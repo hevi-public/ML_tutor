@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k-means clustering — ML Tutor</title>
+
+  <meta name="ml:unit" content="Classical ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="decision-trees.html|Decision trees &amp; forests">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/ml/models.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/kmeans.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Classical ML</p>
+  <h1>k-means: when nobody gives you the answers</h1>
+  <p class="lede">Your first model with no answer key. Just dots, a hunch about how
+  many groups there are, and a two-step dance that sorts them out.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="knn.html">kNN</a> — same notion of distance, opposite situation:
+    there we had labels and asked neighbors; here nobody has a label at all.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A shop owner has data on a thousand customers but no categories — nobody
+  labeled anyone "bargain hunter" or "big spender". The question isn't "predict
+  the label" (there are none); it's "<em>do these customers form natural
+  groups?</em>" Finding groups in unlabeled data is called
+  <dfn data-term="clustering">clustering</dfn>, and
+  <dfn data-term="k-means">k-means</dfn> is its classic recipe.</p>
+  <p>You supply one hunch: k, the number of groups to look for. The algorithm
+  places k guess-centers, then repeats two steps that you can fully understand in
+  one sentence each:</p>
+  <ol>
+    <li><strong>Color the dots:</strong> every dot joins its nearest center.</li>
+    <li><strong>Move the centers:</strong> every center relocates to the middle of
+    the dots that joined it (that middle is its
+    <dfn data-term="centroid">centroid</dfn> — just the mean, feature by
+    feature).</li>
+  </ol>
+  <p>Repeat until no dot wants to switch. That's the entire algorithm — no
+  gradients, no loss curves, just musical chairs settling down.</p>
+
+  <h2>Try it: run the dance yourself</h2>
+  <p>The dots are unlabeled (gray). The ✕ marks are the guess-centers, placed
+  randomly. Step through the dance and watch order appear:</p>
+
+  <div class="demo" id="kmeans-demo">
+    <canvas width="640" height="397" aria-label="Unlabeled dots and k moving cluster centers"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="km-k">How many groups to look for (k)</label>
+        <input type="range" id="km-k" data-param="k" min="2" max="6" step="1" value="3">
+        <output data-out="k">3</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" data-action="step">Step 1: color the dots</button>
+      <button class="action secondary" type="button" data-action="run">Run until settled</button>
+      <button class="action secondary" type="button" data-action="restart">Restart with new random centers</button>
+    </div>
+    <p class="readout">Next up: <span data-out="phase"></span> ·
+      total scatter around centers: <strong data-out="inertia">–</strong>
+      (lower = tighter groups)</p>
+    <p class="hint">Two experiments worth running: (1) Restart several times at
+    k=3 — different random starts can settle into different answers; k-means only
+    promises <em>a</em> resting point, not the best one (the rolling ball's nearest-valley
+    problem, again — real toolkits just run it many times and keep the tightest
+    result). (2) Set k=5 on this clearly-3-group data — k-means will dutifully
+    shatter real groups to satisfy your bad hunch. The algorithm never questions k;
+    choosing it is your job.</p>
+  </div>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>k-means is secretly minimizing something: the total squared distance from
+      each dot to its center. "Color the dots" lowers it by reassignment; "move the
+      centers" lowers it by relocation. Since the number only ever goes down and
+      can't go below zero, the dance must settle. (Watch the scatter readout while
+      stepping — it never rises.)</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">J = \sum_{i=1}^{n} \left\lVert \mathbf{x}_i - \boldsymbol{\mu}_{c_i} \right\rVert^2</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The score being minimized: for every dot, the squared distance to its own
+        group's center — all added up. Both steps of the dance can only shrink J,
+        which is why the dance always ends.
+      </div>
+      <ul class="symbol-legend" data-symbols="J,‖·‖,μc,c"></ul>
+      <p>Familiar shape, isn't it? Sum of squared distances — the same "squared
+      misses" pattern as MSE and variance. One toolbox, many hats: this time
+      there's no truth to miss, so we measure scatter around our own centers
+      instead.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>That's the classical core: lines that predict numbers, lines that give odds,
+  neighbors that vote, flowcharts and their forests, and groups found without a
+  teacher. Unit 4 takes the first of these — the humble weighted sum — and stacks
+  it into networks that can bend.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "J": { "name": "J — the score being minimized", "pron": "say: \"jay\" (just a conventional letter for objectives)",
+           "means": "Total squared dot-to-center distance, summed over all dots. k-means' equivalent of a loss.",
+           "short": "total scatter around the centers" },
+    "‖·‖": { "name": "‖·‖ — the norm (length)", "pron": "say: \"the norm of\" or \"the length of\"",
+           "means": "The length of the arrow between two points — so ‖x−μ‖² is just squared distance (double bars because x and μ are vectors).",
+           "short": "length of the gap, then squared" },
+    "μc": { "name": "μ with a subscript — a group's center", "pron": "say: \"mew sub c\"",
+           "means": "The centroid (feature-wise mean) of group c. Still μ-for-mean — each center IS the average of its members.",
+           "short": "the center of that dot's group" },
+    "c": { "name": "cᵢ — which group dot i belongs to", "pron": "say: \"see sub eye\"",
+           "means": "The group assignment of dot i (1, 2, … k). The subscript chain μ_{cᵢ} reads: \"the center of the group that dot i is in.\"",
+           "short": "which group this dot joined" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "kmeans",
+    "questions": [
+      {
+        "q": "What makes k-means fundamentally different from every other model in Unit 3?",
+        "choices": [
+          "It uses distance instead of equations",
+          "There are no labels — it isn't predicting an answer, it's discovering groups the data never named",
+          "It's the only one that needs a computer"
+        ],
+        "answer": 1,
+        "explain": "Everything else here was supervised: guesses graded against truth. k-means has no truth to be graded against — success is tight, well-separated groups, and judging THAT is partly a human call (including the choice of k)."
+      },
+      {
+        "q": "Why is the dance guaranteed to stop?",
+        "choices": [
+          "Each of the two steps can only lower (never raise) the total scatter score, and it can't drop below zero — so the shuffling must run out",
+          "The algorithm has a built-in step limit",
+          "Dots get tired of switching"
+        ],
+        "answer": 0,
+        "explain": "Reassigning a dot only happens if a center is strictly closer (scatter drops); moving a center to its members' mean is the scatter-minimizing spot (drops again). A number that only falls and has a floor must settle. Elegant — and it says nothing about settling at the BEST answer."
+      },
+      {
+        "q": "You restart k-means and get a different grouping with a worse (higher) scatter score. What happened?",
+        "choices": [
+          "The data changed between runs",
+          "k-means is random in its answers by design, and neither result means anything",
+          "Different random starting centers led it into a different valley — it finds a local resting point, not the global best"
+        ],
+        "answer": 2,
+        "explain": "The rolling ball from the slopes page, in disguise: the dance walks downhill from wherever the centers start and parks in the nearest valley. Standard practice: run it 10+ times from random starts, keep the run with the lowest scatter."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

@@ -164,7 +164,10 @@ prose, math, demos, quizzes:
    page (linear regression with live-fit canvas demo + quiz). Proves the whole stack.
 2. **Core engine** — quiz.js, progress.js, glossary.js + glossary.json seed.
 3. **Units 0–2** content + demos.
-4. **ml/ mini-library + Unit 3** (classical ML demos reuse it).
+4. **ml/ mini-library + Unit 3** (classical ML demos reuse it). *Done for the
+   core path (logreg, kNN, trees+forests, k-means); SVM, naive Bayes, PCA are
+   backlog — slot them in whenever, the library and template make each a
+   one-page job. autodiff.js lands with Unit 4, which is what needs it.*
 5. **Units 4–5** + the MLP playground lab (Web Worker training).
 6. **Units 6–8**, concept map, search, flashcards.
 7. **Polish** — a11y pass, print styles, cross-browser check, offline check.

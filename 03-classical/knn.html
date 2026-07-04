@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k-nearest neighbors — ML Tutor</title>
+
+  <meta name="ml:unit" content="Classical ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="logistic-regression.html|Logistic regression">
+  <meta name="ml:next" content="decision-trees.html|Decision trees &amp; forests">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/ml/models.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/knn.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Classical ML</p>
+  <h1>k-nearest neighbors: just ask the locals</h1>
+  <p class="lede">The simplest classifier that actually works — no training, no
+  equations, no boundary. It remembers everything and, when asked, polls the
+  neighborhood.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-math/vectors-matrices.html">Vectors</a> — "nearest" means
+    distance, and distance between data points is distance between vectors.
+  </div>
+
+  <h2>The idea</h2>
+  <p>You find an unfamiliar animal photo. Your instinct: compare it to animals you
+  know — it most resembles a few cats you've seen, so, probably a cat. That entire
+  instinct is the algorithm. <dfn data-term="knn">k-nearest neighbors</dfn> (kNN)
+  classifies a new point by finding the k most similar known examples and letting
+  them vote.</p>
+  <p>Note what's missing: there is no training step. The "model" <em>is</em> the
+  dataset, kept whole. All the work happens at question time — measure the distance
+  to every stored example, take the k closest, count the votes. Slow to answer,
+  instant to "train", and surprisingly strong: with enough data, the locals
+  usually know.</p>
+
+  <h2>Try it: poll the neighborhood</h2>
+  <p>Three classes of pets, plotted by two features. Move your mouse — the dashed
+  lines point to the k nearest known animals, and their vote follows your cursor.
+  Then paint the whole map and see the territory each class controls:</p>
+
+  <div class="demo" id="knn-demo">
+    <canvas width="640" height="397" aria-label="Three classes of dots; the cursor is classified live by its nearest neighbors"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="knn-k">How many neighbors get a vote (k)</label>
+        <input type="range" id="knn-k" data-param="k" min="1" max="15" step="2" value="3">
+        <output data-out="k">3</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" data-action="regions">Paint the whole map</button>
+    </div>
+    <p class="readout">The vote: <strong data-out="vote">move the mouse over the chart</strong></p>
+    <p class="hint">Paint the map at k=1, then at k=15. At k=1, single stray dots
+    carve their own little islands — that's overfitting, in its purest visible
+    form. Big k smooths the borders but starts steamrolling small legitimate
+    regions. Yes: k is a bendiness dial, and you've already learned how to pick
+    one (a validation set).</p>
+  </div>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>"Similar" = "nearby," and nearby is measured with the straight-line
+      distance you learned as Pythagoras: square the gap in each feature, add,
+      square-root. Then: sort by distance, keep k, majority wins.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">d(\mathbf{a}, \mathbf{b}) = \sqrt{\sum_{i=1}^{n} (a_i - b_i)^2}</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The distance between two data points: for each feature, take the gap,
+        square it; add them all; square-root the total. (With two features this is
+        exactly Pythagoras; with a hundred it's the same recipe, unbothered.)
+      </div>
+      <ul class="symbol-legend" data-symbols="d,√,∑,n"></ul>
+      <p>One practical landmine hides in this formula: it adds <em>raw</em> gaps.
+      If one feature is "age in years" (gaps of ~10) and another is "income in
+      euros" (gaps of ~10,000), income drowns age completely — the vote is rigged
+      by units. The fix is old news to you: rescale features first (subtract the
+      mean, divide by σ). kNN without scaling is the classic beginner faceplant.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>kNN asks "who are you near?" — next, decision trees ask something completely
+  different: "let me play twenty questions with your features."</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "d": { "name": "d — the distance", "pron": "say: \"dee\", or \"the distance between a and b\"",
+           "means": "One number: how far apart two data points are in feature-space. Smaller = more similar.",
+           "short": "how far apart two points are" },
+    "√": { "name": "√ — square root", "pron": "say: \"the square root of\"",
+           "means": "Undo the squaring at the end, returning to ordinary units.",
+           "short": "undo the squaring" },
+    "∑": { "name": "∑ — \"sum of\"", "pron": "say: \"sigma\"",
+           "means": "Add up the squared gaps, one per feature.",
+           "short": "add these up, one per feature" },
+    "n": { "name": "n — how many features", "pron": "say: \"en\"",
+           "means": "The number of features describing each point (2 in the demo; often hundreds in real data).",
+           "short": "how many features" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "knn",
+    "questions": [
+      {
+        "q": "What does kNN's \"training\" consist of?",
+        "choices": [
+          "Gradient descent on the neighbor weights",
+          "Storing the dataset. That's it — all the work happens when a question arrives",
+          "Building a tree of yes/no questions"
+        ],
+        "answer": 1,
+        "explain": "kNN is a \"lazy learner\": zero effort up front, full effort per query (measure distance to everything, sort, vote). The opposite trade from logistic regression, which sweats during training and answers instantly."
+      },
+      {
+        "q": "You saw k=1 carve tiny islands around stray dots. What is that, in the vocabulary of Unit 2?",
+        "choices": [
+          "Underfitting — the model is too simple",
+          "Overfitting — single noisy examples get their own territory, which won't generalize",
+          "A false positive"
+        ],
+        "answer": 1,
+        "explain": "One noisy dot at k=1 rules everything nearest to it — memorized noise, drawn on a map. Raising k is exactly the \"simpler model\" cure: more voters, less power per stray dot."
+      },
+      {
+        "q": "A kNN model uses height-in-centimeters and salary-in-euros as features, unscaled. What happens?",
+        "choices": [
+          "Salary gaps (thousands) dwarf height gaps (tens) inside the distance formula — the vote is effectively salary-only",
+          "Nothing; distance handles units automatically",
+          "The model crashes on mixed units"
+        ],
+        "answer": 0,
+        "explain": "The distance formula adds raw squared gaps, so the feature with the biggest numbers wins by default. Rescaling (subtract mean, divide by σ) puts every feature on equal footing — do it before any distance-based method, always."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

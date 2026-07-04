@@ -313,5 +313,81 @@
     "definition": "A table of prediction vs. reality counts (TP, FP, TN, FN for two classes; N×N for more). Every headline metric — accuracy, precision, recall — is a ratio of cells from this table, which is why it's the honest place to start.",
     "see": ["accuracy", "precision", "recall"],
     "taughtIn": { "href": "02-core/metrics.html", "title": "Judging classifiers" }
+  },
+  "logistic-regression": {
+    "term": "Logistic regression",
+    "plain": "Linear regression's yes/no cousin: score with the weighted sum, then squash the score into a probability.",
+    "definition": "A classifier computing σ(w·x + b): a linear score passed through the sigmoid, trained with log loss. Its decision boundary is a straight line (hyperplane). Despite the name, it does classification — still the standard first model for yes/no problems.",
+    "see": ["sigmoid", "decision-boundary", "log-loss", "linear-regression"],
+    "taughtIn": { "href": "03-classical/logistic-regression.html", "title": "Logistic regression" }
+  },
+  "sigmoid": {
+    "term": "Sigmoid",
+    "plain": "The S-shaped squasher: any number in, something between 0 and 1 out — big scores land near 1, big negatives near 0.",
+    "also": ["logistic function", "σ(z)"],
+    "definition": "σ(z) = 1/(1+e⁻ᶻ). Maps the real line smoothly onto (0, 1) with σ(0) = 0.5, turning raw scores into probabilities. Also one of the classic activation functions in neural networks.",
+    "see": ["logistic-regression", "log-loss"],
+    "taughtIn": { "href": "03-classical/logistic-regression.html", "title": "Logistic regression" }
+  },
+  "decision-boundary": {
+    "term": "Decision boundary",
+    "plain": "The line where a classifier changes its mind — 50/50 territory between \"yes\" and \"no\".",
+    "definition": "The surface in feature-space where a classifier's predicted class flips. Linear models draw straight boundaries; trees draw axis-aligned boxes; kNN and neural networks can draw arbitrarily wiggly ones. A model's boundary shape IS its flexibility.",
+    "see": ["logistic-regression", "threshold", "overfitting"]
+  },
+  "log-loss": {
+    "term": "Log loss",
+    "plain": "A grade for probability-speakers: pay by how little probability you gave the truth — confident wrongness costs dearly.",
+    "also": ["cross-entropy", "negative log-likelihood"],
+    "definition": "For true label y and predicted probability p̂: −[y·log(p̂) + (1−y)·log(1−p̂)], averaged over examples. Punishes overconfident mistakes hard, which trains honest uncertainty. The classification counterpart of mean squared error, and the loss behind most of deep learning.",
+    "see": ["loss", "logistic-regression", "mean-squared-error"]
+  },
+  "knn": {
+    "term": "k-nearest neighbors (kNN)",
+    "plain": "Classify by asking the k most similar known examples to vote. No training — the dataset is the model.",
+    "also": ["k-NN", "nearest neighbor"],
+    "definition": "A lazy learner: store all data; at query time, find the k closest points by distance and take the majority label (or average, for regression). Sensitive to feature scaling and slow at query time on big data — but simple, strong, and a perfect intuition pump.",
+    "see": ["dot-product", "decision-boundary", "clustering"],
+    "taughtIn": { "href": "03-classical/knn.html", "title": "k-nearest neighbors" }
+  },
+  "decision-tree": {
+    "term": "Decision tree",
+    "plain": "A flowchart of yes/no questions about the features, grown automatically — the rare model you can read.",
+    "definition": "A model that recursively splits data with single-feature threshold questions, choosing each split to maximize class purity (e.g. minimize Gini impurity). Fully interpretable, trains fast, and overfits enthusiastically when grown deep — which is why it's usually deployed inside a forest.",
+    "see": ["random-forest", "overfitting", "ensemble"],
+    "taughtIn": { "href": "03-classical/decision-trees.html", "title": "Decision trees & forests" }
+  },
+  "random-forest": {
+    "term": "Random forest",
+    "plain": "Many deep trees, each trained on a random re-sample of the data, voting together — their private mistakes cancel, the shared pattern survives.",
+    "definition": "An ensemble of decision trees trained on bootstrap samples (and typically random feature subsets), predictions combined by majority vote or averaging. Trades the single tree's readability for markedly better generalization; a perennial best-first-try on tabular data.",
+    "see": ["decision-tree", "ensemble", "generalization"],
+    "taughtIn": { "href": "03-classical/decision-trees.html", "title": "Decision trees & forests" }
+  },
+  "ensemble": {
+    "term": "Ensemble",
+    "plain": "A committee of models. Individually shaky, collectively steady — because their errors disagree and average away.",
+    "definition": "Any method combining multiple models' predictions (voting, averaging, stacking, boosting). Works exactly to the degree the members' errors are decorrelated — hence the deliberate randomness in how members are trained.",
+    "see": ["random-forest", "model"]
+  },
+  "clustering": {
+    "term": "Clustering",
+    "plain": "Finding natural groups in data that nobody labeled — sorting the pile without being told the categories.",
+    "definition": "The core unsupervised task: partition data points so members of a group are similar and groups are distinct. k-means is the classic algorithm; success is judged by group tightness/separation and usefulness, since no ground truth exists.",
+    "see": ["k-means", "unsupervised-learning"],
+    "taughtIn": { "href": "03-classical/kmeans.html", "title": "k-means clustering" }
+  },
+  "k-means": {
+    "term": "k-means",
+    "plain": "Pick k guess-centers, then repeat two steps: every dot joins its nearest center; every center moves to the middle of its dots.",
+    "definition": "A clustering algorithm minimizing total squared dot-to-center distance by alternating assignment and centroid-update steps until stable. Always converges, but to a local optimum — run several random restarts and keep the tightest. k is chosen by the human.",
+    "see": ["clustering", "centroid", "gradient-descent"],
+    "taughtIn": { "href": "03-classical/kmeans.html", "title": "k-means clustering" }
+  },
+  "centroid": {
+    "term": "Centroid",
+    "plain": "A group's middle point: the plain average of its members, feature by feature.",
+    "definition": "The component-wise mean of a set of vectors — the point minimizing total squared distance to the set, which is precisely why k-means' update step moves each center there.",
+    "see": ["k-means", "mean", "vector"]
   }
 }

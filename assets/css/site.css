@@ -432,6 +432,21 @@ tr.row-hot { background: var(--accent-soft) !important; }
   padding: 0 0.5rem;
 }
 
+/* ---------- Decision tree flowchart ---------- */
+
+.tree-questions {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  margin-top: 0.9rem;
+  overflow-x: auto;
+}
+.tree-questions .soft { color: var(--text-soft); }
+
 /* ---------- Confusion matrix ---------- */
 
 .conf-matrix {

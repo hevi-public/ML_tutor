@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logistic regression — ML Tutor</title>
+
+  <meta name="ml:unit" content="Classical ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="linear-regression.html|Linear regression">
+  <meta name="ml:next" content="knn.html|k-nearest neighbors">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/ml/models.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/logreg.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Classical ML</p>
+  <h1>Logistic regression: a line that gives odds</h1>
+  <p class="lede">Take linear regression, bend its output into a probability, and
+  you have the workhorse of yes/no prediction — still, decades on, the first model
+  every practitioner tries.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="linear-regression.html">Linear regression</a> (this page reuses its
+    recipe) and <a href="../02-core/metrics.html">judging classifiers</a> (this
+    model outputs exactly the kind of scores you thresholded there).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Suppose you're predicting a yes/no: will this customer buy ice cream? The
+  linear recipe — multiply each feature by a weight, add up — still produces a
+  useful number: strongly positive means "very buy-ish", strongly negative "very
+  not". But it ranges over all numbers, and a probability must live between 0
+  and 1.</p>
+  <p>So we pass the score through a squashing function: very negative scores squash
+  toward 0, very positive toward 1, and a score of exactly zero lands at 50/50.
+  The squasher is called the <dfn data-term="sigmoid">sigmoid</dfn> (it's S-shaped),
+  and the whole assembly is <dfn data-term="logistic-regression">logistic
+  regression</dfn>. Despite the name, it's a classifier — the "regression" is a
+  historical fossil.</p>
+  <p>Geometrically, the model draws one straight line through feature-space: the
+  50/50 line, its <dfn data-term="decision-boundary">decision boundary</dfn>.
+  Everything on one side leans yes, the other no — with confidence growing the
+  farther you go from the line.</p>
+
+  <h2>Try it: watch it find the boundary</h2>
+  <p>Red dots are one class, blue the other. The background is the model's
+  current opinion — deeper color means more confident, the pale ribbon is the
+  50/50 boundary. The model starts knowing nothing (everything 50/50). Press
+  train and watch gradient descent swing the boundary into place:</p>
+
+  <div class="demo" id="logreg-demo">
+    <canvas width="640" height="397" aria-label="Two classes of dots with a probability landscape behind them"></canvas>
+    <div class="buttons">
+      <button class="action" type="button" data-action="train">Train (watch it learn)</button>
+      <button class="action secondary" type="button" data-class="1">Click adds: blue</button>
+      <button class="action secondary" type="button" data-class="0">Click adds: red</button>
+      <button class="action secondary" type="button" data-action="reset">Reset</button>
+    </div>
+    <p class="readout">Grade (log loss): <strong data-out="loss">–</strong> ·
+      dots currently on the right side: <strong data-out="acc">–</strong></p>
+    <p class="hint">After training, click a few blue dots deep inside red territory
+    and retrain. The boundary shifts, but it stays a straight line — logistic
+    regression cannot bend. When the true border between classes is curved, this
+    model underfits it; that ceiling is exactly what neural networks (Unit 4)
+    remove.</p>
+  </div>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>Score the input with the linear recipe. Squash the score into 0–1 with the
+      S-curve. Grade the model not on "right or wrong" but on <em>how much
+      probability it gave the truth</em> — confidently wrong costs a lot, mildly
+      wrong costs a little. Then gradient descent, exactly as before.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <p>The prediction:</p>
+      <div class="math equation">\hat{p} = \sigma(\mathbf{w} \cdot \mathbf{x} + b), \qquad \sigma(z) = \frac{1}{1 + e^{-z}}</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The predicted probability is: the linear score (weights dot inputs, plus
+        offset), squashed by the S-curve σ. The squasher itself: one divided by
+        (one plus e-to-the-minus-score) — big scores → near 1, big negative
+        scores → near 0.
+      </div>
+      <ul class="symbol-legend" data-symbols="p̂,σ,𝐰,e,z"></ul>
+
+      <p>The grade — <dfn data-term="log-loss">log loss</dfn>:</p>
+      <div class="math equation">L = -\frac{1}{n}\sum_{i=1}^{n}\Big[\, y_i \log \hat{p}_i + (1 - y_i)\log(1 - \hat{p}_i) \,\Big]</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        For each example: if the truth was yes (y=1), the cost is "minus the log of
+        the probability you gave yes"; if no, same for no. Give the truth 99% and
+        pay almost nothing; give it 1% and pay dearly. Average over everyone.
+      </div>
+      <ul class="symbol-legend" data-symbols="log,y,n"></ul>
+      <p>Why not just mean squared error? Log loss's punishment for confident
+      wrongness is what keeps the model honest about uncertainty — and it happens
+      to make the gradient astonishingly tidy: the nudge for each weight is just
+      <em>(predicted probability − truth) × input</em>. That "error × input"
+      pattern will return, verbatim, inside neural networks.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <details class="layer">
+    <summary>Show the JavaScript (from this site's own mini-library)</summary>
+    <div class="layer-body">
+<pre><code class="language-javascript">// assets/js/ml/models.js — the actual code running in the demo above
+static sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+
+predictProba(x) { return ML.LogReg.sigmoid(dot(this.w, x) + this.b); }
+
+trainStep(points, lr = 0.5) {
+  const gw = new Array(this.w.length).fill(0);
+  let gb = 0;
+  for (const p of points) {
+    const err = this.predictProba(p.x) - p.y;   // probability − truth
+    for (let i = 0; i &lt; gw.length; i++) gw[i] += err * p.x[i];
+    gb += err;
+  }
+  for (let i = 0; i &lt; this.w.length; i++) this.w[i] -= lr * gw[i] / points.length;
+  this.b -= lr * gb / points.length;
+}</code></pre>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next: a model with the opposite personality — no training, no equations, no
+  boundary. It just remembers everything and asks the neighbors.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "p̂": { "name": "p̂ — \"p-hat\", the predicted probability", "pron": "say: \"pee-hat\"",
+           "means": "The model's estimated chance that the answer is yes — between 0 and 1. The hat marks it as an estimate.",
+           "short": "the predicted chance of yes" },
+    "σ": { "name": "σ — the sigmoid (here!)", "pron": "say: \"SIG-moid\" or \"sigma of z\"",
+           "means": "The S-shaped squashing function turning any score into a 0–1 value. (Same Greek letter as standard deviation — context decides; here it's always the squasher.)",
+           "short": "the S-shaped squasher" },
+    "𝐰": { "name": "𝐰 — the weights (a vector)", "pron": "say: \"the weight vector\"",
+           "means": "One weight per feature; 𝐰·𝐱 is the dot product — multiply each input by how much it matters, add up.",
+           "short": "one weight per feature" },
+    "e": { "name": "e — Euler's number", "pron": "say: \"ee\" (≈ 2.718)",
+           "means": "A constant nature keeps choosing, like π. e⁻ᶻ shrinks fast as z grows — that's what makes the S-curve level off.",
+           "short": "the constant 2.718…" },
+    "z": { "name": "z — the raw score", "pron": "say: \"zed\" (or \"the logit\")",
+           "means": "The linear score before squashing: 𝐰·𝐱 + b. Any size, either sign; the sigmoid turns it into a probability.",
+           "short": "the score before squashing" },
+    "log": { "name": "log — the logarithm", "pron": "say: \"log\"",
+           "means": "The undo of e-to-the-power. What matters here: log(1) = 0 (no cost for certainty in the truth) and log of a tiny number is hugely negative (big cost for confident wrongness).",
+           "short": "gentle near 1, brutal near 0" },
+    "y": { "name": "y — the true answer (0 or 1)", "pron": "say: \"why\"",
+           "means": "The label: 1 for yes, 0 for no. Multiplying by y and (1−y) is just an if-statement in formula clothing: it picks which log term counts.",
+           "short": "the truth: 1 = yes, 0 = no" },
+    "n": { "name": "n — how many examples", "pron": "say: \"en\"",
+           "means": "Dividing by n makes it an average, as always.",
+           "short": "how many examples" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "logistic-regression",
+    "questions": [
+      {
+        "q": "Why pass the linear score through the sigmoid at all?",
+        "choices": [
+          "It makes training faster",
+          "The raw score can be any number, but a probability must live between 0 and 1 — the S-curve squashes it there",
+          "It lets the boundary become curved"
+        ],
+        "answer": 1,
+        "explain": "That's the whole job: any score in, a valid probability out — smoothly, so confidence grows with distance from the boundary. It does NOT bend the boundary; the 50/50 line stays straight."
+      },
+      {
+        "q": "Model A says \"80% spam\" about an email that's real. Model B says \"99.9% spam\" about the same email. Under log loss, who pays more?",
+        "choices": [
+          "They pay the same — both were wrong",
+          "Model B pays far more — confident wrongness is what log loss punishes hardest",
+          "Model A, because 80% is a sloppier estimate"
+        ],
+        "answer": 1,
+        "explain": "Log loss charges by the probability you gave the truth: A gave it 20%, B gave it 0.1% — and log of a tiny number is brutal. This is the pressure that trains models to say \"not sure\" when they aren't."
+      },
+      {
+        "q": "In the demo, the true border between the classes is a curve. What's logistic regression's best move?",
+        "choices": [
+          "It will bend its boundary to match after enough training",
+          "The straightest line it can manage — it structurally cannot bend, so it underfits curved patterns",
+          "It refuses to train on such data"
+        ],
+        "answer": 1,
+        "explain": "One linear score means one straight boundary, forever — more training only repositions it. When you need bends, you either hand-craft curved features or stack these units into a network (Unit 4)."
+      }
+    ]
+  }
+  </script>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

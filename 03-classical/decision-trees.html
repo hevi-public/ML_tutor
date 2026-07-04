@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Decision trees &amp; forests — ML Tutor</title>
+
+  <meta name="ml:unit" content="Classical ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="knn.html|k-nearest neighbors">
+  <meta name="ml:next" content="kmeans.html|k-means clustering">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/ml/models.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/tree.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Classical ML</p>
+  <h1>Decision trees &amp; forests: twenty questions, then a crowd of them</h1>
+  <p class="lede">A model you can read like a flowchart — and the trick that turns
+  a mob of unreliable flowcharts into one of the most reliable tools in ML.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-core/overfitting.html">Overfitting</a> — trees are the most
+    visual overfitters in all of ML, and this page leans on that.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Play twenty questions with the data: "Is the humidity under 4.1? If yes — is
+  the temperature under 2.9? If yes — it's class A." A
+  <dfn data-term="decision-tree">decision tree</dfn> is exactly that flowchart,
+  grown automatically: at each step the algorithm tries every possible yes/no
+  question about every feature and keeps the one that best <em>unmixes</em> the
+  classes — the split after which each side is as single-colored as possible.
+  Then it repeats inside each side, until the groups are pure or a depth limit
+  says stop.</p>
+  <p>Because every question is about one feature at a time ("is x ≤ 4.1?"), a
+  tree's map of the world is all straight fences at right angles — little boxes.
+  And because it can keep asking questions, a deep tree can build a private box
+  around <em>every single dot</em>. You know the name for that.</p>
+
+  <h2>Try it: grow a tree, then hire a forest</h2>
+  <p>The depth dial limits how many questions deep the flowchart may go. The
+  actual questions the tree learned are printed below the chart — this is the
+  rare model you can fully read:</p>
+
+  <div class="demo" id="tree-demo">
+    <canvas width="640" height="397" aria-label="Two classes of dots with the tree's rectangular decision regions painted behind"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="tree-depth">How many questions deep</label>
+        <input type="range" id="tree-depth" data-param="depth" min="1" max="10" step="1" value="3">
+        <output data-out="depth">3</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-action="single">One tree</button>
+      <button class="action" type="button" data-action="forest">Plant a forest (25 trees)</button>
+    </div>
+    <p class="readout"><strong data-out="leaves">–</strong> ·
+      <span data-out="verdict"></span></p>
+    <div class="tree-questions" data-out="questions" aria-label="The tree's learned questions as a flowchart"></div>
+    <p class="hint">Crank depth to 10 and find the absurd little boxes built around
+    single stray dots. Then press "plant a forest": 25 deep trees, each trained on
+    a slightly different random re-sample of the dots, voting together. Each tree
+    still memorizes noise — but they memorize <em>different</em> noise, and the
+    vote averages it away. Deep color = near-unanimous; pale = the trees disagree.</p>
+  </div>
+
+  <h2>Why the mob beats the expert</h2>
+  <p>That button is the biggest idea on this page, worth saying carefully. A
+  single deep tree is a jumpy model — re-deal the data and it draws a different
+  map (high variance, from the overfitting page). The
+  <dfn data-term="random-forest">random forest</dfn> recipe:</p>
+  <ul>
+    <li>Train many deep trees, each on a random re-sample of the data (drawn with
+    replacement — so each tree sees a slightly different world).</li>
+    <li>To predict: let every tree vote, majority rules.</li>
+  </ul>
+  <p>Individual jumpiness, being partly random, points in different directions —
+  so it cancels in the average, while the shared signal doesn't. The same trick
+  works far beyond trees; combining many models is called an
+  <dfn data-term="ensemble">ensemble</dfn>, and some flavor of it wins most
+  tabular-data competitions to this day. The price: you can no longer read the
+  model like a flowchart. Interpretability was traded for steadiness.</p>
+
+  <details class="layer">
+    <summary>How "best question" is scored (the one formula on this page)</summary>
+    <div class="layer-body">
+      <p>Each candidate split is judged by how mixed its two groups remain. The
+      standard mixedness score is <em>Gini impurity</em>: for a group, sum each
+      class's share-squared and subtract from 1. A pure group scores 0; a 50/50
+      group scores 0.5. The tree keeps the question whose two sides have the
+      lowest size-weighted average mixedness — greedily, one question at a time,
+      never looking ahead. (Greedy isn't optimal, but it's fast and works — a very
+      ML trade.)</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Every model so far had an answer key. Next — the final stop in Unit 3 — we
+  take the labels away entirely and let the data sort itself.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "decision-trees",
+    "questions": [
+      {
+        "q": "Why are a single tree's decision regions always boxes with right-angle edges?",
+        "choices": [
+          "The canvas can only draw rectangles",
+          "Every question tests one feature against one number (\"is x ≤ 4.1?\") — each answer slices space with a straight fence along one axis",
+          "Trees round their inputs to whole numbers"
+        ],
+        "answer": 1,
+        "explain": "One-feature-at-a-time questions can only cut perpendicular to that feature's axis. Stack the cuts and you get nested rectangles. A diagonal border has to be approximated by a staircase of boxes — visible in the demo at high depth."
+      },
+      {
+        "q": "Each forest tree trains on a random re-sample of the same data. What's the point of that?",
+        "choices": [
+          "It makes training faster since samples are smaller",
+          "Different samples make the trees memorize different noise — so their errors disagree and cancel in the vote, while the shared pattern survives",
+          "It guarantees every tree is identical, which makes the vote unanimous"
+        ],
+        "answer": 1,
+        "explain": "Identical trees would make voting pointless. The randomness is the ingredient: it decorrelates the trees' mistakes. Signal (shared) survives the average; noise (private) dies in it. That's the whole magic of ensembles, in one sentence."
+      },
+      {
+        "q": "Your bank must explain every loan rejection to the customer. Forest or single shallow tree?",
+        "choices": [
+          "Forest — accuracy above all",
+          "The shallow tree — its decision is a readable flowchart, and that requirement outranks a few points of accuracy here",
+          "Neither can be used for loans"
+        ],
+        "answer": 1,
+        "explain": "A 25-tree vote can't be narrated to a customer; a depth-3 flowchart can. Model choice is not an accuracy contest — constraints like explainability, speed, and cost regularly overrule the leaderboard. (Which is also why simple models never really die.)"
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>
