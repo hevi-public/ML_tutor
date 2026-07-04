@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backpropagation — ML Tutor</title>
+
+  <meta name="ml:unit" content="Neural networks">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="mlp.html|Stacking neurons">
+  <meta name="ml:next" content="optimizers.html|Optimizers">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/ml/autodiff.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/backprop.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Neural networks</p>
+  <h1>Backpropagation: blame, passed backwards</h1>
+  <p class="lede">The algorithm that trains every neural network on Earth is a
+  bookkeeping trick: compute forward, then walk the recipe in reverse, handing
+  each step its share of the blame.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-math/slopes-gradients.html">Slopes &amp; gradients</a> (the
+    nudge question) — backprop is that question, answered wholesale.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Training needs to know: "if I nudge this weight, what happens to the
+  loss?" — for every one of possibly billions of weights. Measuring each by
+  actually nudging it would take one full network-run per weight. Hopeless.</p>
+  <p><dfn data-term="backpropagation">Backpropagation</dfn> gets every answer in
+  just <em>two</em> passes. The insight: a network is a recipe of small steps
+  (multiply, add, bend), and each step knows its own local slope. The
+  <dfn data-term="chain-rule">chain rule</dfn> — the only calculus fact backprop
+  needs — says nudge-effects along a chain <em>multiply</em>: if a nudge to w
+  moves z by 2×, and a nudge to z moves the loss by 3×, then w moves the loss
+  by 6×. So: run the recipe forward and save every intermediate value; then walk
+  backward from the loss, multiplying local slopes as you go. Arriving at each
+  weight, the accumulated product IS its gradient. Two passes, all answers.</p>
+
+  <h2>Try it: one training step, in slow motion</h2>
+  <p>One neuron, one example (input 2, truth "yes"), currently making a bad
+  prediction. Step through the forward pass (values, left to right), then the
+  backward pass (blame, right to left — red numbers). Then apply the nudge and
+  run it again:</p>
+
+  <div class="demo" id="backprop-demo">
+    <canvas width="640" height="269" aria-label="Computation graph of one neuron, revealed step by step with values and gradients"></canvas>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-nav="prev">← Back</button>
+      <button class="action" type="button" data-nav="next">Next step →</button>
+      <button class="action" type="button" data-action="apply">Apply the nudge</button>
+      <button class="action secondary" type="button" data-action="reset">Start over</button>
+    </div>
+    <p class="readout" data-out="say"></p>
+    <p class="readout" data-out="trail"></p>
+    <p class="hint">Do the full cycle three or four times — forward, backward,
+    nudge — and watch the loss trail shrink toward zero. Notice x's box never
+    shows a red number we act on: we can't nudge the data, only the knobs.
+    (The numbers here are computed by this site's real autodiff engine —
+    the same 100 lines you'll meet below.)</p>
+  </div>
+
+  <h2>The same trick, at scale</h2>
+  <p>Everything you just stepped through scales without changing character:</p>
+  <ul>
+    <li>A billion-parameter network is still a recipe of multiply/add/bend
+    steps — just a very long one. Forward saves values; backward multiplies
+    local slopes. Two passes, every gradient, always.</li>
+    <li>Where paths branch and re-join, blame simply <em>adds</em> along the
+    joining paths. (You saw a hint: z's blame flowed unchanged to both m
+    and b.)</li>
+    <li>Modern frameworks (PyTorch, JAX) are, at their core, industrial-strength
+    versions of this bookkeeping: they record the recipe as you compute, then
+    replay it backwards. It has a lovely name — <em>automatic
+    differentiation</em>.</li>
+  </ul>
+
+  <h2>The code</h2>
+  <details class="layer">
+    <summary>Show the autodiff engine (yes, the whole thing)</summary>
+    <div class="layer-body">
+      <p>Each <code>Value</code> remembers how it was made and how to pass blame
+      to its parents. <code>backward()</code> visits the recipe in reverse:</p>
+<pre><code class="language-javascript">// assets/js/ml/autodiff.js — abridged, but faithfully
+mul(other) {
+  const out = new Value(this.data * other.data, [this, other], "×");
+  out._backward = () => {
+    this.grad  += other.data * out.grad;  // chain rule: local slope × incoming blame
+    other.grad += this.data * out.grad;
+  };
+  return out;
+}
+
+sigmoid() {
+  const s = 1 / (1 + Math.exp(-this.data));
+  const out = new Value(s, [this], "σ");
+  out._backward = () => { this.grad += s * (1 - s) * out.grad; };
+  return out;
+}
+
+backward() {
+  const topo = topologicalOrder(this);  // recipe order
+  this.grad = 1;                        // the seed: dL/dL = 1
+  for (let i = topo.length - 1; i >= 0; i--) topo[i]._backward();
+}</code></pre>
+      <p>That's the entire mechanism. PyTorch's version is faster and handles
+      tensors, but the soul is identical — in Unit 8 you'll build this file
+      yourself from a blank page.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Backprop hands you the gradients; something still has to decide how to
+  <em>use</em> them. Next: the optimizers — and a race.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "backprop",
+    "questions": [
+      {
+        "q": "Why is backprop such a big deal, given that we could estimate each weight's gradient by nudging it and re-running?",
+        "choices": [
+          "Nudging gives wrong answers; backprop gives exact ones — that's the only difference",
+          "Nudge-and-rerun costs one full network pass PER WEIGHT; backprop gets every gradient in two passes total",
+          "Backprop avoids calculus entirely"
+        ],
+        "answer": 1,
+        "explain": "A billion weights would need a billion forward passes per training step. Backprop's two-passes-for-everything is what makes training large networks physically possible. (Exactness is a bonus; the count is the revolution.)"
+      },
+      {
+        "q": "A nudge to w moves z by a factor of 2; a nudge to z moves the loss by a factor of 3. What does the chain rule say about w's effect on the loss?",
+        "choices": [
+          "2 + 3 = 5",
+          "2 × 3 = 6 — effects along a chain multiply",
+          "It depends on the activation function"
+        ],
+        "answer": 1,
+        "explain": "Chained sensitivities multiply: that one fact, applied step by step from the loss backwards, is the entire algorithm. Everything else is bookkeeping about which numbers to save and in what order to visit."
+      },
+      {
+        "q": "Why does the forward pass save every intermediate value?",
+        "choices": [
+          "For debugging purposes only",
+          "Because the local slopes needed on the way back depend on them — e.g. σ′(z) = p(1−p) needs the p computed going forward",
+          "To display them in progress bars"
+        ],
+        "answer": 1,
+        "explain": "Each step's local slope is evaluated AT the values that actually flowed through — multiply's slope is \"the other input's value\", sigmoid's is p(1−p). No saved values, no backward pass. (This is also why training eats so much memory.)"
+      }
+    ]
+  }
+  </script>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MLP playground — ML Tutor</title>
+
+  <meta name="ml:unit" content="Practice labs">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../04-neural/optimizers.html|Optimizers">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/ml/datasets.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/playground.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Practice labs</p>
+  <h1>The MLP playground</h1>
+  <p class="lede">A real neural network, training live in your browser. You choose
+  the data and the architecture; a Web Worker does thousands of gradient steps a
+  second; the decision landscape forms in front of you.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Unit 4 — you now know exactly what every control here does: the network is
+    made of <a href="../04-neural/neurons.html">neurons</a>, the bends come from
+    <a href="../04-neural/mlp.html">stacking</a>, the training is
+    <a href="../04-neural/backprop.html">backprop</a> steps.
+  </div>
+
+  <div class="demo" id="playground">
+    <div class="buttons">
+      <button class="action secondary" type="button" data-dataset="blobs">Two blobs (easy)</button>
+      <button class="action" type="button" data-dataset="circle">Ring (no line works)</button>
+      <button class="action secondary" type="button" data-dataset="moons">Moons</button>
+      <button class="action secondary" type="button" data-dataset="spiral">Spiral (boss level)</button>
+    </div>
+
+    <canvas class="board" width="640" height="480" aria-label="Training data and the network's live decision landscape"></canvas>
+
+    <div class="controls">
+      <div class="control">
+        <label>Hidden layers</label>
+        <input type="range" data-param="layers" min="1" max="3" step="1" value="1">
+        <output data-out="layers">1</output>
+      </div>
+      <div class="control">
+        <label>Neurons per layer</label>
+        <input type="range" data-param="width" min="2" max="8" step="1" value="4">
+        <output data-out="width">4</output>
+      </div>
+      <div class="control">
+        <label>Activation
+          <select data-param="activation">
+            <option value="tanh" selected>tanh</option>
+            <option value="relu">ReLU</option>
+          </select>
+        </label>
+      </div>
+      <div class="control">
+        <label>Learning rate</label>
+        <input type="range" data-param="lr" min="0.05" max="2" step="0.05" value="0.5">
+        <output data-out="lr">0.5</output>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="action" type="button" data-action="train">Train</button>
+      <button class="action secondary" type="button" data-action="reset">New random weights</button>
+    </div>
+
+    <p class="readout">Network: <strong data-out="shape">–</strong><br>
+      steps: <strong data-out="step">0</strong> ·
+      loss: <strong data-out="loss">–</strong> ·
+      dots on the right side: <strong data-out="acc">–</strong></p>
+
+    <canvas class="losschart" width="640" height="141" aria-label="Loss curve over training"></canvas>
+  </div>
+
+  <h2>The challenges</h2>
+  <p>Anyone can press Train. The learning is in predicting what will happen
+  before you press it:</p>
+  <ol>
+    <li><strong>Prove the collapse.</strong> Ring dataset, 1 layer × 2 neurons.
+    Train. It struggles — the boundary stays nearly straight-ish. Why? Too few
+    bends. Now try 1 × 6: the ring closes. You just watched expressive power
+    arrive neuron by neuron.</li>
+    <li><strong>Underfit on purpose.</strong> Spiral with 1 × 4. Watch the loss
+    flatten high — the network simply cannot bend enough. This is
+    <em>underfitting</em>, live.</li>
+    <li><strong>Beat the spiral.</strong> 2–3 layers × 8 neurons, tanh, learning
+    rate ~0.5, patience. When the arms finally separate, look at the loss curve's
+    shape — long plateau, then a drop. Training big models feels exactly like
+    this, at 10⁹× the scale.</li>
+    <li><strong>Blow it up.</strong> Any dataset, learning rate 2. Loss bounces
+    or explodes — the optimizer race's lesson, now in your own hands. Halve the
+    rate until it settles.</li>
+    <li><strong>Same recipe, different soup.</strong> Press "new random weights"
+    and retrain the spiral a few times. Different runs settle into different
+    boundaries of similar quality — the rolling ball finds different valleys.
+    Nobody trains a big network twice and gets the same weights; they just get
+    similarly good ones.</li>
+  </ol>
+
+  <div class="box plain-english">
+    <span class="label">What you're looking at, one more time</span>
+    Background color = the network's opinion at every point (blue vs. red,
+    deeper = more confident, pale ribbon = its decision boundary). Every frame,
+    the Web Worker runs dozens of full backprop steps on all the dots and sends
+    back a fresh opinion-map. It's the linear regression demo's guess-grade-adjust
+    loop — with a few thousand more knobs.
+  </div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 4 and its lab: complete. From here the path climbs toward modern
+  territory — convolutions, attention, and the road to LLMs (Units 5–6, coming
+  next), then the expert track, where you'll build the autodiff engine yourself.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "mlp-playground",
+    "questions": [
+      {
+        "q": "The ring dataset defeats a 2-neuron network but falls to a 6-neuron one. What changed?",
+        "choices": [
+          "More neurons mean a higher learning rate",
+          "Each hidden neuron contributes one crease to the boundary — two creases can't close a loop around the core, six can",
+          "The larger network sees more data"
+        ],
+        "answer": 1,
+        "explain": "Same data, same training, same everything — only the supply of bends grew. Enclosing a region needs enough creases to wrap around it; you found the threshold empirically."
+      },
+      {
+        "q": "Why does training run in a Web Worker instead of the page itself?",
+        "choices": [
+          "Workers have faster access to the GPU",
+          "Thousands of gradient steps would freeze the page's interface; the worker trains on a separate thread and just mails back progress",
+          "Workers are required for canvas drawing"
+        ],
+        "answer": 1,
+        "explain": "JavaScript pages are single-threaded — a busy training loop would lock every button and slider. The worker computes; the page only paints. (Real training splits work the same way, just across GPUs instead of threads.)"
+      },
+      {
+        "q": "Two spiral runs from different random weights end with different boundaries but similar loss. What's the right conclusion?",
+        "choices": [
+          "One of the runs is wrong",
+          "The loss landscape has many similarly-deep valleys; training finds A good one, not THE good one — normal and expected",
+          "The dataset changed between runs"
+        ],
+        "answer": 1,
+        "explain": "High-dimensional loss landscapes are full of equally decent minima. Reproducibility in deep learning means \"similar quality\", not \"identical weights\" — a fact that surprises everyone once."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stacking neurons — ML Tutor</title>
+
+  <meta name="ml:unit" content="Neural networks">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="neurons.html|The neuron">
+  <meta name="ml:next" content="backprop.html|Backpropagation">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/relu-builder.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Neural networks</p>
+  <h1>Stacking neurons: where the bends come from</h1>
+  <p class="lede">One neuron draws one bent line. A layer of them, summed, can
+  draw bumps, steps, and wiggles — and with enough neurons, any shape at all.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="neurons.html">The neuron</a>. This page is one idea, built with
+    your own hands.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Wire neurons in layers: every input feeds every neuron in the first layer
+  (a <dfn data-term="hidden-layer">hidden layer</dfn> — "hidden" only means
+  "between input and output", nothing spookier), those outputs feed the next
+  layer, and so on to the final answer. This assembly is a
+  <em>multi-layer perceptron</em> (<dfn data-term="mlp">MLP</dfn>) — the plain
+  bread-and-butter neural network.</p>
+  <p>The question that matters: <strong>where does the expressive power come
+  from?</strong> The demo below lets you feel the answer. A single ReLU neuron
+  contributes a humble bent ramp: flat, then a slope, one kink. But
+  <em>sums of ramps make shapes</em>. Two opposing ramps make a plateau. Three
+  make a bump. More make wiggles, staircases, anything — the kinks are little
+  joints, and with enough joints a chain of straight pieces can trace any
+  curve. That, informally, is the famous universal approximation property.</p>
+
+  <h2>Try it: build a function out of neurons</h2>
+  <p>Three ReLU neurons (thin colored lines) and their sum (thick line). Each
+  neuron has a slope into it, a kink position, and a height. Start with the
+  presets, then sculpt by hand:</p>
+
+  <div class="demo" id="builder-demo">
+    <canvas width="640" height="320" aria-label="Three ReLU neuron contributions and their sum forming a composite curve"></canvas>
+    <div class="buttons">
+      <button class="action" type="button" data-preset="ramp">One ramp</button>
+      <button class="action secondary" type="button" data-preset="bump">A bump (3 ramps)</button>
+      <button class="action secondary" type="button" data-preset="wiggle">A wiggle</button>
+    </div>
+    <div class="controls">
+      <div class="control"><label>N1 slope</label><input type="range" data-unit="0" data-param="w" min="-2" max="2" step="0.1"><output data-unit="0" data-out="w"></output></div>
+      <div class="control"><label>N1 kink at</label><input type="range" data-unit="0" data-param="k" min="-5" max="5" step="0.1"><output data-unit="0" data-out="k"></output></div>
+      <div class="control"><label>N1 height</label><input type="range" data-unit="0" data-param="v" min="-3" max="3" step="0.1"><output data-unit="0" data-out="v"></output></div>
+      <div class="control"><label>N2 slope</label><input type="range" data-unit="1" data-param="w" min="-2" max="2" step="0.1"><output data-unit="1" data-out="w"></output></div>
+      <div class="control"><label>N2 kink at</label><input type="range" data-unit="1" data-param="k" min="-5" max="5" step="0.1"><output data-unit="1" data-out="k"></output></div>
+      <div class="control"><label>N2 height</label><input type="range" data-unit="1" data-param="v" min="-3" max="3" step="0.1"><output data-unit="1" data-out="v"></output></div>
+      <div class="control"><label>N3 slope</label><input type="range" data-unit="2" data-param="w" min="-2" max="2" step="0.1"><output data-unit="2" data-out="w"></output></div>
+      <div class="control"><label>N3 kink at</label><input type="range" data-unit="2" data-param="k" min="-5" max="5" step="0.1"><output data-unit="2" data-out="k"></output></div>
+      <div class="control"><label>N3 height</label><input type="range" data-unit="2" data-param="v" min="-3" max="3" step="0.1"><output data-unit="2" data-out="v"></output></div>
+    </div>
+    <p class="hint">You are doing, by hand, exactly what training does
+    automatically: choosing each neuron's slope, position, and contribution so
+    the total curve takes a wanted shape. Training = a machine turning these
+    same knobs, guided by gradients. Nothing else is new.</p>
+  </div>
+
+  <h2>From curves to boundaries</h2>
+  <p>The demo is one-dimensional for clarity, but the same story holds in 2-D
+  and beyond: each hidden ReLU neuron contributes a crease along a line, and
+  sums of creases sculpt curved decision boundaries — the bent borders that
+  logistic regression, forever straight, could never draw. You'll watch this
+  happen live in the <a href="../07-labs/mlp-playground.html">playground lab</a>
+  after two more short pages.</p>
+  <p>Two honest footnotes while the idea is fresh:</p>
+  <ul>
+    <li><strong>"Any shape" ≠ "easily found."</strong> Universal approximation
+    says a wide-enough layer <em>could</em> represent your function — not that
+    gradient descent will find those knob settings, or that you have enough
+    data to justify them. Depth (more layers) often finds structure with far
+    fewer neurons than one absurdly wide layer would need.</li>
+    <li><strong>More neurons = more bendiness = the Unit 2 dial.</strong> A huge
+    network on scarce data can carve a private kink around every stray dot.
+    The overfitting story never went away; it just got more knobs.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You now know what the knobs do. Next: how the network figures out which way
+  to turn thousands of them at once — backpropagation, stepped through slowly,
+  one number at a time.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "mlp",
+    "questions": [
+      {
+        "q": "In the demo, what did it take to build a bump?",
+        "choices": [
+          "One neuron with a very large weight",
+          "Several ramps with opposing slopes and heights, summed — their kinks jointly sculpt the shape",
+          "A special \"bump\" activation function"
+        ],
+        "answer": 1,
+        "explain": "No single ReLU can make a bump — each contributes one kink and one ramp. The shape lives in the SUM. That's the deep lesson: network expressiveness is teamwork between simple parts, not cleverness inside any one part."
+      },
+      {
+        "q": "What does \"hidden\" mean in \"hidden layer\"?",
+        "choices": [
+          "The layer's weights are encrypted",
+          "Simply: between the input and the output — its activations aren't part of the data or the answer",
+          "The layer is randomly disabled during training"
+        ],
+        "answer": 1,
+        "explain": "Nothing mystical — hidden neurons are the intermediate workers whose outputs no one directly observes or grades. (Randomly disabling neurons during training does exist — it's a regularizer called dropout — but that's not what \"hidden\" means.)"
+      },
+      {
+        "q": "Universal approximation says a wide enough network can represent nearly any function. Why doesn't that end the story?",
+        "choices": [
+          "Because representing isn't finding: gradient descent must locate those settings, and your data must justify them — expressive power without enough data is just overfitting fuel",
+          "Because the theorem only applies to sigmoid activations",
+          "It does end the story; bigger is always better"
+        ],
+        "answer": 0,
+        "explain": "\"There exist knob settings\" is a far cry from \"training will find them with your data.\" In practice: depth helps search, data disciplines flexibility, and the bendiness dial from Unit 2 still rules everything."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

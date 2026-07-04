@@ -389,5 +389,90 @@
     "plain": "A group's middle point: the plain average of its members, feature by feature.",
     "definition": "The component-wise mean of a set of vectors — the point minimizing total squared distance to the set, which is precisely why k-means' update step moves each center there.",
     "see": ["k-means", "mean", "vector"]
+  },
+  "neuron": {
+    "term": "Neuron (artificial)",
+    "plain": "A weighted sum with an attitude: weigh the inputs, add a bias, bend the result.",
+    "also": ["unit", "perceptron"],
+    "definition": "The basic network component: output = g(w·x + b), where g is an activation function. Logistic regression is exactly one neuron with a sigmoid bend; networks are many of them wired in layers.",
+    "see": ["activation-function", "weight", "mlp"],
+    "taughtIn": { "href": "04-neural/neurons.html", "title": "The neuron" }
+  },
+  "activation-function": {
+    "term": "Activation function",
+    "plain": "The bend applied after a neuron's weighted sum — without it, stacked layers collapse into one.",
+    "also": ["nonlinearity", "g(z)"],
+    "definition": "A simple nonlinear function (ReLU, tanh, sigmoid…) applied to each neuron's pre-activation. Since compositions of linear maps are linear, this is the ingredient that makes depth add expressive power.",
+    "see": ["relu", "sigmoid", "neuron"],
+    "taughtIn": { "href": "04-neural/neurons.html", "title": "The neuron" }
+  },
+  "relu": {
+    "term": "ReLU",
+    "plain": "\"Off below zero, a plain ramp above.\" Crude, cheap, and the workhorse bend of modern deep learning.",
+    "also": ["rectified linear unit", "max(0, z)"],
+    "definition": "ReLU(z) = max(0, z). Its slope is exactly 1 wherever it's on — no fading gradients at the extremes like the S-curves — which is much of why deep networks became trainable. Each ReLU neuron contributes one crease to the network's function.",
+    "see": ["activation-function", "neuron"]
+  },
+  "hidden-layer": {
+    "term": "Hidden layer",
+    "plain": "Any layer between input and output. \"Hidden\" just means nobody directly observes or grades its outputs.",
+    "definition": "A layer of neurons whose activations are intermediate computation, not data or answer. Width (neurons per layer) and depth (number of layers) are the main architecture dials — both are bendiness dials in the Unit 2 sense.",
+    "see": ["mlp", "neuron", "overfitting"]
+  },
+  "mlp": {
+    "term": "MLP (multi-layer perceptron)",
+    "plain": "The plain, bread-and-butter neural network: layers of neurons, each layer feeding the next.",
+    "also": ["feed-forward network", "fully-connected network"],
+    "definition": "A stack of fully-connected layers with activations between, trained by backprop. The universal-approximation result says a wide enough MLP can represent nearly any function — finding those weights, and justifying them with data, is the actual work.",
+    "see": ["neuron", "hidden-layer", "backpropagation", "neural-network"],
+    "taughtIn": { "href": "04-neural/mlp.html", "title": "Stacking neurons" }
+  },
+  "backpropagation": {
+    "term": "Backpropagation",
+    "plain": "Blame, passed backwards: run the network forward saving every value, then walk the recipe in reverse, multiplying local slopes, until every weight knows its nudge-effect.",
+    "also": ["backprop", "reverse-mode autodiff"],
+    "definition": "The chain rule organized for efficiency: all gradients of the loss with respect to every parameter in one forward + one backward pass — versus one full pass per parameter for naive nudging. The algorithm that makes training large networks feasible.",
+    "see": ["chain-rule", "gradient", "gradient-descent"],
+    "taughtIn": { "href": "04-neural/backprop.html", "title": "Backpropagation" }
+  },
+  "chain-rule": {
+    "term": "Chain rule",
+    "plain": "Nudge-effects along a chain multiply: if w moves z by 2× and z moves the loss by 3×, then w moves the loss by 6×.",
+    "definition": "d(f∘g)/dx = f′(g(x))·g′(x). The single calculus fact underneath backpropagation — applied step by step from the loss backwards through every operation in the network.",
+    "see": ["derivative", "backpropagation"]
+  },
+  "sgd": {
+    "term": "SGD (stochastic gradient descent)",
+    "plain": "Plain gradient descent, fed by small random batches of data instead of the whole dataset each step.",
+    "definition": "Gradient descent where each step's gradient is estimated on a mini-batch. Cheap per step and noisy in a mostly-harmless way. The baseline optimizer; momentum and Adam are upgrades on top of it.",
+    "see": ["gradient-descent", "mini-batch", "momentum"],
+    "taughtIn": { "href": "04-neural/optimizers.html", "title": "Optimizers" }
+  },
+  "momentum": {
+    "term": "Momentum",
+    "plain": "Give the rolling ball weight: keep a running velocity so zigzag pushes cancel and steady pushes compound.",
+    "definition": "An optimizer keeping an exponentially-decaying average of past gradients as a velocity (v ← βv − η∇L; θ ← θ + v). Damps oscillation across narrow valleys and accelerates along them.",
+    "see": ["sgd", "adam", "learning-rate"],
+    "taughtIn": { "href": "04-neural/optimizers.html", "title": "Optimizers" }
+  },
+  "adam": {
+    "term": "Adam",
+    "plain": "Momentum plus a personal step size for every knob — loud directions tamed, quiet ones amplified. The works-out-of-the-box default.",
+    "definition": "An optimizer tracking per-parameter running means of gradients (momentum) and squared gradients (scale), taking steps of the ratio. Robust to hyperparameter choices, hence its ubiquity.",
+    "see": ["momentum", "sgd", "learning-rate"],
+    "taughtIn": { "href": "04-neural/optimizers.html", "title": "Optimizers" }
+  },
+  "mini-batch": {
+    "term": "Mini-batch",
+    "plain": "A small random handful of examples used to estimate the gradient for one training step.",
+    "also": ["batch"],
+    "definition": "The per-step data sample in SGD (commonly 32–4096 examples). Bigger batches: smoother gradients, more compute per step. The noise from small batches is a mild, sometimes beneficial regularizer.",
+    "see": ["sgd", "epoch"]
+  },
+  "epoch": {
+    "term": "Epoch",
+    "plain": "One full lap through the training data.",
+    "definition": "One pass over every training example. Training runs are measured in epochs or steps; watching validation loss across epochs is how early stopping decides when learning has turned into memorizing.",
+    "see": ["mini-batch", "training", "overfitting"]
   }
 }

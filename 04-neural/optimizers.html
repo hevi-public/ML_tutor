@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Optimizers — ML Tutor</title>
+
+  <meta name="ml:unit" content="Neural networks">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="backprop.html|Backpropagation">
+  <meta name="ml:next" content="../07-labs/mlp-playground.html|The playground lab">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/optimizers.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Neural networks</p>
+  <h1>Optimizers: how to spend a gradient</h1>
+  <p class="lede">Backprop tells you which way is downhill. It says nothing about
+  how boldly to walk. That decision has fifty years of craft in it — and one
+  race settles the intuition.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-math/slopes-gradients.html">Slopes &amp; gradients</a> and
+    <a href="backprop.html">backpropagation</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Real loss landscapes are rarely nice round bowls. The classic villain is the
+  <em>narrow valley</em>: steep walls across, a long gentle slope along. Plain
+  gradient descent (<dfn data-term="sgd">SGD</dfn>) suffers there, because the
+  gradient mostly points at the far wall, not down the valley — so it zigzags
+  wall-to-wall while inching along the floor. Two classic upgrades:</p>
+  <ul>
+    <li><strong><dfn data-term="momentum">Momentum</dfn>: give the ball
+    weight.</strong> Keep a running velocity; each gradient pushes it rather than
+    dictating the step. Zigzag pushes alternate and cancel; the steady
+    down-valley push accumulates. A heavy ball rolls through the chatter.</li>
+    <li><strong><dfn data-term="adam">Adam</dfn>: give every knob its own step
+    size.</strong> Track each parameter's typical gradient size and divide by
+    it — loud directions get tamed, whisper-quiet ones get amplified. Roughly
+    momentum + per-knob auto-scaling; it works well with little tuning, which is
+    why it's the default in half the papers ever written.</li>
+  </ul>
+
+  <h2>Try it: the race</h2>
+  <p>Same valley, same start, same learning rate. Shading shows the loss (darker
+  = lower); the circle is the goal:</p>
+
+  <div class="demo" id="optim-demo">
+    <canvas width="640" height="320" aria-label="Three optimizers racing down a narrow valley from the same start"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="op-lr">Learning rate</label>
+        <input type="range" id="op-lr" data-param="lr" min="0.05" max="0.95" step="0.05" value="0.4">
+        <output data-out="lr">0.40</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" data-action="race">Race!</button>
+    </div>
+    <p class="readout">
+      <span style="color: var(--bad)">●</span> SGD: <strong data-out="sgd">–</strong><br>
+      <span style="color: var(--good)">●</span> Momentum: <strong data-out="momentum">–</strong><br>
+      <span style="color: var(--accent)">●</span> Adam: <strong data-out="adam">–</strong>
+    </p>
+    <p class="hint">Run the race at learning rate 0.2, then 0.4, then 0.9. Watch
+    SGD's zigzag get violent as the rate rises — at 0.9 it bounces between the
+    walls. Momentum plows through; Adam takes an oddly straight, businesslike
+    line because it rescales each direction separately. There is no single
+    \"best\" — but you now know what each personality does, which is what the
+    hyperparameter folklore is actually about.</p>
+  </div>
+
+  <h2>The vocabulary you'll meet in the wild</h2>
+  <ul>
+    <li><strong>The "stochastic" in SGD:</strong> real training computes each
+    gradient on a small random <dfn data-term="mini-batch">mini-batch</dfn> of
+    examples, not the whole dataset — far cheaper per step, and the noise it
+    adds is mostly harmless, sometimes even helpful. One full lap through the
+    data is an <dfn data-term="epoch">epoch</dfn>.</li>
+    <li><strong>Learning rate schedules:</strong> start bolder, end finer —
+    decaying the step size over training is standard practice, for exactly the
+    reason your intuition suggests.</li>
+    <li><strong>What actually matters:</strong> the learning rate is the single
+    most consequential hyperparameter in deep learning. When training diverges
+    (loss exploding) — rate too high. When it crawls — too low. You've now seen
+    both failure modes with your own eyes, which puts you ahead of the
+    folklore.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You have all the pieces: neurons, stacking, backprop, optimizers. Time to
+  put your hands on a real network — the playground lab, where you'll train MLPs
+  live in your browser and personally defeat the spiral.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "optimizers",
+    "questions": [
+      {
+        "q": "Why does plain SGD zigzag in a narrow valley?",
+        "choices": [
+          "Random noise in the gradient",
+          "The gradient points mostly at the steep wall across the valley, not along the gentle floor — so each step overshoots side-to-side while barely advancing",
+          "The learning rate changes on every step"
+        ],
+        "answer": 1,
+        "explain": "The gradient is steepest-uphill, and in a narrow valley \"steepest\" is dominated by the walls. SGD faithfully bounces between them. You watched this — and watched it get worse as the learning rate grew."
+      },
+      {
+        "q": "How does momentum fix the zigzag?",
+        "choices": [
+          "It uses a smaller learning rate on steep walls",
+          "Steps accumulate into a velocity: alternating wall-to-wall pushes cancel out, while the consistent down-valley push compounds",
+          "It computes a more accurate gradient"
+        ],
+        "answer": 1,
+        "explain": "Same gradients, different spending: velocity averages them over time. Oscillating components self-cancel; persistent components snowball. A heavy ball, not a nervous walker."
+      },
+      {
+        "q": "Your training loss suddenly explodes to infinity. First suspect?",
+        "choices": [
+          "Not enough training data",
+          "The learning rate is too high — steps overshoot so far that each one lands higher than it started",
+          "The dataset has too many features"
+        ],
+        "answer": 1,
+        "explain": "Divergence is the too-bold-step signature: overshoot the valley floor, land higher on the far wall, get an even bigger gradient, overshoot worse. Cut the rate (often by 10×) and try again — the first reflex of every practitioner."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

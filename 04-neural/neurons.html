@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The neuron — ML Tutor</title>
+
+  <meta name="ml:unit" content="Neural networks">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../03-classical/kmeans.html|k-means clustering">
+  <meta name="ml:next" content="mlp.html|Stacking neurons">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/activation.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Neural networks</p>
+  <h1>The neuron: a weighted sum with an attitude</h1>
+  <p class="lede">Strip the mystique: a neuron is the linear recipe you already
+  know, plus one bend. Everything "neural" is built from this.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-classical/logistic-regression.html">Logistic regression</a> —
+    because, surprise: you've already trained a neuron.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="neuron">neuron</dfn> does exactly three things:</p>
+  <ol>
+    <li>Multiply each input by a weight (how much it matters).</li>
+    <li>Add them up, plus a bias (the starting offset).</li>
+    <li>Pass the total through a simple bending function — the
+    <dfn data-term="activation-function">activation function</dfn>.</li>
+  </ol>
+  <p>Steps 1–2 are literally linear regression. Step 3 is the only new
+  ingredient, and logistic regression already did a version of it (the sigmoid).
+  So: <em>a neuron is logistic regression wearing a biology costume.</em> The
+  brain metaphor ("fires when stimulation crosses a threshold") is where the
+  name came from, but you lose nothing by thinking "weighted sum, then bend."</p>
+  <p>Why the bend matters so much: if you stack pure weighted sums on top of each
+  other, the stack collapses — a sum of sums is just another sum, so a hundred
+  linear layers can only ever draw the same straight boundary as one. The
+  activation's little nonlinearity is what stops the collapse and lets stacking
+  buy new power. No bend, no deep learning. That's the whole secret, this early
+  in the unit.</p>
+
+  <h2>Try it: one neuron's entire personality</h2>
+  <p>One input across the bottom, the neuron's output as the curve. The weight
+  stretches and flips the response; the bias slides it; the activation decides
+  its shape:</p>
+
+  <div class="demo" id="neuron-demo">
+    <canvas width="640" height="320" aria-label="A single neuron's output curve under different weights, biases and activations"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="nr-w">Weight w (how strongly the input matters)</label>
+        <input type="range" id="nr-w" data-param="w" min="-3" max="3" step="0.1" value="1">
+        <output data-out="w">1.0</output>
+      </div>
+      <div class="control">
+        <label for="nr-b">Bias b (slides the threshold)</label>
+        <input type="range" id="nr-b" data-param="b" min="-5" max="5" step="0.1" value="0">
+        <output data-out="b">0.0</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-act="step">Step (1958)</button>
+      <button class="action secondary" type="button" data-act="sigmoid">Sigmoid</button>
+      <button class="action" type="button" data-act="tanh">Tanh</button>
+      <button class="action secondary" type="button" data-act="relu">ReLU</button>
+    </div>
+    <p class="readout"><span data-out="note"></span></p>
+    <p class="hint">Set weight negative and watch the curve flip — this neuron now
+    votes <em>against</em> its input. Try ReLU with w = 2, b = −4: silent until the
+    input passes 2, then increasingly loud. "Feature detectors" in big networks
+    are exactly this: neurons that stay quiet until their particular pattern
+    shows up.</p>
+  </div>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>Output = bend(weighted sum + offset). With many inputs the weighted sum
+      is the dot product from Unit 1 — "multiply each input by how much it
+      matters, add up" — so a neuron is: dot product, plus bias, then bend.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">a = g(\mathbf{w} \cdot \mathbf{x} + b)</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The neuron's output (its <em>activation</em>, a) is: the bending function g,
+        applied to (weights dot inputs, plus bias).
+      </div>
+      <ul class="symbol-legend" data-symbols="a,g,𝐰,b"></ul>
+      <p>The popular bends, for reference:
+      <dfn data-term="relu">ReLU</dfn>(z) = max(0, z) — off below zero, a ramp
+      above; tanh(z) — a smooth S from −1 to +1; sigmoid — the 0-to-1 S you know.
+      Modern networks mostly use ReLU and its relatives: crude, cheap, and its
+      slope doesn't fade at the extremes the way the S-curves' do.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>One neuron draws one bent curve. Next: wire a few of them together and watch
+  genuinely new shapes appear — including a hands-on build of a bump from two
+  ReLUs.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "a": { "name": "a — the activation (output)", "pron": "say: \"ay\", or \"the activation\"",
+           "means": "What this neuron passes on to the next layer. \"Activation\" = how strongly the neuron fired.",
+           "short": "the neuron's output" },
+    "g": { "name": "g — the activation function", "pron": "say: \"gee\", or \"the nonlinearity\"",
+           "means": "The bend: step, sigmoid, tanh, or ReLU. Applied after the weighted sum. Without it, stacked layers collapse into one.",
+           "short": "the bending function" },
+    "𝐰": { "name": "𝐰 — the weights (a vector)", "pron": "say: \"the weight vector\"",
+           "means": "One weight per input; 𝐰·𝐱 is the familiar dot product.",
+           "short": "one weight per input" },
+    "b": { "name": "b — the bias", "pron": "say: \"bee\"",
+           "means": "The offset before bending — it slides the neuron's threshold left or right, as the slider shows.",
+           "short": "slides the threshold" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "neurons",
+    "questions": [
+      {
+        "q": "What are a neuron's three moves?",
+        "choices": [
+          "Weigh each input, sum plus a bias, then bend the result",
+          "Sort the inputs, pick the biggest, threshold it",
+          "Average the inputs, square them, take the root"
+        ],
+        "answer": 0,
+        "explain": "Weighted sum (the linear recipe from Unit 3) plus one bend (the activation). That's the entire component from which networks are assembled."
+      },
+      {
+        "q": "Why does a 100-layer network NEED activation functions to beat a single layer?",
+        "choices": [
+          "They make the network run faster",
+          "Without bends, stacked weighted sums collapse into one weighted sum — 100 linear layers can only draw what 1 can",
+          "They prevent the weights from growing too large"
+        ],
+        "answer": 1,
+        "explain": "A sum of sums is a sum: the composition of linear maps is linear. The activation breaks that collapse, making each extra layer genuinely add expressive power. The bend is the entire point."
+      },
+      {
+        "q": "A ReLU neuron has w = 2, b = −4. When does it \"speak\"?",
+        "choices": [
+          "Always — ReLU never outputs zero",
+          "Only when 2x − 4 > 0, i.e. when the input exceeds 2 — silent below, increasingly loud above",
+          "Only when the input is negative"
+        ],
+        "answer": 1,
+        "explain": "ReLU outputs max(0, 2x−4): exactly zero until x = 2, then a ramp. Neurons as switched-on-by-a-pattern detectors — you built one with the sliders."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

@@ -1,11 +1,11 @@
 /* ML Tutor — mini ML library: vector/matrix helpers.
    Everything on this site trains in the browser, in plain JavaScript you can
    read. This file is the arithmetic; models.js builds the learners on top.
-   Global namespace: window.ML */
-(function () {
+   Global namespace: ML (on window in pages, on self in Web Workers) */
+(function (root) {
   "use strict";
 
-  const ML = (window.ML = window.ML || {});
+  const ML = (root.ML = root.ML || {});
 
   ML.vec = {
     dot(a, b) {
@@ -64,4 +64,4 @@
     }
     return pts;
   };
-})();
+})(typeof window !== "undefined" ? window : self);
