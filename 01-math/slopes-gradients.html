@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Slopes &amp; gradients — ML Tutor</title>
+
+  <meta name="ml:unit" content="Math foundations">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="vectors-matrices.html|Vectors &amp; matrices">
+  <meta name="ml:next" content="probability.html|Probability &amp; statistics">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/slope.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Math foundations</p>
+  <h1>Slopes &amp; gradients: the nudge question</h1>
+  <p class="lede">All of calculus that ML needs fits in one question: <em>"if I nudge
+  this a tiny bit, what happens to that?"</em></p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Just <a href="reading-math.html">How to read math</a>. No calculus memories
+    required — we're rebuilding the one piece ML uses, not the whole course.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Stand on a hillside. Without opening your eyes you can answer two questions:
+  which way is downhill, and how steep is it. That local, eyes-closed knowledge —
+  <em>steepness right where I'm standing</em> — is what a
+  <dfn data-term="derivative">derivative</dfn> is.</p>
+  <p>On a chart: pick a point on a curve and zoom way in. Every curve looks straight
+  up close. The steepness of that little straight piece is the derivative at that
+  point. Positive: the curve is rising there. Negative: falling. Zero: flat — you're
+  standing in a valley bottom or on a hilltop.</p>
+
+  <h2>Try it: feel the slope</h2>
+  <p>Drag the ball along the hill and watch the dashed line — that's the curve's
+  steepness at the ball, updated live. Then find a spot, press
+  <em>Release the ball</em>, and watch it roll downhill and settle in a valley.</p>
+
+  <div class="demo" id="slope-demo">
+    <canvas width="640" height="352" aria-label="A curvy hill with a draggable ball showing the tangent line and slope"></canvas>
+    <div class="buttons">
+      <button class="action" type="button" data-action="roll">Release the ball</button>
+      <button class="action secondary" type="button" data-action="reset">Reset</button>
+    </div>
+    <p class="readout">Steepness here: <strong data-out="slope">–</strong> ·
+      <span data-out="verdict"></span></p>
+    <p class="hint">Try releasing the ball from the far left, then from the middle
+    bump. Notice it doesn't always find the <em>deepest</em> valley — just the
+    nearest one downhill. Remember that; it becomes a real issue when training
+    big models.</p>
+  </div>
+
+  <h2>You just watched gradient descent</h2>
+  <p>The rolling ball is not a metaphor we bolted on — it's literally the algorithm.
+  In the <a href="../03-classical/linear-regression.html">linear regression demo</a>,
+  "let the computer fit it" does exactly what the ball does: check the slope where
+  you stand, step downhill, repeat. The hill there is the loss (the model's grade)
+  and the ball's position is the model's settings.</p>
+  <p>One upgrade and you have the real thing: real models have many settings, not
+  one. The hill becomes a landscape with many directions, and the slope becomes a
+  list of slopes — one per setting: "nudging w does this, nudging b does that."
+  A list of numbers is a vector (last page!), and this particular vector has a
+  name: the <dfn data-term="gradient">gradient</dfn>. It points uphill; training
+  steps the other way.</p>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>The derivative of f at a point is: nudge the input a tiny bit, see how much
+      the output moves, divide "output change" by "input change." It's a
+      sensitivity: how much bang per unit of nudge, right here.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">\frac{df}{dx} \approx \frac{f(x + h) - f(x)}{h}</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The slope of f at x is roughly: (f a nudge later, minus f now), divided by
+        the size of the nudge — for a very small nudge <span data-sym="h">h</span>.
+      </div>
+      <ul class="symbol-legend" data-symbols="d,h,≈"></ul>
+      <p>When several inputs exist, we write <span data-sym="∂">∂</span> instead of
+      d and nudge one input at a time. The full gradient just collects them:</p>
+      <div class="math equation">\nabla L = \left[ \frac{\partial L}{\partial w},\; \frac{\partial L}{\partial b} \right]</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The gradient of the loss is the list: (how the loss reacts to nudging w,
+        how it reacts to nudging b). One slope per knob, bundled into a vector.
+      </div>
+      <ul class="symbol-legend" data-symbols="∇,∂"></ul>
+      <p>This is also literally how the demo works — the code computes
+      <code>(f(x + 0.0001) - f(x - 0.0001)) / 0.0002</code>. Real ML libraries get
+      exact derivatives with cleverer bookkeeping (Unit 8 builds one), but the
+      meaning is identical: nudge, measure, divide.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next: <em>probability and statistics</em> — the math of "usually", which is the
+  honest language for a world where models guess.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "d": { "name": "d — \"a tiny change in\"", "pron": "say: \"dee\" — df/dx reads \"dee-f by dee-x\"",
+           "means": "df/dx means \"the change in f per tiny change in x\" — the slope. The d's aren't multiplied; the whole fraction is one symbol meaning slope.",
+           "short": "tiny change in…" },
+    "h": { "name": "h — the nudge", "pron": "say: \"aitch\"",
+           "means": "A very small step in the input, like 0.0001. The smaller h gets, the closer the formula gets to the true slope.",
+           "short": "a very small nudge" },
+    "≈": { "name": "≈ — \"is roughly\"", "pron": "say: \"is approximately\"",
+           "means": "Equal for practical purposes, exact in the limit as the nudge shrinks to nothing.",
+           "short": "is roughly equal to" },
+    "∂": { "name": "∂ — \"partial\"", "pron": "say: \"partial\" (a curly d)",
+           "means": "Like d, but when the function has several inputs: nudge just this one, hold the others still.",
+           "short": "nudge one input, hold the rest" },
+    "∇": { "name": "∇ — \"nabla\", the gradient", "pron": "say: \"nabla\" or \"grad\"",
+           "means": "All the partial slopes at once, bundled into a vector. Points uphill; training walks the opposite way.",
+           "short": "all the slopes, as one arrow" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "slopes-gradients",
+    "questions": [
+      {
+        "q": "The derivative of the loss with respect to a weight is −3. What does that mean in nudge language?",
+        "choices": [
+          "The loss is currently 3",
+          "Increasing that weight a little makes the loss go DOWN — so to improve, nudge it up",
+          "The weight equals −3"
+        ],
+        "answer": 1,
+        "explain": "Negative slope: the ground falls as you walk in the +w direction. A derivative is never the value of anything — it's the sensitivity: which way and how strongly the output reacts to a nudge."
+      },
+      {
+        "q": "The ball settles at a spot where the slope is zero. In training terms, what happened?",
+        "choices": [
+          "The model reached settings where no tiny nudge improves the loss — a valley (possibly not the deepest one)",
+          "The loss became zero and the model is perfect",
+          "The learning rate became zero"
+        ],
+        "answer": 0,
+        "explain": "Flat ground means gradient descent stops moving — a local minimum. The loss there isn't necessarily zero, and a deeper valley may exist elsewhere; you saw the ball pick the nearest valley, not the best one."
+      },
+      {
+        "q": "A model has 1,000 settings. What is its gradient?",
+        "choices": [
+          "One number: the overall steepness",
+          "A list of 1,000 numbers — one \"nudge-effect\" per setting",
+          "A 1000×1000 table"
+        ],
+        "answer": 1,
+        "explain": "One partial derivative per knob, collected into a vector: ∇L. That's why the vectors page came first — the gradient IS a vector, and training is arithmetic on it."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

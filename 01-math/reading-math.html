@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to read math — ML Tutor</title>
+
+  <meta name="ml:unit" content="Math foundations">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../00-start/what-is-ml.html|What is machine learning?">
+  <meta name="ml:next" content="vectors-matrices.html|Vectors &amp; matrices">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/equation-reader.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Math foundations</p>
+  <h1>How to read math</h1>
+  <p class="lede">Math notation is not knowledge — it's an alphabet. This page teaches
+  you to sound it out, so a wall of symbols becomes a sentence you can read slowly.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing. This page exists so that every other page needs less courage.
+  </div>
+
+  <h2>The secret: equations are sentences</h2>
+  <p>Every equation is a sentence with a verb in the middle. The verb is usually
+  <strong>=</strong>, and it reads "is". Left of it: the thing being defined. Right
+  of it: the recipe for it. So <em>ŷ = wx + b</em> is just the sentence "the
+  prediction <em>is</em> the input times a weight, plus an offset." Once you spot the
+  verb, you read the rest a piece at a time — never all at once.</p>
+  <p>The three habits that make math readable:</p>
+  <ul>
+    <li><strong>Find the verb first</strong> (=, ≈, ←) and split the sentence there.</li>
+    <li><strong>Sound out symbols by name</strong> — "theta", "sum of", "y-hat".
+    A symbol you can say stops being scary.</li>
+    <li><strong>Letters are just labeled boxes.</strong> There's nothing special
+    about <em>x</em> — it's a box someone labeled tersely. Mentally rename it:
+    <em>x</em> is "the temperature", <em>w</em> is "how much it matters".</li>
+  </ul>
+
+  <h2>Try it: read an equation piece by piece</h2>
+  <p>This is the formula for a plain old average — something you already understand.
+  Step through it and watch familiar knowledge put on fancy clothes:</p>
+
+  <div class="demo eq-reader">
+    <div class="math equation">\mu = \frac{1}{n} \sum_{i=1}^{n} x_i</div>
+    <div class="reader-ui"></div>
+    <script type="application/json" class="steps">
+    [
+      { "latex": "\\mu", "say": "mew (the Greek letter mu)",
+        "means": "the average — Greek letters are just extra boxes when the Latin alphabet runs out. Tradition uses μ for averages." },
+      { "latex": "=", "say": "is",
+        "means": "the verb. Everything to the right is the recipe for the thing on the left." },
+      { "latex": "\\frac{1}{n}", "say": "one over n",
+        "means": "divide by how many items there are — this is what turns a total into an average." },
+      { "latex": "\\sum_{i=1}^{n}", "say": "the sum, for i from one to n",
+        "means": "add up what follows, once per item: first with i=1, then i=2, … up to i=n. ∑ is the Greek capital S, for Sum." },
+      { "latex": "x_i", "say": "x sub i",
+        "means": "item number i. The little i underneath is a counter — x₁ is the first item, x₂ the second." },
+      { "latex": "\\mu = \\frac{1}{n} \\sum_{i=1}^{n} x_i", "say": "the average is: one over n, times the sum of all the items",
+        "means": "in plain English: add everything up and divide by how many there are. You've known this since school — now you can read it in symbols." }
+    ]
+    </script>
+  </div>
+
+  <h2>The Greek letters you'll actually meet</h2>
+  <p>ML uses maybe a dozen Greek letters, and each has a habitual job. You don't need
+  to memorize this table — it's here to come back to, and every page names its
+  symbols anyway.</p>
+
+  <table class="ref">
+    <thead><tr><th>Symbol</th><th>Say it</th><th>Usual job in ML</th></tr></thead>
+    <tbody>
+      <tr><td class="glyph">α</td><td>AL-fah (alpha)</td><td>a small tuning number, often a learning rate</td></tr>
+      <tr><td class="glyph">β</td><td>BAY-tah (beta)</td><td>another tuning number; also weights in statistics</td></tr>
+      <tr><td class="glyph">δ, Δ</td><td>DEL-tah (delta)</td><td>"the change in" — Δx is "how much x changed"</td></tr>
+      <tr><td class="glyph">ε</td><td>EP-sih-lon (epsilon)</td><td>a tiny amount; leftover noise or error</td></tr>
+      <tr><td class="glyph">η</td><td>AY-tah (eta)</td><td>the learning rate — how big each training nudge is</td></tr>
+      <tr><td class="glyph">θ</td><td>THAY-tah (theta)</td><td>"all the model's settings, bundled up" — when you see θ, think "the knobs"</td></tr>
+      <tr><td class="glyph">λ</td><td>LAM-dah (lambda)</td><td>a strength dial, e.g. how hard to penalize complexity</td></tr>
+      <tr><td class="glyph">μ</td><td>MEW (mu)</td><td>an average</td></tr>
+      <tr><td class="glyph">σ</td><td>SIG-mah (sigma, lowercase)</td><td>spread — how scattered values are around their average</td></tr>
+      <tr><td class="glyph">Σ</td><td>SIG-mah (sigma, capital)</td><td>"sum of" — add up a list of things</td></tr>
+      <tr><td class="glyph">π</td><td>PIE (pi)</td><td>3.14159…, and in ML sometimes "a policy" (a strategy)</td></tr>
+      <tr><td class="glyph">φ</td><td>FIE or FEE (phi)</td><td>a transformation applied to inputs</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The operator symbols</h2>
+  <p>These are the punctuation and verbs of math. The last column is the move your
+  eyes should make when you meet one.</p>
+
+  <table class="ref">
+    <thead><tr><th>Symbol</th><th>Say it</th><th>What to do when you see it</th></tr></thead>
+    <tbody>
+      <tr><td class="glyph">=</td><td>is / equals</td><td>the verb — split the sentence here</td></tr>
+      <tr><td class="glyph">≈</td><td>is roughly</td><td>same, but "close enough" rather than exact</td></tr>
+      <tr><td class="glyph">←</td><td>becomes</td><td>an update: replace the left side with the right (like = in code)</td></tr>
+      <tr><td class="glyph">∑</td><td>sum of</td><td>add up what follows, once per item in the range shown</td></tr>
+      <tr><td class="glyph">∏</td><td>product of</td><td>same idea, but multiply instead of add</td></tr>
+      <tr><td class="glyph">∈</td><td>is in</td><td>membership: "x ∈ D" reads "x is one of the items in D"</td></tr>
+      <tr><td class="glyph">|x|</td><td>absolute value of x</td><td>drop the minus sign; how big, ignoring direction</td></tr>
+      <tr><td class="glyph">‖x‖</td><td>the norm of x</td><td>the length of an arrow (next page!)</td></tr>
+      <tr><td class="glyph">x̂</td><td>x-hat</td><td>"our estimate of x" — the hat means it's a guess, not the true value</td></tr>
+      <tr><td class="glyph">xᵢ</td><td>x sub i</td><td>item number i in a list — the subscript is a counter</td></tr>
+      <tr><td class="glyph">x²</td><td>x squared</td><td>x times itself; a superscript number is repeated multiplication</td></tr>
+      <tr><td class="glyph">∂</td><td>partial</td><td>"how this changes as that changes" — a nudge-effect (its own page soon)</td></tr>
+      <tr><td class="glyph">∇</td><td>nabla / grad</td><td>all the nudge-effects at once, bundled into one arrow</td></tr>
+      <tr><td class="glyph">𝔼</td><td>the expected value</td><td>the long-run average of something random</td></tr>
+      <tr><td class="glyph">argmin</td><td>arg-min</td><td>"the setting that makes the following smallest" — not the small value itself, but which knob position achieves it</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box plain-english">
+    <span class="label">Permission slip</span>
+    Reading math slowly is not a remedial skill — it's the skill. People fluent in
+    this stuff read equations one piece at a time, exactly like the stepper above.
+    They're just quicker about it, because every symbol is an old friend.
+  </div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next: <em>vectors and matrices</em> — where a list of numbers becomes an arrow
+  you can drag around, and your faint memory of linear algebra gets a friendly
+  restart.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "reading-math",
+    "questions": [
+      {
+        "q": "You meet θ (theta) in an ML paper. What should you think?",
+        "choices": [
+          "It's an angle, like in trigonometry",
+          "\"The model's settings, bundled into one name\"",
+          "It's a typo for 0"
+        ],
+        "answer": 1,
+        "explain": "In geometry θ is an angle, but ML borrowed it for \"all the parameters at once.\" Symbols are boxes — what's inside depends on the field, which is why every page here names its symbols."
+      },
+      {
+        "q": "How do you read: Σᵢ xᵢ ?",
+        "choices": [
+          "\"Sigma times x\"",
+          "\"The sum of all the items: x₁ plus x₂ plus … \"",
+          "\"x is very large\""
+        ],
+        "answer": 1,
+        "explain": "Capital sigma is an instruction, not a quantity: add up what follows, once per value of the counter i. It's a for-loop wearing a toga."
+      },
+      {
+        "q": "What does the hat mean in ŷ?",
+        "choices": [
+          "y is important",
+          "y is the true, correct value",
+          "This is our estimate — the model's guess at y, not y itself"
+        ],
+        "answer": 2,
+        "explain": "The hat marks guesses. Keeping ŷ (the guess) and y (the truth) visually distinct is what lets a formula like \"y − ŷ\" say \"the miss\" in three characters."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

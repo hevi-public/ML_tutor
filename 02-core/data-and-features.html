@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data &amp; features — ML Tutor</title>
+
+  <meta name="ml:unit" content="Core concepts">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../01-math/probability.html|Probability &amp; statistics">
+  <meta name="ml:next" content="train-and-test.html|Training vs. testing">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/data-points.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Core concepts</p>
+  <h1>Data &amp; features: rows, columns, and dots</h1>
+  <p class="lede">Every dataset is a notebook: one row per thing, one column per fact
+  about it. Learn to see the notebook and the chart as the same object.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-math/vectors-matrices.html">Vectors &amp; matrices</a> helps —
+    a row of the notebook is a vector.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Back to the ice cream stand. Your notebook has one row per day, with three
+  columns: the temperature, whether it was a weekend, and how much you sold. In ML
+  vocabulary:</p>
+  <ul>
+    <li>Each row is a <dfn data-term="data-point">data point</dfn> — one example.</li>
+    <li>The columns you know <em>in advance</em> (temperature, weekend?) are
+    <dfn data-term="feature">features</dfn> — what the model predicts <em>from</em>.</li>
+    <li>The column you want to predict (sales) is the
+    <dfn data-term="label">label</dfn> — the answer key.</li>
+  </ul>
+  <p>That's it. "Dataset" = notebook. "Features" = the known columns. "Label" = the
+  answer column. The whole of supervised learning is: use the filled-in rows to
+  predict the answer column for rows that don't have one yet.</p>
+
+  <h2>Try it: one dataset, two views</h2>
+  <p>Below, the same eight days as a notebook and as a chart. Hover a row and watch
+  its dot light up; hover a dot and find its row. A data point isn't <em>shown</em>
+  as a dot — it <em>is</em> the dot, and the row, at once.</p>
+
+  <div class="demo" id="data-demo">
+    <table class="ref">
+      <thead>
+        <tr><th>Day</th><th>Temperature (feature)</th><th>Weekend? (feature)</th><th>Sales € (label)</th></tr>
+      </thead>
+      <tbody>
+        <tr data-x="14" data-y="38"><td>Mon</td><td>14°</td><td>no</td><td>38</td></tr>
+        <tr data-x="17" data-y="52"><td>Tue</td><td>17°</td><td>no</td><td>52</td></tr>
+        <tr data-x="16" data-y="47"><td>Wed</td><td>16°</td><td>no</td><td>47</td></tr>
+        <tr data-x="21" data-y="74"><td>Thu</td><td>21°</td><td>no</td><td>74</td></tr>
+        <tr data-x="24" data-y="90"><td>Fri</td><td>24°</td><td>no</td><td>90</td></tr>
+        <tr data-x="26" data-y="118"><td>Sat</td><td>26°</td><td>yes</td><td>118</td></tr>
+        <tr data-x="23" data-y="98"><td>Sun</td><td>23°</td><td>yes</td><td>98</td></tr>
+        <tr data-x="12" data-y="31"><td>Mon</td><td>12°</td><td>no</td><td>31</td></tr>
+      </tbody>
+    </table>
+    <canvas width="640" height="397" data-xlabel="temperature →" data-ylabel="sales →"
+            aria-label="Scatter chart of temperature versus sales, linked to the table above"></canvas>
+    <p class="hint">The chart only shows two of the three columns (temperature vs.
+    sales). The weekend column is a third direction the flat screen can't draw —
+    with 100 features, a data point is a dot in 100-dimensional space. Nobody can
+    picture that; the trick is that the <em>math</em> (dot products, distances) works
+    the same in 100 dimensions as in 2. You never need to picture it.</p>
+  </div>
+
+  <h2>Where models actually win or lose</h2>
+  <p>A dull truth with expensive consequences: <strong>most real ML work is work on
+  the data, not the model.</strong> Things practitioners check before touching any
+  algorithm:</p>
+  <ul>
+    <li><strong>Is the label honest?</strong> If "sales" was written down from
+    memory a week later, the answer key itself is noisy.</li>
+    <li><strong>Do the features carry the signal?</strong> Temperature clearly
+    relates to ice cream sales. The day's lottery numbers don't — no model can
+    squeeze prediction out of features that contain nothing.</li>
+    <li><strong>Is the notebook representative?</strong> If every row is from
+    summer, the model learns summer rules and fails in winter, confidently. The
+    data decides what the model <em>can</em> know.</li>
+    <li><strong>Units and scales.</strong> A feature measured in millimeters and
+    another in kilometers will fight; putting features on comparable scales
+    (e.g. subtracting the mean, dividing by σ — last page's two numbers!) is
+    routine hygiene.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next: the most important honesty rule in ML — grading the model on rows it has
+  never seen.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "data-and-features",
+    "questions": [
+      {
+        "q": "You're predicting apartment prices from listings. Which is the label?",
+        "choices": [
+          "The number of rooms",
+          "The price",
+          "The apartment's address"
+        ],
+        "answer": 1,
+        "explain": "The label is the column you want to predict; everything you know in advance (rooms, address, size…) is a feature. Same data, different question — if you instead predicted rooms from price, the roles would swap."
+      },
+      {
+        "q": "Your dataset of handwriting samples comes entirely from right-handed adults. What's the risk?",
+        "choices": [
+          "The model will train more slowly",
+          "The model learns rules for that group and may fail on left-handers and children — while its test grades still look great",
+          "No risk — handwriting is handwriting"
+        ],
+        "answer": 1,
+        "explain": "The data decides what the model can know. And the trap is silent: the test rows come from the same lopsided notebook, so every grade looks fine until real left-handed users show up."
+      },
+      {
+        "q": "A data point with 100 features is best thought of as…",
+        "choices": [
+          "100 separate data points",
+          "A dot in 100-dimensional space — impossible to picture, but the math doesn't care",
+          "Too much data for ML to handle"
+        ],
+        "answer": 1,
+        "explain": "One row = one vector = one dot, however long the row. Nobody visualizes 100 dimensions; we trust the same arithmetic that worked in 2D. That mental move — trust the math, drop the picture — is a rite of passage."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

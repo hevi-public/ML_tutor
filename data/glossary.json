@@ -185,5 +185,133 @@
     "plain": "Many simple weighted-sum units stacked in layers, with gentle bends between them — enough to learn shapes no straight line can.",
     "definition": "A model built from layers of linear transformations (weights and biases) separated by nonlinear activation functions. Trained end-to-end with gradient descent via backpropagation. The foundation of deep learning.",
     "see": ["weight", "gradient-descent", "model"]
+  },
+  "vector": {
+    "term": "Vector",
+    "plain": "A list of numbers — which is also an arrow: [3, 1] is \"walk 3 east, 1 north.\"",
+    "definition": "An ordered list of numbers, viewable geometrically as a point or arrow in space with one dimension per entry. In ML, every data point is a vector (one entry per feature), and so are a model's parameters and gradients.",
+    "see": ["matrix", "dot-product", "feature"],
+    "taughtIn": { "href": "01-math/vectors-matrices.html", "title": "Vectors & matrices" }
+  },
+  "matrix": {
+    "term": "Matrix",
+    "plain": "A table of numbers — or equally, a stack of vectors, one row per data point.",
+    "definition": "A rectangular grid of numbers with rows and columns. A dataset of n examples with d features is an n×d matrix; a neural network layer's weights form a matrix that transforms one vector into another.",
+    "see": ["vector", "data-point"],
+    "taughtIn": { "href": "01-math/vectors-matrices.html", "title": "Vectors & matrices" }
+  },
+  "dot-product": {
+    "term": "Dot product",
+    "plain": "Multiply two lists position by position and add it all up: one number that measures how much two directions agree.",
+    "definition": "For equal-length vectors a and b: Σᵢ aᵢbᵢ. Positive when they point similar ways, zero at right angles, negative when opposed. The core operation inside linear models and every neural network layer.",
+    "see": ["vector", "weight"],
+    "taughtIn": { "href": "01-math/vectors-matrices.html", "title": "Vectors & matrices" }
+  },
+  "mean": {
+    "term": "Mean",
+    "plain": "The plain average: add everything up, divide by how many.",
+    "also": ["average", "μ", "mu"],
+    "definition": "The sum of values divided by their count; the center of mass of a distribution. Written μ for a population or x̄ (\"x-bar\") for a sample.",
+    "see": ["standard-deviation", "distribution"]
+  },
+  "variance": {
+    "term": "Variance",
+    "plain": "The average of the squared gaps from the mean — spread, measured in squared units.",
+    "definition": "σ²: the mean of (value − mean)² over the data. Its square root is the standard deviation, which lives back in ordinary units. Note the family resemblance to mean squared error — MSE is the variance of the misses.",
+    "see": ["standard-deviation", "mean", "mean-squared-error"]
+  },
+  "standard-deviation": {
+    "term": "Standard deviation",
+    "plain": "How far values typically stray from their average — tight huddle or wide scatter, as one number.",
+    "also": ["σ", "sigma", "std"],
+    "definition": "The square root of the variance. For roughly bell-shaped data, ~68% of values fall within one σ of the mean and ~95% within two.",
+    "see": ["variance", "mean", "normal-distribution"],
+    "taughtIn": { "href": "01-math/probability.html", "title": "Probability & statistics" }
+  },
+  "distribution": {
+    "term": "Distribution",
+    "plain": "The shape of a pile of values: where they cluster, how far they spread, whether they lean.",
+    "definition": "A description of how likely each possible value is. Summarized by statistics like the mean and standard deviation; visualized as a histogram or density curve.",
+    "see": ["normal-distribution", "mean", "standard-deviation"]
+  },
+  "normal-distribution": {
+    "term": "Normal distribution",
+    "plain": "The bell curve: values pile up symmetrically around the average and thin out fast on both sides.",
+    "also": ["Gaussian", "bell curve"],
+    "definition": "The distribution that arises whenever many small independent effects add up — which is why measurement noise so often follows it. Fully described by just μ and σ. The 68/95 rule of thumb comes from its shape.",
+    "see": ["distribution", "mean", "standard-deviation"],
+    "taughtIn": { "href": "01-math/probability.html", "title": "Probability & statistics" }
+  },
+  "validation-set": {
+    "term": "Validation set",
+    "plain": "A middle pile of data for repeated tune-and-check cycles — so the real test set stays untouched until the very end.",
+    "also": ["dev set", "holdout"],
+    "definition": "Data held out from training and used to compare model variants and tune hyperparameters. Because you iterate against it, it slowly gets \"used up\" too — which is why a final, once-only test set is kept separate.",
+    "see": ["training-set", "test-set", "hyperparameter"],
+    "taughtIn": { "href": "02-core/train-and-test.html", "title": "Training vs. testing" }
+  },
+  "generalization": {
+    "term": "Generalization",
+    "plain": "Doing well on new examples, not just the ones you practiced on. The entire point of learning.",
+    "definition": "A model's performance on data drawn from the same source but not seen during training. Estimated by the test-set grade; the train-vs-test gap measures how much of the training performance was memorization.",
+    "see": ["overfitting", "test-set"],
+    "taughtIn": { "href": "02-core/train-and-test.html", "title": "Training vs. testing" }
+  },
+  "regularization": {
+    "term": "Regularization",
+    "plain": "A fee for wildness: penalize dramatic settings so the model only bends where the data genuinely pays for it.",
+    "definition": "Any technique that discourages overfitting by constraining a model's effective flexibility — most classically by adding a penalty term (scaled by λ) on parameter size to the loss. Weight decay, dropout, and early stopping are all regularizers in spirit.",
+    "see": ["overfitting", "loss", "hyperparameter"],
+    "taughtIn": { "href": "02-core/overfitting.html", "title": "Overfitting" }
+  },
+  "threshold": {
+    "term": "Threshold",
+    "plain": "Where you draw the line on a model's score: above → flag it, below → let it pass.",
+    "also": ["cutoff", "decision boundary (1-D)"],
+    "definition": "The score above which a classifier's output is treated as positive. Moving it trades false alarms against misses (precision against recall); the right setting depends on which mistake costs more, not on the model.",
+    "see": ["precision", "recall", "false-positive"],
+    "taughtIn": { "href": "02-core/metrics.html", "title": "Judging classifiers" }
+  },
+  "accuracy": {
+    "term": "Accuracy",
+    "plain": "The share of cases handled correctly — and nearly meaningless when the thing you're hunting is rare.",
+    "definition": "(correct predictions) / (all predictions). With imbalanced classes it mostly reflects the imbalance: \"never fraud\" is 99.9% accurate if fraud is 1-in-1,000. Always read it alongside precision and recall.",
+    "see": ["precision", "recall", "confusion-matrix"]
+  },
+  "precision": {
+    "term": "Precision",
+    "plain": "When you point, are you right? Of everything flagged, the share that truly was the thing.",
+    "definition": "TP / (TP + FP): among positive predictions, the fraction that are actually positive. Low precision means crying wolf. Raise the threshold and precision typically rises — at recall's expense.",
+    "see": ["recall", "false-positive", "threshold"],
+    "taughtIn": { "href": "02-core/metrics.html", "title": "Judging classifiers" }
+  },
+  "recall": {
+    "term": "Recall",
+    "plain": "Of what's really out there, how much did you find? The share of actual cases you caught.",
+    "also": ["sensitivity", "true positive rate"],
+    "definition": "TP / (TP + FN): among actual positives, the fraction the model flagged. Low recall means wolves stroll past. The king metric whenever a miss is the catastrophic error (screening, fraud, safety).",
+    "see": ["precision", "false-negative", "threshold"],
+    "taughtIn": { "href": "02-core/metrics.html", "title": "Judging classifiers" }
+  },
+  "false-positive": {
+    "term": "False positive",
+    "plain": "A false alarm: the model flagged something that was actually fine.",
+    "also": ["FP", "type I error", "false alarm"],
+    "definition": "A negative case predicted as positive — a real email junked, a healthy patient flagged. Its cost relative to the false negative's should drive where you set the threshold.",
+    "see": ["false-negative", "precision", "threshold"]
+  },
+  "false-negative": {
+    "term": "False negative",
+    "plain": "A miss: the thing was really there, and the model let it slip past.",
+    "also": ["FN", "type II error", "miss"],
+    "definition": "A positive case predicted as negative — spam reaching the inbox, a disease left undetected. When this is the catastrophic error, optimize for recall and accept more false alarms.",
+    "see": ["false-positive", "recall", "threshold"]
+  },
+  "confusion-matrix": {
+    "term": "Confusion matrix",
+    "plain": "The 2×2 scorecard: caught, correctly passed, false alarms, and misses — all four counts visible at once.",
+    "definition": "A table of prediction vs. reality counts (TP, FP, TN, FN for two classes; N×N for more). Every headline metric — accuracy, precision, recall — is a ratio of cells from this table, which is why it's the honest place to start.",
+    "see": ["accuracy", "precision", "recall"],
+    "taughtIn": { "href": "02-core/metrics.html", "title": "Judging classifiers" }
   }
 }

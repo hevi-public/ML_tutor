@@ -382,6 +382,76 @@ p code, li code {
 }
 .quiz-score { font-weight: 600; }
 
+/* ---------- Content tables (symbol tables, data tables) ---------- */
+
+table.ref {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  margin: 1.2rem 0;
+}
+table.ref th, table.ref td {
+  text-align: left;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+table.ref th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-soft);
+}
+table.ref .glyph {
+  font-family: "STIX Two Math", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+table.ref tbody tr:hover { background: var(--bg-inset); }
+tr.row-hot { background: var(--accent-soft) !important; }
+
+/* ---------- Equation reader ---------- */
+
+.eq-reader .step-box {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: 1rem 1.2rem;
+  margin: 0.8rem 0;
+  min-height: 7.5rem;
+}
+.eq-reader .step-piece { font-size: 1.5rem; display: inline-block; margin-bottom: 0.4rem; }
+.eq-reader .step-say, .eq-reader .step-means { margin: 0.25rem 0; font-size: 0.95rem; }
+.eq-reader .step-count {
+  align-self: center;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  padding: 0 0.5rem;
+}
+
+/* ---------- Confusion matrix ---------- */
+
+.conf-matrix {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 4px;
+  margin: 1rem 0;
+  font-size: 0.88rem;
+  max-width: 30rem;
+}
+.conf-matrix .cell {
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-inset);
+}
+.conf-matrix .head { background: none; color: var(--text-soft); font-size: 0.78rem; align-self: end; }
+.conf-matrix .good-cell { background: var(--good-soft); }
+.conf-matrix .bad-cell { background: var(--bad-soft); }
+.conf-matrix .num { display: block; font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
 /* ---------- Glossary ---------- */
 
 .glossary-controls { margin: 1.5rem 0 2rem; }

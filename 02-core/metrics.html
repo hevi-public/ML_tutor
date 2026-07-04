@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Judging classifiers — ML Tutor</title>
+
+  <meta name="ml:unit" content="Core concepts">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="overfitting.html|Overfitting">
+  <meta name="ml:next" content="../03-classical/linear-regression.html|Linear regression">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/confusion.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Core concepts</p>
+  <h1>Judging classifiers: four ways to be right or wrong</h1>
+  <p class="lede">"95% accurate" can describe a great model or a useless one.
+  This page gives you the two questions that expose the difference.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-math/probability.html">Probability</a> — models score with
+    numbers like 0.93, and someone must choose where to draw the line. On this
+    page, that someone is you.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A spam filter's verdict on one email lands in exactly one of four boxes:</p>
+  <ul>
+    <li>Spam, flagged as spam — caught it. (A <em>true positive</em>.)</li>
+    <li>Real email, left alone — correct pass. (A <em>true negative</em>.)</li>
+    <li>Real email, flagged as spam — a <dfn data-term="false-positive">false
+    alarm</dfn>: your friend's message dies in the junk folder.</li>
+    <li>Spam, left alone — a <dfn data-term="false-negative">miss</dfn>: junk in
+    your inbox.</li>
+  </ul>
+  <p>Here's the part every practitioner has tattooed somewhere: <strong>the two
+  mistakes cost different amounts, and which one costs more depends entirely on the
+  problem.</strong> Junk in the inbox is annoying; a real contract offer silently
+  junked is a disaster. For a cancer screen, the costs reverse-and-multiply. No
+  single number can weigh both mistakes for you — which is why "accuracy" alone
+  is never enough.</p>
+
+  <h2>Try it: you draw the line</h2>
+  <p>The model has scored 100 emails from "looks fine" (left) to "looks spammy"
+  (right). Real emails sit in the top band, actual spam in the bottom band; the
+  tinted zone is what gets flagged. Wrongly-handled emails glow red. Drag the
+  cutoff:</p>
+
+  <div class="demo" id="confusion-demo">
+    <canvas width="640" height="269" aria-label="100 scored emails with a draggable spam cutoff"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="cf-thresh">Where to draw the line (the <dfn data-term="threshold">threshold</dfn>)</label>
+        <input type="range" id="cf-thresh" data-param="threshold" min="0" max="1" step="0.01" value="0.5">
+        <output data-out="thresh">0.50</output>
+      </div>
+    </div>
+
+    <div class="conf-matrix" role="table" aria-label="Confusion matrix">
+      <div class="cell head"></div>
+      <div class="cell head">flagged as spam</div>
+      <div class="cell head">left alone</div>
+      <div class="cell head">actually spam</div>
+      <div class="cell good-cell">caught <span class="num" data-out="tp">–</span></div>
+      <div class="cell bad-cell">missed (junk in inbox) <span class="num" data-out="fn">–</span></div>
+      <div class="cell head">actually real</div>
+      <div class="cell bad-cell">false alarm (lost email!) <span class="num" data-out="fp">–</span></div>
+      <div class="cell good-cell">correct pass <span class="num" data-out="tn">–</span></div>
+    </div>
+
+    <p class="readout">
+      <dfn data-term="accuracy">Accuracy</dfn> (share handled correctly):
+      <strong data-out="acc">–</strong> ·
+      <dfn data-term="precision">precision</dfn> (of the flagged, how many really were spam):
+      <strong data-out="prec">–</strong> ·
+      <dfn data-term="recall">recall</dfn> (of the actual spam, how much we caught):
+      <strong data-out="rec">–</strong>
+    </p>
+    <p class="hint">Slide right: false alarms vanish (precision rises) but spam
+    slips through (recall falls). Slide left: the reverse. You cannot max out both —
+    the overlap zone in the middle is emails the model genuinely can't tell apart,
+    and no threshold fixes that. Only a better model shrinks the overlap.</p>
+  </div>
+
+  <h2>The two questions, in plain words</h2>
+  <ul>
+    <li><strong>Precision — "when you point, are you right?"</strong> Of everything
+    flagged, what share truly was spam? Low precision = the model cries wolf.</li>
+    <li><strong>Recall — "of what's out there, how much did you find?"</strong> Of
+    all actual spam, what share got caught? Low recall = wolves stroll past.</li>
+  </ul>
+  <p>And the trap to retire right now: with rare events, accuracy is nearly
+  meaningless. If 1 email in 1,000 is fraud, the model that says "never fraud"
+  is 99.9% accurate and 100% useless — zero recall; it finds nothing. Whenever
+  you hear an impressive accuracy, your first question is now: <em>"how rare is
+  the thing, and what's the recall?"</em></p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 2 complete — you can now read data honestly, split it honestly, and grade
+  models honestly. Time to meet the models themselves: Unit 3 starts with linear
+  regression, where you'll fit a line by hand and then watch gradient descent do
+  it for you.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "metrics",
+    "questions": [
+      {
+        "q": "A disease screening tool must, above all, not let sick patients slip through undetected. Which number is king?",
+        "choices": [
+          "Accuracy",
+          "Precision",
+          "Recall — of all the truly sick, what share did we catch?"
+        ],
+        "answer": 2,
+        "explain": "A missed case (false negative) is the catastrophic error here, and recall is exactly the share of real cases caught. The price is more false alarms — acceptable, because a false alarm leads to a follow-up test, not a missed illness."
+      },
+      {
+        "q": "A fraud model is 99.9% accurate on data where 1 in 1,000 transactions is fraud. What do you check before applauding?",
+        "choices": [
+          "Whether it beats \"just say never-fraud\" — i.e., what its recall is",
+          "Nothing; 99.9% speaks for itself",
+          "Whether accuracy was computed on a GPU"
+        ],
+        "answer": 0,
+        "explain": "\"Never fraud\" also scores 99.9% here while catching nothing. With rare events, accuracy mostly measures the rarity, not the model. Precision and recall on the rare class tell you if the model actually does anything."
+      },
+      {
+        "q": "In the demo, why couldn't any threshold give both perfect precision and perfect recall?",
+        "choices": [
+          "The slider's steps were too coarse",
+          "Some real and spam emails received overlapping scores — the model itself can't tell them apart, and no cutoff can unmix them",
+          "Precision and recall are mathematically incapable of both being 100%"
+        ],
+        "answer": 1,
+        "explain": "The threshold only decides where to cut a line the model already drew. In the overlap zone, mistakes are baked in — every cutoff just chooses WHICH mistake to make. Shrinking the overlap requires a better model, not a better threshold. (With perfectly separated scores, 100%/100% is possible.)"
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

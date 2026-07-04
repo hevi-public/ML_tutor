@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What is machine learning? — ML Tutor</title>
+
+  <meta name="ml:unit" content="Start here">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../index.html|Home">
+  <meta name="ml:next" content="../01-math/reading-math.html|How to read math">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start here</p>
+  <h1>What is machine learning?</h1>
+  <p class="lede">You already know how to do this. You've just never called it that.</p>
+
+  <h2>You've been doing it all along</h2>
+  <p>Think about how you learned to guess whether it'll rain from the look of the
+  sky. Nobody gave you a rulebook. You saw a lot of skies, noticed what followed,
+  and your guesses got better. The "rule" in your head — dark and heavy in the west
+  means bring an umbrella — was never written down. It grew out of examples.</p>
+  <p>That is the whole trick. Ordinary programming is <em>writing the rule down</em>:
+  a person types "IF the sky is dark THEN predict rain," and the computer obeys.
+  <dfn data-term="machine-learning">Machine learning</dfn> flips it: we show the
+  computer lots of examples with known outcomes, and it works out a rule of its own —
+  by adjusting its internal settings until its guesses match the examples well.</p>
+  <p>The thing being adjusted is called a <dfn data-term="model">model</dfn>: a
+  guessing machine with tunable settings. <dfn data-term="training">Training</dfn> is
+  the adjustment process. That's the vocabulary — everything else on this site is
+  detail, and each detail gets its own page.</p>
+
+  <h2>The two big families</h2>
+  <p>Most of what you'll meet falls into one of two situations:</p>
+  <ul>
+    <li><strong>Learning with an answer key</strong> — every example comes with the
+    right answer attached: this email <em>was</em> spam, this house <em>did</em> sell
+    for $400k. The computer practices and gets graded. This is called
+    <dfn data-term="supervised-learning">supervised learning</dfn>, and it covers
+    two kinds of question: predict a number
+    (<dfn data-term="regression">regression</dfn>), or predict a category
+    (<dfn data-term="classification">classification</dfn>).</li>
+    <li><strong>Learning without an answer key</strong> — just a pile of data, and
+    the job is to find structure in it: which customers behave alike? This is
+    <dfn data-term="unsupervised-learning">unsupervised learning</dfn>.</li>
+  </ul>
+  <p>Modern AI — chatbots, image generators — is built on the same foundations, with
+  more layers of cleverness stacked on top. By Unit 6 you'll be able to see the line
+  from "fit a straight line through dots" to "write me a poem."</p>
+
+  <h2>What ML is not</h2>
+  <p>A model is not smart, and it doesn't "understand." It's a settings-tuning
+  process that makes a guessing machine agree with past examples. That has two
+  practical consequences worth carrying with you from day one:</p>
+  <ul>
+    <li>A model is only as good as its examples. Feed it lopsided data and it learns
+    lopsided rules, confidently.</li>
+    <li>Agreeing with past examples isn't the same as being right about new ones —
+    a model can just memorize the past. This gap has a name
+    (<dfn data-term="overfitting">overfitting</dfn>), a whole page later, and it's
+    the single most important idea in practical ML.</li>
+  </ul>
+
+  <h2>How this site works</h2>
+  <p>Each page: the idea in everyday words → a demo you can poke at → optional math
+  you can unfold layer by layer → the real code → a short quiz. Dotted-underlined
+  words are clickable and explain themselves; so is every math symbol. Use the
+  ← → arrow keys to move between pages. Your progress saves in your browser.</p>
+
+  <h2>Where should you start?</h2>
+  <p>Take the quick quiz below, then use this honest guide:</p>
+  <ul>
+    <li><strong>Math is a faint memory?</strong> Go in order — the next page,
+    <em>How to read math</em>, was written exactly for you, and nothing later
+    assumes more than the pages before it.</li>
+    <li><strong>Comfortable with slopes and averages?</strong> Skim Unit 1, settle
+    in at Unit 2.</li>
+    <li><strong>Already trained models before?</strong> Jump to Unit 3 and use
+    Units 1–2 as reference when something feels shaky.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "what-is-ml",
+    "questions": [
+      {
+        "q": "What's the key difference between ordinary programming and machine learning?",
+        "choices": [
+          "Machine learning uses much faster computers",
+          "In programming a person writes the rule; in ML the computer adjusts its own settings to fit examples",
+          "Machine learning doesn't need any data"
+        ],
+        "answer": 1,
+        "explain": "That's the whole flip: rules-from-a-person versus rules-grown-from-examples. Everything else in ML is machinery for doing that adjustment well."
+      },
+      {
+        "q": "You have 10,000 emails, each already marked \"spam\" or \"not spam\", and you want a program that sorts new ones. What situation is this?",
+        "choices": [
+          "Learning with an answer key (supervised) — predicting a category",
+          "Learning with an answer key (supervised) — predicting a number",
+          "Learning without an answer key (unsupervised)"
+        ],
+        "answer": 0,
+        "explain": "The marks are the answer key, so it's supervised. And spam/not-spam is a category, not a quantity — so it's classification, not regression."
+      },
+      {
+        "q": "A model scores perfectly on the examples it practiced on. What do we know about how it will do on new examples?",
+        "choices": [
+          "It will be perfect on those too",
+          "Nothing for certain — it may have memorized the practice examples instead of learning the pattern",
+          "It will always do exactly half as well"
+        ],
+        "answer": 1,
+        "explain": "Acing the homework doesn't prove you learned the subject — you might have memorized the answer sheet. Checking on unseen examples is how ML tells the difference, and Unit 2 is largely about doing that honestly."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

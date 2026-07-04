@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Training vs. testing — ML Tutor</title>
+
+  <meta name="ml:unit" content="Core concepts">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="data-and-features.html|Data &amp; features">
+  <meta name="ml:next" content="overfitting.html|Overfitting">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/overfit.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Core concepts</p>
+  <h1>Training vs. testing: the honesty rule</h1>
+  <p class="lede">Never grade a student on the exact questions they practiced.
+  The same courtesy applies to models — and forgetting it is the most common
+  way ML projects fool their own creators.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="data-and-features.html">Data &amp; features</a>, and it helps to have
+    seen a model get graded — the
+    <a href="../03-classical/linear-regression.html">linear regression demo</a>
+    if you're curious, though this page stands alone.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A student who memorized the answer sheet aces the practice exam. Do they know
+  the subject? You find out with one move: <strong>new questions.</strong></p>
+  <p>ML copies that move exactly. Before training, split the notebook:</p>
+  <ul>
+    <li>The <dfn data-term="training-set">training set</dfn> (typically ~70–80% of
+    rows) — the model practices on these; its settings are tuned to fit them.</li>
+    <li>The <dfn data-term="test-set">test set</dfn> — locked in a drawer. The model
+    never sees these during training. At the end, they're the real exam.</li>
+  </ul>
+  <p>The grade on the training set tells you how well the model <em>fit what it
+  saw</em>. The grade on the test set estimates what actually matters: how it will
+  do out in the world, on data nobody has labels for yet. When the two grades
+  disagree badly, the model memorized instead of learned — and only the split
+  lets you catch it. Doing well on new data has a name:
+  <dfn data-term="generalization">generalization</dfn>. It is the entire point.</p>
+
+  <h2>Try it: same dots, two grades</h2>
+  <p>Filled dots are the training set; hollow red dots are the test set, hidden
+  during fitting. Fit a simple line, then a very bendy curve, and watch the two
+  grades tell different stories:</p>
+
+  <div class="demo overfit-demo" data-degrees="1,11">
+    <canvas width="640" height="371" aria-label="Scatter with train and test points and a fitted curve"></canvas>
+    <div class="buttons">
+      <button class="action" type="button" data-degree="1">Fit a simple line</button>
+      <button class="action secondary" type="button" data-degree="11">Fit a very bendy curve</button>
+      <button class="action secondary" type="button" data-action="reshuffle">Re-deal the split</button>
+    </div>
+    <p class="readout">Grade on practice dots (train):
+      <strong data-out="train">–</strong> ·
+      grade on hidden dots (test): <strong data-out="test">–</strong><br>
+      Verdict: <span data-out="verdict"></span></p>
+    <p class="hint">The bendy curve gets a <em>better</em> practice grade than the
+    line and a <em>worse</em> exam grade — it bent itself around noise. Also press
+    "re-deal" a few times: the exact numbers wobble depending on which dots landed
+    in which pile. Grades from small test sets are themselves "small samples" —
+    remember the coin flips.</p>
+  </div>
+
+  <h2>The rules of the drawer</h2>
+  <p>The test set only works if it stays untouched. Three practical rules:</p>
+  <ul>
+    <li><strong>Split first, look later.</strong> Decide the split before any
+    fitting. Rows must not leak between piles — the same customer appearing in both
+    counts as leaking.</li>
+    <li><strong>Use the test set once.</strong> If you peek at test grades and go
+    back to adjust the model, then again and again, you're slowly training on the
+    exam. For repeated tune-and-check cycles, carve out a third pile — the
+    <dfn data-term="validation-set">validation set</dfn> — and burn the true test
+    set only at the very end.</li>
+    <li><strong>The split must mimic reality.</strong> If the model will face next
+    year's data, test on the most recent rows, not a random shuffle — predicting
+    the past from the future is easy and meaningless.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You've now seen memorization beat learning on the practice pile. Next page
+  gives that failure its proper name — overfitting — and a dial you can turn to
+  cause and cure it yourself.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "train-and-test",
+    "questions": [
+      {
+        "q": "Why can't we judge a model by its grade on the training data?",
+        "choices": [
+          "Training grades are computed with a different formula",
+          "Because the model's settings were tuned to exactly those examples — it may have memorized them without learning the pattern",
+          "We can — more data always means a fairer grade"
+        ],
+        "answer": 1,
+        "explain": "The training grade answers \"how well did you fit what you saw?\" — and a bendy-enough model can fit anything it saw, including the noise. Only unseen questions reveal whether it learned."
+      },
+      {
+        "q": "You check your model's test-set grade, tweak the model, check again, tweak again — twenty times. What's wrong?",
+        "choices": [
+          "Nothing — that's what the test set is for",
+          "Each peek leaks exam information into your choices; after twenty rounds the \"test\" grade is quietly inflated",
+          "The test set wears out mathematically after ten uses"
+        ],
+        "answer": 1,
+        "explain": "You became the leak: every tweak-after-peeking tunes the model to this particular exam. That's what a validation set is for — iterate against it freely, and keep the test set for one final, honest reading."
+      },
+      {
+        "q": "A model predicting tomorrow's electricity demand is tested on a random shuffle of ten years of data. Why is its excellent grade suspect?",
+        "choices": [
+          "Random shuffles always produce errors in the data",
+          "Ten years is too little data for electricity forecasting",
+          "Shuffling lets it \"predict\" days while having trained on the days right after them — reality will never be that kind"
+        ],
+        "answer": 2,
+        "explain": "The split must mimic the real job. In deployment the model only knows the past; a shuffled test hands it the future's neighbors as training data. Test on the most recent stretch instead — the grade will drop, and be true."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

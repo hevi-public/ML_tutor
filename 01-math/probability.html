@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Probability &amp; statistics — ML Tutor</title>
+
+  <meta name="ml:unit" content="Math foundations">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="slopes-gradients.html|Slopes &amp; gradients">
+  <meta name="ml:next" content="../02-core/data-and-features.html|Data &amp; features">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/probability.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Math foundations</p>
+  <h1>Probability &amp; statistics: the math of "usually"</h1>
+  <p class="lede">Models guess. Probability is the honest language for guessing —
+  and statistics is how we summarize a pile of examples into a few useful numbers.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="reading-math.html">How to read math</a> — we use μ and σ from the
+    Greek letter table (both re-explained here).
+  </div>
+
+  <h2>Probability: what 70% actually means</h2>
+  <p>"70% chance of rain" doesn't mean it will 70%-rain. It means: <em>out of many
+  days exactly like this one, about 70 in 100 turn rainy.</em> Probability is
+  long-run bookkeeping — a single event just happens or doesn't; the number
+  describes the pattern across many repeats.</p>
+  <p>ML speaks this language constantly. A spam filter doesn't say "spam"; it says
+  "0.93" — <em>of emails that look like this, about 93 in 100 turn out to be
+  spam</em>. Someone (you, in Unit 2's metrics page) then chooses where to draw the
+  line.</p>
+
+  <h2>Try it: watch "usually" emerge</h2>
+  <p>A fair coin is 50% heads — but watch how messy the road to 50% is. Flip once,
+  then a hundred times, then ten thousand:</p>
+
+  <div class="demo" id="coin-demo">
+    <canvas width="640" height="288" aria-label="Chart of the running share of heads converging to 50 percent"></canvas>
+    <div class="buttons">
+      <button class="action" type="button" data-flip="1">Flip once</button>
+      <button class="action" type="button" data-flip="100">Flip 100</button>
+      <button class="action" type="button" data-flip="10000">Flip 10,000</button>
+      <button class="action secondary" type="button" data-action="reset">Reset</button>
+    </div>
+    <p class="readout">Flips: <strong data-out="flips">0</strong> ·
+      heads: <strong data-out="heads">0</strong> ·
+      share of heads so far: <strong data-out="share">–</strong></p>
+    <p class="hint">Notice: after 10 flips, 70% heads is unremarkable. After 10,000,
+    it would be astonishing. Small samples lie — the single most practical lesson in
+    this unit. (The x-axis is stretched so you can see the wild early wobbles.)</p>
+  </div>
+
+  <h2>Statistics: a pile of numbers, summarized in two</h2>
+  <p>Given a thousand measurements, two numbers tell most of the story:</p>
+  <ul>
+    <li>The <dfn data-term="mean">mean</dfn> (μ) — the plain average. Where the pile
+    is centered.</li>
+    <li>The <dfn data-term="standard-deviation">standard deviation</dfn> (σ) — the
+    typical distance from that center. Are values huddled tight or scattered wide?</li>
+  </ul>
+  <p>The <em>shape</em> of the pile is called a
+  <dfn data-term="distribution">distribution</dfn>. One shape appears everywhere —
+  measurement errors, heights, averages of anything: the bell curve, or
+  <dfn data-term="normal-distribution">normal distribution</dfn>. Its handy rule of
+  thumb: about 68% of values fall within one σ of the mean, about 95% within
+  two σ.</p>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>Mean: add everything, divide by the count. Standard deviation: measure each
+      value's distance from the mean, average the squared distances (that average is
+      the <dfn data-term="variance">variance</dfn>), then un-square at the end to get
+      back to normal units.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">\mu = \frac{1}{n}\sum_{i=1}^{n} x_i
+        \qquad
+        \sigma = \sqrt{\frac{1}{n}\sum_{i=1}^{n} (x_i - \mu)^2}</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The mean is: add all the values, divide by how many. The standard deviation
+        is: take each value's gap from the mean, square it, average those, then take
+        the square root.
+      </div>
+      <ul class="symbol-legend" data-symbols="μ,σ,√,∑,n"></ul>
+      <p>Look closely at σ's recipe: <em>average of squared misses</em> — you've met
+      that pattern before. Mean squared error is exactly a "variance of the misses."
+      The math of Unit 1 and the ML of Unit 3 are the same small toolbox.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>That's the whole math survival kit: reading notation, vectors, slopes,
+  "usually." On to Unit 2 — where data becomes datasets, and grading models gets
+  honest.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "μ": { "name": "μ — \"mu\", the mean", "pron": "say: \"MEW\"",
+           "means": "The plain average: total divided by count. Where the pile of values is centered.",
+           "short": "the average" },
+    "σ": { "name": "σ — \"sigma\", the standard deviation", "pron": "say: \"SIG-mah\" (lowercase)",
+           "means": "The typical distance of values from their average — how spread out the pile is. (Capital Σ is a different symbol: \"sum of\".)",
+           "short": "typical distance from the average" },
+    "√": { "name": "√ — square root", "pron": "say: \"the square root of\"",
+           "means": "Undo a squaring: √9 = 3. Used here to return to ordinary units after squaring the gaps.",
+           "short": "undo the squaring" },
+    "∑": { "name": "∑ — \"sum of\"", "pron": "say: \"sigma\" (Greek capital S, for Sum)",
+           "means": "Add up what follows, once per item.",
+           "short": "add these up" },
+    "n": { "name": "n — the count", "pron": "say: \"en\"",
+           "means": "How many values there are.",
+           "short": "how many values" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "probability",
+    "questions": [
+      {
+        "q": "A model gives an email a spam score of 0.93. What is it actually claiming?",
+        "choices": [
+          "The email is 93% composed of spam words",
+          "Of emails that look like this one, about 93 in 100 turn out to be spam",
+          "The model is 93% finished processing"
+        ],
+        "answer": 1,
+        "explain": "Probability is long-run bookkeeping over similar cases. This one email simply is or isn't spam — the 0.93 describes the track record of lookalikes, which is exactly what you need for deciding where to draw the line."
+      },
+      {
+        "q": "After 10 coin flips you have 7 heads. After 10,000 flips, 7,000 heads. Which result should worry you about the coin's fairness?",
+        "choices": [
+          "Both equally — 70% is 70%",
+          "The 10-flip result",
+          "Only the 10,000-flip result"
+        ],
+        "answer": 2,
+        "explain": "You watched this: small samples swing wildly, and 7-of-10 happens to fair coins all the time. But by 10,000 flips the share has settled — being at 70% then means the coin almost certainly isn't fair. Sample size is everything."
+      },
+      {
+        "q": "Two sensors both average 20°. Sensor A's readings have σ = 0.1; sensor B's have σ = 5. What does that tell you?",
+        "choices": [
+          "They're equally trustworthy since the averages match",
+          "A's readings huddle tightly near 20°; B's are scattered widely around it",
+          "B is broken"
+        ],
+        "answer": 1,
+        "explain": "The mean says where the center is; σ says how far readings typically stray from it. B isn't necessarily broken — but a single reading from B tells you far less than one from A. Two numbers, most of the story."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

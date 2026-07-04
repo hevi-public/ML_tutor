@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vectors &amp; matrices — ML Tutor</title>
+
+  <meta name="ml:unit" content="Math foundations">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="reading-math.html|How to read math">
+  <meta name="ml:next" content="slopes-gradients.html|Slopes &amp; gradients">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/vectors.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Math foundations</p>
+  <h1>Vectors &amp; matrices: lists and tables of numbers</h1>
+  <p class="lede">The two container types all of ML is built from — and the one
+  operation between them that you'll see a thousand times.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="reading-math.html">How to read math</a> helps but isn't required.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="vector">vector</dfn> is just a list of numbers — that's the
+  whole definition. What makes it useful is a second way of seeing the same list:
+  as an <em>arrow</em>. The list [3, 1] is also "the arrow you get by walking 3
+  steps east and 1 step north." One object, two views: a row of boxes when you're
+  storing data, an arrow when you're thinking about direction and similarity.</p>
+  <p>Why ML cares: <strong>every data point is a vector.</strong> A house is
+  [size, bedrooms, age]. An email becomes a (very long) list of numbers. The moment
+  data becomes vectors, geometry starts answering questions — "which emails are
+  <em>near</em> this one?" becomes a distance between arrows.</p>
+  <p>A <dfn data-term="matrix">matrix</dfn> is the next container up: a table of
+  numbers, or equally, a stack of vectors — one row per data point. A spreadsheet
+  of 1,000 houses × 3 facts is a 1000×3 matrix. That's all "matrix" means.</p>
+
+  <h2>The one operation to actually learn: the dot product</h2>
+  <p>Take two lists of the same length. Multiply them position by position, add the
+  results up: one number out. That's the
+  <dfn data-term="dot-product">dot product</dfn>.</p>
+  <p>It has a beautiful secret: that number measures <strong>agreement between
+  directions</strong>. Arrows pointing the same way → big positive number. Opposite
+  ways → negative. At right angles → zero, "nothing to do with each other."</p>
+
+  <h2>Try it: drag the arrows</h2>
+  <p>Drag the tips of the two arrows and watch the lists and the dot product react.
+  Try to make the dot product exactly zero — notice what the arrows look like when
+  you succeed.</p>
+
+  <div class="demo" id="vectors-demo">
+    <canvas width="640" height="480" aria-label="Two draggable arrows on a grid with live dot product readout"></canvas>
+    <p class="readout">
+      a = <strong data-out="a">[3.0, 1.0]</strong> ·
+      b = <strong data-out="b">[1.0, 2.5]</strong> →
+      dot product: <strong data-out="dot">–</strong><br>
+      <span data-out="verdict"></span>
+    </p>
+    <p class="hint">The dot product is how a model asks "how much does this input
+    look like the pattern I'm tuned for?" — you'll see it inside every neural
+    network layer.</p>
+  </div>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>Multiply matching positions, add it all up. For [3, 1] · [1, 2.5]:
+      3×1 + 1×2.5 = 5.5. Positive — and indeed the arrows lean the same way.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">\mathbf{a} \cdot \mathbf{b} = \sum_{i=1}^{n} a_i b_i</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The dot product of two lists is: the sum, over every position
+        <span data-sym="i">i</span>, of (a's number there) times (b's number there).
+      </div>
+      <ul class="symbol-legend" data-symbols="𝐚,∑,i,n"></ul>
+      <p>Bold letters (𝐚) are how math marks "this is a whole list, not one number."
+      In writing you'll also see arrows over letters, or plain letters when context
+      makes it clear.</p>
+      <p>One more connection worth planting now: our linear regression prediction
+      <em>ŷ = wx + b</em> generalizes to many inputs as ŷ = 𝐰 · 𝐱 + b — the dot
+      product of a weight list with an input list. "Multiply each input by how much
+      it matters and add up" — the same recipe, any number of inputs.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next: <em>slopes and gradients</em> — how math answers "if I nudge this, what
+  happens to that?", which is the question all of training runs on.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "𝐚": { "name": "𝐚 — a vector (a whole list)", "pron": "say: \"vector a\" or just \"a\"",
+           "means": "The bold marks it as a list of numbers rather than a single number. aᵢ is the number at position i in that list.",
+           "short": "a whole list of numbers" },
+    "∑": { "name": "∑ — \"sum of\"", "pron": "say: \"sigma\" (Greek capital S, for Sum)",
+           "means": "Add up what follows, once per position.",
+           "short": "add these up" },
+    "i": { "name": "i — the counter", "pron": "say: \"eye\"",
+           "means": "Walks through the positions: 1, 2, … up to n.",
+           "short": "which position we're at" },
+    "n": { "name": "n — the length", "pron": "say: \"en\"",
+           "means": "How many numbers are in each list. Both lists must have the same length.",
+           "short": "how many numbers in the list" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "vectors-matrices",
+    "questions": [
+      {
+        "q": "A patient's record is [age 54, blood pressure 130, weight 82]. What is this, in ML terms?",
+        "choices": [
+          "A matrix with three rows",
+          "A vector — one data point as a list of numbers",
+          "A dot product"
+        ],
+        "answer": 1,
+        "explain": "One data point = one list = one vector. Stack a thousand patients into a table and *that's* a matrix (1000 rows × 3 columns)."
+      },
+      {
+        "q": "Two arrows have a dot product of zero. What does that tell you?",
+        "choices": [
+          "They point in unrelated directions — at right angles to each other",
+          "At least one of them is the zero arrow",
+          "They point exactly opposite ways"
+        ],
+        "answer": 0,
+        "explain": "Zero means \"no agreement in direction either way.\" Opposite arrows give a *negative* dot product; right angles give zero. (You may have found this by experiment in the demo.)"
+      },
+      {
+        "q": "What is [2, 3] · [4, 1]?",
+        "choices": [
+          "[8, 3]",
+          "11",
+          "24"
+        ],
+        "answer": 1,
+        "explain": "Multiply matching positions, then add: 2×4 + 3×1 = 8 + 3 = 11. One number out, always — the dot product turns two lists into a single agreement score."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

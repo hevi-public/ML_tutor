@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overfitting — ML Tutor</title>
+
+  <meta name="ml:unit" content="Core concepts">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="train-and-test.html|Training vs. testing">
+  <meta name="ml:next" content="metrics.html|Judging classifiers">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/overfit.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Core concepts</p>
+  <h1>Overfitting: memorizing instead of learning</h1>
+  <p class="lede">The central occupational disease of machine learning. This page
+  hands you the dial that causes it, so you can feel exactly where learning tips
+  into memorizing.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="train-and-test.html">Training vs. testing</a> — this page leans
+    entirely on the train/test split.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Give a model more flexibility and it fits the training data better. Always.
+  More bend, better practice grade — nothing stops that trend, ever. But somewhere
+  along the way, the extra bend stops capturing the <em>pattern</em> and starts
+  wrapping around the <em>noise</em>: the accidents of which particular dots landed
+  where. From that point on, the test grade turns around and gets <em>worse</em>
+  while the training grade keeps improving.</p>
+  <p>That's <dfn data-term="overfitting">overfitting</dfn>. Its mirror image —
+  a model too stiff to catch the real pattern at all, bad grades everywhere — is
+  <dfn data-term="underfitting">underfitting</dfn>. Between them sits a sweet spot,
+  and finding it is much of the day-to-day craft of ML.</p>
+
+  <h2>Try it: turn the bendiness dial</h2>
+  <p>The dial below controls how bendy the fitted curve may be (technically the
+  polynomial degree — how many times the curve is allowed to change direction).
+  Sweep it slowly from 1 to 12 and watch both grades:</p>
+
+  <div class="demo overfit-demo" data-degrees="slider">
+    <canvas width="640" height="371" aria-label="Scatter with train and test points and a polynomial fit of adjustable degree"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="ov-degree">How bendy the curve may be</label>
+        <input type="range" id="ov-degree" data-param="degree" min="1" max="12" step="1" value="1">
+        <output data-out="degree">1</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-action="reshuffle">Re-deal the split</button>
+    </div>
+    <p class="readout">Grade on practice dots (train):
+      <strong data-out="train">–</strong> ·
+      grade on hidden dots (test): <strong data-out="test">–</strong><br>
+      Verdict: <span data-out="verdict"></span></p>
+    <p class="hint">Watch the train grade only ever improve as you add bend — while
+    the test grade improves, bottoms out around 3–5, then climbs. That U-shape is
+    the most important curve in applied ML. At degree 12, look at the curve's wild
+    swings between dots: those lurches ARE memorized noise.</p>
+  </div>
+
+  <h2>What to do about it</h2>
+  <p>Overfitting has standard treatments, all with the same flavor — make
+  memorizing harder than learning:</p>
+  <ul>
+    <li><strong>More data.</strong> The cure that always works when you can afford
+    it: noise averages out, patterns don't. Twice the dots makes the bendy curve's
+    tricks visibly fail on its own training set.</li>
+    <li><strong>A simpler model.</strong> Turn the dial down. Fewer knobs, less
+    capacity to memorize.</li>
+    <li><strong><dfn data-term="regularization">Regularization</dfn>.</strong> Keep
+    the flexible model, but charge a fee for wildness: add a penalty to the loss for
+    large, dramatic settings. The model then bends only where the data genuinely
+    pays for it. (The λ from the Greek table is traditionally the fee's size.)</li>
+    <li><strong>Stop early.</strong> During long training runs, the model tends to
+    learn the pattern first and memorize the noise later — so watch the validation
+    grade and stop when it turns.</li>
+  </ul>
+
+  <details class="layer">
+    <summary>The same idea, one level deeper: bias and variance</summary>
+    <div class="layer-body">
+      <p>Textbooks describe the U-shape as a tug-of-war between two failure styles.
+      A too-stiff model is wrong in a consistent way — re-deal the data and it draws
+      nearly the same too-simple curve every time (high <em>bias</em>: stubborn).
+      A too-bendy model is wrong in an erratic way — re-deal and it draws a wildly
+      different curve each time, because it's fitting each deal's noise (high
+      <em>variance</em>: jumpy).</p>
+      <p>You can see this yourself: set the dial to 1 and press "re-deal" repeatedly
+      — the line barely moves. Now set it to 12 and re-deal — the curve flails.
+      The sweet spot is where stubbornness and jumpiness are both tolerable.
+      (Yes, "bias" here is a different concept from the bias parameter b — the word
+      is overworked; the glossary entry disambiguates.)</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>So far every grade has been "average squared miss" — fine for predicting
+  numbers. Next: how to judge models that predict <em>categories</em>, where a
+  single number hides four very different ways of being right or wrong.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "overfitting",
+    "questions": [
+      {
+        "q": "As you made the curve bendier, what happened to the two grades?",
+        "choices": [
+          "Both kept improving together",
+          "The training grade kept improving; the test grade improved, then turned and got worse",
+          "Both got steadily worse"
+        ],
+        "answer": 1,
+        "explain": "More flexibility always fits the seen data better — that's mechanical. The test grade's U-turn marks where the extra bend switched from capturing pattern to wrapping noise. The gap between the grades is your overfitting meter."
+      },
+      {
+        "q": "Your model does great on training data, poorly on test data. A colleague suggests making the model bigger. What do you say?",
+        "choices": [
+          "Good idea — more capacity means more learning",
+          "That's backwards: the model already memorizes; more capacity makes memorizing easier. We need more data, a fee for wildness, or a simpler model",
+          "Size has no relationship to overfitting"
+        ],
+        "answer": 1,
+        "explain": "A large train/test gap is overfitting, and capacity is its fuel. (For honesty's sake: in modern very-large networks this story grows fascinating wrinkles — but the diagnosis-by-gap and the standard treatments are the right instincts, and they're what you'll use daily.)"
+      },
+      {
+        "q": "What does regularization actually do?",
+        "choices": [
+          "Adds a penalty for dramatic settings to the loss, so the model only bends where the data genuinely justifies it",
+          "Deletes noisy points from the dataset",
+          "Makes training run faster"
+        ],
+        "answer": 0,
+        "explain": "It's a fee for wildness, added to the grade being minimized. The model can still bend — it just has to \"pay\" for each dramatic setting, so it spends its flexibility only where the data offers real evidence."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>
