@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diffusion models — ML Tutor</title>
+
+  <meta name="ml:unit" content="Modern ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="finetuning.html|From predictor to assistant">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/viz/diffusion.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Modern ML</p>
+  <h1>Diffusion: images out of static</h1>
+  <p class="lede">The trick behind modern image generators sounds like a joke:
+  teach a network to remove noise, then hand it pure noise and let it
+  "remove" its way to a picture that never existed.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../05-deep/convolutions.html">Convolutions</a> (the denoiser is
+    a CNN-flavored network) and the general idea that networks learn by
+    example. This is the dessert course — enjoy it.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Generating an image from scratch is monstrous: every pixel depends on
+  every other. <dfn data-term="diffusion-model">Diffusion</dfn> breaks the
+  monster into a thousand trivial steps, via a training scheme of ruthless
+  cleverness:</p>
+  <ol>
+    <li><strong>Wreck things (no learning needed).</strong> Take a real photo,
+    add a little random static. Add a little more. Repeat until pure noise.
+    Do this to millions of photos, keeping every intermediate stage.</li>
+    <li><strong>Learn to un-wreck slightly.</strong> Train a network on: given
+    a partly-noised image (and how noisy it is), predict the noise that was
+    added — so it can be subtracted back out. Just supervised learning! The
+    "label" is the exact noise you yourself added one step ago. Data and
+    labels, manufactured for free, in any quantity.</li>
+    <li><strong>Run it backwards to create.</strong> Start from pure random
+    static and apply the denoiser step by step. Each step, it nudges the
+    pixels toward "what a real image would look like if this were its noisy
+    version." A thousand nudges later: a coherent picture — of nothing that
+    ever existed, because the starting static was random.</li>
+  </ol>
+
+  <h2>Try it: the forward wrecking, and the walk back</h2>
+  <p>A little landscape and a noise dial. The forward direction is the real
+  training-data factory; the walk back illustrates generation:</p>
+
+  <div class="demo" id="diffusion-demo">
+    <canvas width="640" height="480" aria-label="A picture progressively dissolving into noise and back"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="df-t">How much noise</label>
+        <input type="range" id="df-t" data-param="t" min="0" max="1" step="0.01" value="0">
+        <output data-out="t">clean picture</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" data-action="forward">Dissolve into static</button>
+      <button class="action" type="button" data-action="back">Walk back to a picture</button>
+      <button class="action secondary" type="button" data-action="renoise">Different static</button>
+    </div>
+    <p class="hint">Find the dial position where the picture stops being
+    recognizable to YOU (~60–75%?). A trained denoiser keeps recovering
+    structure well past where your eye gives up — at every noise level, faint
+    statistical echoes of the image survive, and it has seen millions of
+    examples of exactly what they look like. Honesty note: this demo knows the
+    original picture, so its walk-back is a re-blend. The real model does NOT
+    know — it must hallucinate a plausible image consistent with the static,
+    which is precisely why generation from fresh static yields fresh
+    pictures.</p>
+  </div>
+
+  <h2>The pieces you've already met, reassembled</h2>
+  <ul>
+    <li><strong>The denoiser is just a network</strong> — convolution-heavy
+    (local texture) with attention layers (global coherence), trained with
+    backprop on a plain "predicted noise vs. actual noise" squared-error
+    loss. Unit 3's MSE, moving billions of pixels.</li>
+    <li><strong>Text control is embeddings, again.</strong> "A cat in a space
+    suit" is embedded (Unit 5) and fed into the denoiser at every step, so
+    each nudge leans toward images that match the caption. Same trick as
+    everywhere: shared vector space, geometry does the work.</li>
+    <li><strong>Contrast with LLMs:</strong> language models build their
+    output one token at a time, left to right; diffusion refines the WHOLE
+    image at once, coarse to fine — global layout emerges in the noisiest
+    steps, texture detail in the last ones. Two different ways of taming
+    \"everything depends on everything\".</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>That's Unit 6 — and with it, the guided tour of modern ML. You've gone
+  from reading θ aloud to holding every major component of the systems in the
+  news. What remains on this site's roadmap: the expert track (build the
+  autodiff engine yourself, learn to read papers) and the reference layer
+  (concept map, search, flashcards). The novice is long gone.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "diffusion",
+    "questions": [
+      {
+        "q": "Why is diffusion training data effectively free and unlimited?",
+        "choices": [
+          "The images are generated by another AI",
+          "You manufacture it yourself: add known noise to real photos, and \"the noise you just added\" is a perfect label — no human annotation anywhere",
+          "Noise doesn't require any storage"
+        ],
+        "answer": 1,
+        "explain": "Supervised learning usually starves for labels (Unit 2's eternal problem). Diffusion sidesteps it completely: corrupt, then ask the network to predict the corruption you performed. Every photo yields a thousand labeled exercises at every noise level."
+      },
+      {
+        "q": "Generation starts from pure random static. Why does a DIFFERENT static yield a DIFFERENT image?",
+        "choices": [
+          "The network's weights change randomly between runs",
+          "Each denoising step moves toward \"a plausible image this static could have come from\" — different static, different plausible destination",
+          "It doesn't; diffusion always produces the same image"
+        ],
+        "answer": 1,
+        "explain": "The static is the seed of everything: the denoiser reads faint accidental structure in it and amplifies that toward realism, step by step. Randomness in, novelty out — that's why it CREATES rather than retrieves."
+      },
+      {
+        "q": "How do the generation processes of LLMs and diffusion models differ?",
+        "choices": [
+          "LLMs extend a sequence one token at a time; diffusion refines the entire image at once, from coarse structure to fine detail",
+          "LLMs use neural networks; diffusion models don't",
+          "Diffusion is supervised learning; LLMs are not"
+        ],
+        "answer": 0,
+        "explain": "Two strategies for the same monster (\"everything depends on everything\"): sequential (each token conditions on all previous) versus iterative-refinement (every pixel updated together, a thousand gentle rounds). Both are just networks + backprop + oceans of data underneath."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

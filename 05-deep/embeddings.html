@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Embeddings — ML Tutor</title>
+
+  <meta name="ml:unit" content="Deep learning">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="convolutions.html|Convolutions">
+  <meta name="ml:next" content="attention.html|Attention">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/viz/canvas2d.js"></script>
+  <script defer src="../assets/js/viz/embeddings.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Deep learning</p>
+  <h1>Embeddings: meaning as a place on a map</h1>
+  <p class="lede">Networks eat numbers, not words. The fix turned out to be one
+  of the most beautiful ideas in the field: give every word a location, and let
+  "similar meaning" become "nearby".</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-math/vectors-matrices.html">Vectors</a> — an embedding IS a
+    vector; this page is that idea finally paying off in full.
+  </div>
+
+  <h2>The idea</h2>
+  <p>How do you feed the word "cat" to a neural network? Numbering the
+  dictionary (cat = 5,231) is poison: it implies cat is somehow "close to"
+  word 5,230 and "far from" word 90,000, which is meaningless. What we want is
+  numbers where <em>distance means something</em>.</p>
+  <p>An <dfn data-term="embedding">embedding</dfn> does exactly that: each word
+  gets a list of, say, 300 numbers — its coordinates in a "meaning space." The
+  coordinates are learned, not designed: train a network to predict a word from
+  its surroundings across billions of sentences, and the only way it can
+  succeed is by assigning similar coordinates to words used in similar ways.
+  Meaning, as the residue of prediction.</p>
+  <p>What emerges is eerie: <em>directions</em> in the space become concepts.
+  There's a direction that means "royalty", one that means "plural", one that
+  means gender — so arithmetic on coordinates does analogy:
+  king − man + woman lands near queen.</p>
+
+  <h2>Try it: walk the map</h2>
+  <p>Twenty-six words with small hand-crafted meaning-vectors (six dimensions —
+  real ones use hundreds), flattened onto your screen. Hover to see each word's
+  true nearest neighbors; then do arithmetic on meaning below:</p>
+
+  <div class="demo" id="embed-demo">
+    <canvas width="640" height="448" aria-label="Words scattered on a 2-D meaning map"></canvas>
+    <p class="readout"><span data-out="nn">hover a word…</span></p>
+    <div class="buttons" style="align-items: center; gap: 0.4rem">
+      <select data-an="a" aria-label="word A"></select> −
+      <select data-an="b" aria-label="word B"></select> +
+      <select data-an="c" aria-label="word C"></select>
+    </div>
+    <p class="readout"><span data-out="analogy"></span></p>
+    <p class="hint">Try king − man + woman, then kitten − cat + dog, then
+    king − crown + car (garbage in, garbage out — the space only contains what
+    was put into it). Note the map's neighborhoods: royalty, animals, food,
+    vehicles. Nobody drew those regions; they fall out of the vectors. Also
+    honest fine print: this screen shows 2 of the 6 dimensions' worth of
+    structure, so the flat picture slightly lies — the neighbor lists (computed
+    in full 6-D) are the truth.</p>
+  </div>
+
+  <h2>Why this matters beyond words</h2>
+  <p>Embeddings are how deep learning handles <em>anything discrete</em>:
+  products, songs, users, code, proteins. "Things used similarly get nearby
+  coordinates" is the universal move, and it's the machinery behind
+  recommendation engines ("people who liked nearby-things also liked…"),
+  semantic search (embed the query, embed the documents, retrieve the
+  nearest — the guts of every "chat with your PDF" product), and the input
+  layer of every language model. When Unit 6 talks about LLMs, their very
+  first act on your prompt is: look up each token's embedding.</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Embeddings give each word a meaning-vector — but "bank" gets <em>one</em>
+  vector whether it's a river bank or a savings bank. Fixing that requires
+  letting words read their context. That mechanism is attention, and it's the
+  next page.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "embeddings",
+    "questions": [
+      {
+        "q": "Why is \"number the dictionary\" (cat = 5231) a bad way to feed words to a network?",
+        "choices": [
+          "The numbers get too large for computers",
+          "It smuggles in fake geometry — cat looks \"close to\" word 5230 and \"far from\" word 90000, and the network will try to use that nonsense",
+          "Words can't be represented by numbers at all"
+        ],
+        "answer": 1,
+        "explain": "Networks are geometry machines: they take distances and directions seriously. Arbitrary IDs create arbitrary geometry. Embeddings fix this by LEARNING coordinates where distance genuinely tracks similarity of use."
+      },
+      {
+        "q": "Where do good embedding coordinates come from?",
+        "choices": [
+          "Linguists assign them from dictionaries",
+          "As a side effect of a prediction task: to predict words from context across billions of sentences, the network is forced to place similarly-used words near each other",
+          "Alphabetical order, scaled"
+        ],
+        "answer": 1,
+        "explain": "Nobody labels \"royalty = dimension 7.\" The structure is the residue of prediction pressure — words that behave alike must end up nearby for the predictions to work. Meaning from use, made literal."
+      },
+      {
+        "q": "Why does king − man + woman ≈ queen work?",
+        "choices": [
+          "The training data contained that exact sentence",
+          "Concepts like gender and royalty settle into consistent DIRECTIONS in the space — subtracting man removes one gender-step, adding woman adds the other, royalty untouched",
+          "It's a coincidence that only works for this one example"
+        ],
+        "answer": 1,
+        "explain": "Directions become concepts: the king→queen displacement is roughly the same arrow as man→woman. Arithmetic follows those arrows. (It's imperfect and famously cherry-pickable in real embeddings — but the directional structure is genuinely there, and downstream layers exploit it constantly.)"
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

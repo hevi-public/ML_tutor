@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Convolutions — ML Tutor</title>
+
+  <meta name="ml:unit" content="Deep learning">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../07-labs/mlp-playground.html|The MLP playground">
+  <meta name="ml:next" content="embeddings.html|Embeddings">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/viz/convolution.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Deep learning</p>
+  <h1>Convolutions: one small question, asked everywhere</h1>
+  <p class="lede">How networks see. The idea fits in a sentence: slide a tiny
+  pattern-detector across the whole image and write down where it fires.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-neural/neurons.html">The neuron</a> — a convolution is that
+    same weighted sum, on a leash.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Feeding an image to the playground's MLP would mean one weight per pixel
+  per neuron — millions of knobs that would have to <em>separately</em> learn
+  that a cat at the left of a photo is the same cat as at the right. Wasteful,
+  and it ignores what images are like: the meaningful stuff is <em>local</em>
+  (edges, corners, textures) and it can appear <em>anywhere</em>.</p>
+  <p>The fix: make one tiny neuron — say 3×3 pixels' worth of weights, called a
+  <dfn data-term="kernel">kernel</dfn> (or filter) — and slide it across the
+  whole image, computing its weighted sum at every position. The result is a
+  new image showing <em>where that little pattern occurs</em>. This
+  slide-and-sum is a <dfn data-term="convolution">convolution</dfn>, and a
+  network built from layers of them is a
+  <dfn data-term="cnn">convolutional neural network</dfn> (CNN).</p>
+  <p>Two birds with one stone: the same 9 weights serve every position (a cat
+  is a cat anywhere), and 9 weights instead of millions (the leash).</p>
+
+  <h2>Try it: slide the detector yourself</h2>
+  <p>A little scene, a 3×3 kernel, and the result. Hover the image to watch a
+  single output pixel being computed — the window's 9 pixels times the
+  kernel's 9 weights, added up. Then switch kernels:</p>
+
+  <div class="demo" id="conv-demo">
+    <canvas width="640" height="270" aria-label="An input image and its convolved output side by side"></canvas>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-kernel="identity">Do nothing</button>
+      <button class="action secondary" type="button" data-kernel="blur">Blur</button>
+      <button class="action secondary" type="button" data-kernel="sharpen">Sharpen</button>
+      <button class="action" type="button" data-kernel="edges">Find edges</button>
+      <button class="action secondary" type="button" data-kernel="vertical">Vertical lines only</button>
+      <button class="action secondary" type="button" data-kernel="horizontal">Horizontal lines only</button>
+    </div>
+    <p class="readout"><span data-out="note"></span></p>
+    <div class="conv-math" data-out="math"></div>
+    <p class="hint">Compare "vertical lines only" and "horizontal lines only" on
+    the house: same image, same machinery, 9 different numbers — and completely
+    different features found. Now the punchline: in a CNN, <em>nobody designs
+    these kernels</em>. They're weights. Backprop tunes them, and edge-detectors
+    like these reliably emerge in the first layer on their own — because edges
+    are what images are made of.</p>
+  </div>
+
+  <h2>Stacking the idea</h2>
+  <p>One convolution layer finds simple things (edges, spots of color). The next
+  layer convolves over <em>those results</em> — so its patterns are patterns
+  <em>of edges</em>: corners, curves, textures. Stack again: eyes, wheels,
+  windows. Again: faces, cars, houses. Each layer's vocabulary is built from the
+  previous layer's, which is the "deep" in deep learning doing real work —
+  and it mirrors, loosely, how visual cortex organizes itself.</p>
+  <p>Two supporting parts you'll meet in every CNN diagram:</p>
+  <ul>
+    <li><strong>Many kernels per layer.</strong> A layer doesn't learn one
+    detector, it learns dozens (one output image per kernel — each output is
+    called a feature map). "64 channels" = 64 different little questions asked
+    everywhere.</li>
+    <li><strong>Pooling / downsampling:</strong> periodically shrink the maps
+    (e.g. keep the strongest response in each 2×2 patch). Detail fades, but
+    "is the pattern here-ish?" survives — which buys tolerance to small shifts
+    and keeps compute sane.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Convolutions are how networks handle <em>images</em>. Next: how they handle
+  <em>words</em> — which first requires turning meaning itself into vectors.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "convolutions",
+    "questions": [
+      {
+        "q": "Why does a convolution use the SAME 9 weights at every image position?",
+        "choices": [
+          "To save memory only — more weights would work just as well",
+          "Because a pattern means the same thing wherever it appears — one shared detector both enforces that and slashes the number of knobs to learn",
+          "Because images are always 9 pixels wide"
+        ],
+        "answer": 1,
+        "explain": "Weight sharing bakes in \"a cat is a cat anywhere\" (so the network needn't learn it separately for every position) AND turns millions of per-pixel weights into a handful. Built-in knowledge about the data's structure = fewer knobs = less overfitting. The best free lunch in deep learning."
+      },
+      {
+        "q": "In a trained CNN, where do kernels like the edge-detectors in the demo come from?",
+        "choices": [
+          "Engineers design them by hand for each task",
+          "They're standard presets shipped with the framework",
+          "They're ordinary weights, tuned by backprop — and edge-like detectors emerge in early layers on their own"
+        ],
+        "answer": 2,
+        "explain": "The demo's kernels were hand-picked so you could see what convolution does. In a real CNN the 9 numbers are learned like any other weights — and training rediscovers edge detectors again and again, because edges are the atoms images are built from."
+      },
+      {
+        "q": "What does stacking convolution layers buy?",
+        "choices": [
+          "Each layer detects patterns OF the previous layer's patterns: edges → corners → parts → objects",
+          "Each layer sees a higher-resolution version of the image",
+          "Nothing — one layer with more kernels is always equivalent"
+        ],
+        "answer": 0,
+        "explain": "Layer two convolves over layer one's feature maps, so its patterns are combinations of edges — corners, curves. The hierarchy compounds: this is the clearest example anywhere of what depth actually does."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

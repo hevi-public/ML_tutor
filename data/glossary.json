@@ -474,5 +474,118 @@
     "plain": "One full lap through the training data.",
     "definition": "One pass over every training example. Training runs are measured in epochs or steps; watching validation loss across epochs is how early stopping decides when learning has turned into memorizing.",
     "see": ["mini-batch", "training", "overfitting"]
+  },
+  "convolution": {
+    "term": "Convolution",
+    "plain": "Slide a tiny pattern-detector across the whole image, computing its weighted sum at every position — the result shows where the pattern occurs.",
+    "definition": "An operation applying the same small kernel of weights at every spatial position of its input, producing a feature map of responses. Weight sharing encodes \"this pattern means the same thing anywhere\" and drastically cuts parameter count.",
+    "see": ["kernel", "cnn", "neuron"],
+    "taughtIn": { "href": "05-deep/convolutions.html", "title": "Convolutions" }
+  },
+  "kernel": {
+    "term": "Kernel (filter)",
+    "plain": "The tiny grid of weights that gets slid across an image — a 3×3 kernel is a nine-number question asked at every position.",
+    "also": ["filter"],
+    "definition": "The shared weight patch of a convolution. In a trained CNN kernels are learned parameters; early layers reliably develop edge- and texture-detectors because those patterns are the atoms of natural images.",
+    "see": ["convolution", "cnn", "weight"]
+  },
+  "cnn": {
+    "term": "CNN (convolutional neural network)",
+    "plain": "A network built from stacked convolution layers: edges → corners → parts → objects, each layer detecting patterns of the previous layer's patterns.",
+    "also": ["ConvNet"],
+    "definition": "A network alternating convolution layers, nonlinearities, and periodic downsampling (pooling), trained end-to-end by backprop. The default architecture for images for a decade, and still the local-structure workhorse inside many modern systems.",
+    "see": ["convolution", "kernel", "neural-network"],
+    "taughtIn": { "href": "05-deep/convolutions.html", "title": "Convolutions" }
+  },
+  "embedding": {
+    "term": "Embedding",
+    "plain": "A learned list of coordinates for a discrete thing (word, product, user) — placed so that similar things sit nearby.",
+    "definition": "A dense learned vector representing a discrete item, trained so geometric relationships (distance, direction) track functional similarity. The input layer of every language model, and the machinery behind semantic search and recommendations.",
+    "see": ["vector", "token", "attention"],
+    "taughtIn": { "href": "05-deep/embeddings.html", "title": "Embeddings" }
+  },
+  "attention": {
+    "term": "Attention",
+    "plain": "Every word looks at every other word and takes a weighted blend of what it finds — weights computed fresh from the actual sentence.",
+    "also": ["self-attention"],
+    "definition": "A mechanism where each position emits a query, scores it against every position's key (scaled dot products through softmax), and aggregates their values by those weights. Gives direct any-to-any information flow with full parallelism — the core of the transformer.",
+    "see": ["transformer", "embedding", "softmax", "dot-product"],
+    "taughtIn": { "href": "05-deep/attention.html", "title": "Attention" }
+  },
+  "transformer": {
+    "term": "Transformer",
+    "plain": "The architecture of modern AI: attention layers (words consult each other) alternating with small MLPs (each word thinks), stacked deep.",
+    "definition": "A network of repeated blocks — multi-head self-attention followed by per-position feed-forward layers, with residual connections and normalization — over token embeddings. Replaced recurrence for sequences because it trains in parallel and handles long-range dependencies directly.",
+    "see": ["attention", "mlp", "llm", "embedding"],
+    "taughtIn": { "href": "05-deep/attention.html", "title": "Attention" }
+  },
+  "softmax": {
+    "term": "Softmax",
+    "plain": "The standard machine for turning any list of scores into positive percentages that add to 100% — big scores rewarded disproportionately.",
+    "definition": "softmax(z)ᵢ = e^{zᵢ} / Σⱼ e^{zⱼ}. Converts raw scores into a probability distribution; used for attention weights, classifier outputs, and next-token probabilities alike. Its \"temperature\" variant divides scores first, controlling how peaked the result is.",
+    "see": ["attention", "sigmoid", "llm"]
+  },
+  "token": {
+    "term": "Token",
+    "plain": "One piece from the model's fixed menu of text fragments — common words are one token, rare words get built from parts.",
+    "definition": "The atomic unit of text for a language model, produced by a learned subword vocabulary (~50k–200k entries, e.g. BPE). Models see only token IDs — which explains characteristic quirks like poor letter-counting.",
+    "see": ["llm", "embedding", "context-window"],
+    "taughtIn": { "href": "06-modern/llms.html", "title": "Large language models" }
+  },
+  "llm": {
+    "term": "LLM (large language model)",
+    "plain": "A transformer trained on one task at planetary scale: given the tokens so far, predict the next one. Everything else is a side effect done well.",
+    "definition": "A large transformer pretrained with next-token prediction (log loss) on vast text corpora, then typically aligned via fine-tuning and preference optimization. Generates by repeatedly scoring the vocabulary and appending a chosen token.",
+    "see": ["transformer", "token", "pretraining", "fine-tuning"],
+    "taughtIn": { "href": "06-modern/llms.html", "title": "Large language models" }
+  },
+  "context-window": {
+    "term": "Context window",
+    "plain": "The fixed number of recent tokens the model can see. Outside it, nothing exists — and between conversations, nothing persists.",
+    "definition": "The maximum sequence length a transformer processes at once. Attention's cost grows with window size, making long contexts an active engineering frontier. The model's only \"memory\" absent external tooling.",
+    "see": ["llm", "token", "attention"]
+  },
+  "pretraining": {
+    "term": "Pretraining",
+    "plain": "The big, expensive first phase: learn next-token prediction from a mountain of text, absorbing knowledge as a side effect.",
+    "definition": "Self-supervised training on broad unlabeled data before any task-specific work. Produces a general \"foundation\" model with capability but no job description — alignment stages supply that afterwards, at a tiny fraction of the cost.",
+    "see": ["llm", "fine-tuning", "rlhf"],
+    "taughtIn": { "href": "06-modern/finetuning.html", "title": "From predictor to assistant" }
+  },
+  "fine-tuning": {
+    "term": "Fine-tuning",
+    "plain": "Continue training an existing model on a small curated dataset — same backprop, new specialty or manners.",
+    "definition": "Further gradient training of a pretrained model on task- or behavior-specific examples. Supervised fine-tuning on example dialogues is what turns a raw predictor into an assistant; the Unit 2 overfitting risks apply in miniature.",
+    "see": ["pretraining", "prompting", "rlhf", "overfitting"],
+    "taughtIn": { "href": "06-modern/finetuning.html", "title": "From predictor to assistant" }
+  },
+  "prompting": {
+    "term": "Prompting",
+    "plain": "Steer the model by changing its input, not its weights: describe the task, show examples, paste in documents. Zero training, instant iteration.",
+    "also": ["few-shot", "in-context learning"],
+    "definition": "Task specification via the model's context: instructions, demonstrations (\"few-shot\"), and reference material. A strong prompt often matches what previously needed a training run; the always-try-first lever. Retrieval-augmented prompting adds fetched documents per query.",
+    "see": ["fine-tuning", "context-window", "llm"],
+    "taughtIn": { "href": "06-modern/finetuning.html", "title": "From predictor to assistant" }
+  },
+  "rlhf": {
+    "term": "RLHF",
+    "plain": "Teach by grading instead of demonstrating: people rank pairs of answers, a grader-model learns those tastes, the assistant trains to score well on it.",
+    "also": ["preference tuning", "reinforcement learning from human feedback"],
+    "definition": "Alignment via a reward model trained on human preference comparisons, then policy optimization of the LLM against it. Exploits the asymmetry that recognizing quality is easier than producing it; relatives (DPO etc.) reach similar ends more directly.",
+    "see": ["fine-tuning", "pretraining"],
+    "taughtIn": { "href": "06-modern/finetuning.html", "title": "From predictor to assistant" }
+  },
+  "diffusion-model": {
+    "term": "Diffusion model",
+    "plain": "Learn to remove a little noise from images; then start from pure static and \"remove\" your way, step by step, to a picture that never existed.",
+    "definition": "A generative model trained to predict the noise added to data at every corruption level (free supervised labels), then sampled by iteratively denoising random noise. Text conditioning enters via embeddings at each step. The engine of modern image generation.",
+    "see": ["generative-model", "cnn", "embedding", "mean-squared-error"],
+    "taughtIn": { "href": "06-modern/diffusion.html", "title": "Diffusion models" }
+  },
+  "generative-model": {
+    "term": "Generative model",
+    "plain": "A model whose job is to produce new examples that look like the data — text, images, audio — rather than to label existing ones.",
+    "definition": "A model of the data distribution itself, sampled to create novel instances. LLMs (sequential) and diffusion models (iterative refinement) are today's dominant families. Evaluation is intrinsically harder than for classifiers — there is no single right answer to compare against.",
+    "see": ["llm", "diffusion-model", "classification"]
   }
 }

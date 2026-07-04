@@ -467,6 +467,131 @@ tr.row-hot { background: var(--accent-soft) !important; }
 .conf-matrix .bad-cell { background: var(--bad-soft); }
 .conf-matrix .num { display: block; font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+/* ---------- Attention demo ---------- */
+
+.attn-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 1rem 0;
+}
+.attn-word {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.35rem 0.6rem 0.4rem;
+  cursor: pointer;
+}
+.attn-word:hover { border-color: var(--accent); }
+.attn-word.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 700;
+}
+.attn-word .bar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+.attn-word .bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ---------- Tokenizer & language model demo ---------- */
+
+.token-input {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+}
+.token-input:focus { outline: none; border-color: var(--accent); }
+
+.token-chip {
+  display: inline-block;
+  margin: 0.15rem 0.15rem 0 0;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.88rem;
+}
+.token-chip.c0 { background: var(--accent-soft); }
+.token-chip.c1 { background: var(--good-soft); }
+.token-chip.c2 { background: color-mix(in srgb, var(--accent-soft) 50%, var(--good-soft)); }
+.token-chip.c3 { background: var(--bg-inset); border: 1px solid var(--border); }
+.token-chip.unk { background: var(--bad-soft); border: 1px dashed var(--bad); }
+
+.lm-text {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  min-height: 3.2rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.lm-text strong { color: var(--accent); }
+
+.prob-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+}
+.prob-word {
+  width: 5.5rem;
+  text-align: right;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.prob-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--bg-inset);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.prob-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 6px;
+}
+.prob-val {
+  width: 3rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-soft);
+}
+
+/* Convolution readout */
+.conv-math {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  margin-top: 0.8rem;
+  min-height: 5.2rem;
+}
+
 /* ---------- Glossary ---------- */
 
 .glossary-controls { margin: 1.5rem 0 2rem; }

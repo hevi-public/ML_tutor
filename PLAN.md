@@ -28,7 +28,7 @@ Each unit is a folder of pages; each page ends with a quiz + links onward.
 | 2 | **Core Concepts** | Data & features, train/val/test, loss functions, overfitting & regularization, bias–variance, evaluation metrics (interactive confusion matrix, ROC curve you can drag thresholds on) |
 | 3 | **Classical ML** | Linear regression, logistic regression, kNN, decision trees, random forests, SVM, naive Bayes, k-means, PCA — each with a canvas decision-boundary / fit explorer |
 | 4 | **Neural Networks** | Perceptron, MLP, activation functions, backpropagation (step-through animation), gradient descent & optimizers (SGD/momentum/Adam race visualizer), initialization, regularization (dropout demo) |
-| 5 | **Deep Learning** | CNNs (interactive convolution filter on an image), RNNs/LSTMs, embeddings (2-D projection explorer), attention & transformers (attention-weight heatmap demo) |
+| 5 | **Deep Learning** | CNNs (interactive convolution filter on an image), embeddings (2-D projection explorer), attention & transformers (attention-weight demo). *RNNs/LSTMs folded into the attention page as historical context — attention is what a modern learner needs.* |
 | 6 | **Modern ML** | LLMs & tokenization (live tokenizer demo), fine-tuning vs prompting, RLHF, diffusion models (noise/denoise slider), evaluation of generative models |
 | 7 | **Practice Labs** | In-browser playgrounds: train an MLP on toy 2-D datasets (TensorFlow-Playground style), MNIST digit classifier trained in a Web Worker, k-means on your own pasted data |
 | 8 | **Expert Track** | Backprop derived from scratch, implementing autodiff in JS, reading papers guide, bias/fairness, when ML fails, annotated further-reading list |

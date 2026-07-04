@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>From predictor to assistant — ML Tutor</title>
+
+  <meta name="ml:unit" content="Modern ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="llms.html|Large language models">
+  <meta name="ml:next" content="diffusion.html|Diffusion models">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Modern ML</p>
+  <h1>From predictor to assistant</h1>
+  <p class="lede">Pretraining builds a mind-bogglingly knowledgeable text
+  predictor with no manners and no job description. Three add-on stages give
+  it both.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="llms.html">Large language models</a> — this page is about what
+    happens AFTER that machine exists.
+  </div>
+
+  <h2>The problem with a raw predictor</h2>
+  <p>Ask a freshly <dfn data-term="pretraining">pretrained</dfn> model "How do
+  I make bread?" and a perfectly correct continuation is <em>"How do I make
+  pasta? How do I make rice?"</em> — because on the internet, questions travel
+  in packs. The model isn't broken; it's answering the question it was
+  actually trained on ("what text comes next?"), not the one you meant
+  ("help me"). Closing that gap is called <em>alignment</em>, and it takes a
+  tiny fraction of the compute that pretraining did — a finishing school, not
+  a second education.</p>
+
+  <h2>The three stages</h2>
+  <ol>
+    <li><strong>Supervised <dfn data-term="fine-tuning">fine-tuning</dfn>.</strong>
+    Continue training — same backprop, same log loss — on a small, curated set
+    of example dialogues written the way an assistant should respond. Unit 2
+    vocabulary: it's just more training data, chosen to demonstrate the job.
+    After this, the model answers questions instead of continuing them.</li>
+    <li><strong>Preference tuning (<dfn data-term="rlhf">RLHF</dfn> and
+    relatives).</strong> Some qualities are easier to <em>recognize</em> than
+    to demonstrate: which of two answers is clearer? more honest? People rank
+    pairs of model outputs; a <em>reward model</em> is trained to predict
+    those rankings (a grader — a learned loss, really); then the assistant is
+    tuned to score well on it. That's "reinforcement learning from human
+    feedback": learning from grades instead of worked examples.</li>
+    <li><strong>A system prompt.</strong> The cheapest layer: standing
+    instructions prepended invisibly to every conversation ("You are a helpful
+    assistant. Decline harmful requests…"). No training at all — just context
+    the predictor conditions on.</li>
+  </ol>
+
+  <h2>Prompting vs. fine-tuning: which lever when?</h2>
+  <p>Once assistants existed, a new question appeared: to make the model do
+  <em>your</em> task, do you change its <em>input</em> or its
+  <em>weights</em>?</p>
+  <ul>
+    <li><strong><dfn data-term="prompting">Prompting</dfn> — change the
+    input.</strong> Describe the task, show a few examples in the prompt
+    itself ("few-shot"), paste in reference documents. Zero training,
+    instant iteration, and the model's weights never move — remarkably, a
+    good prompt with three examples often matches what used to require a
+    training run. Start here, always.</li>
+    <li><strong>Fine-tuning — change the weights.</strong> Worth it when the
+    task needs a consistent style at high volume, knowledge too large to
+    paste into every prompt, or a small cheap model made expert at one narrow
+    thing. Costs: training runs, evaluation discipline, and the old Unit 2
+    risks — overfit your 500 examples and the model gets worse at everything
+    else.</li>
+    <li><strong>The middle path that ate the industry:</strong> retrieval —
+    embed your documents (Unit 5!), fetch the relevant ones per question,
+    paste them into the prompt. Fresh knowledge, no training, sources you can
+    cite.</li>
+  </ul>
+
+  <h2>How do you grade a generated paragraph?</h2>
+  <p>A quiet crisis behind all of this: Unit 2's metrics assumed a right
+  answer to compare against. Generated text has no single right answer.
+  Current practice is a patchwork worth knowing by name: benchmark suites
+  (exam-style question sets — with a chronic worry that their questions leak
+  into training data), human side-by-side preferences (the leaderboards), and
+  LLM-as-judge — using a strong model to grade another's output, cheap but
+  with obvious circularity risks. Evaluation is genuinely unsolved, and
+  anyone quoting a single number for "how good is this model" is
+  simplifying.</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Text generation, handled. Next: how the same "learn to undo corruption"
+  spirit generates <em>images</em> — diffusion, the last stop in Unit 6.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "finetuning",
+    "questions": [
+      {
+        "q": "A raw pretrained model answers \"How do I make bread?\" with more questions. Why?",
+        "choices": [
+          "It doesn't contain any bread knowledge",
+          "It's completing \"text like this\" — and online, questions cluster together. It predicts; it wasn't yet taught that its job is to answer",
+          "Its context window is too small for recipes"
+        ],
+        "answer": 1,
+        "explain": "The knowledge is in there — the objective just never asked for helpfulness. Fine-tuning on example dialogues is what installs the job description. (A good prompt can partially substitute: \"Recipe for bread: Step 1\" already steers the raw predictor toward answering.)"
+      },
+      {
+        "q": "Why add preference tuning (RLHF) after supervised fine-tuning, instead of just writing more example dialogues?",
+        "choices": [
+          "It's cheaper to run than regular training",
+          "Some qualities are easier to RECOGNIZE than to write: people can reliably rank two answers even when writing the ideal one is hard — so we train a grader from rankings and optimize against it",
+          "Supervised fine-tuning stops working after a few thousand examples"
+        ],
+        "answer": 1,
+        "explain": "Demonstration teaches what excellence looks like only if you can produce excellence on demand. Comparison ('B is clearer') is a far easier human task, and a reward model turns piles of such comparisons into a trainable signal. Judging is easier than doing — RLHF is that fact, industrialized."
+      },
+      {
+        "q": "Your startup wants a chatbot that answers questions about your product docs, which change weekly. Best first approach?",
+        "choices": [
+          "Fine-tune the model on the docs every week",
+          "Retrieval: embed the docs, fetch relevant passages per question, and paste them into the prompt",
+          "Train a new LLM from scratch on your docs"
+        ],
+        "answer": 1,
+        "explain": "Weekly-changing knowledge is the retrieval sweet spot: update the document index (cheap, instant) instead of the weights (slow, risky, and last week's fine-tune is already stale). Fine-tuning earns its keep for style and narrow expertise — not for fast-moving facts."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

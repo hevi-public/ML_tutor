@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Large language models — ML Tutor</title>
+
+  <meta name="ml:unit" content="Modern ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../05-deep/attention.html|Attention">
+  <meta name="ml:next" content="finetuning.html|From predictor to assistant">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/ml/matrix.js"></script>
+  <script defer src="../assets/js/viz/lm.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Modern ML</p>
+  <h1>Large language models: next-word prediction, taken seriously</h1>
+  <p class="lede">Underneath the conversation is a machine doing one thing:
+  given the text so far, score every possible next token. Everything else
+  follows from doing that astonishingly well.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../05-deep/attention.html">Attention</a> and
+    <a href="../05-deep/embeddings.html">embeddings</a> — an LLM is those,
+    stacked and scaled.
+  </div>
+
+  <h2>First: what's a token?</h2>
+  <p>Models don't quite read words. Text is chopped into
+  <dfn data-term="token">tokens</dfn> — pieces from a fixed menu of a hundred
+  thousand or so, learned by finding the most reusable fragments in a mountain
+  of text. Common words get their own token; rarer words get built from parts
+  (which is why a model can handle "unbreakableness" without ever having a
+  token for it).</p>
+
+  <div class="demo" id="tokenizer-demo">
+    <input class="token-input" type="text" value="unbreakable replaying overthinkers"
+           aria-label="Text to tokenize">
+    <p style="margin: 0.7rem 0 0.2rem"><span data-out="tokens"></span></p>
+    <p class="readout"><span data-out="count"></span></p>
+    <p class="hint">This toy menu has ~30 pieces (real ones: ~100,000; same
+    greedy idea). Type "walking talkers" — clean splits. Type "xylophone" —
+    nothing on the menu matches, so it shatters into characters (red). Fun
+    fact with real-world bite: this is why models are weirdly bad at counting
+    letters in a word — they never see letters, only these chunks.</p>
+  </div>
+
+  <h2>The machine itself</h2>
+  <p>A <dfn data-term="llm">large language model</dfn> is a transformer trained
+  on one task: <em>given the tokens so far, predict the next one</em>. Output:
+  a probability for every token on the menu. Pick one (most-likely, or sample
+  with some randomness — the dial called temperature), append it, repeat.
+  Every chatbot reply you've ever read was generated one token at a time this
+  way.</p>
+  <p>Why does mere next-token prediction produce something that can explain,
+  translate, and write code? Because predicting well <em>forces</em> learning.
+  To continue "the capital of Finland is", you must know it. To continue a
+  half-written function, you must model what the code does. Compress the
+  internet into prediction weights and enormous amounts of world-knowledge,
+  grammar, and reasoning-shaped patterns get dragged in — not because anyone
+  asked for them, but because they reduce the loss (yes — the same log loss
+  you met in logistic regression, summed over trillions of tokens).</p>
+
+  <h2>Try it: a language model that fits in your head</h2>
+  <p>Below is a complete language model trained on eighteen sentences about
+  cats, dogs, and weather. It knows one thing: for each word, how often each
+  other word followed it. That table IS the model. The bold word is where we
+  are; the bars are its genuine next-word probabilities:</p>
+
+  <div class="demo" id="lm-demo">
+    <div class="lm-text" data-out="text"></div>
+    <div style="margin-top: 0.8rem" data-out="dist"></div>
+    <div class="buttons">
+      <button class="action" type="button" data-action="greedy">Add the most likely word</button>
+      <button class="action secondary" type="button" data-action="sample">Roll the dice instead</button>
+      <button class="action secondary" type="button" data-action="auto">Generate 15 words</button>
+      <button class="action secondary" type="button" data-action="restart">Restart</button>
+    </div>
+    <p class="hint">Click "most likely" repeatedly: the text gets stuck in a
+    loop (greedy decoding does that — to real LLMs too!). Restart, use the
+    dice: livelier, occasionally silly. That's the temperature trade-off you
+    see in every LLM API. This toy looks back exactly ONE word; an LLM looks
+    back at your whole conversation through attention, with ~10¹¹ knobs
+    instead of a count table. The generation loop, though — score, pick,
+    append, repeat — is <em>identical</em>.</p>
+  </div>
+
+  <h2>The honest caveats, briefly</h2>
+  <ul>
+    <li><strong>It predicts plausible, not true.</strong> When the model
+    doesn't know, the most probable continuation is often a confident-sounding
+    guess — the failure politely called hallucination. It's not lying; it's
+    doing exactly its job on the wrong occasion.</li>
+    <li><strong>The <dfn data-term="context-window">context window</dfn> is
+    real memory limits.</strong> The model sees a fixed number of recent
+    tokens. Nothing outside it exists — there is no other memory between
+    conversations.</li>
+    <li><strong>Data is destiny, again.</strong> Unit 2's lesson at planetary
+    scale: the model inherits whatever the training text contains —
+    brilliance, bias, and boilerplate alike.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>A raw next-token predictor completes "How do I make bread?" with <em>more
+  questions</em> (that's what forum posts look like!). Turning the predictor
+  into an assistant that answers is a separate, smaller process — next
+  page.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "llms",
+    "questions": [
+      {
+        "q": "What single task is an LLM trained on?",
+        "choices": [
+          "Answering questions helpfully",
+          "Given the tokens so far, predict the probability of every possible next token",
+          "Translating between languages"
+        ],
+        "answer": 1,
+        "explain": "Everything visible — answering, translating, coding — is next-token prediction wearing different prompts. The capabilities are side effects of doing prediction extraordinarily well on extraordinary amounts of text."
+      },
+      {
+        "q": "Why does an LLM sometimes state falsehoods with total confidence?",
+        "choices": [
+          "A bug that better engineering will fully remove",
+          "It outputs the most PLAUSIBLE continuation; when knowledge is missing, plausible and true part ways — and the model has no separate truth-checker",
+          "It was trained exclusively on fiction"
+        ],
+        "answer": 1,
+        "explain": "The machine optimizes \"what text likely comes next,\" not \"what is so.\" Usually those coincide — that's why it's useful — but on the edges of its knowledge, fluent guessing is exactly what the objective rewards. Knowing this failure mode is half of using LLMs well."
+      },
+      {
+        "q": "Your greedy toy model got stuck repeating a loop. What's the real-LLM connection?",
+        "choices": [
+          "Only toy models loop; real ones cannot",
+          "Always-pick-the-most-likely makes real LLMs repetitive and stilted too — hence sampling with a temperature dial",
+          "The loop means the corpus was too small"
+        ],
+        "answer": 1,
+        "explain": "Pure greed collapses into ruts at any scale — repetition is self-reinforcing. Production systems sample from the distribution (with temperature controlling how adventurously), trading a little reliability for a lot of liveliness. You felt both ends of that dial."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

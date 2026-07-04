@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attention — ML Tutor</title>
+
+  <meta name="ml:unit" content="Deep learning">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="embeddings.html|Embeddings">
+  <meta name="ml:next" content="../06-modern/llms.html|Large language models">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/attention.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Deep learning</p>
+  <h1>Attention: every word looks around</h1>
+  <p class="lede">The mechanism inside the T of GPT. One idea — let each word
+  gather information from the words that matter to it — reorganized the entire
+  field.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="embeddings.html">Embeddings</a> and the
+    <a href="../01-math/vectors-matrices.html">dot product</a> — attention is
+    dot products between embeddings, plus bookkeeping.
+  </div>
+
+  <h2>The problem</h2>
+  <p>The last page left a loose end: "bank" gets one embedding, whether river
+  or savings. And meaning is relational in worse ways — in <em>"the trophy
+  didn't fit in the suitcase because it was too big"</em>, the word "it" means
+  <em>trophy</em>, and you know that only by consulting the rest of the
+  sentence (swap "big" for "small" and "it" flips to the suitcase!).</p>
+  <p>For years the standard fix was recurrent networks (RNNs, LSTMs): read
+  left to right, carrying a running summary. It worked, but distant context
+  faded — by word forty, word three was a rumor — and reading one-word-at-a-time
+  made training painfully serial. Attention replaced the relay race with a
+  conference call.</p>
+
+  <h2>The idea</h2>
+  <p><dfn data-term="attention">Attention</dfn> lets every word, in one step,
+  look directly at every other word and take a weighted average of what it
+  finds. Per word, three moves:</p>
+  <ol>
+    <li><strong>Ask.</strong> Each word broadcasts a query — "I'm a pronoun
+    seeking my noun."</li>
+    <li><strong>Match.</strong> The query is compared (dot product — your old
+    friend the agreement-meter) against every other word's advertisement of
+    what it offers. Good matches score high.</li>
+    <li><strong>Blend.</strong> Scores become percentages, and the word updates
+    itself with the percentage-weighted blend of the others' content. "It"
+    comes out of the layer 60% flavored with "trophy" — effectively
+    <em>disambiguated</em>.</li>
+  </ol>
+  <p>Every word does this simultaneously, and the whole thing stacks: a
+  <dfn data-term="transformer">transformer</dfn> is essentially attention
+  layers alternating with small MLPs (Unit 4's networks!), repeated dozens of
+  times. No recurrence, no fading with distance — word 1 reaches word 4,000 as
+  easily as its neighbor — and everything computes in parallel, which is why
+  transformers could be trained on internet-sized text.</p>
+
+  <h2>Try it: whom does each word consult?</h2>
+  <p>Click any word; the bars under the others show how much it attends to
+  them. Start with "it", then switch between the two trophy sentences —
+  <em>one changed adjective reroutes the attention:</em></p>
+
+  <div class="demo" id="attn-demo">
+    <div class="buttons" data-out="picker"></div>
+    <div class="attn-words" data-out="sentence"></div>
+    <p class="readout"><span data-out="say"></span></p>
+    <p class="hint">Also try "bank" in the third sentence — attending to
+    "river" and "flow" is exactly how the one-embedding-per-word problem gets
+    fixed: after this layer, this "bank" carries river in its vector. (Honesty
+    note: these weights are hand-set to mirror what trained transformers
+    measurably do on these classic test sentences — a real model computes them
+    with learned query/key vectors, and no human ever sets a single one.)</p>
+  </div>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>Score = how well my question matches your advertisement (a dot
+      product). Turn all my scores into percentages. My new self = the
+      percentage-weighted average of everyone's content. That's one attention
+      step, for one word; everyone does it at once.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">\text{weights} = \text{softmax}\!\left(\frac{\mathbf{q} \cdot \mathbf{k}_1,\; \mathbf{q} \cdot \mathbf{k}_2,\; \ldots}{\sqrt{d}}\right)</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        My attention percentages are: my query dotted with each word's key
+        (a list of match-scores), scaled down a bit, then pushed through
+        <span data-sym="softmax">softmax</span> — the standard machine for
+        turning any list of scores into positive percentages that sum to 100%.
+      </div>
+      <ul class="symbol-legend" data-symbols="q,k,softmax,√d"></ul>
+      <p>The queries and keys (and the "content" vectors, called values) aren't
+      the embeddings themselves — each is a small learned transformation of
+      them. Those transformations are the layer's weights, trained by backprop
+      like everything else. And each attention layer runs several independent
+      sets of them in parallel ("heads"), so one head can track grammar while
+      another tracks meaning.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Embeddings + attention + MLPs + backprop: you now hold every part of a
+  transformer. Unit 6 assembles them into the machines you've been hearing
+  about for years — starting with what an LLM actually does, which is humbler
+  than the headlines: predict the next word, extremely well.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "q": { "name": "q — the query", "pron": "say: \"the query (vector)\"",
+           "means": "This word's question — a small learned transformation of its embedding, asking \"what am I looking for?\"",
+           "short": "this word's question" },
+    "k": { "name": "k — a key", "pron": "say: \"the key (vector)\"",
+           "means": "Each word's advertisement of what it offers. Query·key = how well the ask matches the offer.",
+           "short": "each word's advertisement" },
+    "softmax": { "name": "softmax — scores → percentages", "pron": "say: \"soft-max\"",
+           "means": "Exponentiate every score, divide by the total: any list of numbers becomes positive weights summing to 1, with big scores rewarded disproportionately. The go-to whenever a network must \"choose\" softly.",
+           "short": "turns scores into percentages" },
+    "√d": { "name": "√d — the calm-down factor", "pron": "say: \"root dee\"",
+           "means": "d is the vector length; dividing scores by √d keeps them in a sane range so softmax doesn't saturate into all-or-nothing. Practical seasoning, not deep magic.",
+           "short": "keeps the scores in a sane range" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "attention",
+    "questions": [
+      {
+        "q": "Swapping \"big\" for \"small\" flips whom \"it\" attends to. What does that demonstrate?",
+        "choices": [
+          "Attention weights are computed FROM the actual context, per sentence — not stored per word like an embedding",
+          "The model memorized both sentences during training",
+          "Adjectives always receive the most attention"
+        ],
+        "answer": 0,
+        "explain": "That's the whole upgrade over static embeddings: the weights are recomputed for every input from query-key matches, so one changed word reroutes information flow through the entire sentence."
+      },
+      {
+        "q": "Why did attention displace recurrent networks for language?",
+        "choices": [
+          "It uses less memory",
+          "Direct access at any distance (no fading relay of a running summary) and every position computes in parallel (no word-by-word serialism) — which is what made internet-scale training feasible",
+          "It eliminated the need for training data"
+        ],
+        "answer": 1,
+        "explain": "RNNs squeezed history through a fixed-size summary, degrading with distance, one step at a time. Attention is a conference call: any word to any word, all at once. Both the quality and the trainability-at-scale follow from that."
+      },
+      {
+        "q": "What is a transformer, structurally?",
+        "choices": [
+          "A single enormous attention computation",
+          "Attention layers alternating with small per-word MLPs, stacked dozens of times — plus embeddings at the bottom",
+          "A convolutional network applied to text"
+        ],
+        "answer": 1,
+        "explain": "Look around, then think: attention mixes information between words; the MLP processes each word's gathered result; repeat. Every ingredient is one you've already built on this site — the recipe is the only new part."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>
