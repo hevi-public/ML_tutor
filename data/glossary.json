@@ -1,0 +1,189 @@
+{
+  "machine-learning": {
+    "term": "Machine learning",
+    "plain": "Getting a computer to work out the rule from examples, instead of being handed the rule.",
+    "definition": "A family of methods where a program improves at a task by adjusting itself based on data, rather than following instructions a person wrote for every case. \"Learning\" means: change the settings until the outputs match the examples better.",
+    "see": ["model", "training", "loss"]
+  },
+  "model": {
+    "term": "Model",
+    "plain": "The rule-of-thumb machine we're building — settings plus a recipe that turns an input into a prediction.",
+    "definition": "A mathematical function with adjustable settings (parameters) that maps inputs to outputs. A straight line with its slope and offset is a model; so is a billion-parameter neural network. \"Training a model\" means tuning its parameters.",
+    "see": ["parameter", "prediction", "training"]
+  },
+  "training": {
+    "term": "Training",
+    "plain": "The guess-grade-adjust loop: try settings, measure how wrong the guesses are, nudge the settings, repeat.",
+    "definition": "The process of adjusting a model's parameters to reduce its loss on a set of examples. Most commonly done with gradient descent.",
+    "see": ["loss", "gradient-descent", "training-set"]
+  },
+  "data-point": {
+    "term": "Data point",
+    "plain": "One example: one row in your notebook, one dot on the chart.",
+    "also": ["example", "sample", "observation"],
+    "definition": "A single recorded case, usually an input (or several) together with the answer we'd like the model to produce for it. A dataset is a collection of data points.",
+    "see": ["feature", "label"]
+  },
+  "feature": {
+    "term": "Feature",
+    "plain": "One of the things we know about each example — a column in the notebook, like the day's temperature.",
+    "also": ["input", "input variable"],
+    "definition": "An individual measurable property used as input to a model. Real problems usually have many features per data point; choosing and preparing them well (feature engineering) often matters more than the choice of model.",
+    "see": ["data-point", "label"]
+  },
+  "label": {
+    "term": "Label",
+    "plain": "The right answer for an example — what actually happened, like that day's real sales.",
+    "also": ["target", "ground truth", "y"],
+    "definition": "The known output value attached to a data point during training. The model's predictions are graded against the labels.",
+    "see": ["prediction", "supervised-learning"]
+  },
+  "prediction": {
+    "term": "Prediction",
+    "plain": "The model's guess for an input it's given.",
+    "also": ["ŷ", "output", "estimate"],
+    "definition": "The output a model produces for a given input. Written ŷ (\"y-hat\") to distinguish the guess from the true answer y.",
+    "see": ["label", "model"]
+  },
+  "parameter": {
+    "term": "Parameter",
+    "plain": "A setting inside the model that training is allowed to change — a knob the learning turns.",
+    "definition": "A value the training process adjusts to fit the data, such as a line's slope and offset, or a neural network's millions of weights. Distinct from hyperparameters, which are set by the human before training starts.",
+    "see": ["weight", "bias", "hyperparameter"]
+  },
+  "weight": {
+    "term": "Weight",
+    "plain": "How much an input matters to the prediction. For a line on a chart, it's the slope.",
+    "also": ["w", "slope", "coefficient"],
+    "definition": "A parameter that multiplies an input. A large weight means that input strongly influences the output; zero means it's ignored; negative means it pushes the output the other way.",
+    "see": ["bias", "parameter"]
+  },
+  "bias": {
+    "term": "Bias (the parameter)",
+    "plain": "The model's starting offset: the prediction when every input is zero. For a line, where it crosses the axis.",
+    "also": ["b", "intercept", "offset"],
+    "definition": "A parameter added to the weighted inputs, letting the model's output start somewhere other than zero. (Unrelated to \"bias\" meaning unfairness in data — that's a different concept that shares the word.)",
+    "see": ["weight", "parameter"]
+  },
+  "loss": {
+    "term": "Loss",
+    "plain": "The model's grade: how wrong its guesses are, boiled down to one number. Lower is better, like golf.",
+    "also": ["cost", "cost function", "objective", "error"],
+    "definition": "A function that measures the gap between predictions and true answers across the data. Training is the search for parameter values that make the loss small. Different tasks use different losses; mean squared error is the classic one for regression.",
+    "see": ["mean-squared-error", "gradient-descent", "training"]
+  },
+  "mean-squared-error": {
+    "term": "Mean squared error (MSE)",
+    "plain": "Grade a model by taking each miss, squaring it, and averaging: misses in both directions count, and big misses count extra.",
+    "also": ["MSE", "squared error"],
+    "definition": "A loss for regression: the average of (true value − prediction)² over all data points. Squaring keeps misses above and below from cancelling out and punishes large errors disproportionately — which is also why outliers pull hard on the fit.",
+    "see": ["loss", "residual", "outlier"]
+  },
+  "residual": {
+    "term": "Residual",
+    "plain": "One example's miss: the gap between the real answer and the model's guess — the little vertical bar from a dot down to the line.",
+    "definition": "The difference y − ŷ for a single data point. Patterns in the residuals (rather than random scatter) are a sign the model is missing structure in the data.",
+    "see": ["mean-squared-error", "loss"]
+  },
+  "outlier": {
+    "term": "Outlier",
+    "plain": "A weird dot far from all the others — a typo, a fluke, or a genuinely unusual case.",
+    "definition": "A data point that lies unusually far from the overall pattern. Squared-error losses give outliers outsized influence, so handling them (investigating, capping, or using a robust loss) is a routine part of real ML work.",
+    "see": ["mean-squared-error", "residual"]
+  },
+  "gradient": {
+    "term": "Gradient",
+    "plain": "The \"which way is uphill\" arrow: for each setting, does the loss go up or down if I nudge it, and how steeply?",
+    "definition": "The collection of a function's derivatives with respect to each parameter — the direction of steepest increase. Training moves parameters against the gradient (downhill) to shrink the loss.",
+    "see": ["derivative", "gradient-descent"]
+  },
+  "derivative": {
+    "term": "Derivative",
+    "plain": "How fast one thing changes when you nudge another — the mathematical answer to \"if I turn this knob a tiny bit, what happens?\"",
+    "also": ["∂", "partial derivative"],
+    "definition": "The rate of change of a function at a point. The partial derivative ∂L/∂w reads \"how the loss L changes as the weight w changes, holding everything else still.\" It is the core tool that lets training know which way to adjust each parameter.",
+    "see": ["gradient", "gradient-descent"]
+  },
+  "gradient-descent": {
+    "term": "Gradient descent",
+    "plain": "Learning by walking downhill: repeatedly nudge every setting in whichever direction makes the grade a little better.",
+    "definition": "An algorithm that iteratively updates parameters a small step against the gradient of the loss: w ← w − η·∂L/∂w. Almost all of deep learning is powered by variants of this loop (SGD, momentum, Adam).",
+    "see": ["gradient", "learning-rate", "loss"],
+    "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" }
+  },
+  "learning-rate": {
+    "term": "Learning rate",
+    "plain": "How big each nudge is. Too small and learning crawls; too big and it overshoots and bounces around.",
+    "also": ["η", "eta", "step size"],
+    "definition": "A hyperparameter multiplying the gradient in each update step. One of the first knobs to tune when training misbehaves.",
+    "see": ["gradient-descent", "hyperparameter"]
+  },
+  "linear-regression": {
+    "term": "Linear regression",
+    "plain": "Fitting the best straight line through your dots, then using the line to predict.",
+    "definition": "A model whose prediction is a weighted sum of the inputs plus a bias: ŷ = wx + b (one input) or ŷ = w₁x₁ + … + wₙxₙ + b (many). Usually fit by minimizing mean squared error — which has a closed-form solution, but is also the standard first example of gradient descent.",
+    "see": ["regression", "mean-squared-error", "gradient-descent"],
+    "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" }
+  },
+  "regression": {
+    "term": "Regression",
+    "plain": "Predicting a number: tomorrow's temperature, a house price, how many ice creams.",
+    "definition": "The family of tasks where the output is a continuous quantity. Contrast with classification, where the output is a category.",
+    "see": ["classification", "linear-regression"]
+  },
+  "classification": {
+    "term": "Classification",
+    "plain": "Predicting a category: spam or not, cat or dog, which digit is in the picture.",
+    "definition": "The family of tasks where the output is one of a fixed set of classes. Uses different losses and metrics than regression (accuracy, precision/recall, cross-entropy).",
+    "see": ["regression", "supervised-learning"]
+  },
+  "supervised-learning": {
+    "term": "Supervised learning",
+    "plain": "Learning from worked examples: every practice question comes with the right answer attached.",
+    "definition": "Training on data points that include labels, so the model's guesses can be graded directly. Regression and classification are both supervised.",
+    "see": ["label", "unsupervised-learning"]
+  },
+  "unsupervised-learning": {
+    "term": "Unsupervised learning",
+    "plain": "Learning without answer keys: find structure in the data on your own, like sorting a pile of photos into groups.",
+    "definition": "Methods that work on unlabeled data — clustering (k-means), dimensionality reduction (PCA), density estimation. The model discovers patterns rather than matching known answers.",
+    "see": ["supervised-learning"]
+  },
+  "training-set": {
+    "term": "Training set",
+    "plain": "The examples the model practices on — the homework.",
+    "definition": "The portion of the data used to fit the parameters. Performance here is not proof of learning: a model can ace data it memorized.",
+    "see": ["test-set", "overfitting"]
+  },
+  "test-set": {
+    "term": "Test set",
+    "plain": "Examples held back and never shown during practice — the real exam.",
+    "also": ["held-out data"],
+    "definition": "Data kept aside to estimate how the model performs on cases it hasn't seen. Looking at it during development erodes its value; that's what a separate validation set is for.",
+    "see": ["training-set", "overfitting"]
+  },
+  "overfitting": {
+    "term": "Overfitting",
+    "plain": "Memorizing the homework instead of learning the subject: perfect on practice examples, lost on new ones.",
+    "definition": "When a model captures noise and quirks of the training set rather than the underlying pattern, so training loss keeps improving while test performance gets worse. The central occupational disease of ML; regularization, more data, and simpler models are the treatments.",
+    "see": ["underfitting", "training-set", "test-set"]
+  },
+  "underfitting": {
+    "term": "Underfitting",
+    "plain": "The model is too simple to catch the pattern at all — a straight line through a clearly curved trend.",
+    "definition": "When a model lacks the capacity (or training) to capture the real structure, performing poorly even on the training set. The cure is a richer model, better features, or longer training.",
+    "see": ["overfitting"]
+  },
+  "hyperparameter": {
+    "term": "Hyperparameter",
+    "plain": "A setting the human picks before training starts — training tunes the parameters, you tune the hyperparameters.",
+    "definition": "Configuration values not learned from data: learning rate, model size, number of training steps, regularization strength. Chosen by experiment, usually judged on a validation set.",
+    "see": ["parameter", "learning-rate"]
+  },
+  "neural-network": {
+    "term": "Neural network",
+    "plain": "Many simple weighted-sum units stacked in layers, with gentle bends between them — enough to learn shapes no straight line can.",
+    "definition": "A model built from layers of linear transformations (weights and biases) separated by nonlinear activation functions. Trained end-to-end with gradient descent via backpropagation. The foundation of deep learning.",
+    "see": ["weight", "gradient-descent", "model"]
+  }
+}

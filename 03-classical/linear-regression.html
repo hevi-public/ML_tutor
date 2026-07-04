@@ -21,6 +21,7 @@
   <script defer src="../assets/js/site.js"></script>
   <script defer src="../assets/js/progress.js"></script>
   <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
   <script defer src="../assets/js/quiz.js"></script>
   <script defer src="../assets/js/viz/linear-regression.js"></script>
 </head>
@@ -45,11 +46,12 @@
   will I sell?" The simplest possible rule is a straight line drawn through your
   dots. To predict a day's sales, find the temperature on the line and read off the
   answer.</p>
-  <p>That's linear regression. The only question is: <strong>which line?</strong>
+  <p>That's <dfn data-term="linear-regression">linear regression</dfn>. The only
+  question is: <strong>which line?</strong>
   Some lines clearly summarize the dots better than others. Machine learning's answer:
   give each candidate line a <em>grade</em> — how far off its predictions are from the
   real answers — and find the line with the best grade. That grade is called the
-  <strong>loss</strong> (lower is better, like golf).</p>
+  <strong><dfn data-term="loss">loss</dfn></strong> (lower is better, like golf).</p>
 
   <h2>Try it: fit the line yourself</h2>
   <p>The dots below follow a hidden pattern plus some randomness. Use the two sliders
@@ -79,8 +81,9 @@
       <strong data-out="loss">–</strong> · best possible for these dots:
       <strong data-out="best">–</strong></p>
     <p class="hint">Tip: click anywhere on the chart to add your own dot and see how
-    it drags the best line around. One weird dot far from the others (an outlier)
-    has a surprisingly big effect — that's the squaring at work.</p>
+    it drags the best line around. One weird dot far from the others (an
+    <dfn data-term="outlier">outlier</dfn>) has a surprisingly big effect — that's
+    the squaring at work.</p>
   </div>
 
   <h2>How the computer "learns" the line</h2>
@@ -94,8 +97,8 @@
   </ol>
   <p>The clever part is step 3: the math tells the computer <em>which direction</em>
   to nudge, without trial and error. This nudging process is called
-  <strong>gradient descent</strong> — "descent" because it walks downhill toward
-  smaller mistakes. You'll meet it properly in Unit&nbsp;4; today it's enough to have
+  <strong><dfn data-term="gradient-descent">gradient descent</dfn></strong> —
+  "descent" because it walks downhill toward smaller mistakes. You'll meet it properly in Unit&nbsp;4; today it's enough to have
   seen it work.</p>
 
   <h2>The math (open as much as you like)</h2>
@@ -122,7 +125,8 @@
       </div>
       <ul class="symbol-legend" data-symbols="ŷ,w,x,b"></ul>
 
-      <p>And the grade — the <strong>mean squared error</strong>:</p>
+      <p>And the grade — the
+      <strong><dfn data-term="mean-squared-error">mean squared error</dfn></strong>:</p>
       <div class="math equation">L = \frac{1}{n} \sum_{i=1}^{n} \left(y_i - \hat{y}_i\right)^2</div>
       <div class="box plain-english">
         <span class="label">In plain English</span>
@@ -155,8 +159,8 @@
       <div class="box plain-english">
         <span class="label">In plain English</span>
         New weight = old weight, minus a small step (<span data-sym="η">eta</span>,
-        the "learning rate" — how big each nudge is) in the uphill direction. Minus
-        uphill = downhill.
+        the <dfn data-term="learning-rate">learning rate</dfn> — how big each nudge
+        is) in the uphill direction. Minus uphill = downhill.
       </div>
       <ul class="symbol-legend" data-symbols="∂,η,←"></ul>
       <p>Don't worry if the derivative itself feels like magic — Unit&nbsp;1 builds it

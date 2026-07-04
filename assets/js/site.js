@@ -70,6 +70,12 @@
       : `<a href="${ROOT}index.html">Home</a> › ${title}`;
     header.appendChild(crumb);
 
+    const glossaryLink = document.createElement("a");
+    glossaryLink.className = "header-link";
+    glossaryLink.href = ROOT + "glossary.html";
+    glossaryLink.textContent = "Glossary";
+    header.appendChild(glossaryLink);
+
     themeButton = document.createElement("button");
     themeButton.className = "theme-toggle";
     themeButton.title = "Switch color theme (auto → dark → light)";

@@ -29,6 +29,7 @@
   <script defer src="../assets/js/site.js"></script>
   <script defer src="../assets/js/progress.js"></script>
   <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
   <script defer src="../assets/js/quiz.js"></script>
   <!-- <script defer src="../assets/js/viz/YOUR-DEMO.js"></script> -->
 </head>
@@ -44,8 +45,10 @@
   </div>
 
   <h2>The idea</h2>
-  <p>Everyday analogy first. Introduce the technical term only after the idea:
-  "…that grade is called the <strong>loss</strong>."</p>
+  <p>Everyday analogy first. Introduce the technical term only after the idea, and
+  make it a glossary term:
+  "…that grade is called the <strong><dfn data-term="loss">loss</dfn></strong>."
+  (data-term slugs must exist in data/glossary.json — add new entries there.)</p>
 
   <h2>Try it</h2>
   <div class="demo" id="YOUR-demo">

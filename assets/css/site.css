@@ -382,6 +382,62 @@ p code, li code {
 }
 .quiz-score { font-weight: 600; }
 
+/* ---------- Glossary ---------- */
+
+.glossary-controls { margin: 1.5rem 0 2rem; }
+.glossary-controls input {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+}
+.glossary-controls input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.glossary-controls .count {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  margin: 0.4rem 0 0;
+}
+
+.letter-head {
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.2rem;
+  margin-top: 2.2rem;
+}
+
+.glossary-entry { margin: 1.4rem 0 1.8rem; }
+.glossary-entry h3 { margin: 0 0 0.3rem; }
+.glossary-entry .aliases {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-soft);
+}
+.glossary-entry .plain { margin: 0.2rem 0; }
+.glossary-entry .plain strong { color: var(--good); font-weight: 600; }
+.glossary-entry p { margin: 0.35rem 0; }
+.glossary-entry .see { font-size: 0.88rem; color: var(--text-soft); }
+.glossary-entry:target {
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+  margin-left: -0.9rem;
+  margin-right: -0.9rem;
+}
+
+.header-link {
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.header-link:hover { color: var(--accent); }
+
 /* ---------- Page footer nav ---------- */
 
 .page-nav {
