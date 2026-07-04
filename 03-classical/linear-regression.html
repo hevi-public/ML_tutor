@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Linear regression — ML Tutor</title>
+
+  <meta name="ml:unit" content="Classical ML">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../index.html|Home">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/linear-regression.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Classical ML</p>
+  <h1>Linear regression: teaching a line to make predictions</h1>
+  <p class="lede">The simplest machine that learns — and the one that quietly contains
+  most of the big ideas in machine learning.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    You only need to be comfortable reading a dot chart (a scatter plot). Any math
+    that appears below is optional, collapsible, and explained symbol by symbol.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Imagine you run an ice cream stand. You've noticed that hotter days mean more
+  sales, and you've kept notes: each day is one dot on a chart — temperature across,
+  sales up.</p>
+  <p>Now you'd like a <em>rule of thumb</em>: "for any temperature, roughly how much
+  will I sell?" The simplest possible rule is a straight line drawn through your
+  dots. To predict a day's sales, find the temperature on the line and read off the
+  answer.</p>
+  <p>That's linear regression. The only question is: <strong>which line?</strong>
+  Some lines clearly summarize the dots better than others. Machine learning's answer:
+  give each candidate line a <em>grade</em> — how far off its predictions are from the
+  real answers — and find the line with the best grade. That grade is called the
+  <strong>loss</strong> (lower is better, like golf).</p>
+
+  <h2>Try it: fit the line yourself</h2>
+  <p>The dots below follow a hidden pattern plus some randomness. Use the two sliders
+  to move the line until its grade is as low as you can get it. Then press
+  <em>"Let the computer fit it"</em> and watch it do the same thing — just faster.</p>
+
+  <div class="demo" id="linreg-demo">
+    <canvas width="640" height="384" aria-label="Scatter plot with an adjustable line through the points"></canvas>
+    <div class="controls">
+      <div class="control">
+        <label for="linreg-w">How steep the line is <span data-sym="w">(the weight, w)</span></label>
+        <input type="range" id="linreg-w" data-param="w" min="-2" max="3" step="0.01" value="0.2">
+        <output data-out="w">0.20</output>
+      </div>
+      <div class="control">
+        <label for="linreg-b">Where the line starts <span data-sym="b">(the bias, b)</span></label>
+        <input type="range" id="linreg-b" data-param="b" min="-2" max="10" step="0.05" value="5">
+        <output data-out="b">5.00</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" data-action="fit">Let the computer fit it</button>
+      <button class="action secondary" type="button" data-action="residuals">Show the mistakes (residuals)</button>
+      <button class="action secondary" type="button" data-action="reset">Reset</button>
+    </div>
+    <p class="readout">Your line's grade (average squared mistake):
+      <strong data-out="loss">–</strong> · best possible for these dots:
+      <strong data-out="best">–</strong></p>
+    <p class="hint">Tip: click anywhere on the chart to add your own dot and see how
+    it drags the best line around. One weird dot far from the others (an outlier)
+    has a surprisingly big effect — that's the squaring at work.</p>
+  </div>
+
+  <h2>How the computer "learns" the line</h2>
+  <p>When you pressed the button, the computer didn't try every possible line. It did
+  something smarter, and this three-step loop is the heart of most machine learning:</p>
+  <ol>
+    <li><strong>Guess</strong> — start with any line at all.</li>
+    <li><strong>Grade</strong> — measure how bad the guess is (the loss).</li>
+    <li><strong>Adjust</strong> — nudge the two sliders in whichever direction makes
+    the grade a little better. Repeat.</li>
+  </ol>
+  <p>The clever part is step 3: the math tells the computer <em>which direction</em>
+  to nudge, without trial and error. This nudging process is called
+  <strong>gradient descent</strong> — "descent" because it walks downhill toward
+  smaller mistakes. You'll meet it properly in Unit&nbsp;4; today it's enough to have
+  seen it work.</p>
+
+  <h2>The math (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>The line's prediction is: <em>take the input, multiply by how much it matters,
+      then add a starting offset.</em> The grade is: <em>for each dot, measure the miss,
+      square it (so misses above and below the line both count, and big misses count
+      a lot), then average over all dots.</em></p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <p>The prediction rule, written in symbols:</p>
+      <div class="math equation">\hat{y} = w x + b</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The prediction (<span data-sym="ŷ">y-hat</span>) is the input times a weight,
+        plus a starting offset.
+      </div>
+      <ul class="symbol-legend" data-symbols="ŷ,w,x,b"></ul>
+
+      <p>And the grade — the <strong>mean squared error</strong>:</p>
+      <div class="math equation">L = \frac{1}{n} \sum_{i=1}^{n} \left(y_i - \hat{y}_i\right)^2</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The loss is the average, over all <span data-sym="n">n</span> dots, of
+        (real answer minus prediction) squared.
+      </div>
+      <ul class="symbol-legend" data-symbols="L,n,∑,i,y"></ul>
+      <p>Tap any symbol chip (or the symbols in the equations) to hear its name and
+      what it stands for.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the derivation (how "which way to nudge" is computed)</summary>
+    <div class="layer-body">
+      <p>To know which way to nudge <span data-sym="w">w</span>, ask: "if I increase
+      <span data-sym="w">w</span> a tiny bit, does the loss go up or down?" Calculus
+      answers exactly that question; the answer is called a
+      <strong>derivative</strong> (∂, said "partial"):</p>
+      <div class="math equation">\frac{\partial L}{\partial w} = -\frac{2}{n} \sum_{i=1}^{n} x_i \left(y_i - \hat{y}_i\right)</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        "How the loss changes as the weight changes" is found by combining every dot's
+        miss, with bigger inputs getting more say. If this number is positive, the loss
+        grows when w grows — so nudge w <em>down</em>. If negative, nudge w <em>up</em>.
+      </div>
+      <p>Then update both numbers a small step in the downhill direction, and repeat:</p>
+      <div class="math equation">w \leftarrow w - \eta \, \frac{\partial L}{\partial w}
+        \qquad b \leftarrow b - \eta \, \frac{\partial L}{\partial b}</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        New weight = old weight, minus a small step (<span data-sym="η">eta</span>,
+        the "learning rate" — how big each nudge is) in the uphill direction. Minus
+        uphill = downhill.
+      </div>
+      <ul class="symbol-legend" data-symbols="∂,η,←"></ul>
+      <p>Don't worry if the derivative itself feels like magic — Unit&nbsp;1 builds it
+      from scratch, gently. The takeaway here: <em>the loss tells the computer not just
+      how wrong it is, but which direction to move to be less wrong.</em></p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <details class="layer">
+    <summary>Show the JavaScript (this is genuinely all of it)</summary>
+    <div class="layer-body">
+<pre><code class="language-javascript">// points: [{x, y}, ...] — the dots on the chart
+let w = 0, b = 0;             // start with any line at all (a flat one)
+const eta = 0.008;            // learning rate: how big each nudge is
+
+for (let step = 0; step &lt; 5000; step++) {
+  // Grade the current line, and note which way each slider should move
+  let gradW = 0, gradB = 0;
+  for (const p of points) {
+    const miss = p.y - (w * p.x + b);   // real answer minus prediction
+    gradW += -2 * p.x * miss;
+    gradB += -2 * miss;
+  }
+  // Nudge both numbers a small step downhill
+  w -= eta * (gradW / points.length);
+  b -= eta * (gradB / points.length);
+}
+// w and b now describe the best-fitting line</code></pre>
+      <p>This is exactly the code running in the demo above — see
+      <code>assets/js/viz/linear-regression.js</code>.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Everything you just did scales up. Real problems have many inputs instead of one
+  (temperature <em>and</em> day of week <em>and</em> location…) — that's still linear
+  regression, just with one weight per input. And when a straight line is too simple
+  for the pattern, we bend it — which is where neural networks begin (Unit&nbsp;4).</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "ŷ": { "name": "ŷ — \"y-hat\"", "pron": "say: \"why-hat\"",
+           "means": "The model's prediction. The hat means \"our estimate of\" — ŷ is our estimate of the real answer y.",
+           "short": "the model's prediction" },
+    "y": { "name": "y — the real answer", "pron": "say: \"why\"",
+           "means": "The true value we're trying to predict (yesterday's actual sales). y with a small i (yᵢ) means \"the answer for dot number i\".",
+           "short": "the real answer" },
+    "w": { "name": "w — the weight", "pron": "say: \"double-u\", or just \"weight\"",
+           "means": "How much the input matters. On the chart, it's the slope: how steep the line is.",
+           "short": "how much the input matters (slope)" },
+    "x": { "name": "x — the input", "pron": "say: \"ex\"",
+           "means": "The thing we know and predict from — the temperature in our story.",
+           "short": "the input" },
+    "b": { "name": "b — the bias", "pron": "say: \"bee\", or \"bias\"",
+           "means": "The starting offset: what the prediction is when the input is zero. On the chart, where the line crosses the left edge.",
+           "short": "the starting offset" },
+    "L": { "name": "L — the loss", "pron": "say: \"ell\", or \"loss\"",
+           "means": "The line's grade: the average squared mistake. Lower is better.",
+           "short": "the grade (lower = better)" },
+    "n": { "name": "n — how many dots", "pron": "say: \"en\"",
+           "means": "The number of data points. Dividing by n turns a total into an average.",
+           "short": "how many dots there are" },
+    "∑": { "name": "∑ — \"sum of\"", "pron": "say: \"sigma\" (a Greek capital S, for Sum)",
+           "means": "Add up what follows, once per dot. The i=1 below and n above mean: for dot 1, dot 2, … up to dot n.",
+           "short": "add these up, one per dot" },
+    "i": { "name": "i — the counter", "pron": "say: \"eye\"",
+           "means": "A counter that walks through the dots: i = 1 is the first dot, i = 2 the second, and so on.",
+           "short": "which dot we're on" },
+    "∂": { "name": "∂ — \"partial\"", "pron": "say: \"partial\" (a curly d)",
+           "means": "∂L/∂w reads \"how L changes as w changes\" — the effect of one knob while the others hold still.",
+           "short": "\"how this changes as that changes\"" },
+    "η": { "name": "η — \"eta\", the learning rate", "pron": "say: \"AY-tah\"",
+           "means": "How big each nudge is. Too small: learning crawls. Too big: it overshoots and bounces around.",
+           "short": "how big each nudge is" },
+    "←": { "name": "← — \"becomes\"", "pron": "say: \"gets\" or \"becomes\"",
+           "means": "Replace the value on the left with the result on the right — an update, like = in code.",
+           "short": "update: replace left with right" }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "linear-regression",
+    "questions": [
+      {
+        "q": "The line's grade — the loss — measures what?",
+        "choices": [
+          "How steep the line is",
+          "How far off the line's predictions are from the real answers, on average",
+          "How many dots are on the chart"
+        ],
+        "answer": 1,
+        "explain": "The loss grades predictions against reality: for each dot, how big was the miss? Steepness (w) is a setting we adjust — the loss is the score that tells us how good our settings are."
+      },
+      {
+        "q": "Why square each mistake instead of just using it as-is?",
+        "choices": [
+          "So misses above and below the line both count against us, and big misses count extra",
+          "Because computers multiply faster than they subtract",
+          "It's a historical convention with no practical effect"
+        ],
+        "answer": 0,
+        "explain": "Without squaring, a miss of +3 and a miss of −3 would cancel out to zero — a terrible line could get a perfect grade. Squaring makes every miss positive, and punishes a miss of 4 four times as hard as a miss of 2. (You saw this in the demo: one far-away dot drags the line hard.)"
+      },
+      {
+        "q": "When the computer \"fit the line automatically\", what was it actually doing?",
+        "choices": [
+          "Trying every possible line and keeping the best one",
+          "Drawing a line through the first and last dots",
+          "Repeatedly nudging the two settings in whichever direction lowered the grade"
+        ],
+        "answer": 2,
+        "explain": "That's gradient descent: guess, grade, adjust, repeat. The math (the derivative) tells it which direction lowers the loss, so no trial and error is needed — and the same loop trains giant neural networks."
+      }
+    ]
+  }
+  </script>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

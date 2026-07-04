@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!-- ML Tutor page template. Copy into a unit folder (e.g. 04-neural/) and fill in.
+     Every topic page follows the same flow:
+       Intuition → Interactive demo → Math (layered details) → Code → Quiz → Next.
+     Plain-language rules (PLAN.md §6): everyday words before jargon; every equation
+     followed by an "In plain English" box + symbol legend; no term or symbol used
+     before it's introduced. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAGE TITLE — ML Tutor</title>
+
+  <!-- Page contract, read by site.js -->
+  <meta name="ml:unit" content="UNIT NAME">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="PREV.html|PREV TITLE">
+  <meta name="ml:next" content="NEXT.html|NEXT TITLE">
+
+  <link rel="stylesheet" href="../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <!-- <script defer src="../assets/js/viz/YOUR-DEMO.js"></script> -->
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit N · UNIT NAME</p>
+  <h1>PAGE TITLE</h1>
+  <p class="lede">One-sentence hook in plain words.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    What this page assumes, with links to refreshers.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Everyday analogy first. Introduce the technical term only after the idea:
+  "…that grade is called the <strong>loss</strong>."</p>
+
+  <h2>Try it</h2>
+  <div class="demo" id="YOUR-demo">
+    <canvas width="640" height="384" aria-label="DESCRIBE THE DEMO"></canvas>
+    <!-- .controls with range+output pairs; .buttons with .action buttons;
+         .readout; .hint — see 03-classical/linear-regression.html -->
+  </div>
+
+  <h2>The math (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body"><p>…</p></div>
+  </details>
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">LATEX HERE</div>
+      <div class="box plain-english">
+        <span class="label">In plain English</span>
+        The same statement as a sentence.
+      </div>
+      <ul class="symbol-legend" data-symbols="COMMA,SEPARATED,SYMBOLS"></ul>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the derivation</summary>
+    <div class="layer-body"><p>…</p></div>
+  </details>
+
+  <h2>The code</h2>
+  <details class="layer">
+    <summary>Show the JavaScript</summary>
+    <div class="layer-body">
+<pre><code class="language-javascript">// …</code></pre>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>…</p>
+
+  <!-- Symbols used on this page: name, pronunciation, meaning, short chip text -->
+  <script type="application/json" class="symbols">
+  { "w": { "name": "w — the weight", "pron": "say: …", "means": "…", "short": "…" } }
+  </script>
+
+  <!-- Quiz: plain-worded understanding questions; id = stable page slug -->
+  <script type="application/json" class="quiz">
+  { "id": "PAGE-SLUG",
+    "questions": [
+      { "q": "…?", "choices": ["…", "…", "…"], "answer": 0, "explain": "…" } ] }
+  </script>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

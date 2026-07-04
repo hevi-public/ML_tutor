@@ -1,0 +1,17 @@
+{
+  "name": "ml-tutor",
+  "version": "0.1.0",
+  "description": "Interactive novice-to-expert machine learning tutor — static HTML/JS, plain language first",
+  "private": true,
+  "scripts": {
+    "dev": "http-server -p 8010 -c-1 -o /index.html ."
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@highlightjs/cdn-assets": "^11.11.1",
+    "katex": "^0.17.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
