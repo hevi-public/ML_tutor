@@ -78,7 +78,8 @@
       ctx.strokeStyle = active ? ML.cssVar("--accent") : ML.cssVar("--border");
       ctx.lineWidth = active ? 2.5 : 1.5;
       ctx.beginPath();
-      ctx.roundRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH, 8);
+      if (ctx.roundRect) ctx.roundRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH, 8);
+      else ctx.rect(cx - boxW / 2, cy - boxH / 2, boxW, boxH); // pre-2022 browsers
       ctx.fill();
       ctx.stroke();
 

@@ -68,6 +68,7 @@
     });
 
     const scoreLine = document.createElement("p");
+    scoreLine.setAttribute("role", "status"); // announced by screen readers
     root.appendChild(scoreLine);
 
     function finish() {

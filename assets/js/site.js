@@ -84,8 +84,10 @@
     }
 
     themeButton = document.createElement("button");
+    themeButton.type = "button";
     themeButton.className = "theme-toggle";
     themeButton.title = "Switch color theme (auto → dark → light)";
+    themeButton.setAttribute("aria-label", "Switch color theme");
     themeButton.addEventListener("click", cycleTheme);
     header.appendChild(themeButton);
     updateThemeButton();
@@ -164,10 +166,36 @@
     });
   }
 
+  /* ---------- Printing: unfold the collapsible layers ---------- */
+
+  let openedForPrint = [];
+  window.addEventListener("beforeprint", () => {
+    openedForPrint = [...document.querySelectorAll("details:not([open])")];
+    openedForPrint.forEach((d) => (d.open = true));
+  });
+  window.addEventListener("afterprint", () => {
+    openedForPrint.forEach((d) => (d.open = false));
+    openedForPrint = [];
+  });
+
+  /* ---------- Favicon (shared, injected — no per-page markup) ---------- */
+
+  function addFavicon() {
+    if (document.querySelector('link[rel="icon"]')) return;
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.href = "data:image/svg+xml," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+      '<circle cx="50" cy="50" r="46" fill="#2563eb"/>' +
+      '<text x="50" y="68" font-size="52" font-family="sans-serif" font-weight="700" fill="white" text-anchor="middle">ŷ</text></svg>');
+    document.head.appendChild(link);
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     buildHeader();
     buildPageNav();
     initKeys();
     renderMath();
+    addFavicon();
   });
 })();

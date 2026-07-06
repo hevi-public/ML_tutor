@@ -122,8 +122,8 @@
       if (!done.length) return;
       const box = document.getElementById("resume-box");
       const text = document.getElementById("resume-text");
-      text.innerHTML = `You've completed <strong>${done.length}</strong> page${done.length > 1 ? "s" : ""} so far. ` +
-        `Latest: <a href="03-classical/linear-regression.html">Linear regression</a>.`;
+      text.innerHTML = `You've completed <strong>${done.length}</strong> page${done.length > 1 ? "s" : ""} so far — ` +
+        `see them on <a href="map.html">the concept map</a>, or review with <a href="flashcards.html">flashcards</a>.`;
       box.hidden = false;
     });
   </script>
