@@ -108,4 +108,110 @@
       return ok / points.length;
     }
   };
+
+  /* Multi-class variant: softmax output + cross-entropy, for the MNIST lab.
+     Same hand-written backprop; the output delta is again (probability −
+     truth), just per class. Inputs are Float32Arrays scaled to 0..1. */
+  ML.MLPSoftmax = class {
+    // sizes: e.g. [784, 32, 10]
+    constructor(sizes, seed = 1) {
+      this.sizes = sizes;
+      const rnd = ML.rand.lcg(seed);
+      this.W = [];
+      this.B = [];
+      for (let l = 0; l < sizes.length - 1; l++) {
+        const scale = Math.sqrt(2 / sizes[l]); // He init for the ReLU hiddens
+        this.W.push(Array.from({ length: sizes[l + 1] }, () =>
+          Float32Array.from({ length: sizes[l] }, () => (rnd() * 2 - 1) * scale)));
+        this.B.push(new Float32Array(sizes[l + 1]));
+      }
+    }
+
+    forward(x) {
+      const acts = [x];
+      const L = this.W.length;
+      for (let l = 0; l < L; l++) {
+        const prev = acts[l];
+        const out = new Float32Array(this.sizes[l + 1]);
+        for (let j = 0; j < out.length; j++) {
+          let z = this.B[l][j];
+          const wj = this.W[l][j];
+          for (let i = 0; i < prev.length; i++) z += wj[i] * prev[i];
+          out[j] = l === L - 1 ? z : Math.max(0, z); // relu hiddens, raw output
+        }
+        acts.push(out);
+      }
+      // softmax on the last layer (stable: subtract the max first)
+      const logits = acts[L];
+      let max = -Infinity;
+      for (const z of logits) if (z > max) max = z;
+      let sum = 0;
+      const probs = new Float32Array(logits.length);
+      for (let j = 0; j < logits.length; j++) { probs[j] = Math.exp(logits[j] - max); sum += probs[j]; }
+      for (let j = 0; j < probs.length; j++) probs[j] /= sum;
+      acts[L] = probs;
+      return acts;
+    }
+
+    predict(x) {
+      const probs = this.forward(x)[this.W.length];
+      let best = 0;
+      for (let j = 1; j < probs.length; j++) if (probs[j] > probs[best]) best = j;
+      return best;
+    }
+
+    predictProbs(x) { return this.forward(x)[this.W.length]; }
+
+    // One step on a batch of {x, y} (y = class index); returns mean loss
+    trainBatch(batch, lr = 0.1) {
+      const L = this.W.length;
+      const gW = this.W.map((layer) => layer.map((row) => new Float32Array(row.length)));
+      const gB = this.B.map((row) => new Float32Array(row.length));
+      let loss = 0;
+
+      for (const p of batch) {
+        const acts = this.forward(p.x);
+        const probs = acts[L];
+        loss += -Math.log(Math.max(probs[p.y], 1e-9));
+
+        let delta = Float32Array.from(probs);
+        delta[p.y] -= 1; // softmax + cross-entropy: delta = prob − onehot
+        for (let l = L - 1; l >= 0; l--) {
+          const prev = acts[l];
+          for (let j = 0; j < delta.length; j++) {
+            gB[l][j] += delta[j];
+            const gwj = gW[l][j];
+            const dj = delta[j];
+            for (let i = 0; i < prev.length; i++) gwj[i] += dj * prev[i];
+          }
+          if (l > 0) {
+            const next = new Float32Array(this.sizes[l]);
+            for (let i = 0; i < next.length; i++) {
+              if (acts[l][i] <= 0) continue; // relu gate
+              let s = 0;
+              for (let j = 0; j < delta.length; j++) s += this.W[l][j][i] * delta[j];
+              next[i] = s;
+            }
+            delta = next;
+          }
+        }
+      }
+
+      const n = batch.length;
+      for (let l = 0; l < L; l++) {
+        for (let j = 0; j < this.W[l].length; j++) {
+          this.B[l][j] -= (lr * gB[l][j]) / n;
+          const wj = this.W[l][j], gwj = gW[l][j];
+          for (let i = 0; i < wj.length; i++) wj[i] -= (lr * gwj[i]) / n;
+        }
+      }
+      return loss / n;
+    }
+
+    accuracy(points) {
+      let ok = 0;
+      for (const p of points) if (this.predict(p.x) === p.y) ok++;
+      return ok / points.length;
+    }
+  };
 })(typeof window !== "undefined" ? window : self);

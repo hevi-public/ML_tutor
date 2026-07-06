@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Build autodiff yourself — ML Tutor</title>
+
+  <meta name="ml:unit" content="Expert track">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="../07-labs/mnist.html|The MNIST lab">
+  <meta name="ml:next" content="reading-papers.html|How to read a paper">
+
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Expert track</p>
+  <h1>Build the autodiff engine yourself</h1>
+  <p class="lede">The rite of passage. You've used this site's autodiff engine
+  since the backprop page — now write it from a blank file, and PyTorch stops
+  being magic forever.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-neural/backprop.html">Backpropagation</a>, cold. Open your
+    editor: this page is a guided build, and copying defeats it. Reference
+    solution: <code>assets/js/ml/autodiff.js</code> — but only after each
+    attempt.
+  </div>
+
+  <h2>The contract</h2>
+  <p>One class, <code>Value</code>, wrapping one number, such that:</p>
+<pre><code class="language-javascript">const w = new Value(-0.5), x = new Value(2), b = new Value(0.4);
+const loss = w.mul(x).add(b).sigmoid().sub(1).pow(2);
+loss.backward();
+console.log(w.grad); // exactly dLoss/dw — no numerical nudging</code></pre>
+  <p>Whatever expression the user builds, calling <code>backward()</code> on
+  the result must fill every participant's <code>.grad</code> with its true
+  nudge-effect on that result. That's the entire spec of an autodiff engine —
+  the rest is deciding what bookkeeping makes it inevitable.</p>
+
+  <h2>The build, in five steps</h2>
+
+  <details class="layer" open>
+    <summary>Step 1 — a Value remembers where it came from</summary>
+    <div class="layer-body">
+      <p>Try first: a class holding <code>data</code> (the number),
+      <code>grad</code> (starts 0), and — the load-bearing part — for values
+      produced by an operation, <em>which values produced it</em>. Every
+      computation quietly builds a family tree.</p>
+<pre><code class="language-javascript">class Value {
+  constructor(data, children = []) {
+    this.data = data;
+    this.grad = 0;
+    this._children = children;
+    this._backward = () => {};   // filled in by whoever creates me
+  }
+}</code></pre>
+      <p><code>_backward</code> is the design's one stroke of elegance: each
+      operation will install a tiny closure that knows how to pass blame to
+      its own parents. Nobody ever needs a global list of derivative rules —
+      each Value carries its own.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Step 2 — add and mul (write these before peeking)</summary>
+    <div class="layer-body">
+      <p>Each operation does three things: compute the result, record the
+      parentage, install the blame-passer. The local derivatives you need:
+      for addition, both parents inherit the child's gradient unchanged
+      (d(a+b)/da = 1); for multiplication, each parent gets the child's
+      gradient times <em>the other parent's value</em> (d(a·b)/da = b).</p>
+<pre><code class="language-javascript">add(other) {
+  const out = new Value(this.data + other.data, [this, other]);
+  out._backward = () => {
+    this.grad  += out.grad;
+    other.grad += out.grad;
+  };
+  return out;
+}
+
+mul(other) {
+  const out = new Value(this.data * other.data, [this, other]);
+  out._backward = () => {
+    this.grad  += other.data * out.grad;   // chain rule, one link
+    other.grad += this.data  * out.grad;
+  };
+  return out;
+}</code></pre>
+      <p><strong>The bug you must not write:</strong> those are
+      <code>+=</code>, not <code>=</code>. If a value is used twice —
+      <code>a.mul(a)</code>, or a weight feeding two neurons — blame arrives
+      along two paths and must <em>accumulate</em>. With <code>=</code>, the
+      second path silently overwrites the first, gradients come out subtly
+      wrong, training limps, and nothing crashes. This exact bug has consumed
+      real engineering careers' worth of debugging hours.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Step 3 — the nonlinearities</summary>
+    <div class="layer-body">
+      <p>Same pattern, one parent each. The local slopes: tanh′ = 1 − tanh²,
+      sigmoid′ = s(1−s), relu′ = 1 if positive else 0, and for
+      <code>pow(n)</code>: n·xⁿ⁻¹ — high-school calculus's greatest hits.
+      Note the pleasant trick in the first two: the derivative is expressed
+      in terms of the <em>output</em> you already computed, so nothing extra
+      needs saving.</p>
+<pre><code class="language-javascript">tanh() {
+  const t = Math.tanh(this.data);
+  const out = new Value(t, [this]);
+  out._backward = () => { this.grad += (1 - t * t) * out.grad; };
+  return out;
+}</code></pre>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Step 4 — backward(): the only subtle part</summary>
+    <div class="layer-body">
+      <p>Now the reverse sweep. Two requirements hide here. First, seed the
+      output: <code>this.grad = 1</code> (a thing's effect on itself). Second
+      — the subtle one — <strong>order</strong>. A node's
+      <code>_backward</code> must fire only after its grad is complete, i.e.
+      after every node <em>downstream</em> of it has fired. The standard
+      solution: a topological sort of the family tree, then walk it in
+      reverse.</p>
+<pre><code class="language-javascript">backward() {
+  const topo = [], seen = new Set();
+  (function build(v) {
+    if (seen.has(v)) return;
+    seen.add(v);
+    for (const c of v._children) build(c);
+    topo.push(v);                 // parents land before children
+  })(this);
+  for (const v of topo) v.grad = 0;   // fresh start each call
+  this.grad = 1;
+  for (let i = topo.length - 1; i >= 0; i--) topo[i]._backward();
+}</code></pre>
+      <p>Why not just recurse backwards from the output? Because of diamonds:
+      if a value's blame arrives via two paths and you fire it after the
+      first, it passes incomplete blame upstream. The topological order is
+      precisely the guarantee that never happens. (The <code>seen</code> set
+      handles the same diamond on the way down.)</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Step 5 — the victory lap: train something with it</summary>
+    <div class="layer-body">
+      <p>Prove the engine by using it as a trainer — this loop is logistic
+      regression with <em>zero</em> hand-derived gradients:</p>
+<pre><code class="language-javascript">let w = new Value(0), b = new Value(0);
+for (let step = 0; step &lt; 200; step++) {
+  let loss = new Value(0);
+  for (const p of points) {                       // {x, y} pairs
+    const prob = w.mul(p.x).add(b).sigmoid();
+    loss = loss.add(prob.sub(p.y).pow(2));
+  }
+  loss.backward();
+  w = new Value(w.data - 0.1 * w.grad);           // (or reuse & zero grads)
+  b = new Value(b.data - 0.1 * b.grad);
+}</code></pre>
+      <p>Sit with what just happened: you changed the <em>model</em> by editing
+      one line (the expression), and training still works, because gradients
+      are derived from the expression automatically. That decoupling — model
+      as expression, gradients for free — is THE productivity unlock of the
+      deep learning era. PyTorch adds tensors, GPU kernels, and forty
+      thousand engineering hours; the soul you have just written.</p>
+      <p>Verify yours the way this site verified its own: pick a gnarly
+      expression, compare every <code>.grad</code> against
+      <code>(f(x+h) − f(x−h)) / 2h</code> with h = 1e-6. If they match to
+      five decimals — and the <code>a.mul(a)</code> case gives 2a — your
+      engine is real.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You've built the machine the papers assume. Next: how to read the papers
+  themselves.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "autodiff-from-scratch",
+    "questions": [
+      {
+        "q": "Why must _backward use += instead of = when writing to a parent's grad?",
+        "choices": [
+          "+= is faster in JavaScript",
+          "A value used in two places receives blame along two paths, which must add — plain = silently overwrites the first path's contribution",
+          "Because grads start at 1, not 0"
+        ],
+        "answer": 1,
+        "explain": "The chain rule sums over paths. a.mul(a) is the smallest test: correct answer 2a, the =-bug gives a. Subtly-wrong gradients don't crash — they just train badly, which makes this the most expensive small bug in the field."
+      },
+      {
+        "q": "Why does backward() need a topological ordering rather than simple recursion from the output?",
+        "choices": [
+          "Recursion would overflow the stack on big graphs",
+          "A node must fire only after ALL its downstream consumers have contributed to its grad — with diamond-shaped graphs, naive recursion fires nodes with incomplete blame",
+          "Topological sorting makes the gradients more numerically precise"
+        ],
+        "answer": 1,
+        "explain": "If z feeds both p and q, z's grad isn't final until both have reported. Reverse topological order is exactly the schedule that guarantees completeness before firing. (Stack depth is a real concern too, but correctness is the reason.)"
+      },
+      {
+        "q": "What's the deepest consequence of \"gradients derived automatically from the expression\"?",
+        "choices": [
+          "Training runs faster than with hand-derived gradients",
+          "Researchers can change architectures by editing the forward expression alone — no re-deriving, no new backward code — which is what made rapid architecture experimentation (and the modern era) possible",
+          "It eliminates overfitting"
+        ],
+        "answer": 1,
+        "explain": "Before autodiff frameworks, every architecture tweak meant days of error-prone calculus. After: edit the forward pass, gradients follow. The transformer era's pace of experimentation is downstream of this one decoupling."
+      }
+    ]
+  }
+  </script>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

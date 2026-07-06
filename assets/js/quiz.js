@@ -41,6 +41,11 @@
           answered++;
           const isRight = ci === question.answer;
           if (isRight) correct++;
+          else if (window.MLProgress && quiz.id) {
+            window.MLProgress.recordMiss(
+              quiz.id, question.q,
+              question.choices[question.answer], question.explain || "");
+          }
 
           choices.querySelectorAll(".choice").forEach((b, bi) => {
             b.disabled = true;

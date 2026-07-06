@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concept map — ML Tutor</title>
+
+  <meta name="ml:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/progress.js"></script>
+</head>
+<body>
+<main class="wide">
+  <h1>The concept map</h1>
+  <p class="lede">Every page on the site and how the ideas feed each other.
+  Solid lines are the path; dashed lines are ideas paying off later. Green =
+  pages you've completed (finish a page's quiz to claim it).</p>
+
+  <div style="overflow-x: auto">
+    <svg id="concept-map" viewBox="0 0 1000 560" width="100%" role="img"
+         aria-label="Concept map of all site pages" style="min-width: 900px"></svg>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+    // x: progression left to right; y: lane within a unit
+    const NODES = [
+      { id: "what-is-ml", label: "What is ML?", unit: "Start", x: 45, y: 280, href: "00-start/what-is-ml.html" },
+
+      { id: "reading-math", label: "Reading math", unit: "Math", x: 150, y: 100, href: "01-math/reading-math.html" },
+      { id: "vectors-matrices", label: "Vectors", unit: "Math", x: 150, y: 220, href: "01-math/vectors-matrices.html" },
+      { id: "slopes-gradients", label: "Slopes", unit: "Math", x: 150, y: 340, href: "01-math/slopes-gradients.html" },
+      { id: "probability", label: "Probability", unit: "Math", x: 150, y: 460, href: "01-math/probability.html" },
+
+      { id: "data-and-features", label: "Data & features", unit: "Core", x: 265, y: 100, href: "02-core/data-and-features.html" },
+      { id: "train-and-test", label: "Train vs. test", unit: "Core", x: 265, y: 220, href: "02-core/train-and-test.html" },
+      { id: "overfitting", label: "Overfitting", unit: "Core", x: 265, y: 340, href: "02-core/overfitting.html" },
+      { id: "metrics", label: "Judging classifiers", unit: "Core", x: 265, y: 460, href: "02-core/metrics.html" },
+
+      { id: "linear-regression", label: "Linear regression", unit: "Classical", x: 390, y: 60, href: "03-classical/linear-regression.html" },
+      { id: "logistic-regression", label: "Logistic regression", unit: "Classical", x: 390, y: 170, href: "03-classical/logistic-regression.html" },
+      { id: "knn", label: "kNN", unit: "Classical", x: 390, y: 280, href: "03-classical/knn.html" },
+      { id: "decision-trees", label: "Trees & forests", unit: "Classical", x: 390, y: 390, href: "03-classical/decision-trees.html" },
+      { id: "kmeans", label: "k-means", unit: "Classical", x: 390, y: 500, href: "03-classical/kmeans.html" },
+
+      { id: "neurons", label: "The neuron", unit: "Neural", x: 515, y: 100, href: "04-neural/neurons.html" },
+      { id: "mlp", label: "Stacking neurons", unit: "Neural", x: 515, y: 220, href: "04-neural/mlp.html" },
+      { id: "backprop", label: "Backprop", unit: "Neural", x: 515, y: 340, href: "04-neural/backprop.html" },
+      { id: "optimizers", label: "Optimizers", unit: "Neural", x: 515, y: 460, href: "04-neural/optimizers.html" },
+
+      { id: "mlp-playground", label: "Playground lab", unit: "Labs", x: 625, y: 280, href: "07-labs/mlp-playground.html" },
+      { id: "mnist-lab", label: "MNIST lab", unit: "Labs", x: 625, y: 420, href: "07-labs/mnist.html" },
+
+      { id: "convolutions", label: "Convolutions", unit: "Deep", x: 730, y: 120, href: "05-deep/convolutions.html" },
+      { id: "embeddings", label: "Embeddings", unit: "Deep", x: 730, y: 260, href: "05-deep/embeddings.html" },
+      { id: "attention", label: "Attention", unit: "Deep", x: 730, y: 400, href: "05-deep/attention.html" },
+
+      { id: "llms", label: "LLMs", unit: "Modern", x: 845, y: 140, href: "06-modern/llms.html" },
+      { id: "finetuning", label: "Predictor → assistant", unit: "Modern", x: 845, y: 280, href: "06-modern/finetuning.html" },
+      { id: "diffusion", label: "Diffusion", unit: "Modern", x: 845, y: 420, href: "06-modern/diffusion.html" },
+
+      { id: "autodiff-from-scratch", label: "Build autodiff", unit: "Expert", x: 950, y: 160, href: "08-expert/autodiff-from-scratch.html" },
+      { id: "reading-papers", label: "Reading papers", unit: "Expert", x: 950, y: 300, href: "08-expert/reading-papers.html" },
+      { id: "when-ml-fails", label: "When ML fails", unit: "Expert", x: 950, y: 440, href: "08-expert/when-ml-fails.html" },
+    ];
+
+    // [from, to, dashed?] — solid = the path, dashed = an idea paying off later
+    const EDGES = [
+      ["what-is-ml", "reading-math"],
+      ["reading-math", "vectors-matrices"], ["vectors-matrices", "slopes-gradients"],
+      ["slopes-gradients", "probability"],
+      ["probability", "data-and-features"],
+      ["data-and-features", "train-and-test"], ["train-and-test", "overfitting"],
+      ["overfitting", "metrics"],
+      ["metrics", "linear-regression"],
+      ["linear-regression", "logistic-regression"], ["logistic-regression", "knn"],
+      ["knn", "decision-trees"], ["decision-trees", "kmeans"],
+      ["kmeans", "neurons"],
+      ["neurons", "mlp"], ["mlp", "backprop"], ["backprop", "optimizers"],
+      ["optimizers", "mlp-playground"],
+      ["mlp-playground", "mnist-lab"],
+      ["mlp-playground", "convolutions"],
+      ["convolutions", "embeddings"], ["embeddings", "attention"],
+      ["attention", "llms"],
+      ["llms", "finetuning"], ["finetuning", "diffusion"],
+      ["mnist-lab", "autodiff-from-scratch"],
+      ["autodiff-from-scratch", "reading-papers"], ["reading-papers", "when-ml-fails"],
+      // dashed: earlier ideas paying off later
+      ["slopes-gradients", "backprop", true],
+      ["vectors-matrices", "embeddings", true],
+      ["overfitting", "decision-trees", true],
+      ["logistic-regression", "neurons", true],
+      ["metrics", "when-ml-fails", true],
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const svg = document.getElementById("concept-map");
+      const NS = "http://www.w3.org/2000/svg";
+      const byId = Object.fromEntries(NODES.map((n) => [n.id, n]));
+      const done = window.MLProgress ? MLProgress.all() : {};
+
+      for (const [from, to, dashed] of EDGES) {
+        const a = byId[from], b = byId[to];
+        const line = document.createElementNS(NS, "line");
+        line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+        line.setAttribute("stroke", "var(--border)");
+        line.setAttribute("stroke-width", dashed ? 1.2 : 2);
+        if (dashed) line.setAttribute("stroke-dasharray", "5 4");
+        svg.appendChild(line);
+      }
+
+      for (const n of NODES) {
+        const g = document.createElementNS(NS, "g");
+        g.style.cursor = "pointer";
+        g.addEventListener("click", () => { location.href = n.href; });
+
+        const isDone = Boolean(done[n.id]?.completedAt);
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", n.x); c.setAttribute("cy", n.y);
+        c.setAttribute("r", 11);
+        c.setAttribute("fill", isDone ? "var(--good)" : "var(--bg-soft)");
+        c.setAttribute("stroke", isDone ? "var(--good)" : "var(--accent)");
+        c.setAttribute("stroke-width", 2);
+        g.appendChild(c);
+
+        const t = document.createElementNS(NS, "text");
+        t.setAttribute("x", n.x); t.setAttribute("y", n.y + 28);
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("fill", "var(--text)");
+        t.setAttribute("font-size", "12");
+        t.textContent = n.label;
+        g.appendChild(t);
+
+        const title = document.createElementNS(NS, "title");
+        title.textContent = `${n.unit}: ${n.label}${isDone ? " ✓" : ""}`;
+        g.appendChild(title);
+        svg.appendChild(g);
+      }
+
+      const doneCount = NODES.filter((n) => done[n.id]?.completedAt).length;
+      const label = document.createElementNS(NS, "text");
+      label.setAttribute("x", 12); label.setAttribute("y", 24);
+      label.setAttribute("fill", "var(--text-soft)");
+      label.setAttribute("font-size", "13");
+      label.textContent = `${doneCount} of ${NODES.length} pages completed`;
+      svg.appendChild(label);
+    });
+  })();
+  </script>
+</main>
+</body>
+</html>

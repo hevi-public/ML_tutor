@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Search — ML Tutor</title>
+
+  <meta name="ml:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+</head>
+<body>
+<main>
+  <h1>Search</h1>
+  <p class="lede">Pages, glossary terms, and symbols — plain phrasing works:
+  try "how wrong the model is", "memorizing", or "curly d".</p>
+
+  <div class="glossary-controls">
+    <input type="search" id="search-input" placeholder="Search everything…"
+           aria-label="Search the site" autofocus>
+    <p class="count" id="search-count"></p>
+  </div>
+
+  <div id="search-results"></div>
+
+  <script>
+  (function () {
+    "use strict";
+    document.addEventListener("DOMContentLoaded", async () => {
+      const resultsEl = document.getElementById("search-results");
+      const input = document.getElementById("search-input");
+      const count = document.getElementById("search-count");
+      let index;
+      try {
+        index = await (await fetch("data/search-index.json")).json();
+      } catch {
+        resultsEl.innerHTML = "<p>Couldn't load the search index — start the dev server: <code>npm run dev</code></p>";
+        return;
+      }
+
+      // pre-lowercase everything once
+      for (const e of index) {
+        e._t = e.t.toLowerCase();
+        e._h = e.h.join(" ").toLowerCase();
+        e._b = e.b.toLowerCase();
+      }
+
+      function search(q) {
+        const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+        if (!terms.length) return [];
+        const scored = [];
+        for (const e of index) {
+          let score = 0, ok = true;
+          for (const term of terms) {
+            const inT = e._t.includes(term), inH = e._h.includes(term), inB = e._b.includes(term);
+            if (!inT && !inH && !inB) { ok = false; break; }
+            score += inT ? 5 : 0;
+            score += inH ? 3 : 0;
+            score += inB ? 1 : 0;
+          }
+          if (ok) scored.push({ e, score });
+        }
+        return scored.sort((a, b) => b.score - a.score).slice(0, 20);
+      }
+
+      function excerpt(e, q) {
+        const term = q.toLowerCase().split(/\s+/)[0];
+        const i = e._b.indexOf(term);
+        if (i < 0) return e.b.slice(0, 140) + "…";
+        const start = Math.max(0, i - 60);
+        return (start ? "…" : "") + e.b.slice(start, i + 90) + "…";
+      }
+
+      function render() {
+        const q = input.value.trim();
+        const hits = search(q);
+        count.textContent = q ? `${hits.length} result${hits.length === 1 ? "" : "s"}` : "";
+        resultsEl.innerHTML = hits.map(({ e }) =>
+          `<article class="glossary-entry">
+             <h3><a href="${e.u}">${e.t}</a>
+               <span class="aliases">${e.unit}</span></h3>
+             <p>${excerpt(e, q)}</p>
+           </article>`).join("");
+      }
+
+      input.addEventListener("input", render);
+      // arriving with ?q=… (from the header link on other pages)
+      const preset = new URLSearchParams(location.search).get("q");
+      if (preset) { input.value = preset; render(); }
+    });
+  })();
+  </script>
+</main>
+</body>
+</html>

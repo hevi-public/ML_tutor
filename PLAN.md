@@ -168,8 +168,10 @@ prose, math, demos, quizzes:
    core path (logreg, kNN, trees+forests, k-means); SVM, naive Bayes, PCA are
    backlog — slot them in whenever, the library and template make each a
    one-page job. autodiff.js lands with Unit 4, which is what needs it.*
-5. **Units 4–5** + the MLP playground lab (Web Worker training).
-6. **Units 6–8**, concept map, search, flashcards.
+5. **Units 4–5** + the MLP playground lab (Web Worker training). *Done.*
+6. **Units 6–8**, concept map, search, flashcards. *Done — includes the MNIST
+   lab (data via `npm run fetch:mnist`), notation.html, and the search index
+   (`npm run build:index` — rerun after adding pages).*
 7. **Polish** — a11y pass, print styles, cross-browser check, offline check.
 
 ## 8. Open decisions (defaults chosen, easy to change)

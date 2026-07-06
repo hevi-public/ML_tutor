@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>When ML fails — ML Tutor</title>
+
+  <meta name="ml:unit" content="Expert track">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="reading-papers.html|How to read a paper">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Expert track</p>
+  <h1>When ML fails: the expert's real syllabus</h1>
+  <p class="lede">The math on this site mostly works. Deployed systems mostly
+  fail anyway — and almost never for mathematical reasons. This page is the
+  difference between knowing ML and being trusted with it.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-core/train-and-test.html">Unit 2</a> — every failure here
+    is one of its lessons, escaped into the world and grown teeth.
+  </div>
+
+  <h2>The recurring villains</h2>
+
+  <h3>1. The model learned the wrong thing perfectly</h3>
+  <p>A famous genre: the tank detector that actually detected sunny weather
+  (all tank photos were taken on sunny days); the pneumonia model that
+  learned to read which hospital's X-ray machine took the image (sicker
+  patients went to sicker hospitals); the wolf classifier that was a snow
+  classifier. Models optimize the loss on the data given — they have no
+  loyalty whatsoever to the concept in your head. This is called
+  <em>shortcut learning</em>, and its detector is Unit 2 honesty applied
+  ruthlessly: test on data where the shortcut breaks (cloudy tanks, same
+  machine, wolves on grass) before someone's safety depends on it.</p>
+
+  <h3>2. Leakage: the answer was hiding in the inputs</h3>
+  <p>The model predicting patient death with uncanny accuracy — using
+  features that included "palliative care ordered." True on the training
+  data, useless in the clinic (by then you don't need a model), and worse
+  than useless before (the signal isn't there yet). Leakage is any feature
+  that won't exist, or won't mean the same thing, at prediction time. It's
+  the single most common cause of "too good to be true" results — so treat
+  too-good-to-be-true as a smoke alarm, not a triumph.</p>
+
+  <h3>3. The world moved: distribution shift</h3>
+  <p>Every model is a photograph of its training data's era. Consumer
+  behavior models trained on 2019 met 2020. Spam evolves <em>against</em>
+  the filter (the adversary reads your boundary and routes around it).
+  Nothing in training warns you — the loss was minimized on a world that no
+  longer exists. Deployed ML is therefore a <em>process</em>: monitor live
+  accuracy, watch input distributions drift, retrain on schedule. A model
+  without monitoring is a photograph someone is treating as a window.</p>
+
+  <h3>4. Bias: the mirror problem</h3>
+  <p>A hiring model trained on past decisions learns past discrimination —
+  now laundered through a machine and stamped "objective." The mechanism is
+  banal, which is what makes it dangerous: the model did its job (match the
+  training labels); the labels carried the harm. And Unit 2's metrics
+  lessons return with force: a model can have equal <em>accuracy</em> across
+  two groups while having wildly different <em>false-positive rates</em>
+  between them — the group-wise confusion matrix, not the headline number,
+  is where fairness lives or dies. There are genuine open trade-offs here
+  (several reasonable fairness definitions are mathematically impossible to
+  satisfy at once), but the floor is simple: measure per group, publish what
+  you measure, and keep a human appeal path for consequential decisions.</p>
+
+  <h3>5. Goodhart's law: the metric ate the goal</h3>
+  <p>"When a measure becomes a target, it ceases to be a good measure."
+  Recommendation systems optimizing "engagement" discovered outrage;
+  RLHF models optimizing "human approval" discovered flattery and confident
+  bluffing. Every metric is a proxy, every proxy has a gap, and a powerful
+  optimizer will find the gap and move into it. The loss you choose is the
+  world you get — choose while imagining a genie who grants exactly what
+  you asked.</p>
+
+  <h2>The expert's checklist</h2>
+  <p>Compressed to a card — the questions to ask of any ML system, including
+  your own:</p>
+  <ul>
+    <li>What data was this trained on, and who's missing from it?</li>
+    <li>Could any feature be leaking the answer? (Is it too good?)</li>
+    <li>What shortcut would be easier to learn than the real concept?</li>
+    <li>How will we know when the world drifts away from the training data?</li>
+    <li>What do the per-group confusion matrices look like?</li>
+    <li>If the metric were satisfied in the laziest possible way, what would
+    that look like — and would we notice?</li>
+    <li>What happens to the person affected when the model is wrong, and is
+    there a path to appeal?</li>
+  </ul>
+
+  <div class="box plain-english">
+    <span class="label">The graduation sentence</span>
+    You came to this site not knowing what θ was called. You're leaving with
+    the questions experts ask. The models will keep changing; these
+    questions won't.
+  </div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Out into the field: the <a href="reading-papers.html">reading
+  list</a> for depth, the <a href="../07-labs/mnist.html">labs</a> to keep
+  your hands warm, and the <a href="../glossary.html">glossary</a> and
+  <a href="../notation.html">notation guide</a> whenever the jargon fog
+  rolls in. This site's guided path ends here — deliberately, at the
+  beginning.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "when-ml-fails",
+    "questions": [
+      {
+        "q": "The wolf-vs-dog classifier was secretly a snow classifier. What failed?",
+        "choices": [
+          "The network was too small to learn wolves",
+          "Nothing, mathematically: it minimized its loss perfectly — on data where snow WAS the easiest predictive signal. The concept in the builder's head was never in the objective",
+          "The learning rate was too high"
+        ],
+        "answer": 1,
+        "explain": "Shortcut learning is optimization succeeding at the task as actually specified. The fix isn't better math — it's adversarial honesty about evaluation: test where the shortcut breaks, before deployment does it for you."
+      },
+      {
+        "q": "Your churn model scores an incredible 99.8% in validation. The seasoned response?",
+        "choices": [
+          "Ship it before the numbers change",
+          "Treat it as a smoke alarm: hunt for leakage — some feature (a cancellation flag, a post-hoc field) is probably smuggling the answer into the inputs",
+          "Add regularization to bring it down to a believable number"
+        ],
+        "answer": 1,
+        "explain": "Too-good-to-be-true almost always is. The classic tell: a feature that won't exist (or won't mean the same) at prediction time. Audit features by asking of each: \"would I know this BEFORE the outcome?\""
+      },
+      {
+        "q": "A loan model shows equal accuracy for two demographic groups. A fairness audit is therefore…",
+        "choices": [
+          "Complete — equal accuracy is equal treatment",
+          "Barely begun: equal accuracy can coexist with very different false-positive rates between groups — one group's errors may be mostly wrongful denials. The per-group confusion matrix is the real audit",
+          "Unnecessary if the model never saw demographic features"
+        ],
+        "answer": 1,
+        "explain": "Accuracy blends both error types; fairness lives in their split. (And omitting demographic features doesn't help — zip codes, names, and purchase histories proxy them relentlessly. Measuring per group is the only way to know.)"
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "greek": {
+    "title": "Greek letters",
+    "entries": [
+      { "sym": "α", "name": "alpha", "say": "AL-fah", "means": "A small tuning number — often a learning rate or a mixing weight.", "aliases": ["fishy a"] },
+      { "sym": "β", "name": "beta", "say": "BAY-tah", "means": "Another tuning number; also the weights in classical statistics, and momentum's decay factor.", "aliases": ["curly B"] },
+      { "sym": "δ, Δ", "name": "delta", "say": "DEL-tah", "means": "\"The change in\" — Δx is \"how much x changed.\" Lowercase δ often marks a small error signal (backprop's per-neuron blame).", "aliases": ["triangle"] },
+      { "sym": "ε", "name": "epsilon", "say": "EP-sih-lon", "means": "A tiny amount: leftover noise, or a small constant added to avoid dividing by zero.", "aliases": ["curly e"] },
+      { "sym": "η", "name": "eta", "say": "AY-tah", "means": "The learning rate — how big each training nudge is.", "aliases": ["n with a tail"], "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "θ", "name": "theta", "say": "THAY-tah", "means": "\"All the model's settings, bundled into one name.\" When you see θ, think \"the knobs.\"", "aliases": ["circle with a line", "o with a dash"] },
+      { "sym": "λ", "name": "lambda", "say": "LAM-dah", "means": "A strength dial — classically, how hard regularization punishes dramatic settings.", "aliases": ["upside-down y"], "taughtIn": { "href": "02-core/overfitting.html", "title": "Overfitting" } },
+      { "sym": "μ", "name": "mu", "say": "MEW", "means": "An average. μ with a subscript (μ_c) is the average of one group — a cluster center.", "aliases": ["u with a tail"], "taughtIn": { "href": "01-math/probability.html", "title": "Probability & statistics" } },
+      { "sym": "σ (lowercase)", "name": "sigma", "say": "SIG-mah", "means": "Two jobs, context decides: the standard deviation (spread around the average), OR the sigmoid squashing function σ(z).", "aliases": ["little o with a hat handle"], "taughtIn": { "href": "01-math/probability.html", "title": "Probability & statistics" } },
+      { "sym": "Σ (capital)", "name": "sigma", "say": "SIG-mah", "means": "\"Sum of\": add up what follows, once per item in the range shown below and above it.", "aliases": ["E-looking symbol", "pointy E"], "taughtIn": { "href": "01-math/reading-math.html", "title": "How to read math" } },
+      { "sym": "π", "name": "pi", "say": "PIE", "means": "3.14159…, and in reinforcement learning, \"a policy\" — a strategy for choosing actions.", "aliases": ["two-legged table"] },
+      { "sym": "φ", "name": "phi", "say": "FIE (or FEE)", "means": "Conventionally, a transformation applied to inputs — \"the features, after processing.\"", "aliases": ["circle with a stick through it"] }
+    ]
+  },
+  "operators": {
+    "title": "Operators & marks",
+    "entries": [
+      { "sym": "=", "name": "equals", "say": "is", "means": "The sentence's verb. Split the equation here: left = the thing being defined, right = the recipe.", "taughtIn": { "href": "01-math/reading-math.html", "title": "How to read math" } },
+      { "sym": "≈", "name": "approximately equals", "say": "is roughly", "means": "Equal for practical purposes — often exact in the limit as some nudge shrinks to nothing.", "aliases": ["squiggly equals", "double tilde"] },
+      { "sym": "←", "name": "assignment arrow", "say": "becomes", "means": "An update: replace the left side with the result on the right. The = of code, in math clothes.", "aliases": ["left arrow"], "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "∑", "name": "summation", "say": "the sum of", "means": "Add up what follows, once per value of the counter. A for-loop in a toga.", "aliases": ["E-looking symbol", "capital sigma"], "taughtIn": { "href": "01-math/reading-math.html", "title": "How to read math" } },
+      { "sym": "∏", "name": "product", "say": "the product of", "means": "Same as ∑, but multiply instead of add.", "aliases": ["tall gate", "capital pi"] },
+      { "sym": "∈", "name": "element of", "say": "is in", "means": "Membership: \"x ∈ D\" reads \"x is one of the items in D.\"", "aliases": ["rounded E", "euro-ish symbol"] },
+      { "sym": "|x|", "name": "absolute value", "say": "the absolute value of x", "means": "Drop the minus sign: how big, ignoring direction.", "aliases": ["bars around x"] },
+      { "sym": "‖x‖", "name": "norm", "say": "the norm of x", "means": "The length of a vector (an arrow). ‖a − b‖ is the distance between two points.", "aliases": ["double bars"], "taughtIn": { "href": "03-classical/knn.html", "title": "k-nearest neighbors" } },
+      { "sym": "x̂", "name": "hat", "say": "x-hat", "means": "\"Our estimate of x\" — the hat marks a guess. ŷ is the model's prediction of the true y.", "aliases": ["little roof"], "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "xᵢ", "name": "subscript", "say": "x sub i", "means": "Item number i in a list. The subscript is a counter, nothing more.", "aliases": ["little letter below the line"], "taughtIn": { "href": "01-math/reading-math.html", "title": "How to read math" } },
+      { "sym": "x²", "name": "superscript / power", "say": "x squared", "means": "Repeated multiplication: x·x. Squaring makes everything positive and punishes big values extra — why it's inside so many losses.", "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "√", "name": "square root", "say": "the square root of", "means": "Undo a squaring: √9 = 3. Often used to return to ordinary units after squaring gaps.", "aliases": ["tick with a roof"] },
+      { "sym": "∂", "name": "partial derivative", "say": "partial", "means": "\"How this changes as that changes,\" nudging one input while the others hold still. ∂L/∂w = the loss's sensitivity to one weight.", "aliases": ["curly d", "backwards 6"], "taughtIn": { "href": "01-math/slopes-gradients.html", "title": "Slopes & gradients" } },
+      { "sym": "∇", "name": "nabla / gradient", "say": "nabla (or \"grad\")", "means": "All the partial derivatives at once, bundled into one vector. Points uphill; training steps the other way.", "aliases": ["upside-down triangle"], "taughtIn": { "href": "01-math/slopes-gradients.html", "title": "Slopes & gradients" } },
+      { "sym": "𝔼", "name": "expected value", "say": "the expected value of", "means": "The long-run average of something random, weighted by how likely each outcome is.", "aliases": ["fancy E", "double-struck E"] },
+      { "sym": "argmin / argmax", "name": "argmin", "say": "arg-min", "means": "\"The setting that makes the following smallest (largest)\" — not the small value itself, but WHICH knob position achieves it. Training is one giant argmin of the loss.", "taughtIn": { "href": "01-math/reading-math.html", "title": "How to read math" } },
+      { "sym": "log", "name": "logarithm", "say": "log", "means": "The undo of e-to-the-power. In losses: gentle near 1 (small penalty for near-certainty in the truth), brutal near 0 (huge penalty for confident wrongness).", "taughtIn": { "href": "03-classical/logistic-regression.html", "title": "Logistic regression" } },
+      { "sym": "e", "name": "Euler's number", "say": "ee", "means": "≈ 2.718, the constant nature keeps choosing. e⁻ᶻ shrinks fast as z grows — the engine inside sigmoid and softmax.", "taughtIn": { "href": "03-classical/logistic-regression.html", "title": "Logistic regression" } }
+    ]
+  },
+  "ml": {
+    "title": "ML-specific symbols",
+    "entries": [
+      { "sym": "x", "name": "the input", "say": "ex", "means": "What we predict from. Bold 𝐱 = the whole input vector (all features).", "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "y", "name": "the true answer", "say": "why", "means": "The label: what actually happened. The model's guesses are graded against it.", "taughtIn": { "href": "02-core/data-and-features.html", "title": "Data & features" } },
+      { "sym": "ŷ", "name": "the prediction", "say": "why-hat", "means": "The model's guess at y. Hat = estimate.", "aliases": ["y with a roof"], "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "w, 𝐰", "name": "weight(s)", "say": "weight", "means": "How much an input matters. Bold = one weight per feature; 𝐰·𝐱 is the dot product at the heart of nearly every model.", "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "b", "name": "the bias", "say": "bee", "means": "The starting offset — the prediction when every input is zero. (Unrelated to dataset bias; the word is overworked.)", "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "L", "name": "the loss", "say": "ell", "means": "The model's grade: how wrong it is, as one number. Lower is better. Also seen as J (an older convention for the same idea).", "taughtIn": { "href": "03-classical/linear-regression.html", "title": "Linear regression" } },
+      { "sym": "n", "name": "the count", "say": "en", "means": "How many: data points, features, whatever's being counted. Dividing by n turns totals into averages.", "taughtIn": { "href": "01-math/reading-math.html", "title": "How to read math" } },
+      { "sym": "σ(z)", "name": "the sigmoid", "say": "SIG-moid of z", "means": "The S-shaped squasher: any score in, a 0-to-1 probability out.", "taughtIn": { "href": "03-classical/logistic-regression.html", "title": "Logistic regression" } },
+      { "sym": "softmax", "name": "softmax", "say": "soft-max", "means": "Scores in, percentages out (positive, summing to 100%). Sigmoid's many-option sibling: attention weights, classifiers, next-token probabilities.", "taughtIn": { "href": "05-deep/attention.html", "title": "Attention" } },
+      { "sym": "q, k, v", "name": "query, key, value", "say": "query, key, value", "means": "Attention's three roles: what I'm looking for, what each word advertises, what each word actually hands over.", "taughtIn": { "href": "05-deep/attention.html", "title": "Attention" } },
+      { "sym": "d(a, b)", "name": "distance", "say": "the distance between a and b", "means": "How far apart two data points are — usually the straight-line (Euclidean) distance.", "taughtIn": { "href": "03-classical/knn.html", "title": "k-nearest neighbors" } },
+      { "sym": "g(z)", "name": "activation function", "say": "gee of z", "means": "The bend after a neuron's weighted sum: ReLU, tanh, sigmoid. Without it, stacked layers collapse into one.", "taughtIn": { "href": "04-neural/neurons.html", "title": "The neuron" } }
+    ]
+  }
+}

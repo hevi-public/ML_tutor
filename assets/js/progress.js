@@ -47,5 +47,22 @@
     all() {
       return load().pages;
     },
+
+    // Missed quiz questions become flashcards (see flashcards.html)
+    recordMiss(pageId, question, answer, explain) {
+      const KEY_M = "ml-tutor:missed";
+      let missed;
+      try { missed = JSON.parse(localStorage.getItem(KEY_M)) || []; }
+      catch { missed = []; }
+      if (!missed.some((m) => m.q === question)) {
+        missed.push({ pageId, q: question, a: answer, explain });
+        localStorage.setItem(KEY_M, JSON.stringify(missed.slice(-100)));
+      }
+    },
+
+    misses() {
+      try { return JSON.parse(localStorage.getItem("ml-tutor:missed")) || []; }
+      catch { return []; }
+    },
   };
 })();

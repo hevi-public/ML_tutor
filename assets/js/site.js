@@ -70,11 +70,18 @@
       : `<a href="${ROOT}index.html">Home</a> › ${title}`;
     header.appendChild(crumb);
 
-    const glossaryLink = document.createElement("a");
-    glossaryLink.className = "header-link";
-    glossaryLink.href = ROOT + "glossary.html";
-    glossaryLink.textContent = "Glossary";
-    header.appendChild(glossaryLink);
+    for (const [href, label] of [
+      ["glossary.html", "Glossary"],
+      ["notation.html", "Symbols"],
+      ["map.html", "Map"],
+      ["search.html", "Search"],
+    ]) {
+      const a = document.createElement("a");
+      a.className = "header-link";
+      a.href = ROOT + href;
+      a.textContent = label;
+      header.appendChild(a);
+    }
 
     themeButton = document.createElement("button");
     themeButton.className = "theme-toggle";
@@ -129,6 +136,12 @@
       if (e.target.closest("input, textarea, select, [contenteditable]")) return;
       if (e.key === "ArrowLeft") document.querySelector(".page-nav .prev")?.click();
       if (e.key === "ArrowRight") document.querySelector(".page-nav .next")?.click();
+      if (e.key === "/") {
+        e.preventDefault();
+        const onPage = document.getElementById("search-input");
+        if (onPage) onPage.focus();
+        else location.href = ROOT + "search.html";
+      }
     });
   }
 

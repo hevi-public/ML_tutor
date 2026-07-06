@@ -4,7 +4,9 @@
   "description": "Interactive novice-to-expert machine learning tutor — static HTML/JS, plain language first",
   "private": true,
   "scripts": {
-    "dev": "http-server -p 8010 -c-1 -o /index.html ."
+    "dev": "http-server -p 8010 -c-1 -o /index.html .",
+    "build:index": "node scripts/build-search-index.js",
+    "fetch:mnist": "node scripts/fetch-mnist.js"
   },
   "license": "MIT",
   "dependencies": {

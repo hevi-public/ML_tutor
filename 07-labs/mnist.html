@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MNIST lab: real handwriting — ML Tutor</title>
+
+  <meta name="ml:unit" content="Practice labs">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="mlp-playground.html|The MLP playground">
+  <meta name="ml:next" content="../08-expert/autodiff-from-scratch.html|Build autodiff yourself">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/mnist.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Practice labs</p>
+  <h1>The MNIST lab: real handwriting, real model</h1>
+  <p class="lede">No more toy dots. Two thousand actual handwritten digits,
+  collected in the 1990s and classified by every ML student since — now it's
+  your turn, live, in this tab.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    The <a href="mlp-playground.html">playground</a>. Same machinery here —
+    the input just grew from 2 numbers to 784 (each digit is 28×28 pixels,
+    every pixel a feature).
+  </div>
+
+  <h2>Train it</h2>
+  <p>The network is [784 → hidden → 10]: pixels in, one score per digit out,
+  softmax turning scores into percentages. Watch the rotating parade of test
+  digits below — every digit is outlined by the model's current verdict
+  (green = right, red = wrong, its guess in the corner):</p>
+
+  <div class="demo" id="mnist-lab">
+    <div class="controls">
+      <div class="control">
+        <label>Hidden neurons</label>
+        <input type="range" data-param="hidden" min="8" max="64" step="8" value="32">
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" data-action="train">Train</button>
+    </div>
+    <p class="readout"><span data-out="data">the dataset loads when you press Train (~2 MB)</span><br>
+      steps: <strong data-out="step">0</strong> ·
+      loss: <strong data-out="loss">–</strong> ·
+      accuracy on trained digits: <strong data-out="train-acc">–</strong> ·
+      on never-seen digits: <strong data-out="test-acc">–</strong></p>
+
+    <canvas class="digit-grid" width="640" height="128"
+            aria-label="A rotating sample of test digits with the model's current predictions"></canvas>
+
+    <h3 style="margin-top: 1.6rem">Now draw your own</h3>
+    <p class="hint" style="margin-top: 0">Draw a digit below (big, centered —
+    like the samples above). The model classifies it as you draw.</p>
+    <div style="max-width: 190px">
+      <canvas class="draw-pad" width="190" height="190" style="cursor: crosshair; border-radius: 8px; border: 1px solid var(--border); background: #fff"
+              aria-label="Drawing pad for your own digit"></canvas>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-action="clear">Clear</button>
+    </div>
+    <p class="readout"><span data-out="verdict">draw a digit, then read my mind</span></p>
+
+    <p class="hint">Things worth noticing while it trains: (1) The two accuracy
+    numbers split — trained digits race toward 100% while never-seen digits
+    plateau around 90%. That gap is Unit 2's overfitting, on real data, in
+    real time. (2) Look at which red-boxed digits remain near the end:
+    ambiguous 4s-vs-9s, 3s-vs-5s — the model's mistakes are largely the ones
+    a tired human makes. (3) If your drawn digit gets misread, try drawing it
+    bigger and centered: the model never saw off-center digits in training,
+    so it has no idea what they are. Data is destiny, in your own
+    handwriting.</p>
+  </div>
+
+  <h2>What just happened</h2>
+  <p>Nothing new — that's the point. This is the playground's exact recipe at
+  784 dimensions: a hidden ReLU layer finds useful strokes and curves
+  (miniature cousins of Unit 5's convolution kernels — with the difference
+  that a real vision system shares its detectors across positions, which is
+  exactly why CNNs beat plain MLPs on images). Softmax + log loss grade the
+  guesses; backprop assigns blame; mini-batch SGD nudges 25,000-ish weights,
+  thirty-two digits at a time, in a Web Worker so your tab stays alive. Every
+  phrase in that sentence is a page you've read.</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You've now trained models on toy dots and real data. The expert track
+  remains: build the autodiff engine yourself, learn to read the papers these
+  ideas came from, and study how ML fails in the wild.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "mnist-lab",
+    "questions": [
+      {
+        "q": "Accuracy on trained digits hits 99%+ while never-seen digits plateau near 90%. What are you looking at?",
+        "choices": [
+          "A bug in the accuracy calculation",
+          "The train/test gap from Unit 2 — some of that 99% is memorized quirks of the training digits, and only the 90% is real",
+          "Proof the test digits are harder than the training digits"
+        ],
+        "answer": 1,
+        "explain": "Same lesson, real data: the model fits what it practices on better than what it hasn't seen, and the gap measures memorization. The honest number to report is always the never-seen one."
+      },
+      {
+        "q": "Your beautifully drawn — but small, corner-placed — digit gets misclassified. Why?",
+        "choices": [
+          "The drawing pad has too few pixels",
+          "Training digits were all big and centered; the model has simply never seen an off-center digit, and a plain MLP has no built-in tolerance for position shifts",
+          "The model needs more hidden neurons for small digits"
+        ],
+        "answer": 1,
+        "explain": "Two site-lessons colliding: data decides what a model CAN know (Unit 2), and a plain MLP — unlike a convolution — has no weight-sharing to make \"same shape, different place\" automatic (Unit 5). Real digit systems use CNNs for exactly this reason."
+      },
+      {
+        "q": "The network's input layer has 784 inputs. Where does that number come from?",
+        "choices": [
+          "It's 28 × 28 — one input per pixel; each image is just a 784-number vector",
+          "It's the number of different handwriting styles",
+          "It's a tunable hyperparameter"
+        ],
+        "answer": 0,
+        "explain": "An image IS a vector once you unroll the grid — the \"dot in 784-dimensional space\" your Unit 2 self was promised nobody would ever have to picture. The math never cared about the number of dimensions; only your imagination did."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

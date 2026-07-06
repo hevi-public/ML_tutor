@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to read a paper — ML Tutor</title>
+
+  <meta name="ml:unit" content="Expert track">
+  <meta name="ml:root" content="../">
+  <meta name="ml:prev" content="autodiff-from-scratch.html|Build autodiff yourself">
+  <meta name="ml:next" content="when-ml-fails.html|When ML fails">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Expert track</p>
+  <h1>How to read an ML paper</h1>
+  <p class="lede">Papers are written backwards, reviewed under deadline, and
+  padded for prestige — and they're still where the field actually lives.
+  Here's how practitioners extract the signal.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Everything before this page IS the preparation: you can read the
+    notation, you know the vocabulary, and you've trained the models papers
+    take as given.
+  </div>
+
+  <h2>The shape of the beast</h2>
+  <p>Nearly every ML paper is the same eight parts: title/abstract (the sales
+  pitch), introduction (the sales pitch, longer), related work (politics and
+  genealogy), method (the actual idea, in armor-plated notation),
+  experiments (the evidence), ablations (which parts of the idea actually
+  matter — often the most honest section), limitations (increasingly real,
+  historically decorative), appendix (where the reproducibility details
+  hide).</p>
+  <p>The single most useful fact about this genre: <strong>the idea is
+  usually one sentence</strong>, and the paper is thirty pages of armor
+  around it. Attention's paper is "let every position query every other
+  directly." Diffusion's is "learn to undo noise, then start from pure
+  noise." Your job as a reader is to find that sentence, not to absorb the
+  armor.</p>
+
+  <h2>Three passes, not one</h2>
+  <ol>
+    <li><strong>Pass 1 — five minutes, no honor at stake.</strong> Title,
+    abstract, all figures and their captions, conclusion. ML papers put
+    their soul in Figure 1 far more often than in Section 3. Exit question:
+    what's the one-sentence idea, and do I care?</li>
+    <li><strong>Pass 2 — thirty minutes, pencil out.</strong> Read for
+    structure, skipping proofs and derivations. For every equation, do what
+    this site trained you to do: find the verb, name each symbol aloud,
+    translate to a plain sentence — most fearsome equations are "weighted
+    average" or "our loss has two terms" in armor. Look hard at the
+    experiments' <em>baselines</em>: what is this beating, and is that
+    comparison fair (same data? same compute? tuned equally hard)?</li>
+    <li><strong>Pass 3 — hours, only for the few that earn it.</strong>
+    Re-derive, or better: re-implement small. You've already done this once
+    — the autodiff page was a pass-3 of the backprop literature. One paper
+    truly rebuilt beats fifty skimmed, permanently.</li>
+  </ol>
+
+  <h2>The skeptic's checklist</h2>
+  <ul>
+    <li><strong>"SOTA" (state-of-the-art) by how much, at what cost?</strong>
+    +0.2% from doubled compute is a shrug wearing a tuxedo. Check the compute
+    column — it's the field's most quietly-omitted number.</li>
+    <li><strong>Where did the test set come from — and is it leaking?</strong>
+    Unit 2's honesty rules at field scale: benchmark questions have a way of
+    seeping into training data, especially for LLMs trained on the whole
+    internet (which now contains the benchmarks).</li>
+    <li><strong>Are the ablations present?</strong> A paper claiming five
+    innovations but ablating none is telling you it doesn't know which parts
+    work either. Often one component carries everything.</li>
+    <li><strong>Cherry-picked outputs?</strong> Generative-model papers show
+    their best samples, never a random draw. Look for the random-sample grid
+    or note its absence loudly.</li>
+    <li><strong>Wrong-by-omission baselines:</strong> the strongest known
+    simple method (a tuned random forest; plain fine-tuning; last year's
+    model at equal compute) has a strange way of not appearing in tables it
+    would win.</li>
+  </ul>
+
+  <h2>An annotated first reading list</h2>
+  <p>Ordered to match this site's path — each is the canonical source for a
+  page you've already mastered, which makes them the gentlest possible
+  entry into the literature:</p>
+  <ul>
+    <li><em>"Attention Is All You Need"</em> (Vaswani et al., 2017) — the
+    transformer. After the attention page, Figure 1 will read like an old
+    friend. Skip Section 5's training minutiae on pass 1.</li>
+    <li><em>"Deep Residual Learning"</em> (He et al., 2015) — one-sentence
+    idea: "let layers learn corrections to identity instead of whole
+    transformations." The cleanest example of a tiny idea moving a whole
+    field.</li>
+    <li><em>"Denoising Diffusion Probabilistic Models"</em> (Ho et al.,
+    2020) — the diffusion page's source. Heavy math armor; you already know
+    the sentence inside it.</li>
+    <li><em>"Language Models are Few-Shot Learners"</em> (Brown et al.,
+    2020, the GPT-3 paper) — where prompting-instead-of-fine-tuning entered
+    the world. Read the ablations on model scale.</li>
+    <li><em>"Random Forests"</em> (Breiman, 2001) — older, wonderfully
+    readable, and the argument for WHY averaging decorrelated trees works is
+    the clearest statistics writing in the field's canon.</li>
+  </ul>
+  <p>Sequence for building the habit: one paper per week, pass 1 always,
+  pass 2 if it survives, pass 3 quarterly. A year of that and you're
+  current; the literature only looks infinite from outside.</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Reading equips you to evaluate claims. The last page is about the claims
+  that fail anyway — how ML breaks in the wild, and why the failures are
+  rarely mathematical.</p>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "reading-papers",
+    "questions": [
+      {
+        "q": "What does pass 1 of a paper consist of?",
+        "choices": [
+          "Reading every section in order without stopping",
+          "Title, abstract, every figure + caption, conclusion — five minutes to extract the one-sentence idea and decide whether to continue",
+          "The method section only, since that's the actual contribution"
+        ],
+        "answer": 1,
+        "explain": "Most papers exit your pipeline at pass 1, and that's the system working. Figures carry the soul; the one-sentence idea is the deliverable; sunk-cost-free abandonment is the skill."
+      },
+      {
+        "q": "Why are the ablation tables often a paper's most honest section?",
+        "choices": [
+          "They contain the fewest equations",
+          "They show which of the claimed components actually matter — and their absence signals the authors don't know either",
+          "Reviewers write them instead of the authors"
+        ],
+        "answer": 1,
+        "explain": "A method is usually several changes bundled; ablations un-bundle them. Very often one component carries the result and the rest is garnish — and no ablations at all is itself loud information."
+      },
+      {
+        "q": "A 2026 LLM paper reports record scores on a benchmark published in 2021. What's the Unit-2-flavored question to ask first?",
+        "choices": [
+          "How many parameters does the model have?",
+          "Was the benchmark in the training data? A model trained on the internet has likely SEEN a 2021 test — this is train/test leakage at civilizational scale",
+          "Which university produced it?"
+        ],
+        "answer": 1,
+        "explain": "The exam went public before the student studied — and the student studied everything. Benchmark contamination is Unit 2's \"rules of the drawer\" violated by the data pipeline itself, and it's among the field's most serious open measurement problems."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>
