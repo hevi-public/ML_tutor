@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modes — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Expert Track">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="../07-labs/routine-builder.html|Routine builder">
+  <meta name="bass:next" content="chord-extensions.html|Chord extensions">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Expert Track</p>
+  <h1>Modes — seven flavors of one scale</h1>
+  <p class="lede">You met the idea in Unit 3: same notes, different home. Now
+  make it practical — because two of the seven modes (Dorian and Mixolydian)
+  quietly run most of the funk, rock, and jam-band music you play.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-theory/major-scale.html">Major scale</a> and
+    <a href="../03-theory/minor-scales.html">relative thinking</a>. From here
+    on, standard terminology leads — every term still taps.
+  </div>
+
+  <h2>The two ways to think about modes</h2>
+  <p><strong>Derivative</strong> (good for finding notes): D Dorian = the C
+  major scale played from D. <strong>Parallel</strong> (good for hearing):
+  D Dorian = D natural minor with the 6th raised. The first gets your fingers
+  there; the second tells your ears what changed. Experts flip between both
+  without noticing.</p>
+
+  <h2>The working bassist's mode table</h2>
+  <table class="ref">
+    <thead><tr><th>Mode</th><th>Formula vs major</th><th>Flavor · where it lives</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ionian</strong> (major)</td><td>—</td><td>home base; pop, everything</td></tr>
+      <tr><td><strong>Dorian</strong></td><td>♭3 ♭7</td><td>minor-but-hopeful; funk vamps, "So What", Santana</td></tr>
+      <tr><td>Phrygian</td><td>♭2 ♭3 ♭6 ♭7</td><td>Spanish/metal darkness</td></tr>
+      <tr><td>Lydian</td><td>♯4</td><td>floating film-score major</td></tr>
+      <tr><td><strong>Mixolydian</strong></td><td>♭7</td><td>major with a blues collar; rock &amp; dominant-7 vamps</td></tr>
+      <tr><td><strong>Aeolian</strong> (nat. minor)</td><td>♭3 ♭6 ♭7</td><td>the default minor; you know it</td></tr>
+      <tr><td>Locrian</td><td>♭2 ♭3 ♭5 ♭6 ♭7</td><td>home of m7♭5; rarely a resting place</td></tr>
+    </tbody>
+  </table>
+  <p>Bold rows are the daily drivers. When a one-chord vamp is minor 7, think
+  Dorian; when it's dominant 7, think Mixolydian — those raised 6ths and
+  lowered 7ths are what keep long vamps from going stale.</p>
+
+  <h2>Hear a mode change the same root</h2>
+  <div class="demo" id="mode-demo">
+    <div class="buttons">
+      <button class="action secondary" type="button" data-mode="ionian">Ionian</button>
+      <button class="action" type="button" data-mode="dorian" aria-pressed="true">Dorian</button>
+      <button class="action secondary" type="button" data-mode="mixolydian">Mixolydian</button>
+      <button class="action secondary" type="button" data-mode="aeolian">Aeolian</button>
+      <button class="action secondary" type="button" data-mode="phrygian">Phrygian</button>
+    </div>
+    <div class="fretboard-wrap" role="img" aria-label="Fretboard showing the selected mode from root A"></div>
+    <p class="readout" id="mode-readout">All from root A — the drone stays,
+    the flavor moves. Press a mode to hear it over the root.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>When modes actually matter to a bassist</summary>
+    <div class="layer-body">
+      <p>Honestly: on vamps and modal tunes — one chord for a long time,
+      where the color notes you choose (the Dorian 6th, the Mixolydian ♭7)
+      ARE the harmony. On fast-changing progressions, chord tones + approach
+      grammar matter far more than mode names. Modes are seasoning for
+      harmonic standstill.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Hearing them fast: the one-note trick</summary>
+    <div class="layer-body">
+      <p>Each daily-driver mode differs from plain major/minor by ONE note:
+      Mixolydian = major with ♭7; Dorian = minor with natural 6; Lydian =
+      major with ♯4; Phrygian = minor with ♭2. Learn to hear those four
+      single notes over a drone and you've got modal ears with four flashcards
+      of effort.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Stack more thirds on the chords themselves: 9ths, 11ths, 13ths — the
+  extensions that make charts look scarier than they are.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "modes",
+    "exercises": [
+      { "id": "modes-drone-flavors",
+        "title": "Four flavors over one drone",
+        "goal": "Over an A drone (tuning-page style or the demo): Ionian, Mixolydian, Dorian, Aeolian played in sequence, the changed notes named out loud as they pass.",
+        "tempo": [60, 84],
+        "steps": [
+          "One octave each, same position, calling 'natural 7… flat 7… natural 6… flat 6'.",
+          "Pause on each mode's color note and let it rub against the drone.",
+          "The goal is EARS: stop looking at the diagram by pass three."
+        ] },
+      { "id": "modes-dorian-vamp",
+        "title": "A Dorian vamp line",
+        "goal": "Two minutes over an Am7 vamp using the Dorian 6th (F♯) as a deliberate color — placed, not stumbled on — at 94 bpm.",
+        "tempo": [80, 104],
+        "steps": [
+          "Groove machine: funk vamp on A. Base line: root/♭7/5 as usual.",
+          "Once per two bars, lean on F♯ (the Dorian 6) — hear it glow against m7.",
+          "Swap it for F natural (Aeolian) and feel the room darken. That's modal control."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "modes",
+    "questions": [
+      { "q": "D Dorian, described both ways:",
+        "choices": ["C major from D (derivative) = D minor with a raised 6th (parallel)",
+                    "D major with a flat 7 = C minor from D",
+                    "any scale starting on D"],
+        "answer": 0,
+        "explain": "Derivative finds the notes; parallel names the flavor. Fluency is flipping between them freely." },
+      { "q": "A long one-chord vamp on E7 suggests thinking in…",
+        "choices": ["E Mixolydian — major with the ♭7 the chord already contains",
+                    "E Locrian",
+                    "E harmonic minor"],
+        "answer": 0,
+        "explain": "Dominant-7 harmony IS Mixolydian's calling card. Dorian plays the same role over m7 vamps." },
+      { "q": "Modes matter most when…",
+        "choices": ["harmony stands still (vamps, modal tunes) and your color notes ARE the motion",
+                    "chords change every two beats",
+                    "reading classical notation"],
+        "answer": 0,
+        "explain": "Fast changes reward chord-tone thinking; standstill rewards flavor. Modes are the seasoning rack for the second situation." },
+      { "q": "The one-note difference between Dorian and Aeolian is…",
+        "choices": ["the 6th — natural in Dorian, flat in Aeolian",
+                    "the 3rd",
+                    "the root"],
+        "answer": 0,
+        "explain": "Both are minor (♭3 ♭7); the 6th decides hopeful-minor vs default-minor. One fret, whole different weather." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#mode-demo .fretboard-wrap");
+      const readout = document.getElementById("mode-readout");
+      const fb = BTFret.create(wrap, { frets: 12, interactive: false });
+      const FORMULAS = { ionian: "the plain major scale", dorian: "minor with a raised 6th",
+        mixolydian: "major with a ♭7", aeolian: "natural minor",
+        phrygian: "minor with a ♭2 (the Spanish note)" };
+      let droneHandle = null;
+
+      function show(mode) {
+        fb.clear();
+        fb.markPcs(BT.scalePcs("A", mode), { rootPc: BT.pc("A") });
+        readout.innerHTML = `<strong>A ${mode}</strong> — ${FORMULAS[mode]}: ` +
+          BT.scale("A", mode).join(" – ");
+        if (droneHandle) droneHandle.stop();
+        droneHandle = BTAudio.drone(33, { gain: 0.1 });
+        const steps = BT.SCALES[mode].concat([12]);
+        BTAudio.playSeq(steps.map((s, i) => ({ midi: 33 + s, t: i * 0.5, dur: 0.45 })),
+          { bpm: 126, onDone() { setTimeout(() => { droneHandle?.stop(); droneHandle = null; }, 800); } });
+      }
+
+      document.querySelectorAll("#mode-demo [data-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#mode-demo [data-mode]").forEach((b) => {
+            b.classList.toggle("secondary", b !== btn);
+            b.setAttribute("aria-pressed", String(b === btn));
+          });
+          show(btn.dataset.mode);
+        });
+      });
+      fb.markPcs(BT.scalePcs("A", "dorian"), { rootPc: BT.pc("A") });
+    });
+  </script>
+</main>
+</body>
+</html>

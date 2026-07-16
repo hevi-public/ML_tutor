@@ -14,14 +14,177 @@
 <body>
 <main class="wide">
   <h1>The concept map</h1>
-  <p class="lede">Every page on the site and how the ideas feed each other —
-  colored by your progress. The map fills in as the units are published.</p>
+  <p class="lede">Every page on the site and how the ideas feed each other.
+  Solid lines are the path; dashed lines are ideas paying off later. Green =
+  pages you've completed (finish a page's quiz to claim it).</p>
 
-  <div class="box">
-    <span class="label">Under construction</span>
-    The map appears here once the units are in place. Until then, start from
-    <a href="index.html">the home page</a> — Unit 0 is live.
+  <div style="overflow-x: auto">
+    <svg id="concept-map" viewBox="0 0 1120 600" width="100%" role="img"
+         aria-label="Concept map of all site pages" style="min-width: 1000px"></svg>
   </div>
+
+  <script>
+  (function () {
+    "use strict";
+    // x: progression left to right; y: lane within a unit
+    const NODES = [
+      { id: "welcome", label: "Welcome", unit: "Start", x: 50, y: 90, href: "00-start/welcome.html" },
+      { id: "gear-and-setup", label: "Gear & setup", unit: "Start", x: 50, y: 230, href: "00-start/gear-and-setup.html" },
+      { id: "tuning", label: "Tuning", unit: "Start", x: 50, y: 370, href: "00-start/tuning.html" },
+      { id: "self-assessment", label: "Find your start", unit: "Start", x: 50, y: 510, href: "00-start/self-assessment.html" },
+
+      { id: "staff-and-clef", label: "Staff & clef", unit: "Reading", x: 160, y: 90, href: "01-reading/staff-and-clef.html" },
+      { id: "rhythm-and-counting", label: "Rhythm", unit: "Reading", x: 160, y: 230, href: "01-reading/rhythm-and-counting.html" },
+      { id: "tab-and-notation", label: "Tab ↔ notation", unit: "Reading", x: 160, y: 370, href: "01-reading/tab-and-notation.html" },
+      { id: "time-signatures", label: "Time signatures", unit: "Reading", x: 160, y: 510, href: "01-reading/time-signatures.html" },
+
+      { id: "strings-and-fret-math", label: "Fret math", unit: "Fretboard", x: 270, y: 90, href: "02-fretboard/strings-and-fret-math.html" },
+      { id: "notes-on-the-fretboard", label: "Notes on the neck", unit: "Fretboard", x: 270, y: 230, href: "02-fretboard/notes-on-the-fretboard.html" },
+      { id: "intervals-as-shapes", label: "Interval shapes", unit: "Fretboard", x: 270, y: 370, href: "02-fretboard/intervals-as-shapes.html" },
+      { id: "positions-and-fingering", label: "Positions", unit: "Fretboard", x: 270, y: 510, href: "02-fretboard/positions-and-fingering.html" },
+
+      { id: "intervals", label: "Intervals", unit: "Theory", x: 385, y: 60, href: "03-theory/intervals.html" },
+      { id: "major-scale", label: "Major scale", unit: "Theory", x: 385, y: 170, href: "03-theory/major-scale.html" },
+      { id: "keys-and-circle-of-fifths", label: "Circle of fifths", unit: "Theory", x: 385, y: 280, href: "03-theory/keys-and-circle-of-fifths.html" },
+      { id: "minor-scales", label: "Minor scales", unit: "Theory", x: 385, y: 390, href: "03-theory/minor-scales.html" },
+      { id: "pentatonics-and-blues", label: "Pentatonics", unit: "Theory", x: 385, y: 500, href: "03-theory/pentatonics-and-blues.html" },
+      { id: "triads", label: "Triads", unit: "Theory", x: 470, y: 115, href: "03-theory/triads.html" },
+      { id: "seventh-chords", label: "7th chords", unit: "Theory", x: 470, y: 280, href: "03-theory/seventh-chords.html" },
+      { id: "diatonic-harmony", label: "Diatonic harmony", unit: "Theory", x: 470, y: 445, href: "03-theory/diatonic-harmony.html" },
+
+      { id: "right-hand", label: "Right hand", unit: "Technique", x: 580, y: 70, href: "04-technique/right-hand.html" },
+      { id: "left-hand", label: "Left hand", unit: "Technique", x: 580, y: 180, href: "04-technique/left-hand.html" },
+      { id: "timing-and-groove", label: "Timing & groove", unit: "Technique", x: 580, y: 290, href: "04-technique/timing-and-groove.html" },
+      { id: "tone-and-dynamics", label: "Tone & dynamics", unit: "Technique", x: 580, y: 400, href: "04-technique/tone-and-dynamics.html" },
+      { id: "how-to-practice", label: "How to practice", unit: "Technique", x: 580, y: 510, href: "04-technique/how-to-practice.html" },
+
+      { id: "role-of-the-bass", label: "The bassist's job", unit: "Bass lines", x: 690, y: 60, href: "05-basslines/role-of-the-bass.html" },
+      { id: "roots-and-chord-tones", label: "Chord tones", unit: "Bass lines", x: 690, y: 150, href: "05-basslines/roots-and-chord-tones.html" },
+      { id: "approach-notes", label: "Approach notes", unit: "Bass lines", x: 690, y: 240, href: "05-basslines/approach-notes.html" },
+      { id: "walking-bass-101", label: "Walking 101", unit: "Bass lines", x: 690, y: 330, href: "05-basslines/walking-bass-101.html" },
+      { id: "twelve-bar-blues", label: "12-bar blues", unit: "Bass lines", x: 690, y: 420, href: "05-basslines/twelve-bar-blues.html" },
+      { id: "song-forms-and-charts", label: "Forms & charts", unit: "Bass lines", x: 690, y: 510, href: "05-basslines/song-forms-and-charts.html" },
+
+      { id: "rock", label: "Rock", unit: "Styles", x: 800, y: 60, href: "06-styles/rock.html" },
+      { id: "blues-shuffle", label: "Blues shuffle", unit: "Styles", x: 800, y: 150, href: "06-styles/blues-shuffle.html" },
+      { id: "funk", label: "Funk", unit: "Styles", x: 800, y: 240, href: "06-styles/funk.html" },
+      { id: "soul-motown", label: "Soul & Motown", unit: "Styles", x: 800, y: 330, href: "06-styles/soul-motown.html" },
+      { id: "reggae", label: "Reggae", unit: "Styles", x: 800, y: 420, href: "06-styles/reggae.html" },
+      { id: "jazz-walking", label: "Jazz walking", unit: "Styles", x: 800, y: 510, href: "06-styles/jazz-walking.html" },
+
+      { id: "fretboard-trainer", label: "Fretboard trainer", unit: "Labs", x: 905, y: 90, href: "07-labs/fretboard-trainer.html" },
+      { id: "ear-trainer", label: "Ear trainer", unit: "Labs", x: 905, y: 195, href: "07-labs/ear-trainer.html" },
+      { id: "groove-machine", label: "Groove machine", unit: "Labs", x: 905, y: 300, href: "07-labs/groove-machine.html" },
+      { id: "tuner-lab", label: "Tuner", unit: "Labs", x: 905, y: 405, href: "07-labs/tuner.html" },
+      { id: "routine-builder", label: "Routine builder", unit: "Labs", x: 905, y: 510, href: "07-labs/routine-builder.html" },
+
+      { id: "modes", label: "Modes", unit: "Expert", x: 1030, y: 60, href: "08-expert/modes.html" },
+      { id: "chord-extensions", label: "Extensions", unit: "Expert", x: 1030, y: 135, href: "08-expert/chord-extensions.html" },
+      { id: "harmonic-analysis", label: "Analysis", unit: "Expert", x: 1030, y: 210, href: "08-expert/harmonic-analysis.html" },
+      { id: "transcription", label: "Transcription", unit: "Expert", x: 1030, y: 285, href: "08-expert/transcription.html" },
+      { id: "improvisation-and-fills", label: "Improv & fills", unit: "Expert", x: 1030, y: 360, href: "08-expert/improvisation-and-fills.html" },
+      { id: "advanced-techniques", label: "Slap, tap & more", unit: "Expert", x: 1030, y: 435, href: "08-expert/advanced-techniques.html" },
+      { id: "next-steps", label: "Next steps", unit: "Expert", x: 1030, y: 510, href: "08-expert/next-steps.html" },
+    ];
+
+    // [from, to, dashed?] — solid = the path, dashed = an idea paying off later
+    const EDGES = [
+      ["welcome", "gear-and-setup"], ["gear-and-setup", "tuning"],
+      ["tuning", "self-assessment"], ["self-assessment", "staff-and-clef"],
+      ["staff-and-clef", "rhythm-and-counting"], ["rhythm-and-counting", "tab-and-notation"],
+      ["tab-and-notation", "time-signatures"], ["time-signatures", "strings-and-fret-math"],
+      ["strings-and-fret-math", "notes-on-the-fretboard"],
+      ["notes-on-the-fretboard", "intervals-as-shapes"],
+      ["intervals-as-shapes", "positions-and-fingering"],
+      ["positions-and-fingering", "intervals"],
+      ["intervals", "major-scale"], ["major-scale", "keys-and-circle-of-fifths"],
+      ["keys-and-circle-of-fifths", "minor-scales"], ["minor-scales", "pentatonics-and-blues"],
+      ["pentatonics-and-blues", "triads"], ["triads", "seventh-chords"],
+      ["seventh-chords", "diatonic-harmony"], ["diatonic-harmony", "right-hand"],
+      ["right-hand", "left-hand"], ["left-hand", "timing-and-groove"],
+      ["timing-and-groove", "tone-and-dynamics"], ["tone-and-dynamics", "how-to-practice"],
+      ["how-to-practice", "role-of-the-bass"],
+      ["role-of-the-bass", "roots-and-chord-tones"], ["roots-and-chord-tones", "approach-notes"],
+      ["approach-notes", "walking-bass-101"], ["walking-bass-101", "twelve-bar-blues"],
+      ["twelve-bar-blues", "song-forms-and-charts"], ["song-forms-and-charts", "rock"],
+      ["rock", "blues-shuffle"], ["blues-shuffle", "funk"], ["funk", "soul-motown"],
+      ["soul-motown", "reggae"], ["reggae", "jazz-walking"],
+      ["jazz-walking", "fretboard-trainer"],
+      ["fretboard-trainer", "ear-trainer"], ["ear-trainer", "groove-machine"],
+      ["groove-machine", "tuner-lab"], ["tuner-lab", "routine-builder"],
+      ["routine-builder", "modes"],
+      ["modes", "chord-extensions"], ["chord-extensions", "harmonic-analysis"],
+      ["harmonic-analysis", "transcription"], ["transcription", "improvisation-and-fills"],
+      ["improvisation-and-fills", "advanced-techniques"], ["advanced-techniques", "next-steps"],
+      // dashed: earlier ideas paying off later
+      ["intervals-as-shapes", "intervals", true],
+      ["rhythm-and-counting", "funk", true],
+      ["time-signatures", "blues-shuffle", true],
+      ["seventh-chords", "chord-extensions", true],
+      ["keys-and-circle-of-fifths", "harmonic-analysis", true],
+      ["pentatonics-and-blues", "improvisation-and-fills", true],
+      ["walking-bass-101", "jazz-walking", true],
+      ["tuning", "tuner-lab", true],
+      ["how-to-practice", "routine-builder", true],
+      ["funk", "advanced-techniques", true],
+      ["diatonic-harmony", "twelve-bar-blues", true],
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const svg = document.getElementById("concept-map");
+      const NS = "http://www.w3.org/2000/svg";
+      const byId = Object.fromEntries(NODES.map((n) => [n.id, n]));
+      const done = window.BassProgress ? BassProgress.all() : {};
+
+      for (const [from, to, dashed] of EDGES) {
+        const a = byId[from], b = byId[to];
+        const line = document.createElementNS(NS, "line");
+        line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+        line.setAttribute("stroke", "var(--border)");
+        line.setAttribute("stroke-width", dashed ? 1.2 : 2);
+        if (dashed) line.setAttribute("stroke-dasharray", "5 4");
+        svg.appendChild(line);
+      }
+
+      for (const n of NODES) {
+        const g = document.createElementNS(NS, "g");
+        g.style.cursor = "pointer";
+        g.addEventListener("click", () => { location.href = n.href; });
+
+        const isDone = Boolean(done[n.id]?.completedAt);
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", n.x); c.setAttribute("cy", n.y);
+        c.setAttribute("r", 11);
+        c.setAttribute("fill", isDone ? "var(--good)" : "var(--bg-soft)");
+        c.setAttribute("stroke", isDone ? "var(--good)" : "var(--accent)");
+        c.setAttribute("stroke-width", 2);
+        g.appendChild(c);
+
+        const t = document.createElementNS(NS, "text");
+        t.setAttribute("x", n.x); t.setAttribute("y", n.y + 28);
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("fill", "var(--text)");
+        t.setAttribute("font-size", "12");
+        t.textContent = n.label;
+        g.appendChild(t);
+
+        const title = document.createElementNS(NS, "title");
+        title.textContent = `${n.unit}: ${n.label}${isDone ? " ✓" : ""}`;
+        g.appendChild(title);
+        svg.appendChild(g);
+      }
+
+      const doneCount = NODES.filter((n) => done[n.id]?.completedAt).length;
+      const label = document.createElementNS(NS, "text");
+      label.setAttribute("x", 12); label.setAttribute("y", 24);
+      label.setAttribute("fill", "var(--text-soft)");
+      label.setAttribute("font-size", "13");
+      label.textContent = `${doneCount} of ${NODES.length} pages completed`;
+      svg.appendChild(label);
+    });
+  })();
+  </script>
 </main>
 </body>
 </html>

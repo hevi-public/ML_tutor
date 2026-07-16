@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chord extensions — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Expert Track">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="modes.html|Modes">
+  <meta name="bass:next" content="harmonic-analysis.html|Harmonic analysis">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Expert Track</p>
+  <h1>Chord extensions &amp; alterations</h1>
+  <p class="lede">C13♯11 looks like a password. It's actually a polite stack
+  of thirds with two notes tweaked — and the bassist's response to almost all
+  of it is beautifully simple.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-theory/seventh-chords.html">Seventh chords</a> and their
+    symbols, cold.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Keep stacking thirds past the 7th and you get the
+  <dfn data-term="extension">extensions</dfn>: the <strong>9th</strong> (a 2nd
+  an octave up), <strong>11th</strong> (a 4th up high), <strong>13th</strong>
+  (a 6th up high). They add color, not function — a C13 still behaves like a
+  C7 that dressed up. <strong>Alterations</strong> bend extensions or the 5th
+  by a semitone (♭9, ♯9, ♯11, ♭13, ♭5, ♯5) — mostly on dominant chords, to
+  sharpen their pull.</p>
+
+  <h2>Reading the passwords</h2>
+  <table class="ref">
+    <thead><tr><th>Symbol</th><th>Means</th><th>Bassist's note</th></tr></thead>
+    <tbody>
+      <tr><td><strong>C9</strong></td><td>C7 + 9</td><td>root (the 9 is upstairs decor)</td></tr>
+      <tr><td><strong>Cmaj9</strong></td><td>Cmaj7 + 9</td><td>root</td></tr>
+      <tr><td><strong>C13</strong></td><td>C7 + 9 + 13</td><td>root; ♭7 and 3 in fills</td></tr>
+      <tr><td><strong>C7♭9</strong> / <strong>C7♯9</strong></td><td>dominant with bent 9</td><td>root; expect a dark resolve</td></tr>
+      <tr><td><strong>C7alt</strong></td><td>dominant, everything bent (♭9 ♯9 ♯5…)</td><td>root, then get out of the way</td></tr>
+      <tr><td><strong>Cadd9</strong></td><td>triad + 9, no 7th</td><td>root; pop sparkle, not jazz tension</td></tr>
+      <tr><td><strong>C6/9</strong></td><td>triad + 6 + 9</td><td>root; the "smiling ending" chord</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box plain-english">
+    <span class="label">The liberating rule</span>
+    Numbers above 7 are the pianist's and guitarist's business. Your root
+    (and 3rd/♭7 when you choose) supports every one of them. Never fight the
+    upstairs — a low 9th or 11th under the band turns color into mud. Big
+    chords ask the bass for MORE simplicity, not less.
+  </div>
+
+  <h2>Hear the stack grow</h2>
+  <div class="demo" id="ext-demo">
+    <div class="buttons">
+      <button class="action secondary" type="button" data-ext="7">C7</button>
+      <button class="action secondary" type="button" data-ext="9">C9</button>
+      <button class="action secondary" type="button" data-ext="13">C13</button>
+      <button class="action secondary" type="button" data-ext="b9">C7♭9</button>
+    </div>
+    <p class="readout" id="ext-readout">Same bass note under all four — listen
+    to the upstairs change while your job doesn't.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why the 11th is the troublemaker</summary>
+    <div class="layer-body">
+      <p>Over a major 3rd, the natural 11 sits a semitone above it — the one
+      rub that reads as error rather than color. Hence ♯11 on major chords
+      (the Lydia­n note) and plain 11 only on minor chords (where the ♭3
+      leaves room). If you ever wondered why "sus" chords remove the 3rd:
+      it's to make room for exactly this note.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>When the bass DOES play extensions</summary>
+    <div class="layer-body">
+      <p>High-register fills, chordal moments (solo bass, duos), and melodic
+      hooks — deliberately, upstairs, where they belong. The 9th two octaves
+      above the root is gorgeous; the same note a 2nd above your root is a
+      cluster. Register is the whole game.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You can read any chord. Next: reading the STORY chords tell together —
+  harmonic analysis, or why progressions feel the way they feel.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "chord-extensions",
+    "exercises": [
+      { "id": "extensions-symbol-sprint",
+        "title": "Password decoding sprint",
+        "goal": "Ten scary symbols (Dm9, G13, Cmaj9, A7alt, F6/9, E7♯9, Bm11, Ab13, D7♭9, Gadd9) each decoded in seconds: root, family (maj/min/dom), and your first-choice note.",
+        "steps": [
+          "Family test: is there a maj? an m? else dominant.",
+          "Your answer is almost always 'the root' — say it with confidence.",
+          "Bonus round: name which chords contain a ♭7 (all dominants and minors with 9/11/13)."
+        ] },
+      { "id": "extensions-upstairs-fill",
+        "title": "One upstairs fill, placed right",
+        "goal": "Over a Cmaj9 vamp: root groove for three bars, then one fill touching the 9 (D) UP an octave-plus — color without mud, landed back on the root.",
+        "tempo": [70, 92],
+        "steps": [
+          "Groove machine: vamp on C. Bars 1–3: roots and fifths.",
+          "Bar 4: walk up to the high D (G string, 7th fret) and fall home.",
+          "Then try the same D right above your low C and hear why register matters."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "chord-extensions",
+    "questions": [
+      { "q": "A 9th is…",
+        "choices": ["the 2nd, an octave up — stacked-third bookkeeping",
+                    "a brand-new note foreign to the scale",
+                    "two 4ths"],
+        "answer": 0,
+        "explain": "Extensions are scale degrees moved upstairs: 9=2, 11=4, 13=6. The stack of thirds just kept going." },
+      { "q": "The chart says E♭13♯11. Your first-choice note is…",
+        "choices": ["E♭ — the root; the tower above is the harmony section's job",
+                    "the ♯11, to be helpful",
+                    "silence, out of fear"],
+        "answer": 0,
+        "explain": "Big chords need the bass MORE grounded. Root (plus 3/♭7 in fills) supports any tower; low extensions turn color to mud." },
+      { "q": "C7 vs C7alt:",
+        "choices": ["same dominant engine, but 'alt' bends the colors (♭9/♯9/♯5…) for a darker pull",
+                    "completely unrelated chords",
+                    "'alt' means optional"],
+        "answer": 0,
+        "explain": "Alterations sharpen a dominant's need to resolve. Function identical — flavor turned up to eleven. Root still works." },
+      { "q": "Why is the natural 11 avoided over major chords?",
+        "choices": ["it sits a semitone above the major 3rd — the one clash that reads as a mistake",
+                    "it's too high to play",
+                    "tradition"],
+        "answer": 0,
+        "explain": "Hence ♯11 on majors (Lydian color) and natural 11 reserved for minor chords. One semitone, entire personality." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const readout = document.getElementById("ext-readout");
+      const STACKS = {
+        "7":  { name: "C7 — the engine", ints: [0, 4, 7, 10] },
+        "9":  { name: "C9 — engine + sparkle", ints: [0, 4, 7, 10, 14] },
+        "13": { name: "C13 — the full tower", ints: [0, 4, 7, 10, 14, 21] },
+        b9:   { name: "C7♭9 — darkened pull", ints: [0, 4, 7, 10, 13] },
+      };
+      document.querySelectorAll("#ext-demo [data-ext]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const s = STACKS[btn.dataset.ext];
+          BTAudio.pluck(36, { dur: 2.4 });                       // your job: low C
+          BTAudio.chordPad(s.ints.map((i) => 60 + i), { dur: 2.2, gain: 0.5 });
+          readout.innerHTML = `<strong>${s.name}</strong> — your note didn't change.`;
+          document.querySelectorAll("#ext-demo [data-ext]").forEach((b) =>
+            b.classList.toggle("secondary", b !== btn));
+        });
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
