@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notes on the fretboard — Bass Tutor</title>
+
+  <meta name="bass:unit" content="The Fretboard">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="../00-start/tuning.html|Tuning up">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · The Fretboard</p>
+  <h1>Notes on the fretboard</h1>
+  <p class="lede">The neck looks like a hundred anonymous places to put your
+  fingers. It's actually a small, repeating map — and you only need a few
+  landmarks to never feel lost on it again.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    You should be in tune (<a href="../00-start/tuning.html">tuning page</a>)
+    and know that your strings, low to high, are E–A–D–G.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Music uses just <strong>twelve note names</strong>, then they repeat. Seven
+  of them are the plain letters A–G, called the
+  <dfn data-term="note">natural notes</dfn>; the other five live between them
+  and are named with <span data-sym="♯">♯</span> (one
+  <dfn data-term="fret">fret</dfn> up) or <span data-sym="♭">♭</span> (one fret
+  down).</p>
+  <p>On a bass, the map is dead simple: <strong>each fret is one
+  <dfn data-term="semitone">semitone</dfn></strong>. Start on any open string
+  and walk up one fret at a time and you pass through all twelve names; at the
+  12th fret you're back where you started, one
+  <dfn data-term="octave">octave</dfn> higher. That's why the 12th fret has a
+  double dot — it's the "you've gone all the way around" marker.</p>
+
+  <h2>Find it</h2>
+  <div class="demo" id="neck-demo">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Interactive bass fretboard, 12 frets. Buttons highlight sets of notes; tapping a fret plays its note."></div>
+    <div class="buttons">
+      <button class="action" type="button" data-show="cs">Show the C's</button>
+      <button class="action secondary" type="button" data-show="naturals">All natural notes</button>
+      <button class="action secondary" type="button" data-show="octave">An octave pair</button>
+      <button class="action secondary" type="button" data-show="clear">Clear</button>
+    </div>
+    <p class="readout" id="neck-readout">Tap any fret to hear it and see its name.</p>
+    <p class="hint">Sound starts with your first tap. Notice how every C sits in
+    the same visual relationship to its neighbors — shapes repeat everywhere.</p>
+  </div>
+
+  <h2>The landmarks</h2>
+  <p>Don't memorize 48 positions. Learn a few anchors and derive the rest:</p>
+  <ul>
+    <li><strong>Open strings: E, A, D, G.</strong> Free notes, no fingers.</li>
+    <li><strong>Fret 3 on the A string is C.</strong> The single most useful
+    note to know — huge amounts of music live around it.</li>
+    <li><strong>Fret 5 replays the next open string.</strong> E-string fret 5
+    is A; A-string fret 5 is D; D-string fret 5 is G. (That's also how you
+    cross-check your tuning.)</li>
+    <li><strong>Fret 12 = the open string, an octave up.</strong> Double dot,
+    same name.</li>
+    <li><strong>The dots at 3 · 5 · 7 · 9 · 12</strong> are your GPS — with
+    them you never have to count frets from the nut.</li>
+  </ul>
+
+  <h2>The octave shape</h2>
+  <p>The single most useful <em>shape</em> on the bass: from any note, go
+  <strong>two strings up and two frets over</strong> and you land on the same
+  note an octave higher. Press "An octave pair" above to see one. This shape
+  turns every note you learn into two notes — learn the E and A strings well
+  and the octave shape hands you the D and G strings for free.</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>Between most neighboring letters there's one in-between note (C♯/D♭
+      between C and D). Two pairs are special: <strong>B–C</strong> and
+      <strong>E–F</strong> are direct neighbors — no note between them, they
+      sit on adjacent frets. Every "why is that note there?!" moment on the
+      neck traces back to those two pairs.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why the same note has two names</summary>
+    <div class="layer-body">
+      <p>The note between C and D is called C♯ when you're thinking "one above
+      C" and D♭ when you're thinking "one below D". Same fret, same sound.
+      Which name gets used depends on the key you're in — that story is told
+      properly in <em>Keys &amp; the circle of fifths</em> (Unit 3). For now:
+      two names, one place.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why 12 frets, exactly?</summary>
+    <div class="layer-body">
+      <p>An octave up means the string vibrates exactly twice as fast. Western
+      music slices that doubling into 12 equal steps (each fret multiplies the
+      pitch by 2<sup>1/12</sup> ≈ 1.059 — about 6% faster per fret). Twelve
+      steps of 6% compound to exactly 2× — which is also why the frets get
+      visibly narrower as you go up the neck.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>Say every note name <em>out loud</em> as you play it — the point isn't
+  moving a finger up a string, it's welding names to places. Slow enough that
+  you never guess.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Once names have places, the next superpower is <em>distances</em>:
+  intervals as fretboard shapes — the same handful of finger patterns that work
+  from any starting note. That's the rest of this unit.</p>
+
+  <script type="application/json" class="symbols">
+  { "♯": { "name": "♯ — sharp", "pron": "say: sharp",
+           "means": "one fret up (a semitone higher). F♯ is one fret above F.",
+           "short": "one fret up" },
+    "♭": { "name": "♭ — flat", "pron": "say: flat",
+           "means": "one fret down (a semitone lower). B♭ is one fret below B.",
+           "short": "one fret down" } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "notes-on-the-fretboard",
+    "exercises": [
+      { "id": "notes-fb-e-string-naturals",
+        "title": "Natural notes up the E string",
+        "goal": "You can play E–F–G–A–B–C–D–E up the low string, naming each note out loud, without pausing to count frets.",
+        "tempo": [50, 80],
+        "steps": [
+          "Frets: 0 · 1 · 3 · 5 · 7 · 8 · 10 · 12 — say each name as you play it.",
+          "Notice the two one-fret gaps: E→F and B→C.",
+          "Then play it backwards, still naming out loud."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 60,
+          "measures": [
+            { "notes": [
+              { "keys": ["e/2"], "duration": "q", "fret": [{ "str": 4, "fret": 0 }], "annotation": "E" },
+              { "keys": ["f/2"], "duration": "q", "fret": [{ "str": 4, "fret": 1 }], "annotation": "F" },
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "G" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "A" } ] },
+            { "notes": [
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 4, "fret": 7 }], "annotation": "B" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 4, "fret": 8 }], "annotation": "C" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 4, "fret": 10 }], "annotation": "D" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 4, "fret": 12 }], "annotation": "E" } ] } ] } },
+      { "id": "notes-fb-a-string-naturals",
+        "title": "Natural notes up the A string",
+        "goal": "Same drill on the A string — and you can find C (fret 3) instantly, eyes closed.",
+        "tempo": [50, 80],
+        "steps": [
+          "Frets: 0 · 2 · 3 · 5 · 7 · 8 · 10 · 12.",
+          "This string's one-fret gaps: B→C (frets 2→3) and E→F (frets 7→8).",
+          "Land hard on C at fret 3 — it's the most useful landmark on the neck."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 60,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 3, "fret": 0 }], "annotation": "A" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }], "annotation": "B" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "C" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "D" } ] },
+            { "notes": [
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }], "annotation": "E" },
+              { "keys": ["f/3"], "duration": "q", "fret": [{ "str": 3, "fret": 8 }], "annotation": "F" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 3, "fret": 10 }], "annotation": "G" },
+              { "keys": ["a/3"], "duration": "q", "fret": [{ "str": 3, "fret": 12 }], "annotation": "A" } ] } ] } },
+      { "id": "notes-fb-octave-shapes",
+        "title": "Octave shapes across the neck",
+        "goal": "From any note on the E or A string, your hand finds the octave (two strings up, two frets over) without looking.",
+        "tempo": [50, 90],
+        "steps": [
+          "Play the low note with your 1st finger, the octave with your 3rd or 4th.",
+          "Say the name once per pair — both notes share it.",
+          "Move the whole shape around; it never changes."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 60,
+          "measures": [
+            { "notes": [
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }], "annotation": "G" },
+              { "keys": ["g/3"], "duration": "h", "fret": [{ "str": 2, "fret": 5 }], "annotation": "G" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 4, "fret": 5 }], "annotation": "A" },
+              { "keys": ["a/3"], "duration": "h", "fret": [{ "str": 2, "fret": 7 }], "annotation": "A" } ] },
+            { "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }], "annotation": "C" },
+              { "keys": ["c/4"], "duration": "h", "fret": [{ "str": 1, "fret": 5 }], "annotation": "C" } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "D" },
+              { "keys": ["d/4"], "duration": "h", "fret": [{ "str": 1, "fret": 7 }], "annotation": "D" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "notes-on-the-fretboard",
+    "questions": [
+      { "q": "Moving up one fret on the same string changes the note by…",
+        "choices": ["one semitone — the smallest step there is",
+                    "one whole letter name",
+                    "one octave"],
+        "answer": 0,
+        "explain": "Each fret is one semitone. Letter names are usually two frets apart — except the neighbor pairs B–C and E–F." },
+      { "q": "Which two pairs of natural notes have NO note between them?",
+        "choices": ["B–C and E–F", "A–B and C–D", "F–G and G–A"],
+        "answer": 0,
+        "explain": "B→C and E→F are one fret apart. Every other neighboring pair has a sharp/flat between them." },
+      { "q": "You're on G at the 3rd fret of the E string. Where's the G an octave up?",
+        "choices": ["Two strings up, two frets over — D string, 5th fret",
+                    "Same string, 6th fret",
+                    "One string up, same fret"],
+        "answer": 0,
+        "explain": "The octave shape: +2 strings, +2 frets. It works from anywhere on the E and A strings." },
+      { "q": "What's special about the 5th fret of the E, A, and D strings?",
+        "choices": ["Each one sounds the same note as the next open string",
+                    "They're always sharps",
+                    "Nothing — the dots are just decoration"],
+        "answer": 0,
+        "explain": "E-string fret 5 = A, A-string fret 5 = D, D-string fret 5 = G. Handy for tuning checks and for hopping between strings." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#neck-demo .fretboard-wrap");
+      const readout = document.getElementById("neck-readout");
+      const fb = BTFret.create(wrap, {
+        frets: 12,
+        onTap(pos) {
+          const stringName = ["E", "A", "D", "G"][pos.string];
+          const fretText = pos.fret === 0 ? "open" : `fret ${pos.fret}`;
+          readout.innerHTML =
+            `That's <strong>${pos.name.replace(/\d+$/, "")}</strong> — ` +
+            `${fretText} on the ${stringName} string.`;
+        },
+      });
+
+      const NATURALS = [0, 2, 4, 5, 7, 9, 11]; // C D E F G A B as pitch classes
+      document.querySelectorAll("#neck-demo [data-show]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          fb.clear();
+          const what = btn.dataset.show;
+          if (what === "cs") fb.markPcs([0], { rootPc: 0 });
+          if (what === "naturals") fb.markPcs(NATURALS);
+          if (what === "octave") fb.mark([
+            { string: 0, fret: 3, label: "G", cls: "root" },
+            { string: 2, fret: 5, label: "G", cls: "root" },
+          ]);
+        });
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

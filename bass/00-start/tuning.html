@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tuning up — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Start Here">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="welcome.html|Welcome">
+  <meta name="bass:next" content="../02-fretboard/notes-on-the-fretboard.html|Notes on the fretboard">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start Here</p>
+  <h1>Tuning up</h1>
+  <p class="lede">An out-of-tune bass makes everything you play sound wrong —
+  including the things you play correctly. Thirty seconds of tuning buys you an
+  hour of honest feedback.</p>
+
+  <h2>The idea</h2>
+  <p>Your four strings are named for the notes they play when
+  <dfn data-term="open-string">open</dfn>: <strong>E, A, D, G</strong>, from
+  the thickest to the thinnest. <dfn data-term="tuning">Tuning</dfn> means
+  turning each string's machine head (the pegs on the headstock) until the
+  string's <dfn data-term="pitch">pitch</dfn> matches its reference note.</p>
+  <p>Turning the peg tightens or loosens the string: <strong>tighter =
+  higher</strong>, looser = lower. Small turns — an out-of-tune string is
+  usually only a hair away.</p>
+
+  <h2>Hear your references</h2>
+  <div class="demo" id="tune-demo">
+    <div class="pad-grid">
+      <button class="pad" type="button" data-note="E1"><strong>E</strong><span class="sub">thickest · 41.2 Hz</span></button>
+      <button class="pad" type="button" data-note="A1"><strong>A</strong><span class="sub">55.0 Hz</span></button>
+      <button class="pad" type="button" data-note="D2"><strong>D</strong><span class="sub">73.4 Hz</span></button>
+      <button class="pad" type="button" data-note="G2"><strong>G</strong><span class="sub">thinnest · 98.0 Hz</span></button>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" id="play-all">▶ Play all four</button>
+      <button class="action secondary" type="button" id="drone-toggle" aria-pressed="false">Hold the tone (drone)</button>
+    </div>
+    <p class="readout" id="tune-readout">Tap a pad, then play your matching open
+    string and adjust until the two sounds melt into one.</p>
+    <p class="hint">With "hold the tone" on, the reference sustains while you
+    tune — listen for the slow wobble (beating) between the two sounds; it gets
+    slower as you get closer, and vanishes when you're in tune.</p>
+  </div>
+
+  <h2>How to match a pitch by ear</h2>
+  <ul>
+    <li>Play the reference and your string <strong>at the same time</strong>.</li>
+    <li>If you can't tell higher from lower: tune your string clearly
+    <em>down</em> until it's obviously too low, then come up slowly.</li>
+    <li>Near the target you'll hear a slow <em>wah-wah-wah</em> wobble — that's
+    the two pitches interfering. Slower wobble = closer. No wobble = in tune.</li>
+    <li>Always finish by tuning <strong>up</strong> to the note — it keeps the
+    string from slipping flat while you play.</li>
+  </ul>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The 5th-fret cross-check</summary>
+    <div class="layer-body">
+      <p>Once one string is right, the bass can check itself: the
+      <strong>5th fret of each string sounds the same note as the next open
+      string</strong>. Hold E-string fret 5 (that's an A) and compare it to
+      your open A string; then A-string fret 5 against open D; then D-string
+      fret 5 against open G. The second practice exercise below walks it.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why basses drift out of tune</summary>
+    <div class="layer-body">
+      <p>Strings are steel under a lot of tension: temperature swings, fresh
+      strings still stretching, enthusiastic playing, and bumping the pegs all
+      shift them. Checking takes seconds — make it the first thing you do every
+      time you pick the bass up, and it becomes automatic ear training for
+      free.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Tuners, clip-ons, and this site</summary>
+    <div class="layer-body">
+      <p>Ear-matching is a skill worth having, but there's no shame in a tuner —
+      clip-on tuners read the vibration through the headstock and work in loud
+      rooms. This site's Practice Labs unit includes a microphone tuner that
+      listens to your bass and shows you exactly how far off each string is.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>Do the first exercise every single time you pick up the bass this week —
+  it's ten notes and it trains your ear on day one.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You're in tune — time to learn what all those frets actually are. Next:
+  the fretboard map, its landmarks, and the octave shape that makes it small.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "tuning",
+    "exercises": [
+      { "id": "tuning-open-strings",
+        "title": "Match each open string to its reference",
+        "goal": "Each open string rings against its reference tone with no wobble — four strings, under a minute.",
+        "tempo": [60],
+        "steps": [
+          "Tap the E pad above, play your open E string, adjust until the wobble disappears.",
+          "Repeat for A, D, G.",
+          "Finish each string by tuning UP into the note."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 60,
+          "measures": [
+            { "notes": [ { "keys": ["e/2"], "duration": "w", "fret": [{ "str": 4, "fret": 0 }], "annotation": "E" } ] },
+            { "notes": [ { "keys": ["a/2"], "duration": "w", "fret": [{ "str": 3, "fret": 0 }], "annotation": "A" } ] },
+            { "notes": [ { "keys": ["d/3"], "duration": "w", "fret": [{ "str": 2, "fret": 0 }], "annotation": "D" } ] },
+            { "notes": [ { "keys": ["g/3"], "duration": "w", "fret": [{ "str": 1, "fret": 0 }], "annotation": "G" } ] } ] } },
+      { "id": "tuning-fifth-fret-check",
+        "title": "The 5th-fret cross-check",
+        "goal": "Each fretted note and the open string above it sound identical — if one pair wobbles, you know exactly which string to fix.",
+        "tempo": [60],
+        "steps": [
+          "Play E-string fret 5, then open A — same note (A).",
+          "Play A-string fret 5, then open D — same note (D).",
+          "Play D-string fret 5, then open G — same note (G)."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 60,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 4, "fret": 5 }], "annotation": "fret 5" },
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 3, "fret": 0 }], "annotation": "open A" } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "fret 5" },
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 2, "fret": 0 }], "annotation": "open D" } ] },
+            { "notes": [
+              { "keys": ["g/3"], "duration": "h", "fret": [{ "str": 2, "fret": 5 }], "annotation": "fret 5" },
+              { "keys": ["g/3"], "duration": "h", "fret": [{ "str": 1, "fret": 0 }], "annotation": "open G" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "tuning",
+    "questions": [
+      { "q": "Your open A string sounds slightly lower than the reference. What do you do?",
+        "choices": ["Tighten it a little — tighter means higher",
+                    "Loosen it a little",
+                    "Play it harder"],
+        "answer": 0,
+        "explain": "Tighter = higher, looser = lower. And go gently — out-of-tune is usually just a hair away." },
+      { "q": "As your string gets close to the reference pitch, the wobble (beating) between them…",
+        "choices": ["slows down, and disappears when you're in tune",
+                    "speeds up until they match",
+                    "stays the same — it's just room noise"],
+        "answer": 0,
+        "explain": "The wobble is the two pitches interfering; its speed is the gap between them. Slower wobble = closer. Silence = in tune." },
+      { "q": "How can the bass check its own tuning without any reference?",
+        "choices": ["Fret 5 of each string should sound identical to the next open string",
+                    "All open strings should sound identical",
+                    "Fret 12 of each string should match the next open string"],
+        "answer": 0,
+        "explain": "E@5 = open A, A@5 = open D, D@5 = open G. If a pair wobbles, one of those two strings is off." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const readout = document.getElementById("tune-readout");
+      const droneBtn = document.getElementById("drone-toggle");
+      let droneOn = false;
+      let currentDrone = null;
+
+      function sound(noteName) {
+        const midi = BT.noteToMidi(noteName);
+        if (currentDrone) { currentDrone.stop(); currentDrone = null; }
+        if (droneOn) currentDrone = BTAudio.drone(midi, { gain: 0.16 });
+        BTAudio.pluck(midi, { dur: 2.5 });
+        readout.innerHTML = `Reference: <strong>${noteName.replace(/\d+$/, "")}</strong> ` +
+          `(${BT.midiToFreq(midi).toFixed(1)} Hz) — now play your open ` +
+          `${noteName.replace(/\d+$/, "")} string and match it.`;
+      }
+
+      document.querySelectorAll("#tune-demo .pad").forEach((pad) => {
+        pad.addEventListener("click", () => {
+          document.querySelectorAll("#tune-demo .pad").forEach((p) =>
+            p.classList.toggle("active", p === pad));
+          sound(pad.dataset.note);
+        });
+      });
+
+      droneBtn.addEventListener("click", () => {
+        droneOn = !droneOn;
+        droneBtn.setAttribute("aria-pressed", String(droneOn));
+        if (!droneOn && currentDrone) { currentDrone.stop(); currentDrone = null; }
+        const active = document.querySelector("#tune-demo .pad.active");
+        if (droneOn && active) sound(active.dataset.note);
+      });
+
+      document.getElementById("play-all").addEventListener("click", () => {
+        if (currentDrone) { currentDrone.stop(); currentDrone = null; }
+        BTAudio.playSeq(
+          ["E1", "A1", "D2", "G2"].map((n, i) => ({ midi: BT.noteToMidi(n), t: i * 1.2, dur: 1.1 })),
+          { bpm: 60 });
+        readout.textContent = "E … A … D … G — lowest to highest.";
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
