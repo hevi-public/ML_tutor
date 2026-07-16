@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ear trainer — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Practice Labs">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="fretboard-trainer.html|Fretboard trainer">
+  <meta name="bass:next" content="groove-machine.html|Groove machine">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/labs/ear-trainer.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Practice Labs</p>
+  <h1>Ear trainer</h1>
+  <p class="lede">The bridge between hearing music and playing it. Five minutes
+  a day of interval and chord-quality recognition compounds faster than any
+  other practice on this site.</p>
+
+  <div class="demo" id="et">
+    <div class="buttons">
+      <button class="action" type="button" data-et-drill="intervals" aria-pressed="true">Intervals</button>
+      <button class="action secondary" type="button" data-et-drill="triads" aria-pressed="false">Triad quality</button>
+      <button class="action secondary" type="button" data-et-drill="sevenths" aria-pressed="false">Seventh chords</button>
+    </div>
+    <div class="buttons" id="et-direction-row">
+      <button class="action secondary" type="button" data-et-dir="asc" aria-pressed="true">ascending</button>
+      <button class="action secondary" type="button" data-et-dir="desc" aria-pressed="false">descending</button>
+      <button class="action secondary" type="button" data-et-dir="harmonic" aria-pressed="false">both at once</button>
+    </div>
+    <div id="et-subset" style="margin:0.6rem 0"></div>
+    <div class="buttons">
+      <button class="action" type="button" id="et-next">▶ Play a question</button>
+      <button class="action secondary" type="button" id="et-replay">↻ Hear it again</button>
+    </div>
+    <p class="big-prompt" id="et-prompt" role="status">Press play to get a question.</p>
+    <div class="choices" id="et-answers"
+         style="display:grid;grid-template-columns:repeat(auto-fill,minmax(6rem,1fr));gap:0.4rem"></div>
+    <p class="readout" id="et-feedback" aria-live="polite"></p>
+    <div class="trainer-stats">
+      <span>correct <strong id="et-right">0</strong> / <strong id="et-total">0</strong></span>
+      <span>streak <strong id="et-streak">0</strong></span>
+    </div>
+  </div>
+
+  <h2>How to get good at this</h2>
+  <ul>
+    <li><strong>Start with the checked subset</strong> (thirds, fourth, fifth,
+    octave) — add intervals only when you're above ~80%.</li>
+    <li><strong>Replays are free.</strong> Listen as many times as you want;
+    guessing fast teaches guessing.</li>
+    <li><strong>Sing before you answer.</strong> Matching the notes with your
+    voice, even badly, is what wires them in — the
+    <a href="../03-theory/intervals.html">song-anchor table</a> helps.</li>
+    <li><strong>Descending is its own skill.</strong> Most people learn
+    ascending first and are surprised; train both.</li>
+  </ul>
+</main>
+</body>
+</html>

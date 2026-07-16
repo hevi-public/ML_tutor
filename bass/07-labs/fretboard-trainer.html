@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fretboard trainer — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Practice Labs">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="../06-styles/jazz-walking.html|Jazz walking">
+  <meta name="bass:next" content="ear-trainer.html|Ear trainer">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/labs/fretboard-trainer.js"></script>
+</head>
+<body>
+<main class="wide">
+  <p class="unit-tag">Unit 7 · Practice Labs</p>
+  <h1>Fretboard trainer</h1>
+  <p class="lede">Sixty seconds, one neck, no mercy. Name marked notes or find
+  prompted ones — misses become flashcards automatically, so the trainer and
+  your review deck conspire against your weak spots.</p>
+
+  <div class="demo" id="ft">
+    <div class="buttons">
+      <button class="action" type="button" data-ft-mode="name" aria-pressed="true">Name the note</button>
+      <button class="action secondary" type="button" data-ft-mode="find" aria-pressed="false">Find the note</button>
+      <span style="width:1rem"></span>
+      <button class="action secondary" type="button" data-ft-range="5" aria-pressed="true">Frets 0–5</button>
+      <button class="action secondary" type="button" data-ft-range="12" aria-pressed="false">Frets 0–12</button>
+      <label style="font-size:0.9rem"><input type="checkbox" id="ft-timed" checked> 60-second round</label>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" id="ft-start">▶ Start round</button>
+    </div>
+    <p class="big-prompt" id="ft-prompt" role="status">Name the marked note. Press start.</p>
+    <div id="ft-neck">
+      <div class="fretboard-wrap" role="img" aria-label="Trainer fretboard"></div>
+    </div>
+    <div class="choices" id="ft-answers"
+         style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.4rem;margin-top:0.8rem"></div>
+    <p class="readout" id="ft-feedback" aria-live="polite"></p>
+    <div class="trainer-stats">
+      <span>score <strong id="ft-score">0</strong></span>
+      <span>streak <strong id="ft-streak">0</strong></span>
+      <span>best <strong id="ft-best">—</strong></span>
+      <span>time <strong id="ft-time">60</strong></span>
+    </div>
+  </div>
+
+  <h2>How to use it</h2>
+  <ul>
+    <li><strong>Start on frets 0–5, "name" mode.</strong> That region holds
+    most of early bass life; get it under 2 seconds per note.</li>
+    <li><strong>"Find" mode is the inverse skill</strong> — it's what you use
+    when reading charts. Both directions matter.</li>
+    <li><strong>Think landmarks, not counting</strong>: the dots, the 5th-fret
+    rule, octave shapes. If you're counting from the nut, slow down and
+    re-anchor.</li>
+    <li>Wrong answers feed <a href="../flashcards.html">your flashcards</a> —
+    the notes that fool you will keep visiting until they don't.</li>
+  </ul>
+</main>
+</body>
+</html>

@@ -146,9 +146,12 @@
       (measure.notes || []).forEach((n, ni) => {
         const isRest = /r$/.test(String(n.duration)) || n.rest;
         const duration = String(n.duration).replace(/r$/, "") + (isRest ? "r" : "");
+        // ghost notes render with an × notehead (key suffix "/x")
+        const keys = isRest ? ["d/3"]
+          : n.ghost ? n.keys.map((k) => k + "/x") : n.keys;
         const staveNote = new VF.StaveNote({
           clef,
-          keys: isRest ? ["d/3"] : n.keys,
+          keys,
           duration,
           auto_stem: true,
         });
@@ -171,8 +174,10 @@
             const gn = new VF.GhostNote({ duration });
             tabNotes.push(gn);
           } else {
+            const positions = ((n.fret || []).length ? n.fret : [{ str: 4, fret: 0 }])
+              .map((p) => (n.ghost ? { ...p, fret: "X" } : p));
             const tn = new VF.TabNote({
-              positions: (n.fret || []).length ? n.fret : [{ str: 4, fret: 0 }],
+              positions,
               duration: String(n.duration).replace(/r$/, ""),
             });
             if (n.dots) VF.Dot.buildAndAttach([tn], { all: true });

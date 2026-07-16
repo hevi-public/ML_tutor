@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tuner — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Practice Labs">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="groove-machine.html|Groove machine">
+  <meta name="bass:next" content="routine-builder.html|Routine builder">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/labs/tuner.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Practice Labs</p>
+  <h1>Tuner</h1>
+  <p class="lede">Plug nothing in: this tuner listens through your device's
+  microphone and shows exactly how far off each string is. (No mic? The
+  reference pads below work by ear, like the tuning page taught.)</p>
+
+  <div class="demo">
+    <div class="buttons">
+      <button class="action" type="button" id="tuner-enable">🎤 Enable microphone</button>
+    </div>
+    <p class="tuner-note" id="tuner-note" aria-live="polite">—</p>
+    <p class="tuner-freq" id="tuner-freq"></p>
+    <div class="tuner-meter" id="tuner-meter-el" aria-hidden="true">
+      <div class="center"></div>
+      <div class="needle" id="tuner-needle"></div>
+    </div>
+    <div class="tuner-scale" aria-hidden="true"><span>-50¢ flat</span><span>0</span><span>+50¢ sharp</span></div>
+    <p class="tuner-status" id="tuner-status" role="status">the meter needs your
+    permission to listen — or tune by ear with the pads below</p>
+    <div class="pad-grid" style="margin-top:1.2rem">
+      <button class="pad" type="button" data-tuner-note="E"><strong>E</strong><span class="sub">41.2 Hz</span></button>
+      <button class="pad" type="button" data-tuner-note="A"><strong>A</strong><span class="sub">55.0 Hz</span></button>
+      <button class="pad" type="button" data-tuner-note="D"><strong>D</strong><span class="sub">73.4 Hz</span></button>
+      <button class="pad" type="button" data-tuner-note="G"><strong>G</strong><span class="sub">98.0 Hz</span></button>
+    </div>
+  </div>
+
+  <h2>Getting a steady reading</h2>
+  <ul>
+    <li><strong>One string at a time</strong>, plucked over the end of the
+    fingerboard (a rounder tone reads better), other strings muted.</li>
+    <li><strong>Let it ring</strong> — the reading settles about half a second
+    after the attack.</li>
+    <li><strong>Tune UP into the note</strong> (drop below, then come up) so
+    the string holds its pitch.</li>
+    <li>Within <strong>±5 cents</strong> the meter turns green — that's in
+    tune for any practical purpose.</li>
+  </ul>
+
+  <div class="box">
+    <span class="label">Why your phone can do this</span>
+    The tuner measures how often the waveform repeats (your low E repeats 41.2
+    times per second) by comparing the signal against time-shifted copies of
+    itself — the shift where they line up best IS the period. The same math
+    from the <a href="../02-fretboard/strings-and-fret-math.html">fret-math
+    page</a> then turns frequency into the nearest note and the difference
+    into cents (hundredths of a semitone).
+  </div>
+</main>
+</body>
+</html>

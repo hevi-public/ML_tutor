@@ -212,6 +212,13 @@
     },
   };
 
+  // A single metronome-style click at an absolute context time (used by labs
+  // that run their own bar scheduler). kind: "accent" | "beat" | "sub".
+  function click(when, kind = "beat", gain = 1) {
+    ensure();
+    metronome._click(when, kind, gain);
+  }
+
   /* ---------- Drone & pads ---------- */
 
   function drone(midi, { gain = 0.13 } = {}) {
@@ -272,6 +279,8 @@
   // Flatten a score spec (see music/score.js) into playable events in beats.
   // Specs use standard bass WRITTEN pitch, one octave above sounding — so
   // playback transposes down an octave (written e/2 sounds as E1).
+  // spec.swing: eighth-note pairs play long-short (triplet feel) — written
+  // straight, leaned in playback, exactly like a real chart marked "shuffle".
   function toEvents(spec) {
     const events = [];
     let t = 0;
@@ -290,6 +299,17 @@
         t += beats;
       }
     }
+    if (spec.swing) {
+      for (const e of events) {
+        const frac = e.t % 1;
+        if (Math.abs(frac - 0.5) < 1e-6) {           // offbeat eighth: play late…
+          e.t = Math.floor(e.t) + 2 / 3;
+          if (e.dur === 0.5) e.dur = 1 / 3;          // …and short
+        } else if (frac < 1e-6 && e.dur === 0.5) {
+          e.dur = 2 / 3;                             // on-beat eighth: long
+        }
+      }
+    }
     return events;
   }
 
@@ -299,7 +319,7 @@
 
   window.BTAudio = {
     ensure, pluck, playSeq, playScore, toEvents,
-    metronome, drone, chordPad, stopAll,
+    metronome, click, drone, chordPad, stopAll,
     now: () => (ctx ? ctx.currentTime : 0),
     get context() { return ctx; },
   };
