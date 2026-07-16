@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roots &amp; chord tones — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Bass Lines">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="role-of-the-bass.html|The bassist's job">
+  <meta name="bass:next" content="approach-notes.html|Approach notes">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Bass Lines</p>
+  <h1>Roots &amp; chord tones — the 80% of everything</h1>
+  <p class="lede">Root, fifth, octave, then the third and seventh: rank a
+  chord's notes by job security and you've ranked most bass lines ever
+  recorded. Here's the hierarchy and how to spend it.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-theory/triads.html">Triads</a>,
+    <a href="../03-theory/seventh-chords.html">sevenths</a>, and their
+    <a href="../02-fretboard/intervals-as-shapes.html">shapes</a>.
+  </div>
+
+  <h2>The hierarchy of usefulness</h2>
+  <table class="ref">
+    <thead><tr><th>Note</th><th>Job</th><th>When to spend it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Root</strong></td><td>names the chord</td><td>the change — beat 1 of a new chord, almost always</td></tr>
+      <tr><td><strong>Fifth</strong></td><td>stable motion without leaving home</td><td>beat 3, the "&amp;" before a change, country/rock bounce</td></tr>
+      <tr><td><strong>Octave</strong></td><td>energy without new information</td><td>lifts, disco/funk pops, doubling intensity</td></tr>
+      <tr><td><strong>Third</strong></td><td>announces major/minor</td><td>mid-bar color; first beat when the chart says so (C/E!)</td></tr>
+      <tr><td><strong>Seventh</strong></td><td>style and lean</td><td>the R–♭7 rock/soul hook; walking descents</td></tr>
+    </tbody>
+  </table>
+  <p>Notice what's NOT on the list yet: everything outside the chord. That's
+  the next page — and it's seasoning, not food.</p>
+
+  <h2>Hear the hierarchy</h2>
+  <div class="demo" id="hier-demo">
+    <div class="buttons">
+      <button class="action secondary" type="button" data-line="r">Roots</button>
+      <button class="action secondary" type="button" data-line="r5">Roots + fifths</button>
+      <button class="action secondary" type="button" data-line="r58">+ octaves</button>
+      <button class="action secondary" type="button" data-line="r537">+ thirds &amp; sevenths</button>
+    </div>
+    <p class="readout" id="hier-readout">Four passes over the same A7–D7 vamp,
+    each adding the next tier. Every version is a real, usable line.</p>
+  </div>
+
+  <h2>The two moves to steal today</h2>
+  <p><strong>Root–fifth alternation</strong> — the two-beat heartbeat under
+  country, polka, and half of rock. Remember the low fifth trick: same fret,
+  one string down.</p>
+  <p><strong>Root–octave bounce</strong> — the energy machine of disco and
+  funk (finger 1 and finger 4, the fixed claw from Unit 2).</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Strong beats want strong notes</summary>
+    <div class="layer-body">
+      <p>The working rule of nearly all bass playing: <strong>chord tones on
+      the beats, anything you like between them</strong>. Beats 1 and 3 carry
+      the harmony; land root/3rd/5th/7th there and the line sounds "inside"
+      no matter what happens on the &amp;s. This one rule generates
+      everything from Motown to walking jazz.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Thirds: the polite warning</summary>
+    <div class="layer-body">
+      <p>The third is gorgeous mid-bar and risky on the bottom of beat 1
+      (it makes the chord sound inverted — sometimes wanted, often not).
+      Standard craft: root on the change, third later in the bar. When the
+      chart WANTS the third under the chord it will say so with a slash
+      (G/B). Exceptions are for when you can name them.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Chord tones are the destinations. Next page: the connectors — approach
+  notes and passing tones, the difference between chords played in a row and
+  an actual line.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "roots-and-chord-tones",
+    "exercises": [
+      { "id": "chord-tones-root-fifth-heartbeat",
+        "title": "Root–fifth heartbeat through a progression",
+        "goal": "G–C–D–G with root on 1, fifth on 3 (mixing high and LOW fifths), steady for two minutes — the oldest bass line in the book, owned.",
+        "tempo": [72, 108],
+        "steps": [
+          "G: fifth above (D, A-str 5) or below (D, same fret down — try both).",
+          "Low fifths sound planted; high fifths sound mobile. Choose per bar.",
+          "Keep note lengths fat and identical — this line is all pocket."
+        ],
+        "score": { "clef": "bass", "keySignature": "G", "time": "4/4", "tempo": 84,
+          "measures": [
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" } ] },
+            { "chord": "C", "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }], "annotation": "5↓" } ] },
+            { "chord": "D", "notes": [
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "R" },
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 4, "fret": 5 }], "annotation": "5↓" } ] },
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "w", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" } ] } ] } },
+      { "id": "chord-tones-arpeggio-per-chord",
+        "title": "Spell each chord as it passes",
+        "goal": "Am7–D7–Gmaj7 with R-3-5-7 arpeggios fitting exactly one bar each — the quality of every chord audible from your line alone.",
+        "tempo": [60, 92],
+        "steps": [
+          "One arpeggio note per beat. Say the chord tones as you play.",
+          "Feel how ♭3 vs 3 and ♭7 vs 7 tell the three chord types apart.",
+          "This exercise is secretly walking bass with the training wheels on."
+        ],
+        "score": { "clef": "bass", "keySignature": "G", "time": "4/4", "tempo": 69,
+          "measures": [
+            { "chord": "Am7", "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "R" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "♭3" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "♭7" } ] },
+            { "chord": "D7", "notes": [
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "R" },
+              { "keys": ["f#/3"], "duration": "q", "fret": [{ "str": 2, "fret": 4 }], "annotation": "3" },
+              { "keys": ["a/3"], "duration": "q", "fret": [{ "str": 2, "fret": 7 }], "annotation": "5" },
+              { "keys": ["c/4"], "duration": "q", "fret": [{ "str": 1, "fret": 5 }], "annotation": "♭7" } ] },
+            { "chord": "Gmaj7", "notes": [
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }], "annotation": "3" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" },
+              { "keys": ["f#/3"], "duration": "q", "fret": [{ "str": 2, "fret": 4 }], "annotation": "7" } ] },
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "w", "fret": [{ "str": 4, "fret": 3 }] } ] } ] } },
+      { "id": "chord-tones-octave-bounce",
+        "title": "The octave engine",
+        "goal": "Root-octave eighths over Am–G–F–G, octaves popping evenly, idle strings silent (the muting test), at 100 bpm.",
+        "tempo": [80, 116],
+        "steps": [
+          "Fixed claw: finger 1 root, finger 4 octave, both strings crossing quiet.",
+          "Accent beat 1 only; the rest even.",
+          "This is the disco/funk energy machine — it should feel like bouncing a ball."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "roots-and-chord-tones",
+    "questions": [
+      { "q": "The working rule for note placement in a bass line:",
+        "choices": ["chord tones on the beats, anything between them",
+                    "roots only, always",
+                    "avoid chord tones — the guitar has them"],
+        "answer": 0,
+        "explain": "Strong beats carry the harmony, so give them the chord's own notes. The 'anything' between beats is next page's subject." },
+      { "q": "Why be careful with the THIRD on beat 1 of a chord change?",
+        "choices": ["The bass note defines what the ear hears — a third on the bottom makes the chord sound inverted",
+                    "Thirds are hard to fret",
+                    "Thirds are dissonant"],
+        "answer": 0,
+        "explain": "It's a color choice the chart marks explicitly (G/B) when wanted. Default craft: root announces the change; the third speaks later in the bar." },
+      { "q": "The 'low fifth' lives…",
+        "choices": ["same fret, one string down from the root", "two frets up, same string", "it doesn't exist"],
+        "answer": 0,
+        "explain": "The fifth below the root: same fret, thicker string. Planted and heavy where the high fifth is mobile — country and rock switch between them constantly." },
+      { "q": "Root–octave eighth notes are the engine of…",
+        "choices": ["disco and uptempo funk — energy without new harmonic information",
+                    "slow ballads",
+                    "free jazz"],
+        "answer": 0,
+        "explain": "The octave adds excitement while saying nothing new harmonically — perfect for lifts and dance grooves. Finger 1 + finger 4, fixed shape, bounce." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const readout = document.getElementById("hier-readout");
+      const SPB = 0.68; // ~88bpm
+      const A = 33, D = 38; // A1, D2
+      const LINES = {
+        r:   { notes: (r) => [[0, r, 4]], label: "Roots: already a record. Thousands of great tracks are exactly this." },
+        r5:  { notes: (r) => [[0, r, 2], [2, r + 7, 2]], label: "Root–fifth: the heartbeat. Stable motion, zero risk." },
+        r58: { notes: (r) => [[0, r, 1.5], [1.5, r + 7, 0.5], [2, r + 12, 1], [3, r + 7, 1]], label: "Octaves added: energy rises, harmony unchanged." },
+        r537:{ notes: (r) => [[0, r, 1], [1, r + 4, 1], [2, r + 7, 1], [3, r + 10, 1]], label: "R-3-5-♭7: the full chord spelled — this is one bar from being a walking line." },
+      };
+
+      function play(kind) {
+        BTAudio.stopAll();
+        const line = LINES[kind];
+        [A, D, A, A].forEach((root, bar) => {
+          const t0 = bar * 4 * SPB;
+          BTAudio.chordPad([root + 12, root + 16, root + 19, root + 22],
+            { when: t0, dur: 4 * SPB - 0.1, gain: 0.4 });
+          for (const [beat, midi, dur] of line.notes(root)) {
+            BTAudio.pluck(midi, { when: t0 + beat * SPB, dur: dur * SPB * 1.05 });
+          }
+        });
+        readout.textContent = line.label;
+      }
+
+      document.querySelectorAll("#hier-demo [data-line]").forEach((btn) => {
+        btn.addEventListener("click", () => play(btn.dataset.line));
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!-- Bass Tutor page template. Copy into a unit folder (e.g. 03-theory/) and fill in.
+     Every topic page follows the same flow:
+       The idea → Hear it / find it (interactive) → The details (layered) →
+       Practice (playable exercises) → Quiz → Next.
+     Plain-language rules (bass/PLAN.md): everyday words before jargon; every notated
+     example is playable and followed by a "Say it out loud" counting/plain line;
+     no term or symbol used before it's introduced. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAGE TITLE — Bass Tutor</title>
+
+  <!-- Page contract, read by site.js -->
+  <meta name="bass:unit" content="UNIT NAME">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="PREV.html|PREV TITLE">
+  <meta name="bass:next" content="NEXT.html|NEXT TITLE">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <!-- VexFlow: only on pages that render notation (score.js falls back to a text
+       tab if it's missing — e.g. before npm install). Unit pages sit two levels
+       below the repo root, hence ../../node_modules/. -->
+  <!-- <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script> -->
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <!-- Music modules, take what the page needs:
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+  -->
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit N · UNIT NAME</p>
+  <h1>PAGE TITLE</h1>
+  <p class="lede">One-sentence hook in plain words.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    What this page assumes, with links to refreshers.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Everyday analogy first. Introduce the technical term only after the idea, and
+  make it a glossary term:
+  "…the distance between two notes is called an
+  <strong><dfn data-term="interval">interval</dfn></strong>."
+  (data-term slugs must exist in bass/data/glossary.json — add new entries there.)</p>
+
+  <h2>Hear it / find it</h2>
+  <div class="demo" id="YOUR-demo">
+    <div class="fretboard-wrap" role="img" aria-label="DESCRIBE THE DIAGRAM"></div>
+    <!-- or a notation example: <div class="score-block" data-score="ex1"></div> -->
+    <div class="buttons">
+      <button class="action" type="button" data-action="play">▶ Play</button>
+    </div>
+    <p class="hint">Tap any fret to hear the note. Sound starts after your first tap.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body"><p>…</p></div>
+  </details>
+  <details class="layer">
+    <summary>Show the theory</summary>
+    <div class="layer-body">
+      <p>…</p>
+      <ul class="symbol-legend" data-symbols="COMMA,SEPARATED,SYMBOLS"></ul>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>What to aim for, in one or two sentences.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>…</p>
+
+  <!-- Symbols used on this page: name, pronunciation, meaning, short chip text -->
+  <script type="application/json" class="symbols">
+  { "♭": { "name": "♭ — flat", "pron": "say: flat",
+           "means": "lower the note by one fret (a half step)", "short": "one fret down" } }
+  </script>
+
+  <!-- Practice exercises: rendered by practice.js, indexed by
+       scripts/build-bass-index.js into bass/data/exercise-index.json.
+       Exercise ids must be globally unique — prefix with the page slug.
+       "score" uses the spec shape documented in assets/js/music/score.js. -->
+  <script type="application/json" class="practice">
+  { "pageId": "PAGE-SLUG",
+    "exercises": [
+      { "id": "PAGE-SLUG-first-exercise",
+        "title": "…",
+        "goal": "One sentence: what done sounds like.",
+        "tempo": [60, 90],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4",
+                   "measures": [ { "notes": [ { "keys": ["e/2"], "duration": "q" } ] } ] },
+        "steps": ["Optional bullet instructions."] } ] }
+  </script>
+
+  <!-- Quiz: plain-worded understanding questions; id = stable page slug -->
+  <script type="application/json" class="quiz">
+  { "id": "PAGE-SLUG",
+    "questions": [
+      { "q": "…?", "choices": ["…", "…", "…"], "answer": 0, "explain": "…" } ] }
+  </script>
+
+  <script>
+    // Page-specific demo wiring (fretboards, play buttons) goes here.
+    // document.addEventListener("DOMContentLoaded", () => { … });
+  </script>
+</main>
+</body>
+</html>

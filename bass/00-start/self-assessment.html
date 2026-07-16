@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find your starting point — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Start Here">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="tuning.html|Tuning up">
+  <meta name="bass:next" content="../01-reading/staff-and-clef.html|The staff &amp; bass clef">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start Here</p>
+  <h1>Find your starting point</h1>
+  <p class="lede">You said you're not a total beginner — great. Answer honestly
+  (nobody's watching) and this page will point you at the right unit. "Sort of"
+  counts as no: the early units are fast to skim if they turn out easy.</p>
+
+  <div class="demo" id="assess">
+    <ol id="assess-questions" style="padding-left:1.2rem"></ol>
+    <div class="buttons">
+      <button class="action" type="button" id="assess-done">Where should I start?</button>
+    </div>
+    <div class="box plain-english" id="assess-result" hidden>
+      <span class="label">Suggested starting point</span>
+      <span id="assess-text"></span>
+    </div>
+  </div>
+
+  <div class="box">
+    <span class="label">Whatever the result says</span>
+    The <a href="../map.html">concept map</a> shows the whole path, every page
+    has a "before you start" note, and skimming a too-easy page costs five
+    minutes. Err toward starting earlier — gaps in fundamentals are what stall
+    self-taught players later.
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+    // Each question gates entry to the unit in `unlocks`: answer "yes" to all
+    // questions up to a unit and you can start past it.
+    const QUESTIONS = [
+      { q: "Is your bass in tune right now — and could you re-tune it without an app doing the listening for you?",
+        unlocks: "tuning", label: "comfortable tuning" },
+      { q: "Can you clap and count a bar of eighth notes (\"1 & 2 & 3 & 4 &\") while a metronome clicks quarters?",
+        unlocks: "reading", label: "basic rhythm literacy" },
+      { q: "Reading bass clef: could you name the notes on the staff lines (G–B–D–F–A) without a cheat sheet?",
+        unlocks: "reading2", label: "reads bass clef (slowly is fine)" },
+      { q: "Can you name the note at the 5th fret of the A string without counting up from the open string?",
+        unlocks: "fretboard", label: "knows the fretboard" },
+      { q: "Could you spell a G major triad (its three note names) and find those notes on the neck?",
+        unlocks: "theory", label: "basic chord theory" },
+      { q: "Do you already alternate two plucking fingers automatically, with idle strings staying quiet?",
+        unlocks: "technique", label: "clean basic technique" },
+      { q: "Given a chart that says C / Am / F / G7, could you improvise a simple root-based line through it in time?",
+        unlocks: "basslines", label: "plays from charts" }
+    ];
+
+    const DESTINATIONS = [
+      { at: 0, href: "welcome.html", text: "Start at the very beginning — <a href='welcome.html'>Unit 0</a>, then straight through. You'll move quickly, and the foundations will actually be foundations." },
+      { at: 1, href: "../01-reading/staff-and-clef.html", text: "Start with <a href='../01-reading/staff-and-clef.html'>Unit 1 — Reading music</a>. Your hands are ahead of your reading; fix that now while it's cheap." },
+      { at: 3, href: "../02-fretboard/strings-and-fret-math.html", text: "Start with <a href='../02-fretboard/strings-and-fret-math.html'>Unit 2 — The fretboard</a>. Reading's fine; make the neck itself just as legible." },
+      { at: 4, href: "../03-theory/intervals.html", text: "Start with <a href='../03-theory/intervals.html'>Unit 3 — Theory core</a>. You know where the notes are; time to learn why lines choose the notes they do." },
+      { at: 5, href: "../04-technique/right-hand.html", text: "Start with <a href='../04-technique/right-hand.html'>Unit 4 — Technique</a>, then breeze into bass-line construction. Consider skimming Unit 3's diatonic harmony first if Roman numerals are hazy." },
+      { at: 6, href: "../05-basslines/role-of-the-bass.html", text: "Start with <a href='../05-basslines/role-of-the-bass.html'>Unit 5 — Bass lines</a> and treat Units 6–8 (styles, labs, expert) as your main course. The ear trainer and groove machine in Unit 7 are your daily gym." },
+      { at: 7, href: "../06-styles/rock.html", text: "You're past the fundamentals — go straight to <a href='../06-styles/rock.html'>Unit 6 — Styles</a> for vocabulary, live in the <a href='../07-labs/groove-machine.html'>practice labs</a>, and cherry-pick Unit 8." }
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const list = document.getElementById("assess-questions");
+      QUESTIONS.forEach((item, i) => {
+        const li = document.createElement("li");
+        li.style.margin = "0.7rem 0";
+        li.innerHTML = `<p style="margin:0 0 0.4rem">${item.q}</p>
+          <label style="margin-right:1rem"><input type="radio" name="q${i}" value="yes"> yes, solidly</label>
+          <label><input type="radio" name="q${i}" value="no" checked> no / sort of</label>`;
+        list.appendChild(li);
+      });
+
+      document.getElementById("assess-done").addEventListener("click", () => {
+        // count consecutive "yes" answers from the top — the first "no" is
+        // where the gaps start, so that's where to begin
+        let streak = 0;
+        for (let i = 0; i < QUESTIONS.length; i++) {
+          const v = document.querySelector(`input[name="q${i}"]:checked`)?.value;
+          if (v === "yes") streak++;
+          else break;
+        }
+        const dest = [...DESTINATIONS].reverse().find((d) => streak >= d.at);
+        const box = document.getElementById("assess-result");
+        document.getElementById("assess-text").innerHTML = dest.text +
+          "<br><br><em>Honest answers beyond the first \"no\" don't change the result — fundamentals stack in order.</em>";
+        box.hidden = false;
+        box.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (window.BassProgress) BassProgress.markComplete("self-assessment");
+      });
+    });
+  })();
+  </script>
+</main>
+</body>
+</html>

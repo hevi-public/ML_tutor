@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intervals — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="../02-fretboard/positions-and-fingering.html|Positions &amp; fingering">
+  <meta name="bass:next" content="major-scale.html|The major scale">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>Intervals — distances with personalities</h1>
+  <p class="lede">You already play interval shapes. This page attaches the
+  proper names and — much more useful — the <em>sounds</em>, so "a fifth"
+  stops being geometry and becomes something you recognize with your eyes
+  closed.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Interval shapes on the neck
+    (<a href="../02-fretboard/intervals-as-shapes.html">Unit 2</a>) and
+    counting frets as <dfn data-term="semitone">semitones</dfn>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Every <dfn data-term="interval">interval</dfn> has a two-part name: a
+  <strong>number</strong> (how many letter names you cross, counting both
+  ends: C→E crosses C, D, E = a <em>third</em>) and a <strong>quality</strong>
+  (major, minor, perfect — the fine-tuning). The everyday translation:</p>
+  <table class="ref">
+    <thead><tr><th>Semitones</th><th>Name</th><th>Short</th><th>Sounds like the start of…</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>minor second</td><td>m2</td><td>Jaws (tension itself)</td></tr>
+      <tr><td>2</td><td>major second</td><td>M2</td><td>Happy Birthday ("hap-py")</td></tr>
+      <tr><td>3</td><td>minor third</td><td>m3</td><td>Smoke on the Water riff; "sad" chord color</td></tr>
+      <tr><td>4</td><td>major third</td><td>M3</td><td>Oh When the Saints; "happy" chord color</td></tr>
+      <tr><td>5</td><td>perfect fourth</td><td>P4</td><td>Here Comes the Bride; your next open string</td></tr>
+      <tr><td>6</td><td>tritone</td><td>TT</td><td>The Simpsons ("the SIMP-sons"); maximum itch</td></tr>
+      <tr><td>7</td><td>perfect fifth</td><td>P5</td><td>Star Wars theme; power and stability</td></tr>
+      <tr><td>8</td><td>minor sixth</td><td>m6</td><td>The Entertainer's opening lean</td></tr>
+      <tr><td>9</td><td>major sixth</td><td>M6</td><td>My Way ("and now…"); the NBC chime</td></tr>
+      <tr><td>10</td><td>minor seventh</td><td>m7</td><td>Star Trek (original) theme; bluesy pull</td></tr>
+      <tr><td>11</td><td>major seventh</td><td>M7</td><td>Take On Me's leap; dreamy ache</td></tr>
+      <tr><td>12</td><td>octave</td><td>P8</td><td>Somewhere Over the Rainbow ("some-WHERE")</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Hear them</h2>
+  <div class="demo" id="int-demo">
+    <div class="buttons" id="int-buttons"></div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-mode="melodic" aria-pressed="true">One after the other</button>
+      <button class="action secondary" type="button" data-mode="harmonic" aria-pressed="false">Both at once</button>
+      <button class="action secondary" type="button" id="int-random">🎲 Random root</button>
+    </div>
+    <div class="fretboard-wrap" role="img" aria-label="Fretboard showing the current interval's two notes"></div>
+    <p class="readout" id="int-readout">Pick an interval — it plays from the
+    current root and draws itself on the neck.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why "perfect"? Why "major/minor"?</summary>
+    <div class="layer-body">
+      <p>Unisons, fourths, fifths, and octaves are so acoustically stable that
+      old theorists called them <em>perfect</em> — they don't come in
+      happy/sad flavors. Seconds, thirds, sixths, and sevenths do: the larger
+      version is <em>major</em>, one semitone smaller is <em>minor</em>. That's
+      the entire naming system. (Shrink a perfect interval and it's
+      <em>diminished</em>; stretch it, <em>augmented</em> — the tritone is both
+      an augmented fourth and a diminished fifth, which suits its troublemaker
+      reputation.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Consonance and dissonance — the working bassist's version</summary>
+    <div class="layer-body">
+      <p>Octaves and fifths sound "at rest" against the root — that's why they
+      carry whole genres of bass playing. Thirds and sixths sound sweet;
+      seconds and sevenths rub; the tritone actively demands resolution.
+      None of these are good or bad — they're <em>tools with different
+      urgencies</em>, and bass lines are built by choosing when to be stable
+      and when to itch.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Compound intervals (past the octave)</summary>
+    <div class="layer-body">
+      <p>A ninth is just a second plus an octave, an eleventh a fourth plus an
+      octave, a thirteenth a sixth. You'll meet them as chord extensions in
+      the Expert unit — the ear-math is the same, only wider.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>Interval singing is the fastest ear-builder there is — and nobody's
+  listening.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Stack intervals in the right recipe and you get the major scale — the
+  measuring stick for everything else in music. That's next.</p>
+
+  <script type="application/json" class="symbols">
+  { "P5": { "name": "P5 — perfect fifth", "pron": "say: perfect fifth",
+            "means": "7 semitones; the stable interval of power chords and half of all bass lines.",
+            "short": "7 semitones, stable" },
+    "m3": { "name": "m3 — minor third", "pron": "say: minor third",
+            "means": "3 semitones; the 'sad' chord color.", "short": "3 semitones, dark" },
+    "M3": { "name": "M3 — major third", "pron": "say: major third",
+            "means": "4 semitones; the 'happy' chord color.", "short": "4 semitones, bright" },
+    "TT": { "name": "TT — tritone", "pron": "say: TRY-tone",
+            "means": "6 semitones; maximum tension, begs to resolve.", "short": "6 semitones, itchy" } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "intervals",
+    "exercises": [
+      { "id": "intervals-sing-fifths-octaves",
+        "title": "Play–sing–check: fifths and octaves",
+        "goal": "You can sing the fifth or octave above a played root before you play it — and the check note proves you right, 8 times out of 10.",
+        "tempo": [60],
+        "steps": [
+          "Play a root (any comfortable one). Sing what you THINK the fifth is.",
+          "Play the real fifth (one string up, two frets over). Compare honestly.",
+          "Same game with the octave. Two minutes a day beats an hour on Sunday."
+        ] },
+      { "id": "intervals-thirds-in-time",
+        "title": "Major and minor thirds, in time",
+        "goal": "Alternating major/minor thirds from moving roots, in steady time, while calling out 'major' or 'minor' — no pausing to compute.",
+        "tempo": [56, 80],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 63,
+          "measures": [
+            { "notes": [
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }], "annotation": "M3" },
+              { "keys": ["g/2"], "duration": "q" },
+              { "keys": ["bb/2"], "duration": "q", "fret": [{ "str": 3, "fret": 1 }], "annotation": "m3" } ] },
+            { "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }], "annotation": "M3" },
+              { "keys": ["c/3"], "duration": "q" },
+              { "keys": ["eb/3"], "duration": "q", "fret": [{ "str": 2, "fret": 1 }], "annotation": "m3" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "intervals",
+    "questions": [
+      { "q": "An interval's NUMBER (third, fifth…) counts…",
+        "choices": ["letter names crossed, including both ends — C to E is a third",
+                    "frets between the notes",
+                    "how many strings you cross"],
+        "answer": 0,
+        "explain": "C→E: C, D, E = three letters = a third. The QUALITY (major/minor/perfect) then pins down the exact semitone count." },
+      { "q": "Which intervals are called 'perfect'?",
+        "choices": ["Unison, fourth, fifth, octave", "Thirds and sixths", "Anything played correctly"],
+        "answer": 0,
+        "explain": "The acoustically rock-solid ones that don't come in happy/sad versions. Seconds, thirds, sixths, sevenths come as major or minor." },
+      { "q": "The difference between a major and a minor third is…",
+        "choices": ["one semitone — 4 vs 3", "one whole letter name", "which string you play it on"],
+        "answer": 0,
+        "explain": "Major third = 4 semitones (bright), minor third = 3 (dark). One fret between happy and sad — you drilled the shapes in Unit 2." },
+      { "q": "Why do root–fifth–octave figures work in nearly every style?",
+        "choices": ["Those intervals are maximally stable against the root — they state the chord without claiming its color",
+                    "They're the only intervals a bass can play",
+                    "Tradition only"],
+        "answer": 0,
+        "explain": "Perfect intervals don't lean major or minor, so they're always 'right'. The color (thirds, sevenths) can be added when YOU choose." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const INTERVALS = [
+        ["m2", 1], ["M2", 2], ["m3", 3], ["M3", 4], ["P4", 5], ["TT", 6],
+        ["P5", 7], ["m6", 8], ["M6", 9], ["m7", 10], ["M7", 11], ["P8", 12],
+      ];
+      const NAMES = { m2: "minor second", M2: "major second", m3: "minor third",
+        M3: "major third", P4: "perfect fourth", TT: "tritone",
+        P5: "perfect fifth", m6: "minor sixth", M6: "major sixth",
+        m7: "minor seventh", M7: "major seventh", P8: "octave" };
+
+      const btnWrap = document.getElementById("int-buttons");
+      const readout = document.getElementById("int-readout");
+      const fb = BTFret.create(document.querySelector("#int-demo .fretboard-wrap"),
+        { frets: 12, interactive: false });
+      let mode = "melodic";
+      let root = { string: 0, fret: 3 };
+
+      function show(short, semis) {
+        const rootNote = BT.noteAt(root.string, root.fret);
+        const targetMidi = rootNote.midi + semis;
+        const options = BT.positions(targetMidi, { exact: true, maxFret: 12 })
+          .filter((p) => p.string !== root.string || p.fret !== root.fret)
+          .sort((a, b) => (Math.abs(a.fret - root.fret) + Math.abs(a.string - root.string))
+                        - (Math.abs(b.fret - root.fret) + Math.abs(b.string - root.string)));
+        fb.clear();
+        const marks = [{ ...root, cls: "root",
+          label: rootNote.name.replace(/\d+$/, "") }];
+        if (options[0]) marks.push({ string: options[0].string, fret: options[0].fret,
+          cls: "good", label: BT.midiToNote(targetMidi).replace(/\d+$/, "") });
+        fb.mark(marks);
+        if (mode === "harmonic") {
+          BTAudio.pluck(rootNote.midi, { dur: 1.8 });
+          BTAudio.pluck(targetMidi, { dur: 1.8 });
+        } else {
+          BTAudio.pluck(rootNote.midi, { dur: 1.1 });
+          BTAudio.pluck(targetMidi, { when: 0.7, dur: 1.6 });
+        }
+        readout.innerHTML = `<strong>${NAMES[short]}</strong> (${short}) — ` +
+          `${semis} semitone${semis > 1 ? "s" : ""} up from ` +
+          `${rootNote.name.replace(/\d+$/, "")}.`;
+      }
+
+      INTERVALS.forEach(([short, semis], i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "action" + (short === "P5" ? "" : " secondary");
+        b.textContent = short;
+        b.title = NAMES[short];
+        b.addEventListener("click", () => {
+          btnWrap.querySelectorAll("button").forEach((x) =>
+            x.classList.toggle("secondary", x !== b));
+          show(short, semis);
+        });
+        btnWrap.appendChild(b);
+      });
+
+      document.querySelectorAll("#int-demo [data-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          mode = btn.dataset.mode;
+          document.querySelectorAll("#int-demo [data-mode]").forEach((x) =>
+            x.setAttribute("aria-pressed", String(x === btn)));
+        });
+      });
+
+      document.getElementById("int-random").addEventListener("click", () => {
+        root = { string: Math.random() < 0.5 ? 0 : 1,
+                 fret: 1 + Math.floor(Math.random() * 7) };
+        const n = BT.noteAt(root.string, root.fret);
+        fb.clear();
+        fb.mark([{ ...root, cls: "root", label: n.name.replace(/\d+$/, "") }]);
+        BTAudio.pluck(n.midi);
+        readout.innerHTML = `New root: <strong>${n.name.replace(/\d+$/, "")}</strong> — now pick an interval.`;
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome — how to use this site — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Start Here">
+  <meta name="bass:root" content="../">
+  <meta name="bass:next" content="gear-and-setup.html|Gear &amp; setup">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start Here</p>
+  <h1>Welcome — how to use this site</h1>
+  <p class="lede">This is a bass course that runs entirely in your browser:
+  fretboards you can tap, notation that plays itself, a metronome, ear
+  training, and a path that goes from "which one is the E string?" to reading
+  real charts.</p>
+
+  <h2>What this site believes</h2>
+  <p>Three things, and everything else follows from them:</p>
+  <p><strong>1. Plain words first.</strong> Every idea starts in everyday
+  language, and the official term arrives only after you already understand the
+  thing it names. When we say "notes that are two frets apart", you'll learn
+  later that musicians call that a <em>whole step</em> — and by then it's just
+  a new name for something you already know. Any term with a dotted underline
+  is tappable and will explain itself.</p>
+  <p><strong>2. Your ears and hands come along.</strong> Music theory that you
+  can't hear is trivia. Every example on this site is playable — tap a fret
+  diagram and it sounds, press ▶ under a line of notation and it plays. And
+  every page ends with something concrete to practice on a real bass, with a
+  starting <dfn data-term="tempo">tempo</dfn> and a target.</p>
+  <p><strong>3. Small, honest steps.</strong> Each page teaches one idea, checks
+  it with a short quiz (asked in plain words, not vocabulary), and tells you
+  where it leads. Quiz questions you miss turn into flashcards automatically,
+  so the things you personally find hard come back around.</p>
+
+  <h2>How a page works</h2>
+  <p>Every topic page has the same flow:</p>
+  <ul>
+    <li><strong>The idea</strong> — a plain-English explanation, usually with an
+    everyday analogy.</li>
+    <li><strong>Hear it / find it</strong> — an interactive diagram or playable
+    notation. <em>Sound always starts with your tap</em> — nothing plays on its
+    own.</li>
+    <li><strong>The details</strong> — collapsible layers. Open as much as you
+    like; you can follow the whole course without ever opening the deepest
+    layer.</li>
+    <li><strong>Practice</strong> — exercises with notation and
+    <dfn data-term="tab">tab</dfn>, a ▶ button so you know what they should
+    sound like, tempo targets, and a "log practice" button that remembers what
+    you've worked on.</li>
+    <li><strong>A quiz</strong> — a few questions to let you claim the page.
+    Finishing the quiz marks the page complete on the concept map; it never
+    blocks you from moving on.</li>
+  </ul>
+
+  <div class="box plain-english">
+    <span class="label">Handy keys</span>
+    ← and → move between pages. Press <code>/</code> anywhere to search — plain
+    phrasing works ("two frets up", "the fancy F symbol").
+  </div>
+
+  <h2>What you need</h2>
+  <ul>
+    <li><strong>A bass.</strong> Any 4-string bass works — this course uses
+    standard tuning (E–A–D–G) throughout. Five-string players: everything here
+    applies; there's an extended-range page in the Expert unit.</li>
+    <li><strong>Something to hear it through</strong> — an amp, headphones via
+    an amp/interface, or even unplugged practice for the early units.</li>
+    <li><strong>15–30 minutes at a time.</strong> Short, regular sessions with a
+    clear goal beat long, occasional ones. The practice log and routine builder
+    are built around that idea.</li>
+  </ul>
+
+  <h2>Where to start</h2>
+  <p>If you're brand new: just follow the arrows — the next page covers your
+  instrument and getting set up, then tuning, then reading music.</p>
+  <p>If you already play a bit: take the self-assessment at the end of this
+  unit. It asks a handful of honest questions ("can you name the note at the
+  5th fret of the A string without counting?") and suggests where to jump in.
+  The <a href="../map.html">concept map</a> shows the whole path at a glance,
+  and nothing stops you from wandering.</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Gear and setup: what the parts of your bass are called, how to sit or
+  stand with it, and the two knobs that matter on day one.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "welcome",
+    "questions": [
+      { "q": "A page's quiz is there to…",
+        "choices": [
+          "let you claim the page as complete — it never blocks you from moving on",
+          "unlock the next page, which stays locked until you pass",
+          "grade you against other learners"
+        ],
+        "answer": 0,
+        "explain": "Quizzes mark progress (and feed your flashcards when you miss one), but navigation is always free — this is a course, not a gate." },
+      { "q": "When does this site make sound?",
+        "choices": [
+          "Only after you tap or click something — nothing plays on its own",
+          "As soon as a page loads",
+          "Only if you turn sound on in the settings"
+        ],
+        "answer": 0,
+        "explain": "Browsers (and good manners) require a tap first. Every fretboard, ▶ button, and metronome starts from your gesture." },
+      { "q": "You keep getting a quiz question wrong. What happens to it?",
+        "choices": [
+          "It becomes a flashcard and comes back for review until you know it",
+          "Nothing — wrong answers are discarded",
+          "The page is marked as failed"
+        ],
+        "answer": 0,
+        "explain": "Missed questions feed the flashcards page, which schedules them with spaced repetition — hard things come back sooner." }
+    ] }
+  </script>
+</main>
+</body>
+</html>

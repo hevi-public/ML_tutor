@@ -1,0 +1,81 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; let a running production deploy finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Runtime deps only (katex, highlight.js assets, vexflow).
+      # The index builders use Node built-ins, so dev deps aren't needed.
+      - name: Install vendored libraries
+        run: npm ci --omit=dev
+
+      - name: Rebuild search indexes
+        run: |
+          npm run build:index
+          npm run build:bass
+
+      # Stage the site. node_modules is gitignored but the pages reference it
+      # by relative path, so copy exactly the vendored files the pages use.
+      - name: Stage site
+        run: |
+          mkdir -p _site
+          rsync -a \
+            --exclude "/.git" \
+            --exclude "/.github" \
+            --exclude "/scripts" \
+            --exclude "/node_modules" \
+            --exclude "/_site" \
+            --exclude ".DS_Store" \
+            ./ _site/
+
+          mkdir -p _site/node_modules/katex \
+                   _site/node_modules/@highlightjs/cdn-assets/styles \
+                   _site/node_modules/vexflow/build/cjs
+          cp -r node_modules/katex/dist _site/node_modules/katex/dist
+          cp node_modules/@highlightjs/cdn-assets/highlight.min.js \
+             _site/node_modules/@highlightjs/cdn-assets/
+          cp node_modules/@highlightjs/cdn-assets/styles/github.min.css \
+             node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css \
+             _site/node_modules/@highlightjs/cdn-assets/styles/
+          cp node_modules/vexflow/build/cjs/vexflow.js \
+             _site/node_modules/vexflow/build/cjs/
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

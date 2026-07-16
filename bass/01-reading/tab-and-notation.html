@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab ↔ notation — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Reading Music">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="rhythm-and-counting.html|Rhythm &amp; counting">
+  <meta name="bass:next" content="time-signatures.html|Time signatures">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Reading Music</p>
+  <h1>Tab ↔ notation</h1>
+  <p class="lede">Tab tells your fingers <em>where</em>. Notation tells your
+  ears <em>what and when</em>. This site shows both, stacked — here's how to
+  read the pair as one thing.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    The staff (<a href="staff-and-clef.html">previous-but-one page</a>) and
+    counting (<a href="rhythm-and-counting.html">previous page</a>).
+  </div>
+
+  <h2>The idea</h2>
+  <p><dfn data-term="tab">Tab</dfn> is a picture of your bass:
+  <strong>four lines = four strings</strong>, with the low E string at the
+  <em>bottom</em> — exactly like the fretboard diagrams you've been tapping.
+  A number on a line means "press that fret on that string"; 0 means open.
+  It's instantly readable… and it's silent about rhythm. Plain tab can't say
+  whether a note lasts two beats or half of one.</p>
+  <p>That's why this site (like most good bass books) stacks tab under real
+  notation: <strong>read the rhythm from the top staff, take the fingering
+  from the bottom one.</strong> Same music, two lenses.</p>
+
+  <h2>Same phrase, both lenses</h2>
+  <div class="demo">
+    <div class="score-block" data-score="phrase" aria-label="A two-bar phrase shown as notation with tab underneath"></div>
+    <div class="buttons">
+      <button class="action" type="button" data-play="phrase">▶ Play the phrase</button>
+    </div>
+    <p class="hint">Follow the top staff for the rhythm you learned last page;
+    glance down for which fret. After a while the two reads merge into one.</p>
+  </div>
+
+  <h2>How the two systems divide the truth</h2>
+  <table class="ref">
+    <thead><tr><th>Question</th><th>Notation answers</th><th>Tab answers</th></tr></thead>
+    <tbody>
+      <tr><td>Which pitch?</td><td>yes — exactly</td><td>indirectly (you'd have to know the fretboard)</td></tr>
+      <tr><td>How long? What rhythm?</td><td>yes — completely</td><td>no (unless rhythm stems are added)</td></tr>
+      <tr><td>Which fret/string to use?</td><td>no — your choice</td><td>yes — exactly</td></tr>
+      <tr><td>Works for any instrument?</td><td>yes</td><td>no — it IS the bass diagram</td></tr>
+      <tr><td>Sight-read new music?</td><td>the standard for it</td><td>slow without the recording</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why the same note appears at different frets</summary>
+    <div class="layer-body">
+      <p>Remember from the fretboard unit (or discover now): most pitches live
+      in several places — the D at A-string fret 5 is also D-string fret 0.
+      Notation leaves the choice to you; tab records one specific choice.
+      When this site's tab picks a position, it's optimizing for staying in
+      one hand position — feel free to disagree once you know why.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Internet tab, honestly</summary>
+    <div class="layer-body">
+      <p>Text tab from the internet is wonderful and wrong: fingerings are
+      often awkward, rhythms absent, and errors common. Use it as a sketch —
+      then let the recording be the authority. (That's also why the
+      transcription skills in the Expert unit beat any tab site: your ears
+      don't have typos.)</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>One page left in the reading toolkit: time signatures — what the two
+  stacked numbers promise, and how 3/4 and 6/8 feel different in your body.</p>
+
+  <script type="application/json" class="scores">
+  { "phrase": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 76,
+      "measures": [
+        { "notes": [
+          { "keys": ["a/2"], "duration": "q",  "fret": [{ "str": 3, "fret": 0 }] },
+          { "keys": ["c/3"], "duration": "8",  "fret": [{ "str": 3, "fret": 3 }] },
+          { "keys": ["d/3"], "duration": "8",  "fret": [{ "str": 3, "fret": 5 }] },
+          { "keys": ["e/3"], "duration": "q",  "fret": [{ "str": 2, "fret": 2 }] },
+          { "keys": ["d/3"], "duration": "q",  "fret": [{ "str": 2, "fret": 0 }] } ] },
+        { "notes": [
+          { "keys": ["c/3"], "duration": "q",  "fret": [{ "str": 3, "fret": 3 }] },
+          { "keys": ["a/2"], "duration": "q",  "fret": [{ "str": 3, "fret": 0 }] },
+          { "keys": ["g/2"], "duration": "h",  "fret": [{ "str": 4, "fret": 3 }] } ] } ] } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "tab-and-notation",
+    "exercises": [
+      { "id": "tab-notation-two-lens-read",
+        "title": "Two-lens reading",
+        "goal": "You can play the page's phrase three ways: from the stacked pair, from tab alone (recalling the rhythm), and from notation alone (choosing your own frets).",
+        "tempo": [60, 80],
+        "steps": [
+          "Pass 1: read the pair as printed.",
+          "Pass 2: cover the top staff; play from tab while counting the remembered rhythm out loud.",
+          "Pass 3: cover the tab; play from notation using any frets that work."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 66,
+          "measures": [
+            { "notes": [
+              { "keys": ["e/2"], "duration": "q",  "fret": [{ "str": 4, "fret": 0 }] },
+              { "keys": ["g/2"], "duration": "q",  "fret": [{ "str": 4, "fret": 3 }] },
+              { "keys": ["a/2"], "duration": "q",  "fret": [{ "str": 3, "fret": 0 }] },
+              { "keys": ["b/2"], "duration": "q",  "fret": [{ "str": 3, "fret": 2 }] } ] },
+            { "notes": [
+              { "keys": ["c/3"], "duration": "h",  "fret": [{ "str": 3, "fret": 3 }] },
+              { "keys": ["a/2"], "duration": "q",  "fret": [{ "str": 3, "fret": 0 }] },
+              { "keys": ["e/2"], "duration": "q",  "fret": [{ "str": 4, "fret": 0 }] } ] } ] } },
+      { "id": "tab-notation-position-choice",
+        "title": "One phrase, two fingerings",
+        "goal": "You can play D–E–G twice — once using open strings, once fully fretted at the 5th position — and hear that pitch is identical while feel differs.",
+        "tempo": [60, 80],
+        "steps": [
+          "Version A (as written): open D string based.",
+          "Version B: same pitches but D = A-string fret 5, E = A-string fret 7, G = D-string fret 5.",
+          "Notice which one sets your hand up better for what comes next — that's how position choices get made."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 70,
+          "measures": [
+            { "notes": [
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 2, "fret": 0 }] },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }] },
+              { "keys": ["g/3"], "duration": "h", "fret": [{ "str": 1, "fret": 0 }] } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }] },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }] },
+              { "keys": ["g/3"], "duration": "h", "fret": [{ "str": 2, "fret": 5 }] } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "tab-and-notation",
+    "questions": [
+      { "q": "In bass tab, the bottom line is…",
+        "choices": ["the low E string (thickest)", "the G string (thinnest)", "whichever string starts the song"],
+        "answer": 0,
+        "explain": "Tab mirrors the player's view: low string low. (Confusingly that means the highest LINE is the highest-pitched string — same as this site's fretboard diagrams.)" },
+      { "q": "What can't plain tab tell you?",
+        "choices": ["how long each note lasts", "which fret to press", "which string to play"],
+        "answer": 0,
+        "explain": "Tab nails the where and is silent on the when. That's exactly what the notation staff above it supplies." },
+      { "q": "A 0 in tab means…",
+        "choices": ["play that string open", "mute that string", "skip that string"],
+        "answer": 0,
+        "explain": "0 = open string, no fretting hand at all. (A muted 'thunk' is written ×, not 0 — you'll meet it in the funk unit.)" },
+      { "q": "Why does this site print notation AND tab instead of just tab?",
+        "choices": ["Tab shows where; notation carries the rhythm and pitch — together they're complete",
+                    "Notation is required by law",
+                    "Tab is only for guitarists"],
+        "answer": 0,
+        "explain": "Each lens answers what the other can't. Read rhythm from the top, fingering from the bottom, until they fuse." }
+    ] }
+  </script>
+</main>
+</body>
+</html>

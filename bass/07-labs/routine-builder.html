@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Routine builder — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Practice Labs">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="tuner.html|Tuner">
+  <meta name="bass:next" content="../08-expert/modes.html|Modes">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+  <script defer src="../assets/js/labs/routine-builder.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Practice Labs</p>
+  <h1>Routine builder</h1>
+  <p class="lede">Tell it how long you've got; it assembles a session from the
+  exercises you've been neglecting — never-practiced first, then the stalest —
+  bookended by a warmup and something fun. Print it and put it on the music
+  stand.</p>
+
+  <div class="demo">
+    <div class="buttons" role="radiogroup" aria-label="Session length">
+      <label style="font-size:0.95rem"><input type="radio" name="rb-time" value="10"> 10 min</label>
+      <label style="font-size:0.95rem"><input type="radio" name="rb-time" value="20" checked> 20 min</label>
+      <label style="font-size:0.95rem"><input type="radio" name="rb-time" value="30"> 30 min</label>
+      <label style="font-size:0.95rem"><input type="radio" name="rb-time" value="45"> 45 min</label>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" id="rb-build">Build my session</button>
+      <button class="action secondary" type="button" id="rb-print" hidden>🖨 Print it</button>
+    </div>
+    <p class="readout" id="rb-status" role="status">it reads your practice log
+    and page progress — nothing leaves your browser</p>
+  </div>
+
+  <div id="rb-list"></div>
+
+  <h2>How it chooses</h2>
+  <ul>
+    <li>Exercises from <strong>pages you've completed or visited</strong> come
+    first — the builder follows your path, it doesn't set one.</li>
+    <li>Within those: <strong>never-practiced beats stale beats recent</strong>
+    (it reads the "log practice" buttons you've been pressing).</li>
+    <li>Every session starts with tuning + a hands warmup and ends with ears
+    or free play — the <a href="../04-technique/how-to-practice.html">session
+    shape</a> from the technique unit.</li>
+  </ul>
+</main>
+</body>
+</html>

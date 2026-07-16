@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The bassist's job — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Bass Lines">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="../04-technique/how-to-practice.html|How to practice">
+  <meta name="bass:next" content="roots-and-chord-tones.html|Roots &amp; chord tones">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Bass Lines</p>
+  <h1>The bassist's job</h1>
+  <p class="lede">The bass sits exactly where rhythm meets harmony — one hand
+  in the drummer's world, one in the chords. Understand the job description
+  and every note-choice question gets easier.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-theory/diatonic-harmony.html">Diatonic harmony</a> and a
+    steady <a href="../04-technique/timing-and-groove.html">pocket</a>.
+  </div>
+
+  <h2>The two duties</h2>
+  <p><strong>Duty 1 — say when.</strong> With the kick drum, you define where
+  the <dfn data-term="beat">beat</dfn> lives. People's bodies move to the
+  bass; if you rush, the whole room rushes.</p>
+  <p><strong>Duty 2 — say what.</strong> When the chord changes, your note is
+  what tells everyone's ear the harmony moved. Play the
+  <dfn data-term="root">root</dfn> on the change and the band sounds
+  organized. This is why the same guitar chord over a different bass note is
+  a different chord to the listener — you hold the harmony's steering
+  wheel (remember slash chords: C/E is an instruction to you).</p>
+
+  <div class="box plain-english">
+    <span class="label">The whole unit in one sentence</span>
+    Land the right note (usually the root) at the right moment (usually the
+    chord change), keep the pocket, and decorate only in the space that's
+    left.
+  </div>
+
+  <h2>Hear the job happen</h2>
+  <p>The same two bars, three ways — pads play the chords, bass underneath:</p>
+  <div class="demo" id="role-demo">
+    <div class="buttons">
+      <button class="action secondary" type="button" data-ver="roots">1 — Roots only</button>
+      <button class="action secondary" type="button" data-ver="groove">2 — Roots + rhythm</button>
+      <button class="action secondary" type="button" data-ver="busy">3 — Too busy (on purpose)</button>
+    </div>
+    <p class="readout" id="role-readout">Play all three. Version 2 is the job.
+    Version 3 is what enthusiasm sounds like before Unit 5.</p>
+  </div>
+
+  <h2>Space is a note choice</h2>
+  <p>Listen to any beloved bass line: the holes are composed as carefully as
+  the notes. Rests create the room that makes the next note land; constant
+  sound is wallpaper. The discipline of Unit 4's note-length work becomes,
+  here, an aesthetic: <strong>you are allowed to be simple</strong>, and the
+  greats usually are.</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Locking with the kick drum, concretely</summary>
+    <div class="layer-body">
+      <p>"Lock with the drummer" means: know where the kick pattern is, land
+      your low notes with it (or in deliberate dialogue with it), and match
+      note endings to the drums' space. In the groove machine lab you can
+      hear root-cue patterns against the click — practice matching them
+      exactly, then leaving gaps where they leave gaps.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>When NOT to play the root</summary>
+    <div class="layer-body">
+      <p>Slash chords (play what's written), walking lines (roots on ones,
+      travel elsewhere), pedal points (hold one note while chords move —
+      instant drama), and melodic hooks where the line IS the song. All are
+      deliberate exceptions that prove the rule: everyone can hear when the
+      bass leaves home, which is exactly why it works.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Job accepted. Tools next: roots, fifths, octaves, and the chord tones —
+  the 80% of every bass line ever written.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "role-of-the-bass",
+    "exercises": [
+      { "id": "role-roots-on-ones",
+        "title": "Roots on the ones (the whole job, minimal edition)",
+        "goal": "Over a looped Am–F–C–G (use the demo or the groove machine later): the correct root lands exactly on beat 1 of every bar for two minutes straight.",
+        "tempo": [70, 100],
+        "steps": [
+          "Chords: Am F C G, one bar each. Whole notes only.",
+          "Beat 1 must feel inevitable. Nothing else matters yet.",
+          "Then half notes (root on 1 and 3). Still boring? You're doing it right."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 80,
+          "measures": [
+            { "chord": "Am", "notes": [
+              { "keys": ["a/2"], "duration": "w", "fret": [{ "str": 3, "fret": 0 }] } ] },
+            { "chord": "F", "notes": [
+              { "keys": ["f/2"], "duration": "w", "fret": [{ "str": 4, "fret": 1 }] } ] },
+            { "chord": "C", "notes": [
+              { "keys": ["c/3"], "duration": "w", "fret": [{ "str": 3, "fret": 3 }] } ] },
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "w", "fret": [{ "str": 4, "fret": 3 }] } ] } ] } },
+      { "id": "role-space-composition",
+        "title": "Compose with silence",
+        "goal": "The same Am–F–C–G loop with a one-beat rest deliberately placed in each bar — the silence landing as precisely as the notes.",
+        "tempo": [70, 96],
+        "steps": [
+          "Pattern per bar: root on 1 (2 beats), rest on 3, root or fifth on 4.",
+          "Stop the string ON beat 3 — muting is the note you're playing there.",
+          "Notice how much bigger beat 1 sounds when something breathed before it."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 80,
+          "measures": [
+            { "chord": "Am", "notes": [
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 3, "fret": 0 }] },
+              { "keys": ["d/3"], "duration": "qr" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }], "annotation": "5" } ] },
+            { "chord": "F", "notes": [
+              { "keys": ["f/2"], "duration": "h", "fret": [{ "str": 4, "fret": 1 }] },
+              { "keys": ["d/3"], "duration": "qr" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "5" } ] },
+            { "chord": "C", "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }] },
+              { "keys": ["d/3"], "duration": "qr" },
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "5" } ] },
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }] },
+              { "keys": ["d/3"], "duration": "qr" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "role-of-the-bass",
+    "questions": [
+      { "q": "The bass's two core duties are…",
+        "choices": ["defining the beat (with the drums) and announcing the harmony (root on the change)",
+                    "playing solos and playing loud",
+                    "doubling the guitar an octave down"],
+        "answer": 0,
+        "explain": "Rhythm section + harmony steering wheel. Everything else on the instrument is decoration on those two duties." },
+      { "q": "Why does the listener's sense of the chord follow the BASS note?",
+        "choices": ["Ears interpret harmony from the lowest note up — your note is the foundation the chord is heard over",
+                    "Bass frequencies are louder",
+                    "It doesn't; only the guitar matters"],
+        "answer": 0,
+        "explain": "The same chord over E vs over C reads as different harmony. That's why slash chords address you, and why your 'wrong' notes are so audible." },
+      { "q": "In great bass lines, rests are…",
+        "choices": ["composed as deliberately as the notes — space makes the next note land",
+                    "places where the bassist got tired",
+                    "mistakes kept for authenticity"],
+        "answer": 0,
+        "explain": "The holes are part of the groove. Constant sound is wallpaper; placed silence is architecture." },
+      { "q": "\"You are allowed to be simple\" is on this page because…",
+        "choices": ["the job is roots in the pocket — simplicity done deeply IS the professional sound",
+                    "beginners can't do better",
+                    "complex lines are out of fashion"],
+        "answer": 0,
+        "explain": "Version 2 of the demo — roots plus intentional rhythm — is what records actually contain. Busy-ness is easier than a deep pocket; that's why it's more common." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const CHORDS = [
+        { sym: "Am", root: "A1", pad: ["A2", "C3", "E3"] },
+        { sym: "F",  root: "F1", pad: ["F2", "A2", "C3"] },
+        { sym: "C",  root: "C2", pad: ["C3", "E3", "G3"] },
+        { sym: "G",  root: "G1", pad: ["G2", "B2", "D3"] },
+      ];
+      const readout = document.getElementById("role-readout");
+      const BPB = 4, SPB = 0.75; // 80 bpm
+
+      function playVersion(ver) {
+        BTAudio.stopAll();
+        CHORDS.forEach((c, bar) => {
+          const t0 = bar * BPB * SPB;
+          BTAudio.chordPad(c.pad.map(BT.noteToMidi), { when: t0, dur: BPB * SPB - 0.1, gain: 0.5 });
+          const rootMidi = BT.noteToMidi(c.root);
+          if (ver === "roots") {
+            BTAudio.pluck(rootMidi, { when: t0, dur: BPB * SPB });
+          } else if (ver === "groove") {
+            BTAudio.pluck(rootMidi, { when: t0, dur: 1.3 });
+            BTAudio.pluck(rootMidi, { when: t0 + 2 * SPB, dur: 0.5 });
+            BTAudio.pluck(rootMidi + 7, { when: t0 + 3 * SPB, dur: 0.6 });
+          } else {
+            for (let i = 0; i < 8; i++) {
+              BTAudio.pluck(rootMidi + [0, 12, 7, 10, 0, 7, 12, 10][i],
+                { when: t0 + i * SPB * 0.5, dur: 0.3 });
+            }
+          }
+        });
+        const labels = {
+          roots: "Roots only: unglamorous, completely solid. This already works.",
+          groove: "Roots + rhythm + a fifth: this is the job. Notice it FEELS better, not just busier.",
+          busy: "Maximum notes, minimum pocket. Fun exactly once.",
+        };
+        readout.textContent = labels[ver];
+      }
+
+      document.querySelectorAll("#role-demo [data-ver]").forEach((btn) => {
+        btn.addEventListener("click", () => playVersion(btn.dataset.ver));
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

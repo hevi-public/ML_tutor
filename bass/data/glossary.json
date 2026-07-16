@@ -1,0 +1,566 @@
+{
+  "pitch": {
+    "term": "Pitch",
+    "plain": "How high or low a sound is.",
+    "definition": "The perceived highness or lowness of a sound, set by its vibration frequency — faster vibration sounds higher. On bass, pressing closer to the body raises the pitch; thicker strings sit lower.",
+    "see": ["note", "octave"]
+  },
+  "note": {
+    "term": "Note",
+    "plain": "One named musical sound — like A, C♯, or E♭.",
+    "definition": "A pitch with a name. Music uses twelve note names that repeat as you go higher or lower: A, A♯/B♭, B, C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭.",
+    "see": ["pitch", "octave", "semitone"]
+  },
+  "string": {
+    "term": "String (E, A, D, G)",
+    "plain": "The four steel wires you pluck; each is named after the note it plays open.",
+    "definition": "A 4-string bass in standard tuning has strings E–A–D–G, from thickest (lowest) to thinnest (highest). \"The A string\" means the second-thickest string, which sounds the note A when played open.",
+    "see": ["open-string", "tuning"]
+  },
+  "open-string": {
+    "term": "Open string",
+    "plain": "Playing a string without pressing any fret.",
+    "definition": "A string plucked while no finger holds it down anywhere. Open strings sound each string's tuned note (E, A, D, or G) and are written as fret 0 in tab.",
+    "see": ["string", "fret"]
+  },
+  "fret": {
+    "term": "Fret",
+    "plain": "The metal strips along the neck; each one raises the note by one small step.",
+    "definition": "The metal bars set into the fingerboard. Pressing a string just behind a fret shortens its vibrating length; each fret raises the pitch by one semitone (half step). \"5th fret\" means the space just behind the fifth metal bar counting from the headstock.",
+    "also": ["fret position"],
+    "see": ["semitone", "open-string"]
+  },
+  "octave": {
+    "term": "Octave",
+    "plain": "The same note, higher or lower — like two people singing the same tune, one deeper.",
+    "definition": "The distance between a note and the next note with the same name (12 semitones). Notes an octave apart vibrate in a 2:1 ratio and sound like \"the same note, higher/lower\". On bass: two strings up and two frets over.",
+    "see": ["note", "interval"]
+  },
+  "semitone": {
+    "term": "Semitone",
+    "plain": "One fret's worth of distance — the smallest step in Western music.",
+    "definition": "The smallest interval in common Western music: the distance from one fret to the next on the same string. Twelve semitones make an octave.",
+    "also": ["half step"],
+    "see": ["whole-step", "fret", "interval"]
+  },
+  "whole-step": {
+    "term": "Whole step",
+    "plain": "Two frets' worth of distance.",
+    "definition": "An interval of two semitones — two frets on the same string. Scales are usually described as patterns of whole and half steps.",
+    "also": ["whole tone"],
+    "see": ["semitone", "scale"]
+  },
+  "interval": {
+    "term": "Interval",
+    "plain": "The distance between two notes.",
+    "definition": "The gap in pitch between two notes, counted in scale steps and given names like \"perfect fifth\" or \"minor third\". Intervals are the units bass lines are built from — on the fretboard each interval is a repeatable shape.",
+    "see": ["semitone", "octave", "root"]
+  },
+  "root": {
+    "term": "Root",
+    "plain": "The home note a chord or scale is built on — the note that gives it its name.",
+    "definition": "The foundational note of a chord or scale: the C in C major, the A in Am7. The bassist's first job in most music is to sound the root when the chord changes.",
+    "also": ["root note"],
+    "see": ["chord", "scale"]
+  },
+  "scale": {
+    "term": "Scale",
+    "plain": "A set of notes that belong together, played in order — the palette a song draws from.",
+    "definition": "An ordered collection of notes spanning an octave, defined by its pattern of whole and half steps (e.g. the major scale: W-W-H-W-W-W-H). Melodies and bass lines are mostly built from a scale's notes.",
+    "see": ["root", "whole-step", "major-scale"]
+  },
+  "major-scale": {
+    "term": "Major scale",
+    "plain": "The do-re-mi scale — the sunny-sounding yardstick everything else is measured against.",
+    "definition": "A seven-note scale built W-W-H-W-W-W-H from its root. It defines the key, names the scale degrees (1–7), and is the reference for describing every chord and interval (\"a minor third is a flattened 3\").",
+    "see": ["scale", "degree", "key"]
+  },
+  "minor-scale": {
+    "term": "Minor scale",
+    "plain": "The moodier cousin of the major scale.",
+    "definition": "Usually means the natural minor scale: W-H-W-W-H-W-W, equivalent to a major scale started from its 6th degree. Variants (harmonic, melodic) alter the 6th and 7th notes for stronger pull back to the root.",
+    "see": ["major-scale", "relative-minor"]
+  },
+  "relative-minor": {
+    "term": "Relative minor / major",
+    "plain": "Two keys that share the exact same notes — one feels bright, one feels dark.",
+    "definition": "Every major key has a minor key with the identical notes and key signature, rooted a minor third below it (C major ↔ A minor). Which one you're \"in\" depends on which note feels like home.",
+    "see": ["minor-scale", "key-signature"]
+  },
+  "pentatonic": {
+    "term": "Pentatonic scale",
+    "plain": "A five-note scale that's almost impossible to make sound wrong.",
+    "definition": "A scale with five notes per octave. The minor pentatonic (1 ♭3 4 5 ♭7) and major pentatonic (1 2 3 5 6) drop the clash-prone notes of their parent scales, which is why they're the workhorse of rock, blues, and funk lines.",
+    "see": ["scale", "blues-scale"]
+  },
+  "blues-scale": {
+    "term": "Blues scale",
+    "plain": "The minor pentatonic plus one deliciously wrong note.",
+    "definition": "The minor pentatonic with an added ♭5 (1 ♭3 4 ♭5 5 ♭7). That extra note — the \"blue note\" — is used as a passing sting between 4 and 5 rather than a resting place.",
+    "see": ["pentatonic"]
+  },
+  "mode": {
+    "term": "Mode",
+    "plain": "The same seven notes, but a different one feels like home.",
+    "definition": "A scale made by treating a different degree of a parent scale as the root. The major scale's seven modes (Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian) each have a distinct flavor; Dorian and Mixolydian matter most to bassists.",
+    "see": ["scale", "major-scale"]
+  },
+  "degree": {
+    "term": "Scale degree",
+    "plain": "A note's house number inside its scale — 1 through 7.",
+    "definition": "The position of a note within a scale, counted from the root: in C major, C=1, D=2, E=3… Degrees let one description work in every key (\"play root and 5\" works in C, in F♯, anywhere).",
+    "also": ["number system"],
+    "see": ["scale", "root", "nashville-numbers"]
+  },
+  "tonic": {
+    "term": "Tonic",
+    "plain": "Home base — the note (or chord) where the music feels settled.",
+    "definition": "The first degree of the key and the chord built on it (the I chord). Music builds tension by leaving the tonic and resolves it by coming back.",
+    "see": ["dominant", "key", "root"]
+  },
+  "dominant": {
+    "term": "Dominant",
+    "plain": "The 5th degree — the chord that leans hard toward home.",
+    "definition": "The fifth scale degree and its chord (V). Dominant chords, especially V7, create the strongest pull back to the tonic; the V→I motion is the engine of most Western harmony (and of the bassist's favorite root moves).",
+    "see": ["tonic", "seventh-chord", "cadence"]
+  },
+  "cadence": {
+    "term": "Cadence",
+    "plain": "A musical punctuation mark — how a phrase ends.",
+    "definition": "A chord motion that closes a phrase: V→I sounds final (period), IV→I sounds churchy-soft (amen), a phrase parking on V sounds like a comma. Bass root motion is what makes cadences land.",
+    "see": ["dominant", "tonic", "chord-progression"]
+  },
+  "chromatic": {
+    "term": "Chromatic",
+    "plain": "Moving fret by fret, using the in-between notes.",
+    "definition": "Motion by semitones, including notes outside the current scale. Chromatic approach notes — landing on a chord tone from one fret above or below — are a signature of walking bass and funk lines.",
+    "see": ["semitone", "approach-note", "diatonic"]
+  },
+  "diatonic": {
+    "term": "Diatonic",
+    "plain": "Staying inside the key's own notes.",
+    "definition": "Using only the seven notes of the current key/scale. \"The diatonic chords of C major\" means the seven chords you can build from C major's notes alone.",
+    "see": ["key", "chromatic", "chord-progression"]
+  },
+  "enharmonic": {
+    "term": "Enharmonic",
+    "plain": "Two names for the same fret — like C♯ and D♭.",
+    "definition": "Notes with different names but identical pitch. Which spelling is correct depends on the key context: the note between C and D is C♯ in D major but D♭ in A♭ major.",
+    "see": ["accidental", "key-signature"]
+  },
+  "accidental": {
+    "term": "Accidental",
+    "plain": "A ♯, ♭, or ♮ stuck in front of a note to bend it away from the key.",
+    "definition": "A sharp, flat, or natural sign applied to a single note in the music (as opposed to the key signature at the start). It lasts until the end of the bar.",
+    "see": ["key-signature", "enharmonic"]
+  },
+  "key": {
+    "term": "Key",
+    "plain": "The home scale of a song — which set of notes it lives in.",
+    "definition": "The scale (and its tonic) a piece is built around, e.g. \"in G major\". The key determines the key signature, the diatonic chords, and where home base is.",
+    "see": ["key-signature", "tonic", "scale"]
+  },
+  "key-signature": {
+    "term": "Key signature",
+    "plain": "The sharps or flats parked at the start of every line, so they don't have to be written on each note.",
+    "definition": "The cluster of ♯ or ♭ symbols after the clef that applies for the whole piece: one sharp = G major (or E minor), two flats = B♭ major (or G minor), etc. The circle of fifths organizes them.",
+    "see": ["key", "circle-of-fifths", "accidental"]
+  },
+  "circle-of-fifths": {
+    "term": "Circle of fifths",
+    "plain": "A clock face of the twelve keys, where neighbors share almost all their notes.",
+    "definition": "Arrangement of the 12 keys in perfect-fifth steps (C→G→D→…). Moving clockwise adds a sharp, counter-clockwise adds a flat. Neighboring keys differ by one note, which is why so many songs modulate to them.",
+    "see": ["key-signature", "interval"]
+  },
+  "chord": {
+    "term": "Chord",
+    "plain": "Several notes that sound at the same time — the harmony the band plays over.",
+    "definition": "Three or more notes sounded together, named by their root and quality (C, Cm, Cmaj7…). Bassists rarely play full chords, but every bass line outlines the current chord's notes.",
+    "see": ["root", "arpeggio", "triad"]
+  },
+  "triad": {
+    "term": "Triad",
+    "plain": "The basic three-note chord: root, third, fifth.",
+    "definition": "A chord of root + 3rd + 5th. The third sets major (bright) vs minor (dark); the fifth is neutral scaffolding. Four flavors: major, minor, diminished, augmented.",
+    "see": ["chord", "third", "fifth"]
+  },
+  "third": {
+    "term": "Third",
+    "plain": "The note that makes a chord happy or sad.",
+    "definition": "The interval (and chord tone) two scale steps above the root: a major third (4 semitones) makes a major chord, a minor third (3 semitones) makes a minor chord.",
+    "see": ["triad", "interval"]
+  },
+  "fifth": {
+    "term": "Fifth",
+    "plain": "The strongest, most neutral note after the root — the bassist's best friend.",
+    "definition": "The interval seven semitones above the root, present in nearly every chord. Root–fifth alternation is the skeleton of country, rock, and polka bass lines alike. On the fretboard: one string up, two frets over (or the same fret one string down for the fifth below).",
+    "see": ["interval", "root", "triad"]
+  },
+  "seventh-chord": {
+    "term": "Seventh chord",
+    "plain": "A triad with one more note stacked on — where grown-up harmony starts.",
+    "definition": "A four-note chord: root, 3rd, 5th, 7th. The common qualities — maj7 (dreamy), dominant 7 (bluesy, wants to move), m7 (mellow), m7♭5 (tense) — cover most songs you'll ever play.",
+    "see": ["triad", "chord", "extension"]
+  },
+  "extension": {
+    "term": "Extension",
+    "plain": "The optional upper floors of a chord: 9ths, 11ths, 13ths.",
+    "definition": "Chord tones beyond the 7th, made by continuing to stack thirds. They add color, not function — as a bassist you mostly acknowledge them by NOT stepping on them: the root still works.",
+    "see": ["seventh-chord", "chord"]
+  },
+  "inversion": {
+    "term": "Inversion",
+    "plain": "A chord with a note other than its root on the bottom.",
+    "definition": "Playing a chord over its 3rd or 5th (written as slash chords: C/E means C major with E in the bass). For bassists, slash chords are direct instructions: play the note after the slash.",
+    "also": ["slash chord"],
+    "see": ["chord", "chart"]
+  },
+  "arpeggio": {
+    "term": "Arpeggio",
+    "plain": "A chord played one note at a time.",
+    "definition": "The notes of a chord played in sequence instead of together. The bread and butter of bass lines: root, third, fifth, (seventh), one after another.",
+    "also": ["broken chord"],
+    "see": ["chord", "chord-tones"]
+  },
+  "chord-tones": {
+    "term": "Chord tones",
+    "plain": "The notes that belong to the chord being played right now.",
+    "definition": "The current chord's own notes (root, 3rd, 5th, 7th). Landing on chord tones on strong beats is the core recipe for bass lines that sound \"right\"; everything else is decoration between them.",
+    "see": ["arpeggio", "passing-tone", "approach-note"]
+  },
+  "passing-tone": {
+    "term": "Passing tone",
+    "plain": "A stepping-stone note between two chord tones.",
+    "definition": "A non-chord note used on a weak beat to walk from one chord tone to another by step. Passing tones turn root–root plods into lines.",
+    "see": ["chord-tones", "approach-note", "walking-bass"]
+  },
+  "approach-note": {
+    "term": "Approach note",
+    "plain": "A note played just before your target, one step or one fret away — so the landing feels aimed.",
+    "definition": "A note that leads into a chord tone (usually into the next chord's root) from a scale step or semitone above or below. The last-beat approach note is the signature move of walking bass and countless soul/rock lines.",
+    "see": ["chord-tones", "chromatic", "walking-bass"]
+  },
+  "chord-progression": {
+    "term": "Chord progression",
+    "plain": "The sequence of chords a song cycles through.",
+    "definition": "An ordered chord pattern, usually written with Roman numerals so it works in any key (I–V–vi–IV). The progression is the map a bass line navigates.",
+    "also": ["changes"],
+    "see": ["roman-numerals", "twelve-bar-blues", "chart"]
+  },
+  "roman-numerals": {
+    "term": "Roman numeral analysis",
+    "plain": "Naming chords by their position in the key — I, IV, V — instead of their letter.",
+    "definition": "Writing chords as the scale degree they're built on: uppercase = major (IV), lowercase = minor (ii), ° = diminished. \"ii–V–I\" describes the same motion in every key, which is why musicians talk this way.",
+    "see": ["chord-progression", "degree", "nashville-numbers"]
+  },
+  "nashville-numbers": {
+    "term": "Nashville numbers",
+    "plain": "The same idea as Roman numerals, but with plain digits — session-musician shorthand.",
+    "definition": "A chart system writing chords as scale-degree numbers (1 4 5, with − for minor: 2−). Made for transposing on the spot: the singer changes key, the chart doesn't change at all.",
+    "see": ["roman-numerals", "chart"]
+  },
+  "beat": {
+    "term": "Beat",
+    "plain": "The steady pulse you tap your foot to.",
+    "definition": "The regular pulse underlying music. Beats group into bars (in most rock/pop, four beats per bar), and the bass usually locks tightly to them with the drums.",
+    "see": ["tempo", "bar", "downbeat"]
+  },
+  "tempo": {
+    "term": "Tempo",
+    "plain": "How fast the music goes — the speed of the beat.",
+    "definition": "The speed of the underlying pulse, measured in beats per minute (bpm). 60 bpm is one beat per second; 120 bpm is two. Practice metronomes count it out loud.",
+    "also": ["bpm"],
+    "see": ["beat", "metronome"]
+  },
+  "bar": {
+    "term": "Bar",
+    "plain": "One small box of musical time — usually four beats long.",
+    "definition": "A group of beats, marked off in written music with vertical lines. The time signature says how many beats each bar holds. Charts are read bar by bar.",
+    "also": ["measure"],
+    "see": ["beat", "time-signature"]
+  },
+  "time-signature": {
+    "term": "Time signature",
+    "plain": "The two stacked numbers that say how beats are grouped — like 4/4.",
+    "definition": "A fraction-looking symbol at the start of written music: the top number is how many beats per bar, the bottom is which note value counts as one beat. 4/4 (four quarter-note beats per bar) is so common it's called \"common time\".",
+    "see": ["bar", "beat", "meter"]
+  },
+  "meter": {
+    "term": "Meter",
+    "plain": "The repeating pattern of strong and weak beats.",
+    "definition": "How beats group and which are emphasized: 4/4 goes STRONG-weak-medium-weak; 3/4 goes STRONG-weak-weak; 6/8 rolls in two big pulses of three. Meter is what makes a waltz feel different from a march at the same speed.",
+    "see": ["time-signature", "downbeat"]
+  },
+  "downbeat": {
+    "term": "Downbeat & offbeat",
+    "plain": "Downbeats are the numbered foot-taps; offbeats are the \"&\"s between them.",
+    "definition": "The downbeat is the start of the bar (beat 1) or, loosely, any on-the-beat moment; offbeats are the in-between subdivisions (\"1 & 2 &\" — the &s). Where you place notes relative to these defines the groove.",
+    "also": ["upbeat", "offbeat"],
+    "see": ["beat", "syncopation", "subdivision"]
+  },
+  "subdivision": {
+    "term": "Subdivision",
+    "plain": "Slicing each beat into smaller equal pieces — and feeling them even when you don't play them.",
+    "definition": "Dividing beats into halves (eighth notes: \"1 & 2 &\"), quarters (sixteenths: \"1 e & a\"), or triplets (\"1 trip-let\"). Great time comes from hearing the subdivision continuously, not from counting bars.",
+    "see": ["beat", "note-value", "sixteenth-groove"]
+  },
+  "note-value": {
+    "term": "Note value",
+    "plain": "How long a note lasts, in beats — whole, half, quarter, eighth, sixteenth.",
+    "definition": "The rhythmic length of a written note: in 4/4 a whole note = 4 beats, half = 2, quarter = 1, eighth = ½, sixteenth = ¼. A dot adds half the note's own length again.",
+    "see": ["subdivision", "rest", "time-signature"]
+  },
+  "rest": {
+    "term": "Rest",
+    "plain": "Written silence — a note you play by NOT playing.",
+    "definition": "A symbol marking measured silence, with the same length system as notes. For bassists rests are active: stopping a string on time (muting) is as much technique as sounding it.",
+    "see": ["note-value", "muting"]
+  },
+  "tie": {
+    "term": "Tie",
+    "plain": "A curved line gluing two notes into one longer note.",
+    "definition": "A curve connecting two notes of the same pitch: play once, hold for their combined length. Used to carry notes across beats or bar lines. (A curve between different pitches is a slur — play smoothly.)",
+    "also": ["slur"],
+    "see": ["note-value", "staccato"]
+  },
+  "syncopation": {
+    "term": "Syncopation",
+    "plain": "Putting notes where the beat isn't — the rhythmic surprise that makes you move.",
+    "definition": "Accenting offbeats or skipping expected downbeats. Funk, reggae, and Latin bass live on syncopation; the trick is feeling the steady subdivision underneath so the \"wrong\" placements are exact.",
+    "see": ["downbeat", "subdivision", "groove"]
+  },
+  "swing": {
+    "term": "Swing / shuffle",
+    "plain": "Playing pairs of notes long-short instead of evenly — the skip in blues and jazz.",
+    "definition": "A feel where each beat's two eighth notes are uneven: the first stretched, the second compressed (roughly a triplet's long+short). \"Straight\" means literal, even eighths. Same notes, completely different feel.",
+    "also": ["shuffle", "straight vs swung"],
+    "see": ["subdivision", "groove"]
+  },
+  "groove": {
+    "term": "Groove",
+    "plain": "The rhythmic feel that makes people nod their heads.",
+    "definition": "The repeating rhythmic pattern and feel of a piece — where notes land, how long they last, which ones are stressed. For a bassist, playing \"in the pocket\" (locked with the drums, steady and intentional) matters more than playing many notes.",
+    "also": ["pocket", "feel"],
+    "see": ["beat", "syncopation", "ghost-note"]
+  },
+  "ghost-note": {
+    "term": "Ghost note",
+    "plain": "A muted \"thunk\" with rhythm but almost no pitch — the percussion inside a bass line.",
+    "definition": "A note played with the fretting hand only damping the string (written as an ×). Ghost notes fill the spaces between real notes and are the secret sauce of funk and R&B bass.",
+    "also": ["dead note"],
+    "see": ["muting", "groove", "sixteenth-groove"]
+  },
+  "sixteenth-groove": {
+    "term": "Sixteenth-note groove",
+    "plain": "Grooves built on four slices per beat — funk's home turf.",
+    "definition": "Bass lines whose rhythmic grid is sixteenth notes (\"1 e & a\"). Few of the sixteen slots are actually played; the pattern of hits, rests, and ghost notes is the groove.",
+    "see": ["subdivision", "ghost-note", "syncopation"]
+  },
+  "dynamics": {
+    "term": "Dynamics",
+    "plain": "How loud or soft you play — and the difference between the two.",
+    "definition": "The volume dimension of music, marked p (soft) through f (loud), with hairpins for gradual change. On bass, dynamics come from pluck strength and are half of what people call \"feel\".",
+    "see": ["accent", "tone"]
+  },
+  "accent": {
+    "term": "Accent",
+    "plain": "Hitting one note harder so it pokes out of the line.",
+    "definition": "Emphasis on a single note (written >). Consistent accent placement — beat 1, or the backbeat, or a syncopated hit — is a big part of what defines a style's feel.",
+    "see": ["dynamics", "groove"]
+  },
+  "staccato": {
+    "term": "Staccato & legato",
+    "plain": "Short, separated notes vs. smooth, connected ones.",
+    "definition": "Staccato (a dot over the note): cut the note short and leave air. Legato (a slur line): connect notes with no gap. The same line played staccato or legato grooves completely differently — note length is a bassist's superpower.",
+    "also": ["legato", "note length"],
+    "see": ["muting", "tie"]
+  },
+  "metronome": {
+    "term": "Metronome",
+    "plain": "A device that clicks a perfectly steady beat for you to practice with.",
+    "definition": "A tool that sounds the beat at an exact tempo. Practicing with one builds the timing that bandmates rely on from a bassist. This site's labs include one, and practice exercises give metronome targets.",
+    "see": ["tempo", "beat"]
+  },
+  "tab": {
+    "term": "Tab",
+    "plain": "Bass-specific notation: four lines for the four strings, numbers for the frets.",
+    "definition": "Short for tablature. Each horizontal line is a string (bottom line = low E), each number is a fret to press (0 = open string). Tab shows you where; standard notation shows you what and when — this site teaches both, side by side.",
+    "also": ["tablature"],
+    "see": ["string", "fret"]
+  },
+  "tuning": {
+    "term": "Tuning",
+    "plain": "Adjusting each string until it sounds its correct note.",
+    "definition": "Setting each string's pitch with the tuning machines on the headstock. Standard bass tuning is E1–A1–D2–G2, low to high. Basses drift out of tune with temperature and playing — checking takes seconds with a tuner.",
+    "see": ["string", "pitch", "intonation"]
+  },
+  "intonation": {
+    "term": "Intonation",
+    "plain": "Whether the bass is still in tune higher up the neck, not just on the open strings.",
+    "definition": "How accurately pitch tracks along the whole string length. If open strings are in tune but the 12th fret is sharp or flat, the bridge saddles need adjusting — a standard part of a setup.",
+    "see": ["tuning", "action"]
+  },
+  "action": {
+    "term": "Action",
+    "plain": "How high the strings float above the frets.",
+    "definition": "String height over the fingerboard. Lower action = easier to press, at the risk of buzz; higher action = more effort, cleaner ring. Set at the bridge (and nut) as part of a setup — worth paying a tech once to get right.",
+    "see": ["intonation", "fret"]
+  },
+  "pickup": {
+    "term": "Pickup",
+    "plain": "The magnetic bar under the strings that turns their motion into your signal.",
+    "definition": "A magnet-and-coil sensor under the strings. Plucking closer to the bridge pickup gives a tight, mid-heavy bite; closer to the neck gives a rounder, deeper sound — position of your plucking hand matters as much as the knobs.",
+    "see": ["tone"]
+  },
+  "tone": {
+    "term": "Tone",
+    "plain": "The character of your sound — round, bright, punchy, dull — before anyone asks how loud.",
+    "definition": "The timbral quality of your notes. On bass it's controlled by where and how you pluck, fretting cleanliness, the tone knob (rolls off treble), pickup choice, and note length — mostly hands, only partly gear.",
+    "see": ["pickup", "dynamics"]
+  },
+  "fingerstyle": {
+    "term": "Fingerstyle",
+    "plain": "Plucking with your index and middle fingers, alternating like walking.",
+    "definition": "The standard bass plucking technique: fingers alternate strictly (i-m-i-m), striking through the string to rest on the next one (rest stroke). Even alternation at slow tempos is the foundation everything fast is built on.",
+    "also": ["two-finger technique"],
+    "see": ["rest-stroke", "raking"]
+  },
+  "rest-stroke": {
+    "term": "Rest stroke",
+    "plain": "Plucking through the string so your finger lands on the next string up.",
+    "definition": "A pluck that follows through and comes to rest on the adjacent (thicker) string. It gives a fatter tone and automatically mutes the string you land on — two jobs, one motion.",
+    "see": ["fingerstyle", "muting"]
+  },
+  "raking": {
+    "term": "Raking",
+    "plain": "Letting one finger fall across two or three strings in a row instead of re-plucking.",
+    "definition": "When crossing to a lower string, dragging the same finger across strings in one motion. Economical and smooth — a standard part of fingerstyle descending lines.",
+    "see": ["fingerstyle"]
+  },
+  "muting": {
+    "term": "Muting",
+    "plain": "Keeping every string quiet except the one that's supposed to be talking.",
+    "definition": "Damping unwanted string noise with both hands: fretting-hand touch, plucking-hand thumb or palm on idle strings, rest strokes. Muting is what makes a bass line sound tight instead of muddy — it's not optional, it IS the technique.",
+    "see": ["rest-stroke", "ghost-note", "staccato"]
+  },
+  "one-finger-per-fret": {
+    "term": "One-finger-per-fret",
+    "plain": "Assigning your four fingers to four neighboring frets so nothing requires a jump.",
+    "definition": "The default fretting-hand system: index, middle, ring, and pinky each own a fret in the current position. It minimizes movement and makes fingerings consistent — with a low-position relaxation (index covering two frets) when stretches are big near the nut.",
+    "also": ["OFPF", "four-fret system"],
+    "see": ["position", "shifting"]
+  },
+  "position": {
+    "term": "Position",
+    "plain": "Where your hand is parked on the neck — named by the fret under your index finger.",
+    "definition": "A four-fret window the fretting hand covers without moving: \"2nd position\" = index on fret 2. Playing \"in position\" means finding the notes you need inside the window instead of running up and down one string.",
+    "see": ["one-finger-per-fret", "shifting"]
+  },
+  "shifting": {
+    "term": "Shifting",
+    "plain": "Moving your hand to a new spot on the neck — smoothly, on purpose.",
+    "definition": "Relocating the fretting hand to a new position. Good shifts are planned (usually on open strings, rests, or long notes), use a light thumb, and land with the finger already over its target fret.",
+    "see": ["position"]
+  },
+  "hammer-on": {
+    "term": "Hammer-on & pull-off",
+    "plain": "Sounding a second note with the fretting hand alone — no pluck.",
+    "definition": "Hammer-on: snap a finger down onto a higher fret so the note sounds (written h). Pull-off: flick a finger off to sound a lower fretted note (written p). Together they make fast, smooth (legato) passages possible.",
+    "also": ["pull-off", "legato technique"],
+    "see": ["slide", "staccato"]
+  },
+  "slide": {
+    "term": "Slide",
+    "plain": "Gliding a pressed finger along the string from one note to another.",
+    "definition": "Keeping pressure while moving along the string so the pitch sweeps (written /). Slides connect positions and add vocal-style expression to lines.",
+    "see": ["hammer-on", "shifting"]
+  },
+  "slap": {
+    "term": "Slap & pop",
+    "plain": "Thumb-whack the low strings, snap the high ones — bass as a drum kit.",
+    "definition": "A percussive technique: the thumb strikes the string against the frets (slap) and fingers yank the higher strings so they snap back (pop), usually woven with ghost notes. The defining sound of a lot of funk.",
+    "also": ["thumb", "slapping"],
+    "see": ["ghost-note", "sixteenth-groove"]
+  },
+  "palm-mute": {
+    "term": "Palm mute",
+    "plain": "Resting the side of your plucking palm on the strings for a thumpy, old-school sound.",
+    "definition": "Damping the strings near the bridge with the edge of the plucking hand (often with thumb plucking). Shortens sustain into a warm thump — think Motown or reggae flavors.",
+    "also": ["palm muting"],
+    "see": ["muting", "tone"]
+  },
+  "bass-line": {
+    "term": "Bass line",
+    "plain": "What the bassist actually plays: the low melody that glues rhythm to harmony.",
+    "definition": "The bass part of a song — a line that states the harmony (mostly chord tones, roots on the changes) while locking rhythmically with the drums. The best ones are singable.",
+    "see": ["groove", "chord-tones", "walking-bass"]
+  },
+  "walking-bass": {
+    "term": "Walking bass",
+    "plain": "A steady note on every beat that strolls through the chord changes.",
+    "definition": "The jazz/blues style of playing quarter notes continuously, outlining each chord and aiming an approach note at each change. Built from chord tones, scale steps, and chromatic connectors.",
+    "see": ["approach-note", "chord-tones", "swing"]
+  },
+  "twelve-bar-blues": {
+    "term": "12-bar blues",
+    "plain": "The most-played chord progression on Earth — twelve bars of I, IV, and V.",
+    "definition": "A repeating 12-bar form: 4 bars of I, 2 of IV, 2 of I, then V–IV–I(–V turnaround). Thousands of songs use it verbatim; every bassist needs it on autopilot in several keys.",
+    "see": ["chord-progression", "form", "turnaround"]
+  },
+  "turnaround": {
+    "term": "Turnaround",
+    "plain": "The last couple of bars that whip the music back to the top of the form.",
+    "definition": "A short progression (often ending on V) at the end of a section that sets up the repeat. Bass fills live here — it's the spot where a little motion is expected.",
+    "see": ["twelve-bar-blues", "fill"]
+  },
+  "form": {
+    "term": "Form",
+    "plain": "The song's floor plan — verse, chorus, bridge, and how they repeat.",
+    "definition": "The large-scale structure of a piece (12-bar blues, 32-bar AABA, verse–chorus). Bassists navigate by form: knowing where you are in it matters more than any single note.",
+    "also": ["song form", "AABA"],
+    "see": ["twelve-bar-blues", "chart"]
+  },
+  "chart": {
+    "term": "Chart",
+    "plain": "The one-page cheat sheet of a song: chords, bars, and the road map.",
+    "definition": "A written summary of a song — chord symbols over slashes or bars, with repeats, endings, and section letters. Reading charts (rather than full notation) is how most working bands communicate.",
+    "also": ["lead sheet"],
+    "see": ["form", "nashville-numbers", "chord-progression"]
+  },
+  "vamp": {
+    "term": "Vamp",
+    "plain": "Looping one or two chords until further notice.",
+    "definition": "A short repeated progression (often a single chord) held for an open-ended stretch — the natural habitat of groove playing and a great practice format.",
+    "see": ["groove", "chord-progression"]
+  },
+  "fill": {
+    "term": "Fill",
+    "plain": "A little extra flurry that decorates the space between phrases.",
+    "definition": "A brief melodic figure a bassist adds at phrase ends or turnarounds. Good fills start and end on time, target the next chord's root, and never sink the groove.",
+    "see": ["turnaround", "improvisation"]
+  },
+  "improvisation": {
+    "term": "Improvisation",
+    "plain": "Making the line up as you go — inside the song's rules.",
+    "definition": "Spontaneously creating parts from the chord progression, the style's vocabulary, and your ear. For bassists it usually means varying grooves and fills, not soloing — though that's here too.",
+    "see": ["fill", "chord-tones", "ear-training"]
+  },
+  "ear-training": {
+    "term": "Ear training",
+    "plain": "Teaching your ears to name what they hear — intervals, chords, and lines.",
+    "definition": "Deliberate practice recognizing intervals, chord qualities, and progressions by sound. For bassists it's the bridge between hearing a song and playing it without sheet music.",
+    "see": ["interval", "transcription"]
+  },
+  "transcription": {
+    "term": "Transcription",
+    "plain": "Lifting a bass line off a recording by ear, note by note.",
+    "definition": "Working out (and optionally writing down) exactly what was played on a record. The single highest-value practice habit for intermediate players: it trains ears, hands, vocabulary, and feel simultaneously.",
+    "see": ["ear-training", "tab"]
+  },
+  "riff": {
+    "term": "Riff",
+    "plain": "A short, repeated musical phrase — the hook a song is built on.",
+    "definition": "A short repeating figure, often played by bass and guitar together, that defines a song's identity. Learning riffs trains both hands and your ear at once.",
+    "see": ["groove", "bass-line"]
+  }
+}

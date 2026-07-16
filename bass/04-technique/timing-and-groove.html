@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Timing &amp; groove — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Technique">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="left-hand.html|The left hand">
+  <meta name="bass:next" content="tone-and-dynamics.html|Tone &amp; dynamics">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Technique</p>
+  <h1>Timing &amp; groove — the actual job</h1>
+  <p class="lede">Nobody hires a bassist for fast fingers. They hire the
+  feeling that the floor is solid. This page is how that feeling is built:
+  a metronome, subdivision, and honest listening.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-reading/rhythm-and-counting.html">Counting out loud</a> —
+    this page turns counting into feel.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Solid time isn't hitting beats like a machine — it's <em>continuously
+  feeling the <dfn data-term="subdivision">subdivision</dfn></em> so every
+  note lands where you chose, not where your nerves put it. The
+  <dfn data-term="metronome">metronome</dfn> isn't a judge; it's a drummer
+  who never rushes. Your relationship with it goes through three stages:
+  playing <em>to</em> it, playing <em>with</em> it, and finally hearing it
+  disappear because you're locked (<dfn data-term="groove">in the
+  pocket</dfn>).</p>
+
+  <h2>Your practice metronome</h2>
+  <div class="demo" id="tg-demo">
+    <div class="beat-lights" id="tg-lights" aria-hidden="true"></div>
+    <div class="controls">
+      <div class="control">
+        <label for="tg-bpm">tempo</label>
+        <input type="range" id="tg-bpm" min="40" max="160" value="70" step="2">
+        <output id="tg-bpm-out">70</output>
+      </div>
+      <div class="control">
+        <label for="tg-sub">clicks per beat</label>
+        <select id="tg-sub">
+          <option value="1" selected>1 — quarters</option>
+          <option value="2">2 — eighths</option>
+          <option value="4">4 — sixteenths</option>
+        </select>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" id="tg-play">▶ Start</button>
+    </div>
+    <p class="hint">Play the exercises below against this. (The full groove
+    machine with chords and styles lives in the Practice Labs unit.)</p>
+  </div>
+
+  <h2>The habits that make time solid</h2>
+  <ul>
+    <li><strong>Subdivide out loud</strong> (or in your chest, later). Long
+    notes drift when nothing is counting through them.</li>
+    <li><strong>Place, don't react.</strong> Aim each note at the click;
+    don't wait to hear the click and chase it.</li>
+    <li><strong>Record yourself weekly.</strong> Twenty seconds of phone
+    audio tells the truth about rushing that your in-the-moment brain
+    hides.</li>
+    <li><strong>Note length is part of rhythm.</strong> Where a note
+    <em>ends</em> grooves as much as where it starts — you built that control
+    on the right-hand page.</li>
+  </ul>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The classic drills, explained</summary>
+    <div class="layer-body">
+      <p><strong>Half-time click:</strong> set the metronome to half your
+      tempo and hear it as beats 2 and 4 (the snare drum) — instantly exposes
+      rushing. <strong>Gap practice:</strong> mute the click every other bar
+      (our groove machine can); if you're off when it returns, the drift is
+      yours. <strong>One-click-per-bar:</strong> the endgame — you keep the
+      whole bar's time yourself.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Ahead, behind, and "on top" — feel vocabulary</summary>
+    <div class="layer-body">
+      <p>Great rhythm sections place notes a hair early (urgent, punk),
+      dead-center (neutral, pop), or a hair late (relaxed, soul) —
+      <em>consistently, by choice</em>. That's "feel". It's only available
+      once dead-center is effortless; the drills here buy you the choice.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Time solid, hands clean — now the sound itself: tone and dynamics, the
+  difference between playing notes and saying something.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "timing-and-groove",
+    "exercises": [
+      { "id": "timing-whole-notes-honest",
+        "title": "Whole notes, brutally honest",
+        "goal": "Eight whole notes in a row land exactly with the click while you count '1-2-3-4' through each — the hardest easy exercise on this site.",
+        "tempo": [60, 60],
+        "steps": [
+          "Metronome at 60, quarters. Play a root; count the held beats out loud.",
+          "The pluck on the next '1' should make the click disappear (that's a perfect hit).",
+          "Miss the disappearing-click feeling? You're early or late — adjust and repeat."
+        ] },
+      { "id": "timing-halftime-click",
+        "title": "Half-time click (click = 2 and 4)",
+        "goal": "A one-bar root groove stays locked for two minutes with the click only on beats 2 and 4 — and it starts to feel BETTER than four clicks.",
+        "tempo": [50, 70],
+        "steps": [
+          "Set the metronome to HALF your groove tempo (e.g. 45 for a 90 feel).",
+          "Count '1 CLICK 3 CLICK' — the clicks are the backbeat, like a snare.",
+          "Play roots on 1 and 3, then any simple line. Rushing becomes instantly audible."
+        ] },
+      { "id": "timing-eighth-lock",
+        "title": "Eighth-note lock with accents",
+        "goal": "Continuous eighths with an accent only on beat 1, then only on the '& of 2' — accents move, the grid doesn't.",
+        "tempo": [60, 100],
+        "steps": [
+          "Steady eighths on one note, all even.",
+          "Add the accent patterns without letting accented notes come early (the classic flaw).",
+          "This is dynamics and time in one drill — the core funk skill."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 76,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 3, "fret": 0 }], "annotation": ">" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8", "annotation": ">" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "timing-and-groove",
+    "questions": [
+      { "q": "The click 'disappearing' under your note means…",
+        "choices": ["you hit exactly with it — the two sounds fused",
+                    "the metronome is broken",
+                    "you're slightly ahead"],
+        "answer": 0,
+        "explain": "A perfectly placed note masks the click. It's the cleanest real-time feedback there is — chase that silence." },
+      { "q": "Why is the half-time click drill so revealing?",
+        "choices": ["With clicks only on 2 and 4, YOU keep the rest of the time — drift has nowhere to hide",
+                    "It's twice as loud",
+                    "It makes everything easier"],
+        "answer": 0,
+        "explain": "Fewer clicks = more responsibility. It also mimics hearing the snare backbeat, which is how band time actually feels." },
+      { "q": "\"Playing behind the beat\" as a feel choice means…",
+        "choices": ["placing notes a consistent hair late, on purpose — the relaxed soul pocket",
+                    "always being late by accident",
+                    "playing quieter"],
+        "answer": 0,
+        "explain": "Ahead/center/behind are deliberate, consistent placements. The word is 'consistent' — which requires owning dead-center first." },
+      { "q": "The most honest practice tool on this page is…",
+        "choices": ["recording yourself and listening back",
+                    "a more expensive metronome",
+                    "playing faster"],
+        "answer": 0,
+        "explain": "Your in-the-moment brain flatters you; the recording doesn't. Twenty seconds a week recalibrates everything." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const lightsWrap = document.getElementById("tg-lights");
+      const lights = [];
+      for (let i = 0; i < 4; i++) {
+        const d = document.createElement("span");
+        d.className = "light" + (i === 0 ? " accent" : "");
+        lightsWrap.appendChild(d);
+        lights.push(d);
+      }
+      const bpmIn = document.getElementById("tg-bpm");
+      const bpmOut = document.getElementById("tg-bpm-out");
+      const subSel = document.getElementById("tg-sub");
+      const playBtn = document.getElementById("tg-play");
+      let running = false;
+
+      bpmIn.addEventListener("input", () => {
+        bpmOut.textContent = bpmIn.value;
+        BTAudio.metronome.setBpm(Number(bpmIn.value));
+      });
+
+      function start() {
+        BTAudio.metronome.start({
+          bpm: Number(bpmIn.value),
+          beatsPerBar: 4,
+          subdivision: Number(subSel.value),
+          onTick(index) {
+            const subs = Number(subSel.value);
+            if (index % subs !== 0) return;
+            const beat = Math.floor(index / subs) % 4;
+            lights.forEach((l, i) => l.classList.toggle("on", i === beat));
+          },
+        });
+      }
+      subSel.addEventListener("change", () => { if (running) start(); });
+      playBtn.addEventListener("click", () => {
+        if (running) {
+          running = false;
+          BTAudio.metronome.stop();
+          lights.forEach((l) => l.classList.remove("on"));
+          playBtn.textContent = "▶ Start";
+          return;
+        }
+        running = true;
+        playBtn.textContent = "■ Stop";
+        start();
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

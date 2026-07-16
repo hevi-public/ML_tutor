@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Funk — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Styles">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="blues-shuffle.html|Blues shuffle">
+  <meta name="bass:next" content="soul-motown.html|Soul &amp; Motown">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Styles</p>
+  <h1>Funk — the sixteenth-note grid</h1>
+  <p class="lede">Funk slices every beat into four and then plays
+  hide-and-seek on the grid: a few fat notes, a few muted
+  <dfn data-term="ghost-note">ghosts</dfn>, and a lot of exact silence. It's
+  the most rhythmically precise style on this site — and the most fun.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-reading/rhythm-and-counting.html">Counting "1 e &amp; a"</a>,
+    <a href="../04-technique/right-hand.html">note-length control</a>, and
+    fretting-hand <a href="../04-technique/left-hand.html">muting</a>.
+  </div>
+
+  <h2>The three ingredients</h2>
+  <ul>
+    <li><strong>The 16th grid</strong> — felt continuously ("1 e &amp; a 2 e
+    &amp; a"), even though you play maybe five of sixteen slots.</li>
+    <li><strong>Ghost notes (×)</strong> — fretting hand touches, doesn't
+    press; plucking hand plays full strength. The "thunk" that fills the
+    machine between real notes.</li>
+    <li><strong>The One.</strong> Funk's law: whatever happens mid-bar, beat 1
+    lands HUGE. James Brown built an empire on it.</li>
+  </ul>
+
+  <h2>The groove</h2>
+  <div class="demo">
+    <div class="score-block" data-score="funkline" aria-label="Sixteenth-note funk line on E7 with ghost notes"></div>
+    <div class="buttons"><button class="action" type="button" data-play="funkline">▶ Play</button></div>
+    <p class="hint">The ×-headed notes are ghosts — rhythm without pitch. Play
+    along: <a href="../07-labs/groove-machine.html#prog=vamp&amp;key=E&amp;style=funk16&amp;bpm=94">groove
+    machine — funk vamp on E7</a>.</p>
+  </div>
+
+  <h2>Funk harmony (mercifully simple)</h2>
+  <p>Whole songs sit on one dominant-7th or minor-7th vamp — harmony parks so
+  rhythm can drive. Your note pool: root, octave, ♭7, 5 — the
+  <a href="../03-theory/pentatonics-and-blues.html">minor pentatonic</a> with
+  the root doing most shifts. The complexity budget goes entirely to
+  <em>when</em>, not <em>what</em>.</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Ghost-note mechanics, precisely</summary>
+    <div class="layer-body">
+      <p>Fretting fingers rest on the string (multiple fingers = deader =
+      better), zero pressure toward the fret; plucking hand strikes normally.
+      The pitch disappears, the rhythm stays. Drill: four plucks alternating
+      real-ghost-real-ghost on one fret until the ghosts are effortless.
+      Then they start sneaking into everything you play, which is correct.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Where slap fits</summary>
+    <div class="layer-body">
+      <p>Slap (thumb-strike + finger-pop) is a funk <em>sound</em>, not a
+      requirement — Rocco Prestia and Jamerson played monumental funk
+      fingerstyle. The technique gets its own treatment in the
+      Expert unit; the grid and ghosts you build here are 90% of what makes
+      slap lines work anyway.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Listening list</summary>
+    <div class="layer-body">
+      <p>James Brown "Sex Machine" (Bootsy's one-emphasis), Tower of Power
+      "What Is Hip?" (Rocco's relentless 16ths), Sly &amp; the Family Stone
+      "Thank You" (the slap prototype), Vulfpeck "Dean Town" (the modern
+      grid, immaculate). Count "1 e &amp; a" against all of them.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Funk's grandparent: soul and Motown — where the ghosts are subtler, the
+  lines are singable, and one man in Detroit rewired what bass could be.</p>
+
+  <script type="application/json" class="scores">
+  { "funkline": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 94,
+      "measures": [
+        { "chord": "E7", "notes": [
+          { "keys": ["e/2"], "duration": "8", "fret": [{ "str": 4, "fret": 0 }], "annotation": "1" },
+          { "keys": ["e/2"], "duration": "16", "ghost": true, "fret": [{ "str": 4, "fret": 0 }] },
+          { "keys": ["e/2"], "duration": "16", "ghost": true },
+          { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 2, "fret": 2 }], "annotation": "8ve" },
+          { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 2, "fret": 0 }], "annotation": "♭7" },
+          { "keys": ["e/2"], "duration": "8" },
+          { "keys": ["e/2"], "duration": "16", "ghost": true },
+          { "keys": ["b/2"], "duration": "16", "fret": [{ "str": 3, "fret": 2 }], "annotation": "5" },
+          { "keys": ["e/2"], "duration": "q" } ] },
+        { "chord": "E7", "notes": [
+          { "keys": ["e/2"], "duration": "8", "annotation": "1!" },
+          { "keys": ["e/2"], "duration": "16", "ghost": true },
+          { "keys": ["e/2"], "duration": "16", "ghost": true },
+          { "keys": ["g/2"], "duration": "8", "fret": [{ "str": 4, "fret": 3 }], "annotation": "♭3→" },
+          { "keys": ["g#/2"], "duration": "8", "fret": [{ "str": 4, "fret": 4 }], "annotation": "3" },
+          { "keys": ["d/3"], "duration": "8", "annotation": "♭7" },
+          { "keys": ["e/2"], "duration": "8", "ghost": true },
+          { "keys": ["e/2"], "duration": "h" } ] } ] } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "funk",
+    "exercises": [
+      { "id": "funk-ghost-alternation",
+        "title": "Real–ghost–real–ghost",
+        "goal": "Sixteen sixteenths alternating full notes and ghosts on one fret: the fat notes identical, the ghosts pitchless thunks, the grid metronomic — at 90 bpm.",
+        "tempo": [70, 100],
+        "steps": [
+          "Fret A-string 5. Count '1 e & a' out loud.",
+          "Full pluck on numbers/&, ghost (touch, don't press) on e/a.",
+          "The plucking hand NEVER changes — only the fretting pressure."
+        ] },
+      { "id": "funk-the-one",
+        "title": "Protect The One",
+        "goal": "The page's groove looped for two minutes: every bar's beat 1 lands huge and together with the click, no matter how the middle of the bar went.",
+        "tempo": [84, 100],
+        "steps": [
+          "Groove machine, funk vamp, count-in ON.",
+          "Rule: if you fumble mid-bar, bail out, mute, and NAIL the next One.",
+          "The recovery skill matters more than the fancy middle."
+        ] },
+      { "id": "funk-compose-a-bar",
+        "title": "Compose your own bar of funk",
+        "goal": "One original bar on the 16th grid (root/8ve/♭7/5 + ghosts) written on the rhythm grid idea from Unit 1, then played clean and looped seamlessly.",
+        "steps": [
+          "Draw 16 boxes; fill ~5 with notes, ~3 with ×, leave the rest empty.",
+          "Beat 1 = root, always (for now).",
+          "Loop it against the funk preset until it sounds inevitable."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "funk",
+    "questions": [
+      { "q": "A ghost note is produced by…",
+        "choices": ["normal pluck + fretting hand touching (not pressing) the string",
+                    "plucking very quietly",
+                    "skipping the note entirely"],
+        "answer": 0,
+        "explain": "The plucking hand stays honest; the fretting hand kills the pitch. Rhythm without note — funk's connective tissue." },
+      { "q": "\"The One\" refers to…",
+        "choices": ["landing beat 1 emphatically, whatever happened mid-bar",
+                    "playing only one note",
+                    "the first string"],
+        "answer": 0,
+        "explain": "Funk's anchor law. The wildest syncopation is licensed by the certainty that 1 will land like a building." },
+      { "q": "Funk harmony is usually simple (one-chord vamps) because…",
+        "choices": ["the complexity budget is spent on rhythm — harmony parks so the grid can drive",
+                    "funk musicians disliked chords",
+                    "vamps are easier to record"],
+        "answer": 0,
+        "explain": "Every genre spends complexity somewhere. Funk spends it on WHEN — sixteen slots per bar of decisions — so WHAT stays minimal." },
+      { "q": "If you fumble mid-bar in funk, the professional move is…",
+        "choices": ["mute, skip, and nail the next One",
+                    "stop and restart the song",
+                    "play the fumbled figure again to fix it"],
+        "answer": 0,
+        "explain": "The groove forgives absence, never lateness. Recovery-to-the-One is a skill worth drilling explicitly." }
+    ] }
+  </script>
+</main>
+</body>
+</html>

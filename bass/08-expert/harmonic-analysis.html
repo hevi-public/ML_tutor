@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Harmonic analysis — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Expert Track">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="chord-extensions.html|Chord extensions">
+  <meta name="bass:next" content="transcription.html|Transcription">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Expert Track</p>
+  <h1>Harmonic analysis — reading the story</h1>
+  <p class="lede">Given any chord chart, you can now name the pieces. Analysis
+  is naming the <em>plot</em>: which chords are home, which are travel, which
+  are visitors from other keys — so your line can tell the same story.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-theory/diatonic-harmony.html">Diatonic families</a>,
+    <a href="../03-theory/keys-and-circle-of-fifths.html">the circle</a>, and
+    Roman-numeral fluency.
+  </div>
+
+  <h2>The method (four passes over any chart)</h2>
+  <ol>
+    <li><strong>Find the key</strong> — key signature, first/last chords, and
+    where things feel resolved. Write the numerals over the letters.</li>
+    <li><strong>Mark the functions</strong>: home (I, vi), departure (ii, IV),
+    tension (V, vii°). Every progression is trips between these three
+    rooms.</li>
+    <li><strong>Flag the visitors</strong> — chords that don't fit the key
+    (see below). They're the interesting bits.</li>
+    <li><strong>Find the bass story</strong>: strongest root motions (5ths
+    falling), stepwise walks, pedal points. Your line should agree with the
+    plot you just read.</li>
+  </ol>
+
+  <h2>The common "visitors" (non-diatonic chords with day jobs)</h2>
+  <table class="ref">
+    <thead><tr><th>Visitor</th><th>Example in C</th><th>What it's doing</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Secondary dominant</strong></td><td>D7 → G (written V7/V)</td><td>borrowing V's pull to aim at a non-tonic chord</td></tr>
+      <tr><td><strong>Borrowed iv</strong></td><td>Fm in C major</td><td>the bittersweet minor-plagal move (Beatles everywhere)</td></tr>
+      <tr><td><strong>♭VII</strong></td><td>B♭ in C major</td><td>the rock backdoor (borrowed from C minor)</td></tr>
+      <tr><td><strong>Diminished passer</strong></td><td>C♯° between C and Dm</td><td>chromatic stepping-stone between diatonic chords</td></tr>
+      <tr><td><strong>Tritone sub</strong></td><td>D♭7 instead of G7</td><td>jazz swap — same tritone engine, chromatic bass fall</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Worked example</h2>
+  <div class="demo">
+    <pre class="tree-questions" aria-label="Analyzed progression">  | C      | E7     | Am     | C7     |
+    I        V7/vi    vi       V7/IV     ← the E7 and C7 are visitors:
+  | F      | Fm     | C  G   | C      |    each one a dominant aimed
+    IV       iv       I  V     I           at the NEXT chord
+         borrowed! ↑</pre>
+    <div class="buttons"><button class="action" type="button" id="ha-play">▶ Hear it (roots + pads)</button></div>
+    <p class="hint">Listen for how E7 makes Am feel inevitable, and how Fm
+    aches on the way home. That's function, audible.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>What analysis changes about your playing</summary>
+    <div class="layer-body">
+      <p>Tension chords get leading approaches (that's what they're FOR);
+      home chords get planted roots; secondary dominants beg for chromatic
+      walks into their targets; a tritone sub means your bass gets a
+      chromatic descent for free (D♭ falling to C). Analysis isn't homework —
+      it's a list of invitations.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Modulation vs. tonicization</summary>
+    <div class="layer-body">
+      <p>A visitor dominant that resolves and leaves = tonicization (the key
+      never really changed). The band settling into the new key for a whole
+      section = modulation (update your numerals!). The classic pop
+      move — final chorus up a semitone or tone — is modulation at its most
+      shameless, and the bass announces it.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Analysis explains other people's music. Transcription is how you take it
+  — next page.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "harmonic-analysis",
+    "exercises": [
+      { "id": "analysis-worked-example",
+        "title": "Play the worked example with intent",
+        "goal": "The 8-bar example played with function-aware choices: planted roots on I, chromatic approaches into each visitor's target, the Fm bar milked for its ache.",
+        "tempo": [66, 92],
+        "steps": [
+          "Roots only first, saying the numerals.",
+          "Add approaches ONLY into the chords that dominants point at (Am, F, C).",
+          "The E7→Am landing is the money moment. Aim everything at it."
+        ] },
+      { "id": "analysis-three-songs",
+        "title": "Analyze three songs you already play",
+        "goal": "Three real charts marked up with numerals + functions + circled visitors, and one sentence each about what the bass should therefore do.",
+        "steps": [
+          "Use the four-pass method. Pencil, always pencil.",
+          "At least one song should contain a visitor (most do — hunt for the odd chord).",
+          "Play each song once BEFORE and once AFTER analyzing. Notice the difference."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "harmonic-analysis",
+    "questions": [
+      { "q": "A secondary dominant (like E7 in the key of C) is…",
+        "choices": ["a borrowed V7 aimed at a non-tonic chord (E7 → Am: 'V7 of vi')",
+                    "a mistake in the chart",
+                    "the second-loudest chord"],
+        "answer": 0,
+        "explain": "Any chord can be tonicized by borrowing a dominant that points at it. The arrows in charts usually point one chord ahead." },
+      { "q": "Fm appearing in a C-major song is called…",
+        "choices": ["a borrowed iv (from C minor) — the bittersweet minor-plagal color",
+                    "a typo for F",
+                    "a key change to F minor"],
+        "answer": 0,
+        "explain": "Borrowing from the parallel minor is everywhere in pop. The ♭6 (A♭) inside Fm is the ache; give it room in your line." },
+      { "q": "The tritone substitution replaces G7 with D♭7 because…",
+        "choices": ["they share the same tritone engine (B–F), and the bass gets a chromatic fall (D♭→C)",
+                    "D♭ is easier to finger",
+                    "they're the same chord"],
+        "answer": 0,
+        "explain": "Same tension, different root — and the substitution exists half FOR the bass line: that semitone drop into home is jazz's silkiest cadence." },
+      { "q": "Analysis matters to the bassist mostly because…",
+        "choices": ["function tells you where to plant, where to lead, and which landings deserve the drama",
+                    "it's required to read tab",
+                    "numerals sound better than letters"],
+        "answer": 0,
+        "explain": "The plot IS the playing instructions: tension chords want approaches, home wants roots, visitors point at their targets. Read the story, then tell it." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("ha-play").addEventListener("click", () => {
+        const SPB = 0.62;
+        // C E7 Am C7 F Fm C/G(G) C — roots + simple pads
+        const BARS = [
+          { r: 36, pad: [48, 52, 55] },        // C
+          { r: 40, pad: [52, 56, 59, 62] },    // E7
+          { r: 33, pad: [45, 48, 52] },        // Am
+          { r: 36, pad: [48, 52, 55, 58] },    // C7
+          { r: 41, pad: [53, 57, 60] },        // F
+          { r: 41, pad: [53, 56, 60] },        // Fm
+          { r: 36, pad: [48, 52, 55] },        // C (G on beat 3)
+          { r: 36, pad: [48, 52, 55] },        // C
+        ];
+        BTAudio.stopAll();
+        BARS.forEach((bar, i) => {
+          const t0 = i * 4 * SPB;
+          BTAudio.chordPad(bar.pad, { when: t0, dur: 4 * SPB - 0.1, gain: 0.42 });
+          BTAudio.pluck(bar.r, { when: t0, dur: 1.6 });
+          BTAudio.pluck(bar.r + (i === 6 ? 7 : 0), { when: t0 + 2 * SPB, dur: 1.4 });
+        });
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Triads — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="pentatonics-and-blues.html|Pentatonics &amp; blues">
+  <meta name="bass:next" content="seventh-chords.html|Seventh chords &amp; symbols">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>Triads — the atoms of harmony</h1>
+  <p class="lede">Every chord chart you'll ever read is mostly these: three
+  notes, stacked in thirds. The band plays them together; you'll play them
+  apart — that's what a bass line mostly is.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="intervals.html">Thirds and fifths</a> as sounds and
+    <a href="../02-fretboard/intervals-as-shapes.html">shapes</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="triad">triad</dfn> = <strong>root + third + fifth</strong>.
+  The fifth is scaffolding (perfect, stable); the third picks the mood. Mix
+  and match the two third-sizes and two fifth-sizes and you get exactly four
+  flavors:</p>
+  <table class="ref">
+    <thead><tr><th>Triad</th><th>Recipe (semitones)</th><th>Symbol</th><th>Character</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Major</strong></td><td>root + 4 + 3 (M3 then m3)</td><td>C</td><td>bright, settled</td></tr>
+      <tr><td><strong>Minor</strong></td><td>root + 3 + 4</td><td>Cm, C−</td><td>dark, settled</td></tr>
+      <tr><td><strong>Diminished</strong></td><td>root + 3 + 3</td><td>C°, Cdim</td><td>clenched, unstable</td></tr>
+      <tr><td><strong>Augmented</strong></td><td>root + 4 + 4</td><td>C+, Caug</td><td>floating, eerie</td></tr>
+    </tbody>
+  </table>
+  <p>Played one note at a time, a triad is an
+  <dfn data-term="arpeggio">arpeggio</dfn> — and arpeggios are the most
+  chord-proof material a bass line can be made of: you literally cannot clash
+  with the chord while spelling it.</p>
+
+  <h2>Build one, hear it, walk it</h2>
+  <div class="demo" id="triad-demo">
+    <div class="buttons">
+      <button class="action" type="button" data-q="" aria-pressed="true">Major</button>
+      <button class="action secondary" type="button" data-q="m">Minor</button>
+      <button class="action secondary" type="button" data-q="dim">Diminished</button>
+      <button class="action secondary" type="button" data-q="aug">Augmented</button>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" id="triad-chord">▶ As a chord</button>
+      <button class="action secondary" type="button" id="triad-arp">▶ As an arpeggio</button>
+      <button class="action secondary" type="button" data-root="G" aria-pressed="true">Root G</button>
+      <button class="action secondary" type="button" data-root="A">Root A</button>
+      <button class="action secondary" type="button" data-root="C">Root C</button>
+    </div>
+    <div class="fretboard-wrap" role="img"
+         aria-label="Fretboard showing the current triad's arpeggio shape"></div>
+    <p class="readout" id="triad-readout"></p>
+  </div>
+
+  <h2>The one-position arpeggio shapes</h2>
+  <p>From a root on the E or A string, both essential flavors sit under one
+  hand: <strong>major</strong> = root (finger 2), third one string up one fret
+  back (1), fifth one string up two frets over (4). <strong>Minor</strong> =
+  same but the third slides one more fret back. Practice below burns these
+  in — they're the skeleton keys of Unit 5.</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Where triads come from (stacking the scale)</summary>
+    <div class="layer-body">
+      <p>Take a scale, keep every other note: degrees 1-3-5. Do it starting
+      from each degree and the scale generates seven triads — its private
+      chord family. That factory (and its Roman-numeral naming) is the
+      <a href="diatonic-harmony.html">diatonic harmony</a> page, two stops
+      from here.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why diminished sounds "clenched"</summary>
+    <div class="layer-body">
+      <p>Squash the fifth from 7 semitones to 6 and you've built a
+      <dfn data-term="interval">tritone</dfn> into the chord — the
+      itchiest interval, demanding resolution. Diminished triads are doors,
+      not rooms: music passes through them. (Augmented stretches the fifth to
+      8 and floats free of gravity instead — rarer, dreamier.)</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Add one more third on top of a triad and you've got a seventh chord —
+  and suddenly you can read almost any chart. Next page.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "triads",
+    "exercises": [
+      { "id": "triads-major-minor-arps",
+        "title": "Major and minor arpeggios, one position",
+        "goal": "G, then Gm, then A, then Am arpeggios (root–3rd–5th–octave–back) at 80 bpm — you always know whether your next note is the major or minor third.",
+        "tempo": [56, 92],
+        "steps": [
+          "Major from G: G (E-string 3, finger 2), B (A-string 2, finger 1), D (A-string 5, finger 4), G (D-string 5, finger 4).",
+          "Minor: move the middle note back one fret (B→B♭, finger 1).",
+          "Call the quality out loud each bar."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 66,
+          "measures": [
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }], "annotation": "3" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "8" } ] },
+            { "chord": "Gm", "notes": [
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["bb/2"], "duration": "q", "fret": [{ "str": 3, "fret": 1 }], "annotation": "♭3" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "8" } ] },
+            { "chord": "A", "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "R" },
+              { "keys": ["c#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 4 }], "annotation": "3" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" },
+              { "keys": ["a/3"], "duration": "q", "fret": [{ "str": 2, "fret": 7 }], "annotation": "8" } ] },
+            { "chord": "Am", "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "R" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "♭3" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" },
+              { "keys": ["a/3"], "duration": "q", "fret": [{ "str": 2, "fret": 7 }], "annotation": "8" } ] } ] } },
+      { "id": "triads-quality-ear-check",
+        "title": "Blind quality check (self-test)",
+        "goal": "Using the demo above with eyes off the screen: 8 of 10 triad plays identified as major/minor by ear alone.",
+        "steps": [
+          "In the demo, click a quality without looking (shuffle your choices), listen, name it, then look.",
+          "Major/minor first; add diminished when that's solid.",
+          "The full ear-trainer lab in Unit 7 turns this into a game with scoring."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "triads",
+    "questions": [
+      { "q": "A minor triad is built…",
+        "choices": ["minor third first, then major third on top (3+4 semitones)",
+                    "major third first, then minor (4+3)",
+                    "two minor thirds (3+3)"],
+        "answer": 0,
+        "explain": "Minor = 3+4. Major flips it: 4+3. Both end at the same perfect fifth — only the middle note moves." },
+      { "q": "Why are arpeggios such safe material for bass lines?",
+        "choices": ["They're the chord's own notes — you can't clash with what you're spelling",
+                    "They're easier to play than scales",
+                    "They avoid open strings"],
+        "answer": 0,
+        "explain": "Playing R-3-5 under a C chord IS the C chord, one note at a time. Chord tones on strong beats = instant 'right' sound." },
+      { "q": "The diminished triad sounds unstable because…",
+        "choices": ["its squashed fifth forms a tritone with the root",
+                    "it's always played louder",
+                    "it has four notes"],
+        "answer": 0,
+        "explain": "3+3 semitones = a 6-semitone 'fifth' — the tritone. Maximum itch, so music treats diminished chords as passages, not destinations." },
+      { "q": "On the neck, converting a major arpeggio shape to minor means…",
+        "choices": ["moving just the third back one fret",
+                    "moving everything back one fret",
+                    "changing strings entirely"],
+        "answer": 0,
+        "explain": "Root and fifth stay put; the mood note slides a semitone. One finger's difference between bright and dark — same as it ever was." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#triad-demo .fretboard-wrap");
+      const readout = document.getElementById("triad-readout");
+      const fb = BTFret.create(wrap, { frets: 12, interactive: false });
+      const ROOTS = { G: { string: 0, fret: 3 }, A: { string: 0, fret: 5 },
+                      C: { string: 1, fret: 3 } };
+      const NAMES = { "": "major", m: "minor", dim: "diminished", aug: "augmented" };
+      let quality = "";
+      let rootName = "G";
+
+      function currentChord() { return BT.chord(rootName, quality); }
+
+      function draw() {
+        const c = currentChord();
+        fb.clear();
+        fb.markPcs(c.pcs, { rootPc: BT.pc(rootName) });
+        readout.innerHTML = `<strong>${c.symbol || rootName}</strong> (${rootName} ${NAMES[quality]}): ` +
+          c.notes.join(" – ");
+      }
+
+      function rootMidi() {
+        const r = ROOTS[rootName];
+        return BT.noteAt(r.string, r.fret).midi;
+      }
+
+      document.querySelectorAll("#triad-demo [data-q]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quality = btn.dataset.q;
+          document.querySelectorAll("#triad-demo [data-q]").forEach((b) => {
+            b.classList.toggle("secondary", b !== btn);
+            b.setAttribute("aria-pressed", String(b === btn));
+          });
+          draw();
+          BTAudio.chordPad(currentChord().intervals.map((s) => rootMidi() + 12 + s), { dur: 1.6, gain: 0.5 });
+        });
+      });
+      document.querySelectorAll("#triad-demo [data-root]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          rootName = btn.dataset.root;
+          document.querySelectorAll("#triad-demo [data-root]").forEach((b) =>
+            b.setAttribute("aria-pressed", String(b === btn)));
+          draw();
+        });
+      });
+      document.getElementById("triad-chord").addEventListener("click", () => {
+        BTAudio.chordPad(currentChord().intervals.map((s) => rootMidi() + 12 + s), { dur: 2, gain: 0.55 });
+      });
+      document.getElementById("triad-arp").addEventListener("click", () => {
+        const ints = currentChord().intervals.concat([12]);
+        BTAudio.playSeq(ints.map((s, i) => ({ midi: rootMidi() + s, t: i * 0.55, dur: 0.5 })),
+          { bpm: 110 });
+      });
+      draw();
+    });
+  </script>
+</main>
+</body>
+</html>

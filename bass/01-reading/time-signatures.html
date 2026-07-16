@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Time signatures — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Reading Music">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="tab-and-notation.html|Tab ↔ notation">
+  <meta name="bass:next" content="../02-fretboard/strings-and-fret-math.html|Strings &amp; fret math">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Reading Music</p>
+  <h1>Time signatures</h1>
+  <p class="lede">The two stacked numbers are a promise about how time is
+  boxed. Most music you'll play keeps one promise — 4/4 — but the others feel
+  wonderful in the body, and bassists are the ones who make them feel right.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Counting quarters and eighths out loud
+    (<a href="rhythm-and-counting.html">rhythm &amp; counting</a>).
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="time-signature">time signature</dfn> like
+  <span data-sym="4/4">4/4</span> says: <strong>top number — how many beats
+  per <dfn data-term="bar">bar</dfn>; bottom number — which note value counts
+  as one beat</strong> (4 = quarter note, 8 = eighth note). So 4/4 is four
+  quarter-note beats per bar; 3/4 is three.</p>
+  <p>But the signature also implies a <dfn data-term="meter">stress
+  pattern</dfn>: 4/4 leans ONE-two-THREE-four (with 1 the strongest); 3/4
+  spins ONE-two-three; 6/8 rolls in <em>two</em> big pulses, each made of
+  three little ones — ONE-two-three FOUR-five-six. Same clock speed, totally
+  different dance.</p>
+
+  <h2>Feel the difference</h2>
+  <div class="demo" id="meter-demo">
+    <div class="buttons">
+      <button class="action" type="button" data-meter="4" aria-pressed="true">4/4 — march/rock</button>
+      <button class="action secondary" type="button" data-meter="3">3/4 — waltz</button>
+      <button class="action secondary" type="button" data-meter="6">6/8 — rolling</button>
+    </div>
+    <div class="beat-lights" id="meter-lights" aria-hidden="true"></div>
+    <div class="controls">
+      <div class="control">
+        <label for="meter-bpm">tempo</label>
+        <input type="range" id="meter-bpm" min="60" max="140" value="96" step="4">
+        <output id="meter-bpm-out">96</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" id="meter-play">▶ Start the count</button>
+    </div>
+    <p class="hint">The bright first light is beat 1. Count out loud with each
+    meter and sway — seriously, sway. Meter is physical.</p>
+  </div>
+
+  <h2>The signatures you'll actually meet</h2>
+  <table class="ref">
+    <thead><tr><th>Signature</th><th>Count</th><th>Where it lives</th></tr></thead>
+    <tbody>
+      <tr><td class="glyph">4/4</td><td>1 2 3 4</td><td>Rock, pop, funk, blues, jazz — ~90% of everything. Also written 𝄴.</td></tr>
+      <tr><td class="glyph">3/4</td><td>1 2 3</td><td>Waltzes, country ballads, "My Favorite Things".</td></tr>
+      <tr><td class="glyph">6/8</td><td>ONE-2-3 FOUR-5-6</td><td>Slow blues, doo-wop ballads, Irish jigs, "House of the Rising Sun".</td></tr>
+      <tr><td class="glyph">2/4</td><td>1 2</td><td>Marches, polkas, fast country — feel of "oom-pah".</td></tr>
+      <tr><td class="glyph">12/8</td><td>four rolling 3s</td><td>Slow blues at full grandeur — 4/4 where every beat is a triplet.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>6/8 vs 3/4 — the classic confusion, settled</summary>
+    <div class="layer-body">
+      <p>Both contain six eighth notes' worth of time, but they group
+      differently: 3/4 is <strong>three</strong> beats subdivided in twos
+      (ONE-and TWO-and THREE-and); 6/8 is <strong>two</strong> beats
+      subdivided in threes (ONE-two-three FOUR-five-six). Your foot taps 3
+      times per bar in 3/4 and 2 times per bar in 6/8. When in doubt, find
+      the foot.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>What the bassist does about all this</summary>
+    <div class="layer-body">
+      <p>The bass states the meter more than any other instrument: landing the
+      <dfn data-term="root">root</dfn> on beat 1 is what tells everyone's body
+      where the bar starts. In 3/4 the classic move is root on 1, lighter
+      notes (or nothing) on 2–3; in 6/8, roots on the two big pulses. The
+      practice exercises below build exactly that instinct.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>Root-on-the-strong-beat drills in three meters. The notes are trivial on
+  purpose — your job is to make beat 1 feel inevitable.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Reading toolkit complete: what, when, where, and how time is boxed. Now
+  back to the instrument — Unit 2 makes the whole neck as legible as the page.</p>
+
+  <script type="application/json" class="symbols">
+  { "4/4": { "name": "4/4 — four-four (common time)", "pron": "say: four four",
+             "means": "four quarter-note beats per bar. The default box of pop, rock, funk, jazz.",
+             "short": "4 beats per bar" },
+    "6/8": { "name": "6/8 — six-eight", "pron": "say: six eight",
+             "means": "six eighths grouped as two rolling pulses of three: ONE-two-three FOUR-five-six.",
+             "short": "2 big rolling beats" } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "time-signatures",
+    "exercises": [
+      { "id": "timesig-waltz-roots",
+        "title": "Waltz bass: own beat 1 in 3/4",
+        "goal": "Beat 1 lands like furniture being set down — solid, unhurried — while 2 and 3 stay light, for a full minute without drifting.",
+        "tempo": [80, 110],
+        "steps": [
+          "Count 'ONE two three' out loud, leaning the ONE.",
+          "Fifth (E) on beat 3 is optional seasoning — the recipe is the strong 1.",
+          "Try it with eyes closed; feel the bar spin."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "3/4", "tempo": 90,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 3, "fret": 0 }], "annotation": "1" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }], "annotation": "3" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "h", "dots": 1 } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 2, "fret": 0 }], "annotation": "1" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 3, "fret": 0 }], "annotation": "3" } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "h", "dots": 1 } ] } ] } },
+      { "id": "timesig-six-eight-pulses",
+        "title": "6/8: play the two big pulses",
+        "goal": "You sound only the two dotted-quarter pulses per bar while counting all six eighths out loud — the rolling feel appears by itself.",
+        "tempo": [60, 90],
+        "steps": [
+          "Count 'ONE-two-three FOUR-five-six', playing on ONE and FOUR.",
+          "Keep the plucks fat and even — this is the heartbeat of slow blues.",
+          "Then try leaving out FOUR every other bar and feel the space."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "6/8", "tempo": 72,
+          "measures": [
+            { "notes": [
+              { "keys": ["e/2"], "duration": "q", "dots": 1, "fret": [{ "str": 4, "fret": 0 }], "annotation": "1" },
+              { "keys": ["e/2"], "duration": "q", "dots": 1, "annotation": "4" } ] },
+            { "notes": [
+              { "keys": ["g/2"], "duration": "q", "dots": 1, "fret": [{ "str": 4, "fret": 3 }], "annotation": "1" },
+              { "keys": ["g/2"], "duration": "q", "dots": 1, "annotation": "4" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q", "dots": 1, "fret": [{ "str": 3, "fret": 0 }], "annotation": "1" },
+              { "keys": ["a/2"], "duration": "q", "dots": 1, "annotation": "4" } ] },
+            { "notes": [
+              { "keys": ["e/2"], "duration": "h", "dots": 1, "fret": [{ "str": 4, "fret": 0 }], "annotation": "1 (held)" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "time-signatures",
+    "questions": [
+      { "q": "In a time signature, the TOP number tells you…",
+        "choices": ["how many beats each bar holds", "how fast the song goes", "how many strings to use"],
+        "answer": 0,
+        "explain": "Top = beats per bar; bottom = which note value is one beat. Speed is a separate marking (♩ = 92)." },
+      { "q": "The big feel difference between 3/4 and 6/8 is…",
+        "choices": ["3/4 has three foot-taps per bar; 6/8 has two big rolling ones",
+                    "6/8 is twice as fast",
+                    "there is none — they're identical"],
+        "answer": 0,
+        "explain": "Same six eighth-notes of time, grouped 2+2+2 (three beats) vs 3+3 (two beats). Find the foot-tap and you know which one you're in." },
+      { "q": "As the bassist, the strongest way to make the meter clear to everyone is…",
+        "choices": ["landing the root solidly on beat 1 of each bar",
+                    "playing as many notes as possible",
+                    "avoiding beat 1 so the drummer can have it"],
+        "answer": 0,
+        "explain": "The low root on 1 is the body's 'the bar starts NOW' signal. Bassists state the meter; everyone else decorates it." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const lightsWrap = document.getElementById("meter-lights");
+      const bpmIn = document.getElementById("meter-bpm");
+      const bpmOut = document.getElementById("meter-bpm-out");
+      const playBtn = document.getElementById("meter-play");
+      let beats = 4;
+      let running = false;
+      let lights = [];
+
+      function buildLights() {
+        lightsWrap.replaceChildren();
+        lights = [];
+        for (let i = 0; i < beats; i++) {
+          const d = document.createElement("span");
+          d.className = "light" + (i === 0 ? " accent" : "");
+          lightsWrap.appendChild(d);
+          lights.push(d);
+        }
+      }
+      buildLights();
+
+      function restartIfRunning() {
+        if (!running) return;
+        BTAudio.metronome.start({
+          bpm: Number(bpmIn.value), beatsPerBar: beats,
+          onTick(index) {
+            const b = index % beats;
+            lights.forEach((l, i) => l.classList.toggle("on", i === b));
+          },
+        });
+      }
+
+      document.querySelectorAll("#meter-demo [data-meter]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          beats = Number(btn.dataset.meter);
+          document.querySelectorAll("#meter-demo [data-meter]").forEach((b) => {
+            b.classList.toggle("secondary", b !== btn);
+            b.setAttribute("aria-pressed", String(b === btn));
+          });
+          buildLights();
+          restartIfRunning();
+        });
+      });
+
+      bpmIn.addEventListener("input", () => {
+        bpmOut.textContent = bpmIn.value;
+        BTAudio.metronome.setBpm(Number(bpmIn.value));
+      });
+
+      playBtn.addEventListener("click", () => {
+        if (running) {
+          running = false;
+          BTAudio.metronome.stop();
+          lights.forEach((l) => l.classList.remove("on"));
+          playBtn.textContent = "▶ Start the count";
+          return;
+        }
+        running = true;
+        playBtn.textContent = "■ Stop";
+        restartIfRunning();
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

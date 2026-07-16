@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Approach notes — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Bass Lines">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="roots-and-chord-tones.html|Roots &amp; chord tones">
+  <meta name="bass:next" content="walking-bass-101.html|Walking bass 101">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Bass Lines</p>
+  <h1>Approach notes — aiming at the next chord</h1>
+  <p class="lede">The difference between chords-played-in-a-row and a
+  <em>line</em> is one small habit: spending the last moment of each bar
+  traveling toward the next root. Three ways to travel, one rule about
+  timing.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="roots-and-chord-tones.html">Chord tones on the beats</a> — this
+    page is about the space between the beats.
+  </div>
+
+  <h2>The idea</h2>
+  <p>An <dfn data-term="approach-note">approach note</dfn> is played just
+  before a target (usually the next chord's root), one step away from it, so
+  the landing sounds aimed rather than teleported. The three flavors:</p>
+  <ul>
+    <li><strong>Chromatic</strong> — one fret above or below the target.
+    Works over <em>any</em> chords, in <em>any</em> key, because it borrows
+    its meaning entirely from where it's going. The pro's pocketknife.</li>
+    <li><strong>Scale (diatonic)</strong> — one scale step above or below.
+    Smoother, more "inside" than chromatic.</li>
+    <li><strong>Dominant</strong> — the fifth of the target, dropped in just
+    before it. The strongest pull in harmony, miniaturized.</li>
+  </ul>
+  <div class="box plain-english">
+    <span class="label">The timing rule</span>
+    Approach notes live on <strong>weak</strong> moments — the last eighth or
+    last beat of the bar. Target lands ON the change. Tension on the weak,
+    resolution on the strong: that's the whole grammar.
+  </div>
+
+  <h2>Hear the difference</h2>
+  <div class="demo" id="app-demo">
+    <div class="buttons">
+      <button class="action secondary" type="button" data-mode="plain">No approaches</button>
+      <button class="action secondary" type="button" data-mode="chromatic">Chromatic from below</button>
+      <button class="action secondary" type="button" data-mode="above">Chromatic from above</button>
+      <button class="action secondary" type="button" data-mode="fifth">Dominant approach</button>
+    </div>
+    <p class="readout" id="app-readout">Same G–C–D–G progression; only the last
+    eighth note of each bar changes. Small habit, different instrument.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why chromatic approaches never sound wrong</summary>
+    <div class="layer-body">
+      <p>A note a semitone from its target resolves so fast the ear files it
+      as motion, not harmony — it's heard as belonging to where it's GOING.
+      That's why F♯ works before G even in keys with no F♯: context is
+      destination. The only way to break a chromatic approach is to be late —
+      then it's just a wrong note standing still.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Passing tones: the same idea, mid-bar</summary>
+    <div class="layer-body">
+      <p>A <dfn data-term="passing-tone">passing tone</dfn> connects two
+      chord tones by step on a weak beat (root … 2 … 3rd). Same grammar as
+      approaches — non-chord notes are fine while moving on weak time. Put
+      one on a strong beat and hold it, and you'll hear why the rule
+      exists.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Double chromatic &amp; enclosure (preview of fancier moves)</summary>
+    <div class="layer-body">
+      <p>Two frets away, walking in by semitones (F–F♯–G), or surrounding the
+      target from both sides (A♭–F♯–G — an "enclosure"): jazz vocabulary
+      built from the same brick. Meet them properly in walking bass and the
+      Expert unit.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Chord tones on beats + approach notes into changes + quarter-note pulse =
+  walking bass. You have all the parts; next page assembles them.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "approach-notes",
+    "exercises": [
+      { "id": "approach-chromatic-below",
+        "title": "Chromatic from below, everywhere",
+        "goal": "G–C–D–G with the last eighth of each bar approaching the next root from one fret below — landings inevitable, approach never early.",
+        "tempo": [66, 100],
+        "steps": [
+          "Pattern per bar: root (dotted feel), fifth on 3, approach on the '& of 4'.",
+          "The approach is quiet and short; the LANDING gets the weight.",
+          "Loop until your hand aims at bars ahead of your brain."
+        ],
+        "score": { "clef": "bass", "keySignature": "G", "time": "4/4", "tempo": 76,
+          "measures": [
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" },
+              { "keys": ["d/3"], "duration": "8r" },
+              { "keys": ["b/2"], "duration": "8", "fret": [{ "str": 3, "fret": 2 }], "annotation": "→C" } ] },
+            { "chord": "C", "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "5" },
+              { "keys": ["g/2"], "duration": "8r" },
+              { "keys": ["c#/3"], "duration": "8", "fret": [{ "str": 3, "fret": 4 }], "annotation": "→D" } ] },
+            { "chord": "D", "notes": [
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "R" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "5" },
+              { "keys": ["a/2"], "duration": "8r" },
+              { "keys": ["f#/2"], "duration": "8", "fret": [{ "str": 4, "fret": 2 }], "annotation": "→G" } ] },
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "w", "fret": [{ "str": 4, "fret": 3 }] } ] } ] } },
+      { "id": "approach-mixed-flavors",
+        "title": "Mixing the three flavors",
+        "goal": "The same progression with a different approach type each pass (below, above, dominant) — chosen before the bar starts, not improvised in panic.",
+        "tempo": [66, 96],
+        "steps": [
+          "Pass 1: all approaches from a fret below. Pass 2: from a fret above.",
+          "Pass 3: dominant approaches (play the target's fifth on beat 4).",
+          "Then alternate freely — but always KNOW which one you're about to play."
+        ] },
+      { "id": "approach-passing-tone-walk",
+        "title": "Passing tones inside the bar",
+        "goal": "Root–2–3–5 through each chord (the passing 2 on the weak beat), even quarters — your first taste of a real walking line.",
+        "tempo": [60, 88],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 69,
+          "measures": [
+            { "chord": "C", "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "2" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }], "annotation": "3" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "5" } ] },
+            { "chord": "F", "notes": [
+              { "keys": ["f/2"], "duration": "q", "fret": [{ "str": 4, "fret": 1 }], "annotation": "R" },
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "2" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "3" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "5" } ] },
+            { "chord": "G", "notes": [
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "2" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }], "annotation": "3" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" } ] },
+            { "chord": "C", "notes": [
+              { "keys": ["c/3"], "duration": "w", "fret": [{ "str": 3, "fret": 3 }] } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "approach-notes",
+    "questions": [
+      { "q": "Approach notes belong on…",
+        "choices": ["weak moments (the last eighth/beat), resolving ONTO the strong change",
+                    "beat 1, where they're audible",
+                    "any beat — placement is taste"],
+        "answer": 0,
+        "explain": "Tension on weak time, resolution on strong. An approach ON the change isn't an approach anymore — it's a missed landing." },
+      { "q": "Why do chromatic approaches work over any progression in any key?",
+        "choices": ["A semitone-away note resolves so fast it's heard as motion toward the target, not as harmony",
+                    "All keys contain all chromatic notes",
+                    "They don't; they only work in jazz"],
+        "answer": 0,
+        "explain": "The ear files it under 'going somewhere'. Its legitimacy comes from the destination — which is why lateness is the only real way to ruin it." },
+      { "q": "A 'dominant approach' to C is…",
+        "choices": ["playing G (C's fifth) just before landing on C",
+                    "playing C louder",
+                    "playing B♭"],
+        "answer": 0,
+        "explain": "The V→I pull, shrunk to a single beat. Strongest of the three flavors — you're quoting the cadence." },
+      { "q": "A passing tone held on a strong beat sounds wrong because…",
+        "choices": ["non-chord notes read as motion; parked on strong time they read as errors",
+                    "passing tones are quiet by nature",
+                    "it's against copyright"],
+        "answer": 0,
+        "explain": "Same grammar as approaches: outside notes are fine while traveling on weak time. Standing still on the beat, they claim to be harmony — and they aren't." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const readout = document.getElementById("app-readout");
+      const SPB = 0.71; // ~85bpm
+      const PROG = [
+        { root: 31, pad: [43, 47, 50] },  // G
+        { root: 36, pad: [48, 52, 55] },  // C
+        { root: 38, pad: [50, 54, 57] },  // D
+        { root: 31, pad: [43, 47, 50] },  // G
+      ];
+      const LABELS = {
+        plain: "Solid but teleporting — each chord arrives unannounced.",
+        chromatic: "One fret below each target: the landings feel aimed. That's the whole trick.",
+        above: "From above: same grammar, darker flavor. Mix freely with below.",
+        fifth: "The target's fifth as the springboard: the V→I pull, miniaturized.",
+      };
+
+      function play(mode) {
+        BTAudio.stopAll();
+        PROG.forEach((bar, i) => {
+          const t0 = i * 4 * SPB;
+          BTAudio.chordPad(bar.pad, { when: t0, dur: 4 * SPB - 0.1, gain: 0.4 });
+          BTAudio.pluck(bar.root, { when: t0, dur: 1.4 * SPB });
+          BTAudio.pluck(bar.root + 7, { when: t0 + 2 * SPB, dur: 0.9 * SPB });
+          if (i < PROG.length - 1 && mode !== "plain") {
+            const next = PROG[i + 1].root;
+            const app = mode === "chromatic" ? next - 1
+                      : mode === "above" ? next + 1
+                      : next + 7; // fifth of the target
+            BTAudio.pluck(app, { when: t0 + 3.5 * SPB, dur: 0.45 * SPB, gain: 0.8 });
+          }
+        });
+        readout.textContent = LABELS[mode];
+      }
+
+      document.querySelectorAll("#app-demo [data-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => play(btn.dataset.mode));
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

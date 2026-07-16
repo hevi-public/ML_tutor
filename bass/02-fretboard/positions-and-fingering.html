@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Positions &amp; fingering — Bass Tutor</title>
+
+  <meta name="bass:unit" content="The Fretboard">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="intervals-as-shapes.html|Intervals as shapes">
+  <meta name="bass:next" content="../03-theory/intervals.html|Intervals (by ear)">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · The Fretboard</p>
+  <h1>Positions &amp; fingering</h1>
+  <p class="lede">Your four fingers can own four neighboring frets without
+  moving your hand. Decide once which finger owns which fret, and most
+  "where do I put my fingers?" questions answer themselves forever.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Interval shapes (<a href="intervals-as-shapes.html">previous page</a>) —
+    positions are where shapes live.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Park your hand so your index finger hovers over, say, fret 5. Then:
+  <strong>index = fret 5, middle = 6, ring = 7, pinky = 8</strong>. That
+  claim — <dfn data-term="one-finger-per-fret">one finger per fret</dfn> —
+  defines a <dfn data-term="position">position</dfn> (this one is "5th
+  position", named after the index finger's fret). Within a position you can
+  reach every note in a 4-fret × 4-string window — around 25 notes — without
+  your hand traveling an inch.</p>
+
+  <h2>See the window</h2>
+  <div class="demo" id="pos-demo">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Interactive fretboard showing a four-fret position window with finger numbers"></div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-pos="1">1st position</button>
+      <button class="action" type="button" data-pos="3">3rd position</button>
+      <button class="action secondary" type="button" data-pos="5">5th position</button>
+      <button class="action secondary" type="button" data-pos="7">7th position</button>
+    </div>
+    <p class="readout" id="pos-readout">Numbers show which finger owns each
+    fret: 1 = index … 4 = pinky. Tap any marked fret to hear it.</p>
+  </div>
+
+  <h2>The rules of thumb (literally)</h2>
+  <ul>
+    <li><strong>Thumb behind the neck</strong>, roughly opposite your middle
+    finger, pointing up-ish. It's a pivot, not a clamp.</li>
+    <li><strong>Fingers stay curled and close</strong> to the strings —
+    hovering a centimeter away, not flying up between notes.</li>
+    <li><strong>Press with fingertips just behind the fret</strong>, as you
+    learned in setup — the position system tells you <em>which</em> tip.</li>
+    <li><strong>Near the nut, relax the rule</strong>: frets 1–4 are wide, so
+    many players cover them index-middle-pinky (1-2-4, the "three-fret"
+    fingering borrowed from upright bass). Both systems are correct; big
+    stretches are not.</li>
+  </ul>
+
+  <h2>Shifting: moving house gracefully</h2>
+  <p><dfn data-term="shifting">Shifts</dfn> — moving the whole hand to a new
+  position — are planned, not panicked. The pros' tricks: shift during an
+  open string or a rest; lighten the thumb and glide (don't hop); and lead
+  with the finger that will play the next note, arriving just as it's needed.
+  The last exercise below drills exactly this.</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why bother with a system at all?</summary>
+    <div class="layer-body">
+      <p>Because hesitation is the enemy of time. When every note in the
+      window has exactly one finger assigned, your hands stop making decisions
+      mid-bar — and decision-free hands are what "effortless" players actually
+      have. The system also makes written fingerings (the little 1-2-3-4
+      numbers under notes) instantly meaningful.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Same lick, three positions</summary>
+    <div class="layer-body">
+      <p>Most phrases fit in several windows. A C major arpeggio: around 3rd
+      position using the A-string C; around 7th position using the E-string C
+      (fret 8); or open-position mixing open strings. They sound nearly
+      identical — they <em>set up differently</em> for what comes next. Choosing
+      positions by "where am I going?" is the skill; it starts by knowing more
+      than one option exists.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>The chromatic 1-2-3-4 drill looks robotic and is quietly the most
+  valuable warmup on the instrument — it trains the finger-per-fret reflex,
+  evenness, and string crossing at once.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 2 complete: the neck is named, shaped, and organized. Unit 3 turns
+  to the theory core — starting where all of it becomes audible: intervals,
+  by ear.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "positions-and-fingering",
+    "exercises": [
+      { "id": "positions-chromatic-1234",
+        "title": "The 1-2-3-4 chromatic warmup",
+        "goal": "All four fingers place notes of equal volume and length across all four strings in 3rd position — no flams, no buzzes — at 70 bpm.",
+        "tempo": [50, 90],
+        "steps": [
+          "3rd position: index owns fret 3 … pinky owns fret 6.",
+          "E string: frets 3-4-5-6 with fingers 1-2-3-4, then the same on A, D, G.",
+          "Fingers stay DOWN as they accumulate (1 stays while 2 presses…) — then reverse it, 4-3-2-1, coming back.",
+          "Alternate plucking fingers throughout."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 60,
+          "measures": [
+            { "notes": [
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "1" },
+              { "keys": ["g#/2"], "duration": "q", "fret": [{ "str": 4, "fret": 4 }], "annotation": "2" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "3" },
+              { "keys": ["a#/2"], "duration": "q", "fret": [{ "str": 4, "fret": 6 }], "annotation": "4" } ] },
+            { "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "1" },
+              { "keys": ["c#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 4 }], "annotation": "2" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "3" },
+              { "keys": ["d#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 6 }], "annotation": "4" } ] },
+            { "notes": [
+              { "keys": ["f/3"], "duration": "q", "fret": [{ "str": 2, "fret": 3 }], "annotation": "1" },
+              { "keys": ["f#/3"], "duration": "q", "fret": [{ "str": 2, "fret": 4 }], "annotation": "2" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "3" },
+              { "keys": ["g#/3"], "duration": "q", "fret": [{ "str": 2, "fret": 6 }], "annotation": "4" } ] },
+            { "notes": [
+              { "keys": ["a#/3"], "duration": "q", "fret": [{ "str": 1, "fret": 3 }], "annotation": "1" },
+              { "keys": ["b/3"], "duration": "q", "fret": [{ "str": 1, "fret": 4 }], "annotation": "2" },
+              { "keys": ["c/4"], "duration": "q", "fret": [{ "str": 1, "fret": 5 }], "annotation": "3" },
+              { "keys": ["c#/4"], "duration": "q", "fret": [{ "str": 1, "fret": 6 }], "annotation": "4" } ] } ] } },
+      { "id": "positions-shift-drill",
+        "title": "The two-position shift",
+        "goal": "The shift from 3rd to 5th position happens during the long note — silently, calmly — and the landing note speaks exactly on the beat.",
+        "tempo": [56, 80],
+        "steps": [
+          "Bar 1 in 3rd position; the half note is your travel time.",
+          "Lighten the thumb, glide, land with finger 1 ready over fret 5.",
+          "The listener should not be able to tell where the shift happened."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 63,
+          "measures": [
+            { "notes": [
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "1" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "3" },
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }], "annotation": "1 → shift" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "1" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 4, "fret": 7 }], "annotation": "3" },
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "1" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "positions-and-fingering",
+    "questions": [
+      { "q": "\"3rd position\" means…",
+        "choices": ["your index finger owns fret 3 (and the other fingers own 4, 5, 6)",
+                    "your hand is on the 3rd string",
+                    "you're playing the 3rd of the chord"],
+        "answer": 0,
+        "explain": "Positions are named by the index finger's fret. One finger per fret assigns the rest automatically." },
+      { "q": "When is the best moment to shift positions?",
+        "choices": ["During an open string, a rest, or a long note — planned travel time",
+                    "Exactly on beat 1, where it's loudest",
+                    "Never — good players stay in one position"],
+        "answer": 0,
+        "explain": "Shifts hide inside moments when the fretting hand isn't needed. Planned shifts are silent; panicked ones drag the time." },
+      { "q": "Down near the nut (frets 1–4), many bassists…",
+        "choices": ["relax one-finger-per-fret and use fingers 1-2-4 across three frets",
+                    "use only the thumb",
+                    "refuse to play at all"],
+        "answer": 0,
+        "explain": "The frets are widest there; 1-2-4 (borrowed from upright technique) trades reach for comfort. Systems serve hands, not the reverse." },
+      { "q": "The deeper purpose of a fingering system is…",
+        "choices": ["removing mid-phrase decisions so your hands never hesitate",
+                    "making practice look disciplined",
+                    "maximizing stretch"],
+        "answer": 0,
+        "explain": "When every note has a pre-assigned finger, execution becomes automatic — and the attention you save goes to time and tone." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#pos-demo .fretboard-wrap");
+      const readout = document.getElementById("pos-readout");
+      const fb = BTFret.create(wrap, { frets: 12 });
+
+      function show(pos) {
+        fb.clear();
+        const marks = [];
+        for (let s = 0; s < 4; s++) {
+          for (let f = 0; f < 4; f++) {
+            marks.push({ string: s, fret: pos + f, label: String(f + 1),
+                         cls: f === 0 ? "root" : "mark" });
+          }
+        }
+        fb.mark(marks);
+        readout.innerHTML = `<strong>${pos}${pos === 1 ? "st" : pos === 3 ? "rd" : "th"} position</strong>: ` +
+          `index owns fret ${pos}, pinky owns fret ${pos + 3} — ~25 notes, zero hand travel.`;
+      }
+
+      document.querySelectorAll("#pos-demo [data-pos]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#pos-demo [data-pos]").forEach((b) =>
+            b.classList.toggle("secondary", b !== btn));
+          show(Number(btn.dataset.pos));
+        });
+      });
+      show(3);
+    });
+  </script>
+</main>
+</body>
+</html>

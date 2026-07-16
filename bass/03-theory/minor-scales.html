@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minor scales — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="keys-and-circle-of-fifths.html|Keys &amp; the circle of fifths">
+  <meta name="bass:next" content="pentatonics-and-blues.html|Pentatonics &amp; the blues scale">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>Minor scales</h1>
+  <p class="lede">Most of the music you love that isn't sunshine lives here.
+  The good news: you already own the notes — minor is the major scale wearing
+  different gravity.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    The <a href="major-scale.html">major scale</a> and
+    <a href="keys-and-circle-of-fifths.html">relative keys</a> (the circle's
+    inner ring).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Take C major's seven notes but make <strong>A</strong> feel like home
+  instead of C, and everything changes character: same palette, darker
+  painting. That's the <dfn data-term="minor-scale">natural minor
+  scale</dfn> — and every minor scale is some major scale's
+  <dfn data-term="relative-minor">relative</dfn>, rooted three semitones
+  below it (A minor ↔ C major, E minor ↔ G major…).</p>
+  <p>Measured from its own root, natural minor's recipe is
+  <strong>2 · 1 · 2 · 2 · 1 · 2 · 2</strong>, and in degree language it's the
+  major scale with <strong>♭3, ♭6, ♭7</strong> — three notes shifted one fret
+  down. The ♭3 alone flips the mood; you heard exactly this on the
+  <a href="intervals.html">thirds</a> page.</p>
+
+  <h2>Hear the flip, see the shape</h2>
+  <div class="demo" id="minor-demo">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Fretboard showing the one-octave natural minor shape from A"></div>
+    <div class="buttons">
+      <button class="action" type="button" id="minor-play">▶ A natural minor</button>
+      <button class="action secondary" type="button" id="major-play">▶ A major (compare)</button>
+      <button class="action secondary" type="button" data-root="A" aria-pressed="true">Root A</button>
+      <button class="action secondary" type="button" data-root="E">Root E</button>
+      <button class="action secondary" type="button" data-root="C">Root C</button>
+    </div>
+    <p class="readout" id="minor-readout">Same root, two scales — the ♭3 does
+    most of the emotional work.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Relative vs parallel — two ways to "go minor"</summary>
+    <div class="layer-body">
+      <p><strong>Relative</strong> minor shares notes but moves home
+      (C major ↔ A minor — zero accidentals change). <strong>Parallel</strong>
+      minor keeps the home and changes notes (C major ↔ C minor — flat the
+      3rd, 6th, 7th). Charts and the circle think in relatives; your ear at a
+      jam usually notices parallels ("same root, sadder"). Keep both words —
+      they answer different questions.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Harmonic &amp; melodic minor (the famous tweaks)</summary>
+    <div class="layer-body">
+      <p>Natural minor's ♭7 doesn't lean into home the way major's leading
+      tone does. Classical harmony fixes it by raising the 7th —
+      <strong>harmonic minor</strong> — creating that instantly-recognizable
+      exotic gap between ♭6 and 7. Raising the 6th as well smooths the melody
+      — <strong>melodic minor</strong>. For now: recognize the names, know
+      why they exist (stronger pull to the root), and file them for the
+      Expert unit. Rock, pop, and funk live overwhelmingly in natural minor
+      (and its pentatonic — next page).</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Minor key signatures</summary>
+    <div class="layer-body">
+      <p>A minor key borrows its relative major's signature: E minor wears
+      G major's one sharp. When a chart says "1 sharp", the tonic is either
+      G (major) or E (minor) — the first bass note and the resting chord
+      usually settle which. The circle page's inner ring is exactly this
+      lookup.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Strip minor (or major) down to its five sturdiest notes and you get the
+  pentatonic — the working bassist's favorite palette. Next page.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "minor-scales",
+    "exercises": [
+      { "id": "minor-scale-shape-octave",
+        "title": "Natural minor, one octave, degrees aloud",
+        "goal": "A minor up and down, calling '1 2 ♭3 4 5 ♭6 ♭7 8' — the flats said out loud — then the same shape from E.",
+        "tempo": [56, 90],
+        "steps": [
+          "Box from the E-string root A (fret 5): fingers 1-3-4 on the E string, 1-3-4 on the A string, 1-3 on the D string.",
+          "Say the flat degrees out loud; they're the identity of minor.",
+          "Then move the identical shape to root E (open/12th) and root C (fret 8)."
+        ],
+        "score": { "clef": "bass", "keySignature": "Am", "time": "4/4", "tempo": 63,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 4, "fret": 5 }], "annotation": "1" },
+              { "keys": ["b/2"], "duration": "8", "fret": [{ "str": 4, "fret": 7 }], "annotation": "2" },
+              { "keys": ["c/3"], "duration": "8", "fret": [{ "str": 4, "fret": 8 }], "annotation": "♭3" },
+              { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 3, "fret": 5 }], "annotation": "4" },
+              { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" },
+              { "keys": ["f/3"], "duration": "8", "fret": [{ "str": 3, "fret": 8 }], "annotation": "♭6" },
+              { "keys": ["g/3"], "duration": "8", "fret": [{ "str": 2, "fret": 5 }], "annotation": "♭7" },
+              { "keys": ["a/3"], "duration": "8", "fret": [{ "str": 2, "fret": 7 }], "annotation": "8" } ] },
+            { "notes": [
+              { "keys": ["a/3"], "duration": "8" }, { "keys": ["g/3"], "duration": "8" },
+              { "keys": ["f/3"], "duration": "8" }, { "keys": ["e/3"], "duration": "8" },
+              { "keys": ["d/3"], "duration": "8" }, { "keys": ["c/3"], "duration": "8" },
+              { "keys": ["b/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" } ] } ] } },
+      { "id": "minor-scale-major-minor-flip",
+        "title": "The parallel flip: A major ↔ A minor",
+        "goal": "You can play both scales from the same root back-to-back and your ear tracks exactly which three notes moved (3, 6, 7 — each one fret down).",
+        "tempo": [56, 84],
+        "steps": [
+          "One octave of A major, then A natural minor, same position.",
+          "Then just the changed pairs: C♯→C, F♯→F, G♯→G, each major-then-minor.",
+          "Name the mood change out loud; corny works: 'bright… dark…'"
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "minor-scales",
+    "questions": [
+      { "q": "Natural minor, described relative to the major scale on the same root, is…",
+        "choices": ["major with ♭3, ♭6, and ♭7", "major with every note flattened", "major played backwards"],
+        "answer": 0,
+        "explain": "Three notes drop one fret: the 3rd, 6th, and 7th. The ♭3 alone carries most of the mood flip." },
+      { "q": "The relative minor of C major is…",
+        "choices": ["A minor — same seven notes, home moved to A", "C minor", "G minor"],
+        "answer": 0,
+        "explain": "Relatives share every note and the key signature; the root moves down three semitones. C major ↔ A minor is the classic pair." },
+      { "q": "\"Parallel minor\" means…",
+        "choices": ["same root, minor version — C major vs C minor",
+                    "same notes, different root",
+                    "two basses playing together"],
+        "answer": 0,
+        "explain": "Parallel keeps the home note and changes the palette (♭3 ♭6 ♭7). Relative keeps the palette and changes the home." },
+      { "q": "Why did harmonic minor raise natural minor's 7th?",
+        "choices": ["To recreate the leading-tone pull toward the root that natural minor lacks",
+                    "To make it easier to finger",
+                    "To add a sixth string"],
+        "answer": 0,
+        "explain": "♭7 sits a whole step below home — no itch. Raising it to a half step restores the gravity, at the cost of that exotic ♭6-to-7 gap." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#minor-demo .fretboard-wrap");
+      const readout = document.getElementById("minor-readout");
+      const fb = BTFret.create(wrap, { frets: 12, interactive: false });
+      const ROOTS = { A: { string: 0, fret: 5 }, E: { string: 0, fret: 0 },
+                      C: { string: 1, fret: 3 } };
+      let current = "A";
+
+      function draw() {
+        const root = ROOTS[current];
+        const rootMidi = BT.noteAt(root.string, root.fret).midi;
+        fb.clear();
+        fb.markPcs(BT.scalePcs(current, "naturalMinor"), { rootPc: BT.pc(current) });
+        readout.innerHTML = `<strong>${current} natural minor</strong>: ` +
+          BT.scale(current, "naturalMinor").join(" – ") +
+          ` — relative major: ${BT.scale(current, "naturalMinor")[2]}.`;
+        return rootMidi;
+      }
+
+      function play(type) {
+        const root = ROOTS[current];
+        const rootMidi = BT.noteAt(root.string, root.fret).midi;
+        const steps = BT.SCALES[type].concat([12]);
+        BTAudio.playSeq(steps.map((s, i) => ({ midi: rootMidi + s, t: i * 0.5, dur: 0.45 })),
+          { bpm: 126 });
+      }
+
+      document.querySelectorAll("#minor-demo [data-root]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          current = btn.dataset.root;
+          document.querySelectorAll("#minor-demo [data-root]").forEach((b) =>
+            b.setAttribute("aria-pressed", String(b === btn)));
+          draw();
+        });
+      });
+      document.getElementById("minor-play").addEventListener("click", () => play("naturalMinor"));
+      document.getElementById("major-play").addEventListener("click", () => play("major"));
+      draw();
+    });
+  </script>
+</main>
+</body>
+</html>

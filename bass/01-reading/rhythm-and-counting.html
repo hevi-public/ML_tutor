@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rhythm &amp; counting — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Reading Music">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="staff-and-clef.html|The staff &amp; bass clef">
+  <meta name="bass:next" content="tab-and-notation.html|Tab ↔ notation">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Reading Music</p>
+  <h1>Rhythm &amp; counting</h1>
+  <p class="lede">Wrong note, right time: the band barely flinches. Right note,
+  wrong time: everyone hears it. For a bassist, rhythm literacy IS literacy.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing but a steady foot. Notes' <em>names</em> were last page; this page
+    is entirely about <em>when</em>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Time in music is a grid. The <dfn data-term="beat">beat</dfn> is the
+  steady pulse; a <dfn data-term="bar">bar</dfn> boxes up (usually) four of
+  them. Written rhythm just says how many boxes each note fills:
+  a <span data-sym="♩">♩</span> quarter note fills one beat, a
+  <span data-sym="♪">♪</span> eighth note half a beat, a half note two, a
+  whole note four. Silence is written too — <dfn data-term="rest">rests</dfn>
+  fill boxes with deliberate quiet.</p>
+  <p>And the trade secret: musicians don't feel rhythm as math, they feel it
+  as <strong>syllables</strong>. Quarters: "1, 2, 3, 4". Eighths: "1 &amp; 2
+  &amp; 3 &amp; 4 &amp;" (say "and" for &amp;). Count out loud — it feels
+  silly for exactly two days, and then you can read rhythm.</p>
+
+  <h2>Hear the grid</h2>
+  <p>Toggle boxes on the eighth-note grid, press play, and count along with the
+  clicks — the accented click is beat 1.</p>
+  <div class="demo" id="grid-demo">
+    <div class="rhythm-grid" id="rgrid" role="group" aria-label="Eighth-note rhythm grid: eight toggleable cells over one bar"></div>
+    <div class="controls">
+      <div class="control">
+        <label for="grid-bpm">how fast the beat goes (tempo)</label>
+        <input type="range" id="grid-bpm" min="60" max="120" value="80" step="4">
+        <output id="grid-bpm-out">80</output>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" id="grid-play">▶ Play the grid</button>
+      <button class="action secondary" type="button" data-preset="1,0,1,0,1,0,1,0">Quarters</button>
+      <button class="action secondary" type="button" data-preset="1,1,1,1,1,1,1,1">All eighths</button>
+      <button class="action secondary" type="button" data-preset="1,0,0,1,1,0,1,0">Something funkier</button>
+    </div>
+    <p class="hint">The grid is one bar of 4/4 sliced into eighths: cells read
+    "1 &amp; 2 &amp; 3 &amp; 4 &amp;". Count out loud while it plays — the counting is
+    the skill.</p>
+  </div>
+
+  <h2>The values, in one table</h2>
+  <table class="ref">
+    <thead><tr><th>Note</th><th>Length in 4/4</th><th>Count it</th></tr></thead>
+    <tbody>
+      <tr><td class="glyph">𝅝</td><td>4 beats (a whole bar)</td><td>"1 — (2, 3, 4 held)"</td></tr>
+      <tr><td class="glyph">𝅗𝅥</td><td>2 beats</td><td>"1 — (2 held)"</td></tr>
+      <tr><td class="glyph">♩</td><td>1 beat</td><td>"1"</td></tr>
+      <tr><td class="glyph">♪</td><td>½ beat</td><td>"1" or "&amp;"</td></tr>
+      <tr><td class="glyph">𝅘𝅥𝅯</td><td>¼ beat</td><td>"1", "e", "&amp;", or "a"</td></tr>
+      <tr><td class="glyph">𝄽</td><td>1 beat of silence</td><td>count it, don't play it</td></tr>
+    </tbody>
+  </table>
+  <ul class="symbol-legend" data-symbols="♩,♪,𝄽,·,‿"></ul>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Dots and ties — the length modifiers</summary>
+    <div class="layer-body">
+      <p>A <span data-sym="·">dot</span> after a note adds half its own length:
+      dotted quarter = 1½ beats ("1 &amp; 2", landing again on "&amp; of 2"). A
+      <span data-sym="‿">tie</span> gluing two notes means pluck once, hold
+      through both — it's how a note reaches across a bar line. Dotted-quarter
+      + eighth is <em>the</em> rhythm of thousands of bass lines; you'll drill
+      it below.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Rests are a bass superpower</summary>
+    <div class="layer-body">
+      <p>Reggae, funk, and Motown lines are famous for the holes in them. A
+      rest means <em>stop the string</em> — with the fretting hand relaxing or
+      the plucking hand touching down (<dfn data-term="muting">muting</dfn>).
+      When you practice the exercises below, treat every rest as an action
+      with a precise landing time, not a gap where you wait.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why count out loud, really?</summary>
+    <div class="layer-body">
+      <p>Because it forces the <dfn data-term="subdivision">subdivision</dfn>
+      to run continuously in your head, and steady subdivision is what
+      "great time" physically is. Silent counting collapses under pressure;
+      spoken counting survives it. Every rhythm you can say precisely, you can
+      play precisely — it's remarkably reliable in both directions.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>All on one note (open A) on purpose — zero fretboard distraction, one
+  hundred percent time. Count out loud on every rep.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You now read <em>what</em> (staff) and <em>when</em> (rhythm). Next: tab —
+  the bass-specific script that says <em>where</em> — and how the two systems
+  carry different halves of the truth.</p>
+
+  <script type="application/json" class="symbols">
+  { "♩": { "name": "♩ — quarter note", "pron": "say: QUOR-ter note",
+           "means": "one beat — the foot-tap. Four fill a bar of 4/4.", "short": "1 beat" },
+    "♪": { "name": "♪ — eighth note", "pron": "say: eighth note",
+           "means": "half a beat. Count pairs as '1 &'.", "short": "½ beat" },
+    "𝄽": { "name": "𝄽 — quarter rest", "pron": "say: QUOR-ter rest",
+           "means": "one beat of deliberate silence — stop the string on time.", "short": "1 beat of silence" },
+    "·": { "name": "· — dot", "pron": "say: dotted",
+           "means": "adds half the note's own length: dotted quarter = 1½ beats.", "short": "+half again" },
+    "‿": { "name": "‿ — tie", "pron": "say: tie",
+           "means": "glues two same-pitch notes: pluck once, hold for both.", "short": "pluck once, hold" } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "rhythm-and-counting",
+    "exercises": [
+      { "id": "rhythm-quarters-and-rests",
+        "title": "Quarters and rests, spoken and played",
+        "goal": "Notes land exactly on the click, rests are exactly silent (string stopped, not fading), and your counting never pauses.",
+        "tempo": [60, 90],
+        "steps": [
+          "Count '1 2 3 4' out loud, continuously, including through the rests.",
+          "On rests: touch the string with your plucking fingers to stop it ON the beat.",
+          "It's harder than it looks. That's the point."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 70,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q" }, { "keys": ["a/2"], "duration": "q" },
+              { "keys": ["d/3"], "duration": "qr" }, { "keys": ["a/2"], "duration": "q" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q" }, { "keys": ["d/3"], "duration": "qr" },
+              { "keys": ["a/2"], "duration": "q" }, { "keys": ["d/3"], "duration": "qr" } ] } ] } },
+      { "id": "rhythm-eighths-count",
+        "title": "Eighth notes with the '&' spoken",
+        "goal": "A full bar of eighths sits evenly inside the beat — no rushing the '&'s — at 80 bpm with alternating fingers.",
+        "tempo": [60, 96],
+        "steps": [
+          "Count '1 & 2 & 3 & 4 &' out loud; notes on every syllable.",
+          "Alternate plucking fingers strictly: index-middle-index-middle.",
+          "Record 10 seconds on your phone and listen for even spacing — your ears are honest."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 80,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q" }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "q" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/2"], "duration": "8" } ] } ] } },
+      { "id": "rhythm-dotted-quarter-eighth",
+        "title": "The dotted-quarter + eighth (the classic)",
+        "goal": "The second note lands cleanly on the '& of 2' and '& of 4' — the lopsided-on-purpose feel that powers half of pop bass.",
+        "tempo": [56, 84],
+        "steps": [
+          "Count '1 & 2 & 3 & 4 &'; pluck on '1', '& of 2', '3', '& of 4'.",
+          "Keep the foot tapping quarters — the foot must NOT follow your hands.",
+          "When it stops feeling like math and starts feeling like a groove, raise the tempo."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 66,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q", "dots": 1 }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "q", "dots": 1 }, { "keys": ["a/2"], "duration": "8" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q", "dots": 1 }, { "keys": ["a/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "h" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "rhythm-and-counting",
+    "questions": [
+      { "q": "In 4/4, how do you count a bar of eighth notes out loud?",
+        "choices": ["1 & 2 & 3 & 4 &", "1 2 3 4 5 6 7 8", "1 e & a 2 e & a"],
+        "answer": 0,
+        "explain": "Numbers on the beats, '&' between them. ('1 e & a' is the sixteenth-note count — that's funk's grid, coming later.)" },
+      { "q": "A dotted quarter note lasts…",
+        "choices": ["one and a half beats", "one and a quarter beats", "two beats"],
+        "answer": 0,
+        "explain": "The dot adds half the note's own value: 1 + ½ = 1½ beats. Paired with an eighth it fills exactly two beats — the classic lopsided pop rhythm." },
+      { "q": "For a bassist, a rest means…",
+        "choices": ["actively stopping the string at an exact moment",
+                    "waiting while the note fades naturally",
+                    "the bar is optional"],
+        "answer": 0,
+        "explain": "Silence is played: muting on time is technique. The funk and reggae you'll meet later are built from precisely-placed holes." },
+      { "q": "Why do musicians count OUT LOUD when learning rhythms?",
+        "choices": ["Speaking keeps the subdivision running steadily — what you can say precisely, you can play precisely",
+                    "Tradition from military bands",
+                    "It helps the audience follow"],
+        "answer": 0,
+        "explain": "Spoken counting forces continuous subdivision, which is what solid time physically is. Silent counting collapses under pressure." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const grid = document.getElementById("rgrid");
+      const labels = ["1", "&", "2", "&", "3", "&", "4", "&"];
+      const cells = labels.map((lab) => {
+        const c = document.createElement("button");
+        c.type = "button";
+        c.className = "cell";
+        c.textContent = lab;
+        c.setAttribute("aria-pressed", "false");
+        c.addEventListener("click", () => {
+          c.classList.toggle("hit");
+          c.setAttribute("aria-pressed", c.classList.contains("hit"));
+        });
+        grid.appendChild(c);
+        return c;
+      });
+      [0, 2, 4, 6].forEach((i) => cells[i].classList.add("hit"));
+
+      const bpmIn = document.getElementById("grid-bpm");
+      const bpmOut = document.getElementById("grid-bpm-out");
+      bpmIn.addEventListener("input", () => {
+        bpmOut.textContent = bpmIn.value;
+        BTAudio.metronome.setBpm(Number(bpmIn.value));
+      });
+
+      document.querySelectorAll("#grid-demo [data-preset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          btn.dataset.preset.split(",").forEach((v, i) => {
+            cells[i].classList.toggle("hit", v === "1");
+            cells[i].setAttribute("aria-pressed", v === "1");
+          });
+        });
+      });
+
+      const playBtn = document.getElementById("grid-play");
+      let running = false;
+      playBtn.addEventListener("click", () => {
+        if (running) {
+          BTAudio.metronome.stop();
+          BTAudio.stopAll();
+          cells.forEach((c) => c.classList.remove("now"));
+          playBtn.textContent = "▶ Play the grid";
+          running = false;
+          return;
+        }
+        running = true;
+        playBtn.textContent = "■ Stop";
+        BTAudio.metronome.start({
+          bpm: Number(bpmIn.value),
+          beatsPerBar: 4,
+          subdivision: 2,
+          gain: 0.7,
+          onTick(index) {
+            const cell = index % 8;
+            cells.forEach((c, i) => c.classList.toggle("now", i === cell));
+            if (cells[cell].classList.contains("hit")) {
+              BTAudio.pluck(33, { dur: 0.5 }); // open A
+            }
+          },
+        });
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

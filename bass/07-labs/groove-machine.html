@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Groove machine — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Practice Labs">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="ear-trainer.html|Ear trainer">
+  <meta name="bass:next" content="tuner.html|Tuner">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/labs/groove-machine.js"></script>
+</head>
+<body>
+<main class="wide">
+  <p class="unit-tag">Unit 7 · Practice Labs</p>
+  <h1>Groove machine</h1>
+  <p class="lede">A patient band that never gets bored: pick a progression, a
+  style, and a tempo — then play along. The chart lights up, the fretboard
+  shows the current chord's notes, and the whole thing loops until you stop.</p>
+
+  <div class="demo" id="gm">
+    <div class="controls">
+      <div class="control">
+        <label for="gm-prog">progression</label>
+        <select id="gm-prog"></select>
+      </div>
+      <div class="control">
+        <label for="gm-key">key</label>
+        <select id="gm-key"></select>
+      </div>
+      <div class="control">
+        <label for="gm-style">style pattern</label>
+        <select id="gm-style"></select>
+      </div>
+      <div class="control">
+        <label for="gm-bpm">tempo</label>
+        <input type="range" id="gm-bpm" min="50" max="180" value="90" step="2">
+        <output id="gm-bpm-out">90</output>
+      </div>
+    </div>
+    <div class="control" id="gm-custom-row" hidden style="margin-top:0.6rem">
+      <label for="gm-custom">custom chords (bars split by |)</label>
+      <input type="text" id="gm-custom" value="Am7 | D7 | Am7 | E7"
+             style="flex:2;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.7rem">
+    </div>
+    <div class="buttons">
+      <button class="action" type="button" id="gm-play">▶ Play</button>
+      <label style="font-size:0.9rem"><input type="checkbox" id="gm-count" checked> count-in</label>
+      <label style="font-size:0.9rem"><input type="checkbox" id="gm-pads" checked> chord pads</label>
+      <label style="font-size:0.9rem"><input type="checkbox" id="gm-cues" checked> bass cues</label>
+    </div>
+    <div class="rhythm-grid" id="gm-chart" aria-label="Chord chart; the current bar is highlighted"></div>
+    <p class="readout" id="gm-status" role="status">choose your band…</p>
+  </div>
+
+  <div class="demo" id="gm-neck">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Fretboard highlighting the current chord's tones"></div>
+    <p class="hint">Amber = the current chord's root, everywhere it lives;
+    outlined = its other chord tones. Tap any fret to hear it.</p>
+  </div>
+
+  <h2>How to practice with it</h2>
+  <ul>
+    <li><strong>Match the cues first</strong> — play exactly what the bass
+    cues play until the pattern is in your hands, then turn "bass cues" off
+    and own it alone.</li>
+    <li><strong>Roots-only is a complete workout</strong>: any progression,
+    roots on beat 1, until the changes stop surprising you.</li>
+    <li><strong>Steal the styles</strong>: each Unit 6 page deep-links here
+    with its groove pre-configured.</li>
+    <li><strong>Gap training</strong>: turn pads AND cues off — just clicks
+    and the highlighted chart. You are the harmony now.</li>
+  </ul>
+
+  <div class="box">
+    <span class="label">Presets to try</span>
+    <a href="#prog=12bar&amp;key=A&amp;style=shuffle&amp;bpm=96">Blues shuffle in A</a> ·
+    <a href="#prog=1564&amp;key=C&amp;style=rock8&amp;bpm=120">Pop-rock I–V–vi–IV in C</a> ·
+    <a href="#prog=251&amp;key=F&amp;style=walk4&amp;bpm=100">Walking ii–V–I in F</a> ·
+    <a href="#prog=vamp&amp;key=E&amp;style=funk16&amp;bpm=94">Funk vamp on E7</a> ·
+    <a href="#prog=doowop&amp;key=G&amp;style=onedrop&amp;bpm=72">One-drop doo-wop in G</a>
+  </div>
+</main>
+</body>
+</html>
