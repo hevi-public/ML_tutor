@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The major scale — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="intervals.html|Intervals">
+  <meta name="bass:next" content="keys-and-circle-of-fifths.html|Keys &amp; the circle of fifths">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>The major scale — music's measuring stick</h1>
+  <p class="lede">Do–re–mi is not a children's song, it's the coordinate system.
+  Chords, keys, other scales, even "wrong notes" are all described by how they
+  differ from this one seven-note recipe.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Whole and half steps (<a href="../02-fretboard/strings-and-fret-math.html">two
+    frets / one fret</a>) and <a href="intervals.html">interval names</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The <dfn data-term="major-scale">major scale</dfn> is a recipe of steps:
+  <strong>Whole, Whole, Half, Whole, Whole, Whole, Half</strong> — in frets:
+  <strong>2 · 2 · 1 · 2 · 2 · 2 · 1</strong>. Start on any note, apply the
+  recipe, and you get that note's major scale. Start on C and it happens to
+  use only natural notes (C D E F G A B); start anywhere else and sharps or
+  flats appear <em>because the recipe demands them</em>, not by decoration.</p>
+  <p>Each note gets a number — its <dfn data-term="degree">degree</dfn>:
+  1 2 3 4 5 6 7, then 1 again (the octave). Those numbers are how musicians
+  talk: "root and 5", "walk up to the 3", "flat 7". Learn the numbers with
+  your hands now and every future page gets easier.</p>
+
+  <h2>One shape, every key</h2>
+  <p>Because the recipe is fixed, the fretboard shape is fixed too. Here's the
+  classic one-octave box (starting finger 2 on the root):</p>
+  <div class="demo" id="scale-demo">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Fretboard showing the movable one-octave major scale shape"></div>
+    <div class="buttons">
+      <button class="action" type="button" data-root="G">G major</button>
+      <button class="action secondary" type="button" data-root="A">A major</button>
+      <button class="action secondary" type="button" data-root="C">C major</button>
+      <button class="action secondary" type="button" data-root="Eb">E♭ major</button>
+      <button class="action secondary" type="button" id="scale-play">▶ Play the scale</button>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-labels="degrees" aria-pressed="true">Show degrees</button>
+      <button class="action secondary" type="button" data-labels="names" aria-pressed="false">Show names</button>
+    </div>
+    <p class="readout" id="scale-readout">Same picture, different address —
+    that's the whole trick.</p>
+  </div>
+
+  <h2>Written out (G major)</h2>
+  <div class="demo">
+    <div class="score-block" data-score="gmajor" aria-label="G major scale, one octave up and down, notation and tab"></div>
+    <div class="buttons"><button class="action" type="button" data-play="gmajor">▶ Play</button></div>
+    <p class="hint">Notice the key signature: one sharp (F♯). That's the recipe
+    showing up in writing — next page explains the bookkeeping.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why those two half steps matter</summary>
+    <div class="layer-body">
+      <p>The half steps fall between degrees 3–4 and 7–8. Degree 7 sits one
+      semitone under home and <em>leans</em> into it (play 7 then stop —
+      feel the itch). Degree 4 leans down onto 3. These two gravitational
+      spots are why melodies resolve where they do — and why the approach
+      notes you'll use in bass lines work.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Degrees have names too</summary>
+    <div class="layer-body">
+      <p>1 <dfn data-term="tonic">tonic</dfn> (home) · 2 supertonic · 3 mediant
+      · 4 subdominant · 5 <dfn data-term="dominant">dominant</dfn> (the other
+      pole) · 6 submediant · 7 leading tone (the leaner). Bassists mostly say
+      the numbers — but "tonic" and "dominant" appear on every theory page
+      ever written, including the next few here.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Two positions for the same scale</summary>
+    <div class="layer-body">
+      <p>The box shown starts with finger 2 on the root (E- or A-string). A
+      second essential fingering starts with finger 4 — same notes, hand one
+      position lower. Having both means the scale is always under your hand,
+      whichever way the line is heading.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>Scales are for <em>saying numbers with your hands</em> — always count
+  degrees out loud, never just run fingers.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Twelve possible starting notes = twelve major scales = twelve keys. How
+  they're organized (and why F♯ major isn't scary) is the circle of fifths —
+  next page.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "major-scale",
+    "exercises": [
+      { "id": "major-scale-degrees-aloud",
+        "title": "One octave, degrees out loud",
+        "goal": "G major up and down while saying '1 2 3 4 5 6 7 8' — then the same shape from A and from C without re-thinking the fingering.",
+        "tempo": [56, 92],
+        "steps": [
+          "Fingering (from E-string root, finger 2): 2-4 / 1-2-4 / 1-3-4.",
+          "Say degrees, not note names, on this drill.",
+          "Move the identical shape: root A (fret 5), root C (fret 8)."
+        ],
+        "score": { "clef": "bass", "keySignature": "G", "time": "4/4", "tempo": 63,
+          "measures": [
+            { "notes": [
+              { "keys": ["g/2"], "duration": "8", "fret": [{ "str": 4, "fret": 3 }], "annotation": "1" },
+              { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 4, "fret": 5 }], "annotation": "2" },
+              { "keys": ["b/2"], "duration": "8", "fret": [{ "str": 3, "fret": 2 }], "annotation": "3" },
+              { "keys": ["c/3"], "duration": "8", "fret": [{ "str": 3, "fret": 3 }], "annotation": "4" },
+              { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" },
+              { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 2, "fret": 2 }], "annotation": "6" },
+              { "keys": ["f#/3"], "duration": "8", "fret": [{ "str": 2, "fret": 4 }], "annotation": "7" },
+              { "keys": ["g/3"], "duration": "8", "fret": [{ "str": 2, "fret": 5 }], "annotation": "8" } ] },
+            { "notes": [
+              { "keys": ["g/3"], "duration": "8" }, { "keys": ["f#/3"], "duration": "8" },
+              { "keys": ["e/3"], "duration": "8" }, { "keys": ["d/3"], "duration": "8" },
+              { "keys": ["c/3"], "duration": "8" }, { "keys": ["b/2"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["g/2"], "duration": "8" } ] } ] } },
+      { "id": "major-scale-skip-drill",
+        "title": "Skips: 1-3, 2-4, 3-5…",
+        "goal": "Playing the scale in thirds (skip one degree each time) stays clean and you can still name what you're on — the drill that turns scales into music.",
+        "tempo": [50, 84],
+        "steps": [
+          "Pattern up: 1-3, 2-4, 3-5, 4-6, 5-7, 6-8.",
+          "Say the pairs as you play them.",
+          "This IS how melodies and fills move — scales rarely walk straight."
+        ],
+        "score": { "clef": "bass", "keySignature": "G", "time": "4/4", "tempo": 60,
+          "measures": [
+            { "notes": [
+              { "keys": ["g/2"], "duration": "8", "annotation": "1" },
+              { "keys": ["b/2"], "duration": "8", "annotation": "3" },
+              { "keys": ["a/2"], "duration": "8", "annotation": "2" },
+              { "keys": ["c/3"], "duration": "8", "annotation": "4" },
+              { "keys": ["b/2"], "duration": "8", "annotation": "3" },
+              { "keys": ["d/3"], "duration": "8", "annotation": "5" },
+              { "keys": ["c/3"], "duration": "8", "annotation": "4" },
+              { "keys": ["e/3"], "duration": "8", "annotation": "6" } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "8", "annotation": "5" },
+              { "keys": ["f#/3"], "duration": "8", "annotation": "7" },
+              { "keys": ["e/3"], "duration": "8", "annotation": "6" },
+              { "keys": ["g/3"], "duration": "8", "annotation": "8" },
+              { "keys": ["g/3"], "duration": "h" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="scores">
+  { "gmajor": { "clef": "bass", "keySignature": "G", "time": "4/4", "tempo": 72,
+      "measures": [
+        { "notes": [
+          { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }] },
+          { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }] },
+          { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }] },
+          { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }] } ] },
+        { "notes": [
+          { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }] },
+          { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }] },
+          { "keys": ["f#/3"], "duration": "q", "fret": [{ "str": 2, "fret": 4 }] },
+          { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }] } ] } ] } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "major-scale",
+    "questions": [
+      { "q": "The major-scale recipe, in frets, is…",
+        "choices": ["2 · 2 · 1 · 2 · 2 · 2 · 1", "2 · 1 · 2 · 2 · 1 · 2 · 2", "2 · 2 · 2 · 1 · 2 · 2 · 1"],
+        "answer": 0,
+        "explain": "Whole-whole-half, whole-whole-whole-half. The two half steps land between 3–4 and 7–8." },
+      { "q": "Why does A major need sharps while C major doesn't?",
+        "choices": ["The step recipe forces them — starting from A, the plain letters don't fall 2-2-1-2-2-2-1",
+                    "A is a sharper-sounding letter",
+                    "Tradition assigns three sharps to A"],
+        "answer": 0,
+        "explain": "Apply the recipe from A and you must land on C♯, F♯, G♯ to keep the spacing right. Accidentals are consequences, not decorations." },
+      { "q": "\"Play the 5\" in G major means…",
+        "choices": ["D — the fifth degree of the G major scale", "The 5th fret", "Five notes, any notes"],
+        "answer": 0,
+        "explain": "Degrees count from the root: G(1) A(2) B(3) C(4) D(5). Numbers make the same instruction work in every key." },
+      { "q": "Degree 7 is nicknamed the 'leading tone' because…",
+        "choices": ["it sits a half step under home and audibly leans into it",
+                    "it leads the band",
+                    "it's the loudest degree"],
+        "answer": 0,
+        "explain": "One semitone below the octave, it creates the itch that resolution scratches — gravity you'll exploit in every walking line." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#scale-demo .fretboard-wrap");
+      const readout = document.getElementById("scale-readout");
+      const fb = BTFret.create(wrap, { frets: 12, interactive: false });
+      // one-octave box relative to root at (string s, fret f), finger-2 form
+      const SHAPE = [
+        { ds: 0, df: 0, deg: "1" }, { ds: 0, df: 2, deg: "2" },
+        { ds: 1, df: -1, deg: "3" }, { ds: 1, df: 0, deg: "4" },
+        { ds: 1, df: 2, deg: "5" }, { ds: 2, df: -1, deg: "6" },
+        { ds: 2, df: 1, deg: "7" }, { ds: 2, df: 2, deg: "8" },
+      ];
+      const ROOTS = { G: { string: 0, fret: 3 }, A: { string: 0, fret: 5 },
+                      C: { string: 1, fret: 3 }, Eb: { string: 1, fret: 6 } };
+      let current = "G";
+      let labels = "degrees";
+
+      function draw() {
+        const root = ROOTS[current];
+        fb.clear();
+        fb.mark(SHAPE.map((p, i) => {
+          const string = root.string + p.ds, fret = root.fret + p.df;
+          return { string, fret,
+            cls: p.deg === "1" || p.deg === "8" ? "root" : "mark",
+            label: labels === "degrees" ? p.deg
+              : BT.noteAt(string, fret).name.replace(/\d+$/, "") };
+        }));
+        readout.innerHTML = `<strong>${current} major</strong>: ` +
+          BT.scale(current, "major").join(" – ") +
+          ` — same shape, root on ${current}.`;
+      }
+
+      document.querySelectorAll("#scale-demo [data-root]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          current = btn.dataset.root;
+          document.querySelectorAll("#scale-demo [data-root]").forEach((b) =>
+            b.classList.toggle("secondary", b !== btn));
+          draw();
+        });
+      });
+      document.querySelectorAll("#scale-demo [data-labels]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          labels = btn.dataset.labels;
+          document.querySelectorAll("#scale-demo [data-labels]").forEach((b) =>
+            b.setAttribute("aria-pressed", String(b === btn)));
+          draw();
+        });
+      });
+      document.getElementById("scale-play").addEventListener("click", () => {
+        const root = ROOTS[current];
+        const rootMidi = BT.noteAt(root.string, root.fret).midi;
+        const steps = BT.SCALES.major.concat([12]);
+        BTAudio.playSeq(steps.map((s, i) => ({ midi: rootMidi + s, t: i * 0.5, dur: 0.45 })),
+          { bpm: 120 });
+      });
+      draw();
+    });
+  </script>
+</main>
+</body>
+</html>

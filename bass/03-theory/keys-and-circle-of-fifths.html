@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Keys &amp; the circle of fifths — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="major-scale.html|The major scale">
+  <meta name="bass:next" content="minor-scales.html|Minor scales">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+  <script defer src="../assets/js/viz/circle-of-fifths.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>Keys &amp; the circle of fifths</h1>
+  <p class="lede">"What key is it in?" is the first question at every jam. The
+  answer names the home note, the seven-note palette, and — via one elegant
+  circle — how every key relates to every other.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    The <a href="major-scale.html">major scale</a> and its recipe; the
+    <dfn data-term="fifth">fifth</dfn> as an interval.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="key">key</dfn> is a home base plus its major (or minor)
+  scale: "in G major" means G feels like home and the music draws from G's
+  seven notes. Rather than re-flagging F♯ on every line, written music
+  declares it once — the <dfn data-term="key-signature">key signature</dfn>
+  after the clef.</p>
+  <p>Now the beautiful part. Walk from C up a perfect fifth to G, and G's
+  scale differs from C's by <strong>exactly one note</strong> (F becomes F♯).
+  Up another fifth to D: one more sharp. Every fifth you climb adds one
+  sharp; every fifth you descend adds one flat. Twelve steps of this and
+  you're back home — a closed <dfn data-term="circle-of-fifths">circle</dfn>.</p>
+
+  <h2>The circle, live</h2>
+  <div class="demo" id="cof-demo">
+    <div class="cof-wrap"></div>
+    <p class="readout" id="cof-readout">Tap any key — outer ring majors, inner
+    ring their relative minors. It plays the scale and shows the signature.</p>
+    <p class="hint">Neighbors on the circle share six of seven notes — that's
+    why songs drift to them so easily, and why the two chords next to your key
+    (IV and V!) feel like family.</p>
+  </div>
+
+  <h2>Reading a key signature at a glance</h2>
+  <ul>
+    <li><strong>Sharps:</strong> the last sharp is the leading tone — go one
+    semitone up from it and you've named the key. (Two sharps, last is C♯ →
+    key of D.)</li>
+    <li><strong>Flats:</strong> the second-to-last flat IS the key. (Three
+    flats B♭-E♭-A♭ → E♭ major.) With one flat, memorize it: F.</li>
+    <li>The sharps always arrive in the order F-C-G-D-A-E-B; flats in the
+    exact reverse. Nothing to compute — it's the circle again.</li>
+  </ul>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>What the circle does for a bassist, concretely</summary>
+    <div class="layer-body">
+      <p>Three jobs: <strong>(1)</strong> Instant key-signature lookup.
+      <strong>(2)</strong> The notes either side of your key are its IV and V
+      — the two most common chords in the language, pre-located.
+      <strong>(3)</strong> Root
+      motion by fifths (C→F→B♭…) is the strongest sound in harmony; countless
+      progressions and the entire ii–V–I move counter-clockwise along this
+      circle. Practicing anything "around the circle" therefore practices the
+      motion real songs use.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Enharmonic seams</summary>
+    <div class="layer-body">
+      <p>At the bottom of the circle, spelling flips: F♯ major (6 sharps) and
+      G♭ major (6 flats) are the <dfn data-term="enharmonic">same
+      sounds</dfn> written differently. Writers pick whichever spelling reads
+      easier. Your hands don't care — same frets.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why fifths generate everything</summary>
+    <div class="layer-body">
+      <p>Stack twelve perfect fifths and you visit all twelve pitch classes
+      exactly once before returning (7 semitones and 12 notes share no common
+      factor — musical number theory). That's why the circle exists at all,
+      and why the fifth feels like music's load-bearing interval.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Each major key's inner-ring twin is its relative minor — same notes,
+  darker home. Minor scales get their own page next.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "keys-and-circle-of-fifths",
+    "exercises": [
+      { "id": "cof-roots-around-circle",
+        "title": "Roots around the circle",
+        "goal": "You can play the circle's roots in order — C G D A E B F♯ D♭ A♭ E♭ B♭ F — two beats each, without consulting the diagram.",
+        "tempo": [60, 90],
+        "steps": [
+          "Clockwise once (up a fifth = up 7 frets, or down 5 — pick the closer one).",
+          "Counter-clockwise once (down a fifth / up a fourth) — this is the direction real progressions move.",
+          "Say each root out loud; land each one confidently."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 72,
+          "measures": [
+            { "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }], "annotation": "C" },
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }], "annotation": "G" } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "D" },
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 4, "fret": 5 }], "annotation": "A" } ] },
+            { "notes": [
+              { "keys": ["e/3"], "duration": "h", "fret": [{ "str": 2, "fret": 2 }], "annotation": "E" },
+              { "keys": ["b/2"], "duration": "h", "fret": [{ "str": 3, "fret": 2 }], "annotation": "B" } ] },
+            { "notes": [
+              { "keys": ["f#/3"], "duration": "h", "fret": [{ "str": 2, "fret": 4 }], "annotation": "F♯" },
+              { "keys": ["db/3"], "duration": "h", "fret": [{ "str": 3, "fret": 4 }], "annotation": "D♭" } ] },
+            { "notes": [
+              { "keys": ["ab/2"], "duration": "h", "fret": [{ "str": 4, "fret": 4 }], "annotation": "A♭" },
+              { "keys": ["eb/3"], "duration": "h", "fret": [{ "str": 3, "fret": 6 }], "annotation": "E♭" } ] },
+            { "notes": [
+              { "keys": ["bb/2"], "duration": "h", "fret": [{ "str": 4, "fret": 6 }], "annotation": "B♭" },
+              { "keys": ["f/3"], "duration": "h", "fret": [{ "str": 2, "fret": 3 }], "annotation": "F" } ] } ] } },
+      { "id": "cof-scale-transposition",
+        "title": "One scale shape, four keys",
+        "goal": "The major-scale box lands cleanly in G, D, A, and E — proving to your hands that new sharps don't mean new fingerings.",
+        "tempo": [56, 88],
+        "steps": [
+          "Play the one-octave major shape from G (E-string 3), then D (A-string 5), then A (E-string 5), then E (A-string 7).",
+          "Before each: say how many sharps that key has (1, 2, 3, 4).",
+          "Notice you never thought about the sharps — the shape did."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "keys-and-circle-of-fifths",
+    "questions": [
+      { "q": "Moving one step clockwise around the circle (C → G → D …) does what to the key signature?",
+        "choices": ["adds one sharp", "adds one flat", "doubles the sharps"],
+        "answer": 0,
+        "explain": "Each fifth up = one more sharp; each fifth down (counter-clockwise) = one more flat. One note changes per step — neighbors are 6/7 identical." },
+      { "q": "A signature shows four sharps. The key is…",
+        "choices": ["E major — the last sharp (D♯) plus a semitone", "D major", "A major"],
+        "answer": 0,
+        "explain": "Sharps arrive F-C-G-D…, so four sharps ends on D♯; one semitone up names the key: E. (The trick works for every sharp key.)" },
+      { "q": "Why do songs so often visit the keys/chords adjacent on the circle?",
+        "choices": ["Neighbors share six of seven notes, so the move sounds natural — they're the IV and V",
+                    "The circle is alphabetical",
+                    "Adjacent keys are easier to finger"],
+        "answer": 0,
+        "explain": "One-note difference = maximum familiarity. Your key's circle-neighbors literally ARE its two main chords beyond home." },
+      { "q": "F♯ major and G♭ major are…",
+        "choices": ["the same sounds spelled two ways — same frets under your hands",
+                    "a semitone apart",
+                    "relative major and minor"],
+        "answer": 0,
+        "explain": "An enharmonic seam at the circle's bottom. Writers choose the friendlier spelling; the fretboard is agnostic." }
+    ] }
+  </script>
+</main>
+</body>
+</html>

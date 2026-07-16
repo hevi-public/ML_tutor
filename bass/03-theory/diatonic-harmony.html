@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diatonic harmony — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="seventh-chords.html|Seventh chords">
+  <meta name="bass:next" content="../04-technique/right-hand.html|The right hand">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>Diatonic harmony — a key's chord family</h1>
+  <p class="lede">Why do certain chords "belong together"? Because a key
+  manufactures its own chords — seven of them, with fixed personalities and
+  numbered name tags. Learn the tags and you can hear a song once and know
+  what the bass should do.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="major-scale.html">Scale degrees</a>,
+    <a href="triads.html">triads</a>, and
+    <a href="seventh-chords.html">seventh qualities</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Build a triad (1-3-5 stack) on <em>each degree</em> of a major scale,
+  using only the scale's own notes — <dfn data-term="diatonic">diatonic</dfn>
+  means exactly that. The spacing of the scale forces each chord's quality;
+  nobody chooses it:</p>
+  <p><strong>I major · ii minor · iii minor · IV major · V major · vi minor ·
+  vii diminished</strong></p>
+  <p>Written as <dfn data-term="roman-numerals">Roman numerals</dfn>
+  (uppercase = major, lowercase = minor, ° = diminished), the pattern is the
+  same in every key — which is why musicians say "a
+  <strong>I–V–vi–IV</strong>" instead of naming four chords twelve different
+  ways. Session players' <dfn data-term="nashville-numbers">Nashville
+  numbers</dfn> are the same idea with digits: 1 5 6− 4.</p>
+
+  <h2>Every key's family, generated</h2>
+  <div class="demo" id="dia-demo">
+    <div class="buttons" id="dia-keys"></div>
+    <div class="buttons">
+      <button class="action secondary" type="button" id="dia-sevenths" aria-pressed="false">Show sevenths</button>
+      <button class="action secondary" type="button" id="dia-walk">▶ Hear the family (I→vii°)</button>
+    </div>
+    <table class="ref" id="dia-table" aria-live="polite">
+      <thead><tr><th>Degree</th><th>Roman</th><th>Nashville</th><th>Chord</th><th>Notes</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="hint">Tap a row's ▶ to hear that chord with its root under it —
+    the bassist's-eye view of harmony.</p>
+  </div>
+
+  <h2>The progressions you already know by heart</h2>
+  <table class="ref">
+    <thead><tr><th>Numerals</th><th>In C</th><th>You've heard it in…</th></tr></thead>
+    <tbody>
+      <tr><td><strong>I–IV–V</strong></td><td>C–F–G</td><td>the blues, early rock &amp; roll, punk — the primary colors</td></tr>
+      <tr><td><strong>I–V–vi–IV</strong></td><td>C–G–Am–F</td><td>a comical fraction of all pop hits since 1990</td></tr>
+      <tr><td><strong>ii–V–I</strong></td><td>Dm7–G7–Cmaj7</td><td>jazz's handshake; the strongest resolution in the language</td></tr>
+      <tr><td><strong>I–vi–IV–V</strong></td><td>C–Am–F–G</td><td>1950s doo-wop, "Stand By Me"</td></tr>
+      <tr><td><strong>vi–IV–I–V</strong></td><td>Am–F–C–G</td><td>the moody rotation of the pop wheel</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why V pulls home so hard</summary>
+    <div class="layer-body">
+      <p>The V chord contains the key's leading tone (degree 7, a semitone
+      under home) — and as a V7 it adds the 4, forming a tritone that must
+      resolve. Both tension notes collapse inward onto the I chord. Your
+      root motion V→I underlines the strongest gravity harmony has; that's
+      why <dfn data-term="cadence">cadences</dfn> live or die by the bass.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Minor keys run the same factory</summary>
+    <div class="layer-body">
+      <p>Natural minor generates: i · ii° · III · iv · v · VI · VII. Same
+      machine, rotated (compare: it's the relative major's family starting
+      from vi). In practice minor-key music often borrows a major V from
+      harmonic minor for that leading-tone pull — you'll hear both flavors in
+      the styles unit.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>What this buys you at a jam</summary>
+    <div class="layer-body">
+      <p>Someone shouts "it's a 1-4-5 in G!" and you now know every chord
+      before the count-in: G, C, D. Numbers + the circle of fifths + movable
+      shapes = you can play songs you've never heard in keys you didn't
+      choose. That's not a party trick; it's the actual job.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Theory core complete. Unit 4 moves to the hands — plucking, fretting,
+  timing, tone — so that everything you now understand can come out of the
+  speaker sounding like you mean it.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "diatonic-harmony",
+    "exercises": [
+      { "id": "diatonic-roots-1564",
+        "title": "Root motion: I–V–vi–IV in three keys",
+        "goal": "Two bars per chord, roots only, in C, then G, then D — announced by numbers ('one… five… six-minor… four…') and landed without hesitation.",
+        "tempo": [66, 100],
+        "steps": [
+          "In C: C G Am F. In G: G D Em C. In D: D A Bm G.",
+          "Say the NUMBER as you land each root — the letters change, numbers don't.",
+          "Add the fifth of each chord on beat 3 once the roots are automatic."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 80,
+          "measures": [
+            { "chord": "C (I)", "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }] },
+              { "keys": ["c/3"], "duration": "h" } ] },
+            { "chord": "G (V)", "notes": [
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }] },
+              { "keys": ["g/2"], "duration": "h" } ] },
+            { "chord": "Am (vi)", "notes": [
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 3, "fret": 0 }] },
+              { "keys": ["a/2"], "duration": "h" } ] },
+            { "chord": "F (IV)", "notes": [
+              { "keys": ["f/2"], "duration": "h", "fret": [{ "str": 4, "fret": 1 }] },
+              { "keys": ["f/2"], "duration": "h" } ] } ] } },
+      { "id": "diatonic-ii-V-I",
+        "title": "The ii–V–I with thirds",
+        "goal": "Dm7–G7–Cmaj7 outlined as root+third per chord, so each chord's quality is audible from the bass alone.",
+        "tempo": [60, 92],
+        "steps": [
+          "Per bar: root on 1, third on 3 (Dm7: D+F, G7: G+B, Cmaj7: C+E).",
+          "Hear how the thirds alone tell minor-major-major.",
+          "Loop it — this cadence is jazz's front door, and it's everywhere."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 72,
+          "measures": [
+            { "chord": "Dm7 (ii)", "notes": [
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "R" },
+              { "keys": ["f/3"], "duration": "h", "fret": [{ "str": 2, "fret": 3 }], "annotation": "♭3" } ] },
+            { "chord": "G7 (V)", "notes": [
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["b/2"], "duration": "h", "fret": [{ "str": 3, "fret": 2 }], "annotation": "3" } ] },
+            { "chord": "Cmaj7 (I)", "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+              { "keys": ["e/3"], "duration": "h", "fret": [{ "str": 2, "fret": 2 }], "annotation": "3" } ] },
+            { "chord": "(rest)", "notes": [
+              { "keys": ["c/3"], "duration": "wr" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "diatonic-harmony",
+    "questions": [
+      { "q": "In ANY major key, the chord built on the 5th degree is…",
+        "choices": ["major (V) — and as a seventh chord, the key's only dominant 7",
+                    "minor",
+                    "whatever the composer prefers"],
+        "answer": 0,
+        "explain": "The scale's spacing forces I, IV, V major; ii, iii, vi minor; vii°. Nobody decides — the recipe does. V7's uniqueness is why it fingerprints the key." },
+      { "q": "\"I–V–vi–IV in G\" means the chords…",
+        "choices": ["G, D, Em, C", "G, C, D, Em", "G, D, E, C"],
+        "answer": 0,
+        "explain": "Count degrees in G major (G A B C D E F♯): 1=G, 5=D, 6=Em (lowercase = minor!), 4=C." },
+      { "q": "Why do musicians communicate progressions as numbers rather than chord letters?",
+        "choices": ["Numbers are key-independent — one description works in all twelve keys",
+                    "Numbers are faster to shout",
+                    "Letters are copyrighted"],
+        "answer": 0,
+        "explain": "'1-4-5' is the same instruction in E or B♭. The singer changes key; the chart in your head doesn't. (Nashville built an entire studio system on this.)" },
+      { "q": "The vi chord in a major key is also…",
+        "choices": ["the relative minor's home chord", "always diminished", "the loudest chord"],
+        "answer": 0,
+        "explain": "vi is where the relative minor lives (in C: Am). That's why major-key songs can drift moody by camping on vi — same family, darker room." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const KEYS = ["C", "G", "D", "A", "E", "F", "Bb", "Eb"];
+      const keysWrap = document.getElementById("dia-keys");
+      const tbody = document.querySelector("#dia-table tbody");
+      const sevBtn = document.getElementById("dia-sevenths");
+      let currentKey = "C";
+      let sevenths = false;
+
+      function rootMidiFor(name) {
+        let m = BT.noteToMidi(name + "1");
+        if (m === null || m < 28) m = BT.noteToMidi(name + "2");
+        return m;
+      }
+
+      function render() {
+        const chords = BT.diatonicChords(currentKey, "major", { sevenths });
+        tbody.replaceChildren();
+        chords.forEach((c) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML =
+            `<td>${c.degree}</td><td><strong>${c.roman}</strong></td>` +
+            `<td>${c.nashville}</td><td>${c.symbol}</td>` +
+            `<td>${(c.notes || []).join(" ")}</td>` +
+            `<td><button class="action secondary" type="button" aria-label="Play ${c.symbol}">▶</button></td>`;
+          tr.querySelector("button").addEventListener("click", () => {
+            const rm = rootMidiFor(c.root);
+            const chord = BT.chord(c.root, c.quality);
+            BTAudio.pluck(rm, { dur: 1.6 });
+            BTAudio.chordPad(chord.intervals.map((s) => rm + 24 + s), { dur: 1.6, gain: 0.45 });
+          });
+          tbody.appendChild(tr);
+        });
+      }
+
+      KEYS.forEach((k) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "action" + (k === "C" ? "" : " secondary");
+        b.textContent = k;
+        b.addEventListener("click", () => {
+          currentKey = k;
+          keysWrap.querySelectorAll("button").forEach((x) =>
+            x.classList.toggle("secondary", x !== b));
+          render();
+        });
+        keysWrap.appendChild(b);
+      });
+
+      sevBtn.addEventListener("click", () => {
+        sevenths = !sevenths;
+        sevBtn.setAttribute("aria-pressed", String(sevenths));
+        sevBtn.textContent = sevenths ? "Show triads" : "Show sevenths";
+        render();
+      });
+
+      document.getElementById("dia-walk").addEventListener("click", () => {
+        const chords = BT.diatonicChords(currentKey, "major", { sevenths });
+        chords.forEach((c, i) => {
+          const rm = rootMidiFor(c.root);
+          const chord = BT.chord(c.root, c.quality);
+          BTAudio.pluck(rm, { when: i * 0.9, dur: 0.85 });
+          BTAudio.chordPad(chord.intervals.map((s) => rm + 24 + s),
+            { when: i * 0.9, dur: 0.85, gain: 0.4 });
+        });
+      });
+
+      render();
+    });
+  </script>
+</main>
+</body>
+</html>

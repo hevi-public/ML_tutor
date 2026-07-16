@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pentatonics &amp; the blues scale — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="minor-scales.html|Minor scales">
+  <meta name="bass:next" content="triads.html|Triads">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>Pentatonics &amp; the blues scale</h1>
+  <p class="lede">Remove a scale's two riskiest notes and what's left can
+  hardly sound wrong. Five notes power more famous bass lines than the other
+  seven-note theory combined.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="major-scale.html">Major</a> and
+    <a href="minor-scales.html">minor</a> scales as degree numbers.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The <dfn data-term="pentatonic">minor pentatonic</dfn> is natural minor
+  minus its two half-step-adjacent notes (the 2 and ♭6):
+  <strong>1 · ♭3 · 4 · 5 · ♭7</strong>. No note sits a semitone from any
+  chord tone, so nothing clashes hard — which is why you can lean on any of
+  these five over a groove and sound intentional. The
+  <strong>major pentatonic</strong> plays the same trick on the major scale:
+  <strong>1 · 2 · 3 · 5 · 6</strong> (drop the 4 and 7) — instant country,
+  gospel, and Motown sweetness.</p>
+  <p>Add one spicy chromatic note to the minor pentatonic — the
+  <strong>♭5</strong> — and you have the
+  <dfn data-term="blues-scale">blues scale</dfn>: 1 · ♭3 · 4 ·
+  <strong>♭5</strong> · 5 · ♭7. The ♭5 is a passing sting, not a home:
+  slide through it and it's the blues; sit on it and it's a horror film.</p>
+
+  <h2>The box</h2>
+  <p>The famous minor-pentatonic "box" fits one position perfectly — this is
+  probably the most-played hand shape in popular music:</p>
+  <div class="demo" id="pent-demo">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Fretboard showing the minor pentatonic box shape"></div>
+    <div class="buttons">
+      <button class="action" type="button" data-scale="minorPentatonic" aria-pressed="true">Minor pentatonic</button>
+      <button class="action secondary" type="button" data-scale="majorPentatonic" aria-pressed="false">Major pentatonic</button>
+      <button class="action secondary" type="button" data-scale="blues" aria-pressed="false">Blues (+♭5)</button>
+      <button class="action secondary" type="button" id="pent-play">▶ Play it</button>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" data-root="A" aria-pressed="true">Root A</button>
+      <button class="action secondary" type="button" data-root="E">Root E</button>
+      <button class="action secondary" type="button" data-root="G">Root G</button>
+    </div>
+    <p class="readout" id="pent-readout"></p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why five notes feel so safe (one layer deeper)</summary>
+    <div class="layer-body">
+      <p>The notes removed are precisely the ones that form semitone rubs
+      against chord tones: the 4 sits on the 3's shoulder, the 7 leans on the
+      root, minor's 2 and ♭6 crowd the ♭3 and 5. What remains keeps a polite
+      whole-step-or-more distance from trouble. Less tension available — but
+      total permission to move freely. That trade IS the pentatonic sound.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Relative pentatonics — one shape, two jobs</summary>
+    <div class="layer-body">
+      <p>A minor pentatonic and C major pentatonic contain the identical five
+      notes (relatives again!). So the box you learn today is also your major
+      pentatonic — just anchored on a different root dot. This is the
+      only-learn-it-once economy that makes pentatonics such good value.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Bassists vs guitarists, pentatonically</summary>
+    <div class="layer-body">
+      <p>Guitarists solo with this scale; bassists <em>build</em> with it. The
+      classic rock/soul bass vocabulary — root, ♭7 slide, 4-to-5 walk, ♭3
+      hammer — is pentatonic geometry under a groove. When Unit 5 constructs
+      lines, most connective tissue will come from this page.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Scales are the horizontal view. Next: the vertical one — triads, the
+  three-note stacks that chords (and arpeggio-based bass lines) are made of.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "pentatonics-and-blues",
+    "exercises": [
+      { "id": "pent-box-up-down",
+        "title": "The box, up and down, degrees aloud",
+        "goal": "A minor pentatonic box flows evenly at 90 bpm, degrees spoken ('1, ♭3, 4, 5, ♭7, 8'), from A and then E without re-thinking.",
+        "tempo": [60, 100],
+        "steps": [
+          "Fingers: 1 and 4 do almost everything — the box is two notes per string.",
+          "Up then down without pausing at the top.",
+          "Move the identical box to root E (open position uses open strings — bonus points)."
+        ],
+        "score": { "clef": "bass", "keySignature": "Am", "time": "4/4", "tempo": 72,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 4, "fret": 5 }], "annotation": "1" },
+              { "keys": ["c/3"], "duration": "8", "fret": [{ "str": 4, "fret": 8 }], "annotation": "♭3" },
+              { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 3, "fret": 5 }], "annotation": "4" },
+              { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" },
+              { "keys": ["g/3"], "duration": "8", "fret": [{ "str": 2, "fret": 5 }], "annotation": "♭7" },
+              { "keys": ["a/3"], "duration": "8", "fret": [{ "str": 2, "fret": 7 }], "annotation": "8" },
+              { "keys": ["g/3"], "duration": "8" },
+              { "keys": ["e/3"], "duration": "8" } ] },
+            { "notes": [
+              { "keys": ["d/3"], "duration": "8" }, { "keys": ["c/3"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "h" },
+              { "keys": ["a/2"], "duration": "qr" } ] } ] } },
+      { "id": "pent-blues-sting",
+        "title": "The ♭5 sting (pass through, don't live there)",
+        "goal": "The chromatic 4–♭5–5 move slides smoothly inside a line — the ♭5 always resolving, never parked on a strong beat.",
+        "tempo": [56, 88],
+        "steps": [
+          "In A: D (fret 5, A string) → E♭ (6) → E (7), one finger per fret.",
+          "Loop the lick below until the ♭5 feels like seasoning, not error.",
+          "Then reverse it: 5–♭5–4 falling."
+        ],
+        "score": { "clef": "bass", "keySignature": "Am", "time": "4/4", "tempo": 66,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "1" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 4, "fret": 8 }], "annotation": "♭3" },
+              { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 3, "fret": 5 }], "annotation": "4" },
+              { "keys": ["eb/3"], "duration": "8", "fret": [{ "str": 3, "fret": 6 }], "annotation": "♭5" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" } ] },
+            { "notes": [
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "♭7" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }] },
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 4, "fret": 5 }], "annotation": "1" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "pentatonics-and-blues",
+    "questions": [
+      { "q": "Minor pentatonic = natural minor minus…",
+        "choices": ["the 2 and the ♭6", "the root and the 5", "the ♭3 and ♭7"],
+        "answer": 0,
+        "explain": "The two notes that sit a semitone from chord tones get cut. What's left — 1 ♭3 4 5 ♭7 — has no hard clashes available." },
+      { "q": "The blues scale adds which note to the minor pentatonic?",
+        "choices": ["the ♭5", "the major 7", "the 2"],
+        "answer": 0,
+        "explain": "1 ♭3 4 ♭5 5 ♭7. The ♭5 is a passing sting between 4 and 5 — slide through it, don't sit on it." },
+      { "q": "A minor pentatonic and C major pentatonic…",
+        "choices": ["contain the identical five notes — relatives, one shape",
+                    "share no notes",
+                    "differ by one sharp"],
+        "answer": 0,
+        "explain": "A-C-D-E-G viewed from A is minor pentatonic; viewed from C it's C-D-E-G-A, major pentatonic. One box, two flavors — free of charge." },
+      { "q": "Why can you lean on any pentatonic note over a groove without disaster?",
+        "choices": ["No pentatonic note sits a semitone from a chord tone, so there's no hard rub available",
+                    "Pentatonic notes are quieter",
+                    "Amplifiers filter out wrong notes"],
+        "answer": 0,
+        "explain": "The dangerous semitone neighbors were removed by construction. Less available tension, total freedom of movement — the pentatonic bargain." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#pent-demo .fretboard-wrap");
+      const readout = document.getElementById("pent-readout");
+      const fb = BTFret.create(wrap, { frets: 12, interactive: false });
+      const ROOTS = { A: 5, E: 0, G: 3 }; // E-string frets
+      const LABELS = { minorPentatonic: "minor pentatonic",
+                       majorPentatonic: "major pentatonic", blues: "blues scale" };
+      let scaleType = "minorPentatonic";
+      let rootName = "A";
+
+      function draw() {
+        fb.clear();
+        fb.markPcs(BT.scalePcs(rootName, scaleType), { rootPc: BT.pc(rootName) });
+        readout.innerHTML = `<strong>${rootName} ${LABELS[scaleType]}</strong>: ` +
+          BT.scale(rootName, scaleType).join(" – ");
+      }
+
+      document.querySelectorAll("#pent-demo [data-scale]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          scaleType = btn.dataset.scale;
+          document.querySelectorAll("#pent-demo [data-scale]").forEach((b) => {
+            b.classList.toggle("secondary", b !== btn);
+            b.setAttribute("aria-pressed", String(b === btn));
+          });
+          draw();
+        });
+      });
+      document.querySelectorAll("#pent-demo [data-root]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          rootName = btn.dataset.root;
+          document.querySelectorAll("#pent-demo [data-root]").forEach((b) =>
+            b.setAttribute("aria-pressed", String(b === btn)));
+          draw();
+        });
+      });
+      document.getElementById("pent-play").addEventListener("click", () => {
+        const rootMidi = BT.noteToMidi(rootName + "1") < 28
+          ? BT.noteToMidi(rootName + "2") : BT.noteToMidi(rootName + "1");
+        const steps = BT.SCALES[scaleType].concat([12]);
+        BTAudio.playSeq(steps.map((s, i) => ({ midi: rootMidi + s, t: i * 0.5, dur: 0.45 })),
+          { bpm: 126 });
+      });
+      draw();
+    });
+  </script>
+</main>
+</body>
+</html>

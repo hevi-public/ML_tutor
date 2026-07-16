@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seventh chords &amp; symbols — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Theory Core">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="triads.html|Triads">
+  <meta name="bass:next" content="diatonic-harmony.html|Diatonic harmony">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Theory Core</p>
+  <h1>Seventh chords &amp; how charts spell them</h1>
+  <p class="lede">Stack one more third on a triad and harmony grows up: blues,
+  soul, funk, and jazz are written almost entirely in these four-note chords —
+  and in the shorthand this page teaches you to read.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="triads.html">Triads</a> — sevenths are triads plus one decision.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="seventh-chord">seventh chord</dfn> adds the 7th degree
+  above the root. Like the third, the seventh comes in two sizes (major 7 =
+  11 semitones, minor/"flat" 7 = 10) — and the combination of triad + seventh
+  size gives the four workhorses:</p>
+  <table class="ref">
+    <thead><tr><th>Chord</th><th>Build</th><th>Written</th><th>Personality</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Major seven</strong></td><td>major triad + M7</td><td>Cmaj7, CΔ7</td><td>dreamy, floating, "jazz ballad"</td></tr>
+      <tr><td><strong>Dominant seven</strong></td><td>major triad + ♭7</td><td>C7</td><td>bluesy, restless, wants to move</td></tr>
+      <tr><td><strong>Minor seven</strong></td><td>minor triad + ♭7</td><td>Cm7, C−7</td><td>mellow, warm, soul's default</td></tr>
+      <tr><td><strong>Half-diminished</strong></td><td>dim triad + ♭7</td><td>Cø7, Cm7♭5</td><td>tense, noir, minor keys' ii</td></tr>
+    </tbody>
+  </table>
+  <p>Beware the classic trap: <strong>C7 and Cmaj7 are different chords.</strong>
+  A plain 7 always means the bluesy ♭7; "maj7"/Δ marks the dreamy natural 7.
+  Their sevenths sit one fret apart and one world apart.</p>
+
+  <h2>Hear the four flavors</h2>
+  <div class="demo" id="sev-demo">
+    <div class="buttons">
+      <button class="action" type="button" data-q="maj7" aria-pressed="true">maj7</button>
+      <button class="action secondary" type="button" data-q="7">7</button>
+      <button class="action secondary" type="button" data-q="m7">m7</button>
+      <button class="action secondary" type="button" data-q="m7b5">ø7 (m7♭5)</button>
+    </div>
+    <div class="buttons">
+      <button class="action secondary" type="button" id="sev-chord">▶ Chord</button>
+      <button class="action secondary" type="button" id="sev-arp">▶ Arpeggio</button>
+      <button class="action secondary" type="button" data-root="C" aria-pressed="true">Root C</button>
+      <button class="action secondary" type="button" data-root="G">Root G</button>
+      <button class="action secondary" type="button" data-root="A">Root A</button>
+    </div>
+    <div class="fretboard-wrap" role="img"
+         aria-label="Fretboard showing the current seventh chord's tones"></div>
+    <p class="readout" id="sev-readout"></p>
+  </div>
+
+  <h2>Reading chord symbols — the survival grammar</h2>
+  <ul>
+    <li><strong>Letter</strong> = root (your note!). Alone = major triad.</li>
+    <li><strong>m / − / min</strong> = minor third. <strong>maj / Δ</strong>
+    before a 7 = major seventh.</li>
+    <li><strong>A number</strong> (7, 9, 13) = that degree stacked on;
+    plain numbers imply the ♭7 underneath.</li>
+    <li><strong>° dim</strong>, <strong>ø</strong>, <strong>+ aug</strong>,
+    <strong>sus</strong> = the triad modifications you've met.</li>
+    <li><strong>Slash (C/E)</strong> = chord left of the slash, <em>bass note
+    right of it</em> — the one symbol that's literally an instruction to you
+    personally.</li>
+  </ul>
+  <p>Full symbol table with pronunciations: the
+  <a href="../notation.html">symbol reference</a> keeps them all searchable.</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>What the bassist actually plays over sevenths</summary>
+    <div class="layer-body">
+      <p>Roots and fifths still pay the rent. The upgrade sevenths offer is
+      the <strong>♭7 as a melodic hook</strong> (the R–♭7 rock/soul move) and
+      the <strong>3rd to signal quality</strong> in walking lines. You almost
+      never need to sound all four notes — you imply them, one tasty tone at
+      a time. Unit 5 does exactly this, at length.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Where each flavor lives in a key</summary>
+    <div class="layer-body">
+      <p>Preview of the next page: build sevenths on every degree of a major
+      scale and the flavors sort themselves — maj7 on I and IV, dominant 7 on
+      V (only!), m7 on ii, iii, vi, ø7 on vii. That's why hearing "…m7 …7
+      …maj7" in a chart practically announces ii–V–I before you've found the
+      key.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You can build and read chords. Final theory stop: how a key organizes
+  its seven chords into a family — Roman numerals, Nashville numbers, and the
+  progressions you already know by sound.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "seventh-chords",
+    "exercises": [
+      { "id": "sevenths-four-arps",
+        "title": "The four seventh arpeggios from C",
+        "goal": "Cmaj7 → C7 → Cm7 → Cø7 arpeggios in sequence, one position each, naming the note that changed between neighbors.",
+        "tempo": [56, 88],
+        "steps": [
+          "Cmaj7: C(A-str 3) E(D-str 2) G(D-str 5) B(G-str 4).",
+          "C7: same but B→B♭ (G-str 3). Cm7: also E→E♭ (D-str 1). Cø7: also G→G♭ (D-str 4).",
+          "One note moves at each step — say which."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 63,
+          "measures": [
+            { "chord": "Cmaj7", "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }], "annotation": "3" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "5" },
+              { "keys": ["b/3"], "duration": "q", "fret": [{ "str": 1, "fret": 4 }], "annotation": "7" } ] },
+            { "chord": "C7", "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }] },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }] },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }] },
+              { "keys": ["bb/3"], "duration": "q", "fret": [{ "str": 1, "fret": 3 }], "annotation": "♭7" } ] },
+            { "chord": "Cm7", "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }] },
+              { "keys": ["eb/3"], "duration": "q", "fret": [{ "str": 2, "fret": 1 }], "annotation": "♭3" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }] },
+              { "keys": ["bb/3"], "duration": "q", "fret": [{ "str": 1, "fret": 3 }] } ] },
+            { "chord": "Cø7", "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }] },
+              { "keys": ["eb/3"], "duration": "q", "fret": [{ "str": 2, "fret": 1 }] },
+              { "keys": ["gb/3"], "duration": "q", "fret": [{ "str": 2, "fret": 4 }], "annotation": "♭5" },
+              { "keys": ["bb/3"], "duration": "q", "fret": [{ "str": 1, "fret": 3 }] } ] } ] } },
+      { "id": "sevenths-symbol-drill",
+        "title": "Symbol flashcard sprint (no instrument)",
+        "goal": "Given any of Dm7, G7, Cmaj7, Eø7, F/A, Bb7 — you can say the root, the quality, and the one note you'd play first, within two seconds each.",
+        "steps": [
+          "Write the six symbols above on paper, shuffle-point at random ones.",
+          "Say: root, quality in plain words, first-choice bass note.",
+          "F/A trick answer: the slash makes A your note, not F."
+        ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "seventh-chords",
+    "questions": [
+      { "q": "C7 versus Cmaj7:",
+        "choices": ["C7 has the flat seven (B♭) — bluesy; Cmaj7 has the natural seven (B) — dreamy",
+                    "identical chords written differently",
+                    "C7 is louder"],
+        "answer": 0,
+        "explain": "The plain number always implies ♭7. 'maj'/Δ specifically marks the natural 7. One fret apart, opposite moods — charts assume you know." },
+      { "q": "A chart says F/A. You play…",
+        "choices": ["A — the note after the slash is the bass note",
+                    "F — the chord always wins",
+                    "both at once"],
+        "answer": 0,
+        "explain": "Slash chords are direct orders to the bassist: F major harmony with A under it. It's the one symbol aimed squarely at you." },
+      { "q": "Which seventh chord is built dim-triad + ♭7?",
+        "choices": ["Half-diminished (ø7, also written m7♭5)", "Dominant 7", "Major 7"],
+        "answer": 0,
+        "explain": "Cø7 = C E♭ G♭ B♭. The noir chord — you'll meet it as the ii in minor keys." },
+      { "q": "Why does hearing 'something-m7, something-7, something-maj7' in a row suggest ii–V–I?",
+        "choices": ["Those are exactly the seventh qualities a major key builds on its 2nd, 5th, and 1st degrees",
+                    "It's alphabetical coincidence",
+                    "m7 chords are only legal before 7 chords"],
+        "answer": 0,
+        "explain": "Diatonic harmony assigns m7 to ii, dominant 7 to V (uniquely), maj7 to I. The quality sequence fingerprints the progression — next page makes this systematic." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#sev-demo .fretboard-wrap");
+      const readout = document.getElementById("sev-readout");
+      const fb = BTFret.create(wrap, { frets: 12, interactive: false });
+      const ROOTS = { C: { string: 1, fret: 3 }, G: { string: 0, fret: 3 },
+                      A: { string: 0, fret: 5 } };
+      let quality = "maj7";
+      let rootName = "C";
+
+      function draw() {
+        const c = BT.chord(rootName, quality);
+        fb.clear();
+        fb.markPcs(c.pcs, { rootPc: BT.pc(rootName) });
+        readout.innerHTML = `<strong>${c.symbol}</strong> — “${c.plain}”: ${c.notes.join(" – ")}`;
+        return c;
+      }
+      function rootMidi() {
+        const r = ROOTS[rootName];
+        return BT.noteAt(r.string, r.fret).midi;
+      }
+
+      document.querySelectorAll("#sev-demo [data-q]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          quality = btn.dataset.q;
+          document.querySelectorAll("#sev-demo [data-q]").forEach((b) => {
+            b.classList.toggle("secondary", b !== btn);
+            b.setAttribute("aria-pressed", String(b === btn));
+          });
+          const c = draw();
+          BTAudio.chordPad(c.intervals.map((s) => rootMidi() + 12 + s), { dur: 1.8, gain: 0.5 });
+        });
+      });
+      document.querySelectorAll("#sev-demo [data-root]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          rootName = btn.dataset.root;
+          document.querySelectorAll("#sev-demo [data-root]").forEach((b) =>
+            b.setAttribute("aria-pressed", String(b === btn)));
+          draw();
+        });
+      });
+      document.getElementById("sev-chord").addEventListener("click", () => {
+        const c = BT.chord(rootName, quality);
+        BTAudio.chordPad(c.intervals.map((s) => rootMidi() + 12 + s), { dur: 2.2, gain: 0.55 });
+      });
+      document.getElementById("sev-arp").addEventListener("click", () => {
+        const c = BT.chord(rootName, quality);
+        const ints = c.intervals.concat([12]);
+        BTAudio.playSeq(ints.map((s, i) => ({ midi: rootMidi() + s, t: i * 0.5, dur: 0.45 })),
+          { bpm: 116 });
+      });
+      draw();
+    });
+  </script>
+</main>
+</body>
+</html>
