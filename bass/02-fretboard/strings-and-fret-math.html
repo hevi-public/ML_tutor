@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Strings &amp; fret math — Bass Tutor</title>
+
+  <meta name="bass:unit" content="The Fretboard">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="../01-reading/time-signatures.html|Time signatures">
+  <meta name="bass:next" content="notes-on-the-fretboard.html|Notes on the fretboard">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · The Fretboard</p>
+  <h1>Strings &amp; fret math</h1>
+  <p class="lede">Four strings, tuned a fixed distance apart, sliced by frets
+  into equal steps. Three facts — and the entire neck becomes a system instead
+  of a mystery.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Your strings are in tune (<a href="../00-start/tuning.html">tuning</a>) and
+    you know one fret = one <dfn data-term="semitone">semitone</dfn>.
+  </div>
+
+  <h2>Fact 1 — the strings are all a fourth apart</h2>
+  <p>E → A → D → G: each string sits exactly <strong>five semitones</strong>
+  (five frets' worth) above its thicker neighbor. That regular spacing is a
+  gift — every pattern you learn works across ALL string pairs, because the
+  relationship between neighbors never changes. (Guitarists aren't so lucky;
+  their B string breaks the pattern.)</p>
+
+  <h2>Fact 2 — fret 5 duplicates the next string</h2>
+  <p>Direct consequence: press fret 5 and you've recreated the next open
+  string. Tap around and prove it:</p>
+  <div class="demo" id="unison-demo">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Interactive fretboard highlighting unison pairs: fret 5 of each string and the next open string"></div>
+    <div class="buttons">
+      <button class="action" type="button" data-pair="0">E5 = open A</button>
+      <button class="action secondary" type="button" data-pair="1">A5 = open D</button>
+      <button class="action secondary" type="button" data-pair="2">D5 = open G</button>
+      <button class="action secondary" type="button" data-pair="all">All three pairs</button>
+    </div>
+    <p class="readout" id="unison-readout">Tap the buttons — or any fret — to hear it.</p>
+    <p class="hint">Same note, two homes. This is why the same lick can be
+    played in several places, and why your tuning cross-check works.</p>
+  </div>
+
+  <h2>Fact 3 — every fret multiplies by the same tiny amount</h2>
+  <p>Each fret raises the string's vibration speed by about
+  <strong>6%</strong> (precisely: ×2<sup>1/12</sup> ≈ 1.0595). Do that twelve
+  times and you've exactly <strong>doubled</strong> the frequency — which your
+  ear hears as "the same note, higher": the <dfn data-term="octave">octave</dfn>
+  at fret 12. Equal steps are also why the frets get physically narrower up
+  the neck: each one cuts off 6% of the remaining string length.</p>
+
+  <div class="box plain-english">
+    <span class="label">In plain English</span>
+    Frets are a ruler marked in equal musical steps. Twelve steps = one octave
+    = double the vibration speed. The narrowing spacing isn't decoration —
+    it's the 6% rule made visible.
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why tune in fourths at all?</summary>
+    <div class="layer-body">
+      <p>Five frets is what a hand can comfortably span. Tuned this way, one
+      hand position reaches a two-octave patchwork of notes without moving —
+      wider tuning would mean stretches, narrower would mean constant
+      shifting. Fourths are the ergonomic sweet spot, which is why the bass,
+      the double bass before it, and most of the guitar all settled there.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The numbers, one layer deeper</summary>
+    <div class="layer-body">
+      <p>Open E vibrates ≈ 41.2 times per second (41.2 Hz). Fret 1 (F):
+      41.2 × 1.0595 ≈ 43.7 Hz. Fret 12: 41.2 × 2 = 82.4 Hz — the octave E.
+      Every note on the instrument comes from that one multiplication,
+      repeated. (The general recipe: frequency = open-string frequency ×
+      2<sup>frets/12</sup>.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Where this breaks (and why nobody panics)</summary>
+    <div class="layer-body">
+      <p>Pressing a string stretches it slightly sharp, and real strings
+      aren't ideal mathematical strings. That's what a setup's
+      <dfn data-term="intonation">intonation</dfn> adjustment compensates for
+      — moving each bridge saddle until the 12th fret really is a perfect
+      octave. Math proposes; the tech disposes.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>System understood — now populate it with names. Next page: the notes on
+  the fretboard, the landmark method, and the octave shape.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "strings-and-fret-math",
+    "questions": [
+      { "q": "How far apart are neighboring bass strings tuned?",
+        "choices": ["Five semitones — the same as five frets",
+                    "Seven semitones",
+                    "It varies from pair to pair"],
+        "answer": 0,
+        "explain": "E→A, A→D, D→G are all five semitones (a perfect fourth). That uniformity is why every shape works across all string pairs." },
+      { "q": "Fret 12 sounds the octave of the open string because…",
+        "choices": ["twelve 6% steps exactly double the vibration speed",
+                    "the string is twice as tight there",
+                    "the 12th fret is decorated with two dots"],
+        "answer": 0,
+        "explain": "Each fret multiplies frequency by 2^(1/12) ≈ 1.06. Twelve of those multiply out to exactly 2 — and a doubled frequency is what an octave IS. (The dots celebrate it.)" },
+      { "q": "Why do frets get narrower toward the body?",
+        "choices": ["Each fret removes the same fraction (~6%) of the remaining string, so the cuts shrink",
+                    "It's purely cosmetic",
+                    "Because your fingers get more accurate up there"],
+        "answer": 0,
+        "explain": "Equal musical steps mean equal ratios, not equal distances — 6% of an ever-shorter string is an ever-smaller slice." },
+      { "q": "You want the note of the open D string but fretted. Where is it?",
+        "choices": ["A string, fret 5", "E string, fret 5", "A string, fret 7"],
+        "answer": 0,
+        "explain": "Each string's 5th fret duplicates the next open string: A@5 = D. (E@5 duplicates A, D@5 duplicates G.)" }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#unison-demo .fretboard-wrap");
+      const readout = document.getElementById("unison-readout");
+      const fb = BTFret.create(wrap, { frets: 7 });
+      const PAIRS = [
+        { fretted: { string: 0, fret: 5 }, open: { string: 1, fret: 0 }, name: "A" },
+        { fretted: { string: 1, fret: 5 }, open: { string: 2, fret: 0 }, name: "D" },
+        { fretted: { string: 2, fret: 5 }, open: { string: 3, fret: 0 }, name: "G" },
+      ];
+
+      function showPair(p) {
+        fb.mark([
+          { ...p.fretted, cls: "root", label: p.name },
+          { ...p.open, cls: "good", label: p.name },
+        ]);
+        const m = BT.noteAt(p.open.string, 0).midi;
+        BTAudio.pluck(m, { dur: 1.2 });
+        BTAudio.pluck(m, { when: 0.7, dur: 1.6 });
+      }
+
+      document.querySelectorAll("#unison-demo [data-pair]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          fb.clear();
+          if (btn.dataset.pair === "all") {
+            PAIRS.forEach((p, i) => setTimeout(() => showPair(p), i * 1600));
+            readout.textContent = "Fret 5, open string — fret 5, open string… same note every time.";
+          } else {
+            const p = PAIRS[Number(btn.dataset.pair)];
+            showPair(p);
+            readout.innerHTML = `Both of those are <strong>${p.name}</strong> — one fretted, one free.`;
+          }
+        });
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

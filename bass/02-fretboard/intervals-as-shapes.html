@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intervals as shapes — Bass Tutor</title>
+
+  <meta name="bass:unit" content="The Fretboard">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="notes-on-the-fretboard.html|Notes on the fretboard">
+  <meta name="bass:next" content="positions-and-fingering.html|Positions &amp; fingering">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/fretboard.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · The Fretboard</p>
+  <h1>Intervals as shapes</h1>
+  <p class="lede">Here's the fretboard's best secret: a distance between two
+  notes is a <em>picture</em> your hand can hold — and the picture works from
+  any starting note, anywhere on the neck.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Note names on the neck (<a href="notes-on-the-fretboard.html">previous
+    page</a>) and the word
+    <dfn data-term="interval">interval</dfn> = distance between two notes.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Because the strings are tuned evenly (five frets apart, every pair), a
+  given musical distance always makes the <strong>same visual shape</strong>.
+  A <dfn data-term="fifth">fifth</dfn> is always "one string up, two frets
+  over" — whether you start on E, on B♭, at the 3rd fret or the 10th. Learn
+  five shapes and you can build most of the bass lines in this course without
+  hunting for names first.</p>
+
+  <h2>See them, hear them</h2>
+  <div class="demo" id="shape-demo">
+    <div class="fretboard-wrap" role="img"
+         aria-label="Interactive fretboard showing interval shapes from a movable root"></div>
+    <div class="buttons">
+      <button class="action" type="button" data-shape="P5">Fifth</button>
+      <button class="action secondary" type="button" data-shape="P4">Fourth</button>
+      <button class="action secondary" type="button" data-shape="P8">Octave</button>
+      <button class="action secondary" type="button" data-shape="M3">Major third</button>
+      <button class="action secondary" type="button" data-shape="m3">Minor third</button>
+      <button class="action secondary" type="button" data-shape="m7">Minor seventh</button>
+    </div>
+    <p class="readout" id="shape-readout">Pick a shape — then tap any fret on the
+    E or A string to move the root there. The shape follows.</p>
+  </div>
+
+  <h2>The five (plus one) shapes that matter first</h2>
+  <table class="ref">
+    <thead><tr><th>Interval</th><th>Shape from the root</th><th>Sounds like / used for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Fifth</strong> (7 semitones)</td><td>up 1 string, up 2 frets</td><td>power, stability — the root's best friend in every style</td></tr>
+      <tr><td><strong>Fourth</strong> (5 semitones)</td><td>up 1 string, same fret</td><td>the next-string note; smooth motion between roots</td></tr>
+      <tr><td><strong>Octave</strong> (12)</td><td>up 2 strings, up 2 frets</td><td>the same note, higher — disco/funk jumps</td></tr>
+      <tr><td><strong>Major third</strong> (4)</td><td>up 1 string, back 1 fret</td><td>the "happy" color note of major chords</td></tr>
+      <tr><td><strong>Minor third</strong> (3)</td><td>up 1 string, back 2 frets (or same string +3)</td><td>the "sad" color note of minor chords</td></tr>
+      <tr><td><strong>Minor seventh</strong> (10)</td><td>up 2 strings, same fret</td><td>the bluesy tension note of 7th chords</td></tr>
+    </tbody>
+  </table>
+  <p>Down-a-fifth deserves a mention too: <strong>same fret, one string
+  down</strong> lands a fifth below the root — the "low fifth" country and
+  rock lines bounce off constantly.</p>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why shapes beat letter names (at first)</summary>
+    <div class="layer-body">
+      <p>Names tell you <em>what</em> a note is; shapes tell your hand
+      <em>where relationships live</em>. Real bass lines are built from
+      relationships — "root, fifth, octave, flat-seven" — so a movable shape
+      vocabulary means one lick learned = twelve keys owned. The names still
+      matter (you'll call shapes BY their interval names forever), which is
+      why the last page taught them first.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The one caveat: crossing to the G string</summary>
+    <div class="layer-body">
+      <p>All shapes here are true everywhere on a 4-string bass in standard
+      tuning because every string pair is a fourth apart. Guitarists' shapes
+      warp when they cross their B string — if you ever move patterns between
+      the instruments, that's the difference you're feeling.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <p>Shapes go into your hands by moving them around, not by staring. Say the
+  interval name out loud on every pair.</p>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Shapes need a home base: positions — how your four fingers claim four
+  frets, and how to move between neighborhoods without looking.</p>
+
+  <script type="application/json" class="practice">
+  { "pageId": "intervals-as-shapes",
+    "exercises": [
+      { "id": "intervals-shapes-root-fifth",
+        "title": "Root–fifth, walked up the neck",
+        "goal": "The fifth shape lands without looking, from four different roots, both as up-a-fifth and down-a-fifth (same fret, string below).",
+        "tempo": [60, 92],
+        "steps": [
+          "Play root then fifth (one string up, two frets over), two beats each.",
+          "Move the root: G (E-string 3), A (5), B (7), C (8).",
+          "Second pass: root then the LOW fifth (same fret, one string down… for roots on the A string)."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 70,
+          "measures": [
+            { "notes": [
+              { "keys": ["g/2"], "duration": "h", "fret": [{ "str": 4, "fret": 3 }], "annotation": "R" },
+              { "keys": ["d/3"], "duration": "h", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" } ] },
+            { "notes": [
+              { "keys": ["a/2"], "duration": "h", "fret": [{ "str": 4, "fret": 5 }], "annotation": "R" },
+              { "keys": ["e/3"], "duration": "h", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" } ] },
+            { "notes": [
+              { "keys": ["b/2"], "duration": "h", "fret": [{ "str": 4, "fret": 7 }], "annotation": "R" },
+              { "keys": ["f#/3"], "duration": "h", "fret": [{ "str": 3, "fret": 9 }], "annotation": "5" } ] },
+            { "notes": [
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 4, "fret": 8 }], "annotation": "R" },
+              { "keys": ["g/3"], "duration": "h", "fret": [{ "str": 3, "fret": 10 }], "annotation": "5" } ] } ] } },
+      { "id": "intervals-shapes-thirds-color",
+        "title": "Major vs minor third: hear the color flip",
+        "goal": "From the same root, you can play both thirds back-to-back and hear (and name) happy vs. sad — from any root you pick.",
+        "tempo": [60, 84],
+        "steps": [
+          "Root A (E-string 5): major third = one string up, one fret BACK (C♯); minor third = one string up, two frets back (C).",
+          "Play root–major third, root–minor third; say 'major… minor…' out loud.",
+          "Move the whole drill to root B (fret 7), then G (fret 3)."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 66,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "R" },
+              { "keys": ["c#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 4 }], "annotation": "M3" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "R" },
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "m3" } ] },
+            { "notes": [
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 4, "fret": 7 }], "annotation": "R" },
+              { "keys": ["d#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 6 }], "annotation": "M3" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 4, "fret": 7 }], "annotation": "R" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "m3" } ] } ] } },
+      { "id": "intervals-shapes-octave-jumps",
+        "title": "Octave jumps in time",
+        "goal": "Root–octave–root bounces cleanly (octave = 2 strings up, 2 frets over) with the octave popping out evenly, disco-style, at 90 bpm.",
+        "tempo": [70, 100],
+        "steps": [
+          "Fingers: 1 on the root, 3 or 4 on the octave — the shape is one fixed claw.",
+          "Keep the idle A string quiet: let the fretting finger's underside touch it.",
+          "Move roots each bar: A, C, D, E."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 84,
+          "measures": [
+            { "notes": [
+              { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 4, "fret": 5 }] },
+              { "keys": ["a/3"], "duration": "8", "fret": [{ "str": 2, "fret": 7 }] },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/3"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "8" }, { "keys": ["a/3"], "duration": "8" },
+              { "keys": ["a/2"], "duration": "q" } ] },
+            { "notes": [
+              { "keys": ["c/3"], "duration": "8", "fret": [{ "str": 3, "fret": 3 }] },
+              { "keys": ["c/4"], "duration": "8", "fret": [{ "str": 1, "fret": 5 }] },
+              { "keys": ["c/3"], "duration": "8" }, { "keys": ["c/4"], "duration": "8" },
+              { "keys": ["c/3"], "duration": "8" }, { "keys": ["c/4"], "duration": "8" },
+              { "keys": ["c/3"], "duration": "q" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "intervals-as-shapes",
+    "questions": [
+      { "q": "Why does an interval make the SAME shape anywhere on the bass neck?",
+        "choices": ["Every string pair is tuned the same distance apart (a fourth)",
+                    "Because frets are evenly spaced along one string",
+                    "It doesn't — shapes change near the 12th fret"],
+        "answer": 0,
+        "explain": "Uniform tuning between all neighboring strings means cross-string geometry never varies. (Guitars break this at their B string; basses don't.)" },
+      { "q": "The FIFTH from any root is…",
+        "choices": ["one string up, two frets toward the body",
+                    "one string up, same fret",
+                    "two strings up, same fret"],
+        "answer": 0,
+        "explain": "Up 1 string (+5 semitones) + up 2 frets (+2) = 7 semitones = a perfect fifth. Same fret one string UP is the fourth; one string DOWN is the fifth below." },
+      { "q": "Major third vs minor third, as shapes from the same root:",
+        "choices": ["one string up: back 1 fret = major, back 2 frets = minor",
+                    "they're on the same string only",
+                    "major is up 2 strings, minor is up 1"],
+        "answer": 0,
+        "explain": "Both live one string up, just one fret apart — which is exactly the one-semitone difference between happy and sad." },
+      { "q": "You learned a root–fifth–octave move starting on A. To play it starting on C you…",
+        "choices": ["slide the identical shape so the root sits on a C",
+                    "learn a new C-specific fingering",
+                    "can't — it only works from A"],
+        "answer": 0,
+        "explain": "Movable shapes are the whole point: one picture, twelve keys. Find the root; the rest comes along." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const wrap = document.querySelector("#shape-demo .fretboard-wrap");
+      const readout = document.getElementById("shape-readout");
+      const fb = BTFret.create(wrap, {
+        frets: 12,
+        onTap(pos) {
+          if (pos.string > 1) return; // roots live on E and A strings here
+          root = pos;
+          draw();
+        },
+      });
+
+      // [string offset, fret offset] per interval shape
+      const SHAPES = {
+        P4: { d: [1, 0], semis: 5, name: "perfect fourth" },
+        P5: { d: [1, 2], semis: 7, name: "perfect fifth" },
+        P8: { d: [2, 2], semis: 12, name: "octave" },
+        M3: { d: [1, -1], semis: 4, name: "major third" },
+        m3: { d: [1, -2], semis: 3, name: "minor third" },
+        m7: { d: [2, 0], semis: 10, name: "minor seventh" },
+      };
+      let current = "P5";
+      let root = { string: 0, fret: 5 };
+
+      function draw() {
+        const shape = SHAPES[current];
+        const other = { string: root.string + shape.d[0], fret: root.fret + shape.d[1] };
+        if (other.fret < 0 || other.fret > 12 || other.string > 3) {
+          readout.textContent = "That root pushes the shape off the neck — try another fret.";
+          return;
+        }
+        fb.clear();
+        const rootNote = BT.noteAt(root.string, root.fret);
+        const otherNote = BT.noteAt(other.string, other.fret);
+        fb.mark([
+          { ...root, cls: "root", label: rootNote.name.replace(/\d+$/, "") },
+          { ...other, cls: "good", label: otherNote.name.replace(/\d+$/, "") },
+        ]);
+        BTAudio.pluck(rootNote.midi, { dur: 1.1 });
+        BTAudio.pluck(otherNote.midi, { when: 0.65, dur: 1.4 });
+        readout.innerHTML =
+          `<strong>${rootNote.name.replace(/\d+$/, "")} → ${otherNote.name.replace(/\d+$/, "")}</strong>: ` +
+          `a ${shape.name} (${shape.semis} semitones). Tap the E or A string to move the root.`;
+      }
+
+      document.querySelectorAll("#shape-demo [data-shape]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          current = btn.dataset.shape;
+          document.querySelectorAll("#shape-demo [data-shape]").forEach((b) =>
+            b.classList.toggle("secondary", b !== btn));
+          draw();
+        });
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
