@@ -1,0 +1,84 @@
+{
+  "staff": {
+    "title": "The staff & clefs",
+    "entries": [
+      { "sym": "𝄢", "name": "bass clef", "say": "BASE clef",
+        "means": "The fancy F at the start of a staff. Its two dots surround the line where F sits — that's how you anchor every other note. Bass music lives in this clef.",
+        "aliases": ["F clef", "the fancy F", "backwards C with dots"] },
+      { "sym": "𝄞", "name": "treble clef", "say": "TREB-el clef",
+        "means": "The swirly symbol used for higher instruments (guitar, vocals, piano right hand). You'll see it on other people's charts — bassists read the bass clef.",
+        "aliases": ["G clef", "the swirl"] },
+      { "sym": "𝄚", "name": "staff", "say": "staff",
+        "means": "The five horizontal lines music is written on. Higher on the staff = higher pitch. Notes sit on lines or in the spaces between them.",
+        "aliases": ["stave", "the five lines"] },
+      { "sym": "𝄀", "name": "bar line", "say": "bar line",
+        "means": "A vertical line that marks off one bar (one group of beats). A double bar with a thick line means the end.",
+        "aliases": ["measure line"] }
+    ]
+  },
+  "accidentals": {
+    "title": "Accidentals",
+    "entries": [
+      { "sym": "♭", "name": "flat", "say": "flat",
+        "means": "Lower the note by one semitone — one fret down toward the headstock. B♭ is one fret below B.",
+        "aliases": ["little b"] },
+      { "sym": "♯", "name": "sharp", "say": "sharp",
+        "means": "Raise the note by one semitone — one fret up toward the body. F♯ is one fret above F.",
+        "aliases": ["hashtag", "pound sign"] },
+      { "sym": "♮", "name": "natural", "say": "NATCH-er-al",
+        "means": "Cancel a sharp or flat — play the plain letter-name note.",
+        "aliases": ["squared-off b"] }
+    ]
+  },
+  "rhythm": {
+    "title": "Rhythm values",
+    "entries": [
+      { "sym": "𝅝", "name": "whole note", "say": "whole note",
+        "means": "A note held for four beats — a whole bar of 4/4. Written as an empty oval with no stem.",
+        "aliases": ["semibreve"] },
+      { "sym": "𝅗𝅥", "name": "half note", "say": "half note",
+        "means": "Two beats. An empty oval with a stem.",
+        "aliases": ["minim"] },
+      { "sym": "♩", "name": "quarter note", "say": "QUOR-ter note",
+        "means": "One beat — the foot-tap. A filled-in oval with a stem. Four of them fill a bar of 4/4.",
+        "aliases": ["crotchet"] },
+      { "sym": "♪", "name": "eighth note", "say": "eighth note",
+        "means": "Half a beat. A filled oval with a stem and one flag; groups get beamed together. Count them \"1 & 2 &…\".",
+        "aliases": ["quaver"] },
+      { "sym": "𝅘𝅥𝅯", "name": "sixteenth note", "say": "six-TEENTH note",
+        "means": "A quarter of a beat — funk lives here. Two flags or a double beam. Count \"1 e & a 2 e & a…\".",
+        "aliases": ["semiquaver"] },
+      { "sym": "𝄽", "name": "quarter rest", "say": "QUOR-ter rest",
+        "means": "One beat of deliberate silence. Rests are played — muting on time is a core bass skill.",
+        "aliases": ["squiggle that means rest"] },
+      { "sym": "·", "name": "dot (after a note)", "say": "dotted note",
+        "means": "Adds half the note's own length. A dotted quarter = one and a half beats.",
+        "aliases": ["dotted"] }
+    ]
+  },
+  "time": {
+    "title": "Time & tempo",
+    "entries": [
+      { "sym": "4/4", "name": "four-four time", "say": "four four",
+        "means": "Four quarter-note beats per bar — the time signature of most rock, pop, and funk. So common it's also written 𝄴 (\"common time\").",
+        "aliases": ["common time"] },
+      { "sym": "♩=92", "name": "tempo marking", "say": "quarter equals ninety-two",
+        "means": "The metronome speed: 92 quarter-note beats per minute. Practice exercises on this site give these as start and target tempos.",
+        "aliases": ["bpm marking"] }
+    ]
+  },
+  "tab": {
+    "title": "Tab & fingering marks",
+    "entries": [
+      { "sym": "TAB", "name": "tablature staff", "say": "tab",
+        "means": "Four lines = the four strings (bottom line = low E string), numbers = which fret to press, 0 = open string. Shows where to play; the notation above it shows what and when.",
+        "aliases": ["tab staff"] },
+      { "sym": "R", "name": "root marker", "say": "root",
+        "means": "In this site's fretboard diagrams: the filled amber dot marks the root — the home note the shape is built on.",
+        "aliases": ["root dot"] },
+      { "sym": "1 2 3 4", "name": "finger numbers", "say": "fingers one to four",
+        "means": "Left-hand fingering: 1 = index, 2 = middle, 3 = ring, 4 = pinky. (Thumb is T, rare on bass fretboards.)",
+        "aliases": ["fingering numbers"] }
+    ]
+  }
+}

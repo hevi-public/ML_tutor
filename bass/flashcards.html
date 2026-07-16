@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flashcards — Bass Tutor</title>
+
+  <meta name="bass:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/progress.js"></script>
+</head>
+<body>
+<main>
+  <h1>Flashcards</h1>
+  <p class="lede">Spaced repetition over the glossary, the symbol guide, and
+  every quiz question you've missed. Cards you find hard come back sooner;
+  cards you know retreat into the future.</p>
+
+  <div class="demo" id="cards-app">
+    <p class="readout" id="cards-status">loading cards…</p>
+    <div class="box" id="card-front" style="min-height: 5rem" hidden></div>
+    <div class="box plain-english" id="card-back" hidden></div>
+    <div class="buttons" id="reveal-row" hidden>
+      <button class="action" type="button" id="btn-reveal">Show the answer</button>
+    </div>
+    <div class="buttons" id="grade-row" hidden>
+      <button class="action secondary" type="button" data-grade="again">Again (soon)</button>
+      <button class="action" type="button" data-grade="good">Got it (later)</button>
+      <button class="action secondary" type="button" data-grade="easy">Easy (much later)</button>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+    const KEY = "bass-tutor:cards";
+    const DAY = 24 * 60 * 60 * 1000;
+    const SESSION_CAP = 20;
+
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+      catch { return {}; }
+    }
+    function saveState(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
+
+    async function buildDeck() {
+      const deck = [];
+      try {
+        const glossary = await (await fetch("data/glossary.json")).json();
+        for (const [slug, e] of Object.entries(glossary)) {
+          deck.push({
+            id: "g:" + slug,
+            front: `<span class="label">Term</span><strong>${e.term}</strong> — what does it mean, in plain words?`,
+            back: `<span class="label">Answer</span><strong>${e.plain}</strong><br><br>${e.definition}`,
+          });
+        }
+      } catch { /* glossary unavailable over file:// — cards still work from misses */ }
+      try {
+        const notation = await (await fetch("data/notation.json")).json();
+        for (const group of Object.values(notation)) {
+          for (const e of group.entries) {
+            deck.push({
+              id: "n:" + e.sym,
+              front: `<span class="label">Symbol</span><strong style="font-size:1.6em">${e.sym}</strong> — what's it called, and what does it mean here?`,
+              back: `<span class="label">Answer</span><strong>${e.name}</strong> (say: “${e.say}”)<br><br>${e.means}`,
+            });
+          }
+        }
+      } catch { /* same */ }
+      for (const m of (window.BassProgress ? BassProgress.misses() : [])) {
+        deck.push({
+          id: "q:" + m.q.slice(0, 60),
+          front: `<span class="label">You missed this one</span>${m.q}`,
+          back: `<span class="label">Answer</span><strong>${m.a}</strong><br><br>${m.explain}`,
+        });
+      }
+      return deck;
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const deck = await buildDeck();
+      const state = loadState();
+      const now = Date.now();
+
+      // due cards first (oldest due first), then unseen; cap the session
+      const due = deck.filter((c) => state[c.id] && state[c.id].due <= now)
+        .sort((a, b) => state[a.id].due - state[b.id].due);
+      const fresh = deck.filter((c) => !state[c.id]);
+      const queue = [...due, ...fresh].slice(0, SESSION_CAP);
+
+      const status = document.getElementById("cards-status");
+      const front = document.getElementById("card-front");
+      const back = document.getElementById("card-back");
+      const revealRow = document.getElementById("reveal-row");
+      const gradeRow = document.getElementById("grade-row");
+      let i = 0, done = 0;
+
+      function show() {
+        if (i >= queue.length) {
+          front.hidden = back.hidden = revealRow.hidden = gradeRow.hidden = true;
+          const nextDue = deck
+            .map((c) => state[c.id]?.due)
+            .filter((d) => d && d > now)
+            .sort((a, b) => a - b)[0];
+          status.innerHTML = `Session done — <strong>${done}</strong> card${done === 1 ? "" : "s"} reviewed. ` +
+            (nextDue
+              ? `Next cards due ${new Date(nextDue).toLocaleDateString()}.`
+              : `Come back tomorrow, or miss some quiz questions to feed the deck.`);
+          return;
+        }
+        status.textContent = `card ${i + 1} of ${queue.length}`;
+        front.innerHTML = queue[i].front;
+        front.hidden = false;
+        back.hidden = true;
+        revealRow.hidden = false;
+        gradeRow.hidden = true;
+      }
+
+      document.getElementById("btn-reveal").addEventListener("click", () => {
+        back.innerHTML = queue[i].back;
+        back.hidden = false;
+        revealRow.hidden = true;
+        gradeRow.hidden = false;
+      });
+
+      gradeRow.addEventListener("click", (e) => {
+        const grade = e.target.dataset?.grade;
+        if (!grade) return;
+        const card = queue[i];
+        const s = state[card.id] || { interval: 0 };
+        if (grade === "again") {
+          s.interval = 0;
+          s.due = now + 10 * 60 * 1000;              // 10 minutes
+        } else if (grade === "good") {
+          s.interval = Math.max(1, (s.interval || 0.5) * 2.5);
+          s.due = now + s.interval * DAY;
+        } else {
+          s.interval = Math.max(3, (s.interval || 1) * 4);
+          s.due = now + s.interval * DAY;
+        }
+        state[card.id] = s;
+        saveState(state);
+        done++;
+        i++;
+        show();
+      });
+
+      if (!queue.length) {
+        status.innerHTML = deck.length
+          ? "Nothing due right now — every card is scheduled in the future. 🎉"
+          : "Couldn't load the card sources — start the dev server: <code>npm run dev</code>";
+      } else {
+        show();
+      }
+    });
+  })();
+  </script>
+</main>
+</body>
+</html>

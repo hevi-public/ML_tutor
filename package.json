@@ -5,13 +5,16 @@
   "private": true,
   "scripts": {
     "dev": "http-server -p 8010 -c-1 -o /index.html .",
+    "dev:bass": "http-server -p 8010 -c-1 -o /bass/index.html .",
     "build:index": "node scripts/build-search-index.js",
+    "build:bass": "node scripts/build-bass-index.js",
     "fetch:mnist": "node scripts/fetch-mnist.js"
   },
   "license": "MIT",
   "dependencies": {
     "@highlightjs/cdn-assets": "^11.11.1",
-    "katex": "^0.17.0"
+    "katex": "^0.17.0",
+    "vexflow": "^4.2.5"
   },
   "devDependencies": {
     "http-server": "^14.1.1"

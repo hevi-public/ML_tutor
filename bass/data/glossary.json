@@ -1,0 +1,143 @@
+{
+  "pitch": {
+    "term": "Pitch",
+    "plain": "How high or low a sound is.",
+    "definition": "The perceived highness or lowness of a sound, set by its vibration frequency — faster vibration sounds higher. On bass, pressing closer to the body raises the pitch; thicker strings sit lower.",
+    "see": ["note", "octave"]
+  },
+  "note": {
+    "term": "Note",
+    "plain": "One named musical sound — like A, C♯, or E♭.",
+    "definition": "A pitch with a name. Music uses twelve note names that repeat as you go higher or lower: A, A♯/B♭, B, C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭.",
+    "see": ["pitch", "octave", "semitone"]
+  },
+  "string": {
+    "term": "String (E, A, D, G)",
+    "plain": "The four steel wires you pluck; each is named after the note it plays open.",
+    "definition": "A 4-string bass in standard tuning has strings E–A–D–G, from thickest (lowest) to thinnest (highest). \"The A string\" means the second-thickest string, which sounds the note A when played open.",
+    "see": ["open-string", "tuning"]
+  },
+  "open-string": {
+    "term": "Open string",
+    "plain": "Playing a string without pressing any fret.",
+    "definition": "A string plucked while no finger holds it down anywhere. Open strings sound each string's tuned note (E, A, D, or G) and are written as fret 0 in tab.",
+    "see": ["string", "fret"]
+  },
+  "fret": {
+    "term": "Fret",
+    "plain": "The metal strips along the neck; each one raises the note by one small step.",
+    "definition": "The metal bars set into the fingerboard. Pressing a string just behind a fret shortens its vibrating length; each fret raises the pitch by one semitone (half step). \"5th fret\" means the space just behind the fifth metal bar counting from the headstock.",
+    "also": ["fret position"],
+    "see": ["semitone", "open-string"]
+  },
+  "octave": {
+    "term": "Octave",
+    "plain": "The same note, higher or lower — like two people singing the same tune, one deeper.",
+    "definition": "The distance between a note and the next note with the same name (12 semitones). Notes an octave apart vibrate in a 2:1 ratio and sound like \"the same note, higher/lower\". On bass: two strings up and two frets over.",
+    "see": ["note", "interval"]
+  },
+  "semitone": {
+    "term": "Semitone",
+    "plain": "One fret's worth of distance — the smallest step in Western music.",
+    "definition": "The smallest interval in common Western music: the distance from one fret to the next on the same string. Twelve semitones make an octave.",
+    "also": ["half step"],
+    "see": ["whole-step", "fret", "interval"]
+  },
+  "whole-step": {
+    "term": "Whole step",
+    "plain": "Two frets' worth of distance.",
+    "definition": "An interval of two semitones — two frets on the same string. Scales are usually described as patterns of whole and half steps.",
+    "also": ["whole tone"],
+    "see": ["semitone", "scale"]
+  },
+  "interval": {
+    "term": "Interval",
+    "plain": "The distance between two notes.",
+    "definition": "The gap in pitch between two notes, counted in scale steps and given names like \"perfect fifth\" or \"minor third\". Intervals are the units bass lines are built from — on the fretboard each interval is a repeatable shape.",
+    "see": ["semitone", "octave", "root"]
+  },
+  "root": {
+    "term": "Root",
+    "plain": "The home note a chord or scale is built on — the note that gives it its name.",
+    "definition": "The foundational note of a chord or scale: the C in C major, the A in Am7. The bassist's first job in most music is to sound the root when the chord changes.",
+    "also": ["root note"],
+    "see": ["chord", "scale"]
+  },
+  "scale": {
+    "term": "Scale",
+    "plain": "A set of notes that belong together, played in order — the palette a song draws from.",
+    "definition": "An ordered collection of notes spanning an octave, defined by its pattern of whole and half steps (e.g. the major scale: W-W-H-W-W-W-H). Melodies and bass lines are mostly built from a scale's notes.",
+    "see": ["root", "whole-step", "semitone"]
+  },
+  "chord": {
+    "term": "Chord",
+    "plain": "Several notes that sound at the same time — the harmony the band plays over.",
+    "definition": "Three or more notes sounded together, named by their root and quality (C, Cm, Cmaj7…). Bassists rarely play full chords, but every bass line outlines the current chord's notes.",
+    "see": ["root", "arpeggio"]
+  },
+  "arpeggio": {
+    "term": "Arpeggio",
+    "plain": "A chord played one note at a time.",
+    "definition": "The notes of a chord played in sequence instead of together. The bread and butter of bass lines: root, third, fifth, (seventh), one after another.",
+    "also": ["broken chord"],
+    "see": ["chord", "root"]
+  },
+  "tempo": {
+    "term": "Tempo",
+    "plain": "How fast the music goes — the speed of the beat.",
+    "definition": "The speed of the underlying pulse, measured in beats per minute (bpm). 60 bpm is one beat per second; 120 bpm is two. Practice metronomes count it out loud.",
+    "also": ["bpm"],
+    "see": ["beat", "metronome"]
+  },
+  "beat": {
+    "term": "Beat",
+    "plain": "The steady pulse you tap your foot to.",
+    "definition": "The regular pulse underlying music. Beats group into bars (in most rock/pop, four beats per bar), and the bass usually locks tightly to them with the drums.",
+    "see": ["tempo", "bar"]
+  },
+  "bar": {
+    "term": "Bar",
+    "plain": "One small box of musical time — usually four beats long.",
+    "definition": "A group of beats, marked off in written music with vertical lines. The time signature says how many beats each bar holds. Charts are read bar by bar.",
+    "also": ["measure"],
+    "see": ["beat", "time-signature"]
+  },
+  "time-signature": {
+    "term": "Time signature",
+    "plain": "The two stacked numbers that say how beats are grouped — like 4/4.",
+    "definition": "A fraction-looking symbol at the start of written music: the top number is how many beats per bar, the bottom is which note value counts as one beat. 4/4 (four quarter-note beats per bar) is so common it's called \"common time\".",
+    "see": ["bar", "beat"]
+  },
+  "groove": {
+    "term": "Groove",
+    "plain": "The rhythmic feel that makes people nod their heads.",
+    "definition": "The repeating rhythmic pattern and feel of a piece — where notes land, how long they last, which ones are stressed. For a bassist, playing \"in the pocket\" (locked with the drums, steady and intentional) matters more than playing many notes.",
+    "also": ["pocket", "feel"],
+    "see": ["beat", "tempo"]
+  },
+  "tab": {
+    "term": "Tab",
+    "plain": "Bass-specific notation: four lines for the four strings, numbers for the frets.",
+    "definition": "Short for tablature. Each horizontal line is a string (bottom line = low E), each number is a fret to press (0 = open string). Tab shows you where; standard notation shows you what and when — this site teaches both, side by side.",
+    "also": ["tablature"],
+    "see": ["string", "fret"]
+  },
+  "tuning": {
+    "term": "Tuning",
+    "plain": "Adjusting each string until it sounds its correct note.",
+    "definition": "Setting each string's pitch with the tuning machines on the headstock. Standard bass tuning is E1–A1–D2–G2, low to high. Basses drift out of tune with temperature and playing — checking takes seconds with a tuner.",
+    "see": ["string", "pitch"]
+  },
+  "metronome": {
+    "term": "Metronome",
+    "plain": "A device that clicks a perfectly steady beat for you to practice with.",
+    "definition": "A tool that sounds the beat at an exact tempo. Practicing with one builds the timing that bandmates rely on from a bassist. This site's labs include one, and practice exercises give metronome targets.",
+    "see": ["tempo", "beat"]
+  },
+  "riff": {
+    "term": "Riff",
+    "plain": "A short, repeated musical phrase — the hook a song is built on.",
+    "definition": "A short repeating figure, often played by bass and guitar together, that defines a song's identity. Learning riffs trains both hands and your ear at once.",
+    "see": ["groove"]
+  }
+}
