@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Walking bass 101 — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Bass Lines">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="approach-notes.html|Approach notes">
+  <meta name="bass:next" content="twelve-bar-blues.html|The 12-bar blues">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Bass Lines</p>
+  <h1>Walking bass 101</h1>
+  <p class="lede">A note on every beat, strolling through the changes like
+  someone who knows the neighborhood. It looks improvised — it's actually a
+  formula you can learn this week, then spend years making elegant.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="roots-and-chord-tones.html">Chord tones</a> and
+    <a href="approach-notes.html">approach notes</a> — walking is those two
+    pages at a steady quarter-note pulse.
+  </div>
+
+  <h2>The formula (really)</h2>
+  <p>For each bar of a chord, four quarter notes:</p>
+  <div class="box plain-english">
+    <span class="label">The beginner's recipe</span>
+    <strong>Beat 1:</strong> the root — non-negotiable, for now.<br>
+    <strong>Beats 2–3:</strong> chord tones or scale steps heading somewhere
+    (up or down, pick a direction per bar).<br>
+    <strong>Beat 4:</strong> an approach note aimed at the next bar's root.
+  </div>
+  <p>That's it. R–2–3–approach, R–3–5–approach, R–5–3–approach… every
+  combination of "start home, travel, aim" produces a legitimate walking
+  line. Swing the eighth-note feel later; make the quarters even first.</p>
+
+  <h2>A written chorus to steal</h2>
+  <div class="demo">
+    <div class="score-block" data-score="walk" aria-label="Two-bar walking pattern over a ii-V-I in C"></div>
+    <div class="buttons"><button class="action" type="button" data-play="walk">▶ Play the line</button></div>
+    <p class="hint">Dm7–G7–C: watch beat 4 of every bar do the aiming. Steal
+    this exact line, then vary one beat at a time.</p>
+  </div>
+
+  <h2>The three classic bar-shapes</h2>
+  <table class="ref">
+    <thead><tr><th>Shape</th><th>Example over C</th><th>Feel</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Scalar</strong> R-2-3-app</td><td>C D E (F♯)</td><td>smooth stroll upward</td></tr>
+      <tr><td><strong>Arpeggio</strong> R-3-5-app</td><td>C E G (A♭ or B)</td><td>spells the chord clearly</td></tr>
+      <tr><td><strong>Down</strong> R-♭7-5-app</td><td>C B♭ G (F♯)</td><td>descending gravity (great on 7th chords)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Two chords per bar (the ii–V squeeze)</summary>
+    <div class="layer-body">
+      <p>Real charts often put two chords in one bar (Dm7 G7 | C). Simple
+      rule: <strong>root on 1, root on 3</strong>, with beats 2 and 4 as
+      approaches. When in doubt, roots-only through fast changes is
+      professional, not remedial — clarity beats cleverness at speed.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Making it swing (after it's even)</summary>
+    <div class="layer-body">
+      <p>Jazz quarters aren't literally even — they lean slightly long-short
+      with a fat, connected attack (that's the
+      <dfn data-term="swing">swing</dfn> you met in the reading unit; the
+      styles unit drills it). But the drill order is strict: metronome-even
+      first, feel second. A lopsided beat can't be styled.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Where walking actually gets used</summary>
+    <div class="layer-body">
+      <p>Jazz standards, obviously — but also blues shuffles, rockabilly,
+      country two-beat turnarounds, gospel, and the last chorus of a
+      thousand pop songs when the band wants lift. Walking is a transferable
+      superpower: it's just real-time harmony navigation, audible.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The best place to walk (and groove, and everything else) is the form
+  every musician on Earth shares: the 12-bar blues. Next page.</p>
+
+  <script type="application/json" class="scores">
+  { "walk": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 100,
+      "measures": [
+        { "chord": "Dm7", "notes": [
+          { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "R" },
+          { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 3, "fret": 7 }], "annotation": "2" },
+          { "keys": ["f/3"], "duration": "q", "fret": [{ "str": 3, "fret": 8 }], "annotation": "♭3" },
+          { "keys": ["f#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 9 }], "annotation": "→G" } ] },
+        { "chord": "G7", "notes": [
+          { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "R" },
+          { "keys": ["f/3"], "duration": "q", "fret": [{ "str": 2, "fret": 3 }], "annotation": "♭7" },
+          { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 2, "fret": 0 }], "annotation": "5" },
+          { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }], "annotation": "→C" } ] },
+        { "chord": "Cmaj7", "notes": [
+          { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+          { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }], "annotation": "3" },
+          { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "5" },
+          { "keys": ["a/3"], "duration": "q", "fret": [{ "str": 2, "fret": 7 }], "annotation": "6" } ] },
+        { "chord": "Cmaj7", "notes": [
+          { "keys": ["g/3"], "duration": "h", "fret": [{ "str": 2, "fret": 5 }] },
+          { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }] } ] } ] } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "walking-bass-101",
+    "exercisesNote": "tempos are quarter=bpm; swing comes later",
+    "exercises": [
+      { "id": "walking-recipe-two-chords",
+        "title": "The recipe over two chords",
+        "goal": "Four choruses of Dm7–G7 (one bar each), never repeating the exact same bar twice, every beat-4 aiming correctly — at even 80 bpm quarters.",
+        "tempo": [66, 104],
+        "steps": [
+          "Chorus 1: R-2-3-app both bars. Chorus 2: R-3-5-app.",
+          "Chorus 3: descending shapes. Chorus 4: mix, decided one bar ahead.",
+          "Even quarters, fat and connected — no swing yet."
+        ] },
+      { "id": "walking-write-one-chorus",
+        "title": "Write one chorus (pencil, then hands)",
+        "goal": "A written 4-bar walking line over Am7–D7–Gmaj7–E7 that obeys the recipe, then played from your own chart from memory.",
+        "steps": [
+          "On paper: pick each bar's shape, write the four notes, mark the approaches.",
+          "Check: beat 1 = root? beat 4 = one step/fret from the next root?",
+          "Play it until memorized. Writing lines teaches faster than only improvising them."
+        ] },
+      { "id": "walking-two-per-bar",
+        "title": "Two chords per bar",
+        "goal": "Dm7 G7 | Cmaj7 (the classic squeeze) with roots on 1 and 3 and approaches on 2 and 4, clean at 90 bpm.",
+        "tempo": [72, 110],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 84,
+          "measures": [
+            { "chord": "Dm7  G7", "notes": [
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "R" },
+              { "keys": ["f#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 9 }], "annotation": "→G" },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }], "annotation": "R" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 3, "fret": 2 }], "annotation": "→C" } ] },
+            { "chord": "Cmaj7", "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "R" },
+              { "keys": ["e/3"], "duration": "q", "fret": [{ "str": 2, "fret": 2 }] },
+              { "keys": ["g/3"], "duration": "q", "fret": [{ "str": 2, "fret": 5 }] },
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "→C" } ] },
+            { "chord": "Cmaj7", "notes": [
+              { "keys": ["c/3"], "duration": "w", "fret": [{ "str": 3, "fret": 3 }] } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "walking-bass-101",
+    "questions": [
+      { "q": "The beginner's walking recipe for one bar is…",
+        "choices": ["root on 1, travel on 2–3, approach note on 4",
+                    "root on every beat",
+                    "approach notes on 1 and 3"],
+        "answer": 0,
+        "explain": "Home, travel, aim. Every legitimate variation you'll learn for years is a refinement of those three jobs." },
+      { "q": "With two chords in one bar (Dm7 G7 |…), the standard move is…",
+        "choices": ["roots on beats 1 and 3, approaches on 2 and 4",
+                    "skip the second chord",
+                    "play twice as fast"],
+        "answer": 0,
+        "explain": "Half the bar per chord = half the recipe per chord. And roots-only through fast changes is pro clarity, not a beginner's compromise." },
+      { "q": "Why practice walking with metronome-even quarters BEFORE adding swing?",
+        "choices": ["Feel is a controlled lean on an even pulse — a lopsided beat can't be styled",
+                    "Swing is illegal below 120 bpm",
+                    "Even quarters are the final goal"],
+        "answer": 0,
+        "explain": "Swing is a deliberate, consistent placement choice layered ON solid time. Order of operations: even, then lean." },
+      { "q": "Beat 4's note often isn't in the current chord at all. That's fine because…",
+        "choices": ["it's an approach — heard as motion toward the next bar, resolving on the strong beat",
+                    "beat 4 is inaudible",
+                    "walking lines ignore harmony"],
+        "answer": 0,
+        "explain": "The approach-note grammar from last page: outside notes traveling on weak time, landing home on strong time. Walking is that grammar at a steady pulse." }
+    ] }
+  </script>
+</main>
+</body>
+</html>

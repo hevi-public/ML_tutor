@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The 12-bar blues — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Bass Lines">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="walking-bass-101.html|Walking bass 101">
+  <meta name="bass:next" content="song-forms-and-charts.html|Song forms &amp; charts">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Bass Lines</p>
+  <h1>The 12-bar blues — everyone's common language</h1>
+  <p class="lede">Walk into any jam on the planet, say "blues in A", count
+  four — and total strangers play a song together. This is the form that
+  makes that possible. Learn it until it's not memory but geography.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-theory/diatonic-harmony.html">I, IV, V</a> and
+    <a href="../03-theory/seventh-chords.html">dominant 7ths</a>. Blues bends
+    one rule: ALL three chords are played as dominant 7s.
+  </div>
+
+  <h2>The map</h2>
+  <table class="ref" aria-label="The 12-bar blues form as three lines of four bars">
+    <tbody>
+      <tr><td><strong>I7</strong></td><td>I7</td><td>I7</td><td>I7</td></tr>
+      <tr><td><strong>IV7</strong></td><td>IV7</td><td>I7</td><td>I7</td></tr>
+      <tr><td><strong>V7</strong></td><td>IV7</td><td>I7</td><td>V7 <em>(turnaround)</em></td></tr>
+    </tbody>
+  </table>
+  <p>Three four-bar sentences: <em>make yourself at home (4 bars) — go visit
+  the IV (2) and come back (2) — build the tension (V–IV) and resolve, with
+  the last bar (<dfn data-term="turnaround">turnaround</dfn>) launching the
+  next chorus.</em> In A: A7 / D7 / E7. In G: G7 / C7 / D7. The Roman numerals
+  are the form; keys are just wardrobe.</p>
+
+  <h2>Hear the form</h2>
+  <div class="demo" id="blues-demo">
+    <div class="buttons">
+      <button class="action" type="button" id="blues-play">▶ One chorus in A (roots)</button>
+      <button class="action secondary" type="button" id="blues-stop">■ Stop</button>
+    </div>
+    <div class="rhythm-grid" id="blues-bars" aria-label="Twelve bars, highlighted as they play"></div>
+    <p class="hint">Follow the highlight and say the numerals out loud:
+    "one… one… one… one… FOUR, four, one, one, FIVE, four, one, five!"</p>
+  </div>
+
+  <h2>The classic line every bassist owns</h2>
+  <p>The root–3–5–6 "boogie" pattern, one bar per chord, moved between I, IV,
+  and V — the sound of ten thousand records:</p>
+  <div class="demo">
+    <div class="score-block" data-score="boogie" aria-label="The boogie line over the first bars of a blues in A"></div>
+    <div class="buttons"><button class="action" type="button" data-play="boogie">▶ Play</button></div>
+    <p class="hint">Because it's built from intervals, the identical shape
+    works from A (fret 5), D (A-string 5), and E (A-string 7) — one pattern,
+    entire form covered.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The quick change (and other dialects)</summary>
+    <div class="layer-body">
+      <p>Common variants you'll meet: <strong>quick change</strong> — bar 2
+      goes to IV7 (…and bar 1 stays I7); <strong>slow blues in 12/8</strong> —
+      same map, rolling triplet feel; <strong>minor blues</strong> — i7, iv7,
+      V7 (only the V stays dominant); <strong>8-bar blues</strong> — a
+      compressed cousin. Learn the standard form cold and the dialects are
+      one-sentence updates.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why dominant 7ths everywhere doesn't break theory</summary>
+    <div class="layer-body">
+      <p>By diatonic rules only V gets a dominant 7 — blues ignores this and
+      puts that restless ♭7 buzz on every chord. That's not sloppy harmony;
+      it IS the blues sound: three chords that all lean, forever unresolved.
+      Theory describes; blues predates the description.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Turnaround vocabulary, starter kit</summary>
+    <div class="layer-body">
+      <p>Bar 12's job is re-launch. Three reliable moves: sit on V7; walk up
+      to it (I–ii–iii–V feel: A–B–C♯–E); or the chromatic slide down from I's
+      octave into V. Fills live here too — but a turnaround that just lands
+      beat 1 of the next chorus solidly beats a flashy one that doesn't.</p>
+    </div>
+  </details>
+
+  <h2>Practice</h2>
+  <div class="practice-root"></div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The blues is one famous room. Next page: reading the floor plans of all
+  the other songs — forms, charts, and the shorthand bands actually use.</p>
+
+  <script type="application/json" class="scores">
+  { "boogie": { "clef": "bass", "keySignature": "A", "time": "4/4", "tempo": 100,
+      "measures": [
+        { "chord": "A7", "notes": [
+          { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 4, "fret": 5 }], "annotation": "R" },
+          { "keys": ["a/2"], "duration": "8" },
+          { "keys": ["c#/3"], "duration": "8", "fret": [{ "str": 3, "fret": 4 }], "annotation": "3" },
+          { "keys": ["c#/3"], "duration": "8" },
+          { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 3, "fret": 7 }], "annotation": "5" },
+          { "keys": ["e/3"], "duration": "8" },
+          { "keys": ["f#/3"], "duration": "8", "fret": [{ "str": 3, "fret": 9 }], "annotation": "6" },
+          { "keys": ["f#/3"], "duration": "8" } ] },
+        { "chord": "D7", "notes": [
+          { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 3, "fret": 5 }], "annotation": "R" },
+          { "keys": ["d/3"], "duration": "8" },
+          { "keys": ["f#/3"], "duration": "8", "fret": [{ "str": 2, "fret": 4 }], "annotation": "3" },
+          { "keys": ["f#/3"], "duration": "8" },
+          { "keys": ["a/3"], "duration": "8", "fret": [{ "str": 2, "fret": 7 }], "annotation": "5" },
+          { "keys": ["a/3"], "duration": "8" },
+          { "keys": ["b/3"], "duration": "8", "fret": [{ "str": 2, "fret": 9 }], "annotation": "6" },
+          { "keys": ["b/3"], "duration": "8" } ] },
+        { "chord": "A7", "notes": [
+          { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 4, "fret": 5 }] },
+          { "keys": ["a/2"], "duration": "8" },
+          { "keys": ["c#/3"], "duration": "8", "fret": [{ "str": 3, "fret": 4 }] },
+          { "keys": ["c#/3"], "duration": "8" },
+          { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 3, "fret": 7 }] },
+          { "keys": ["e/3"], "duration": "8" },
+          { "keys": ["c#/3"], "duration": "8" },
+          { "keys": ["a/2"], "duration": "8" } ] } ] } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "twelve-bar-blues",
+    "exercises": [
+      { "id": "blues-roots-full-chorus",
+        "title": "Roots through the full form (three keys)",
+        "goal": "A complete 12-bar chorus from memory — no chart — with correct changes, in A, then G, then E. The form recited out loud while playing.",
+        "tempo": [76, 112],
+        "steps": [
+          "Two roots per bar (beats 1 and 3). Say the numerals as you go.",
+          "The two danger spots: bar 2 (stay on I!) and bars 9–10 (V then IV).",
+          "When A is solid, move to G and E — numerals steady, letters swap."
+        ] },
+      { "id": "blues-boogie-form",
+        "title": "The boogie line over the whole form",
+        "goal": "The R-3-5-6 pattern maintained through all 12 bars with clean shape-shifts at every chord change, at 100 bpm.",
+        "tempo": [80, 126],
+        "steps": [
+          "Shape from A (E-string 5), D (A-string 5), E (A-string 7).",
+          "Shifts happen on the last eighth of the old bar — plan them.",
+          "Loop choruses until the form disappears and only the groove is left."
+        ] },
+      { "id": "blues-turnaround-kit",
+        "title": "Three turnarounds, on demand",
+        "goal": "Bar 11–12 played three ways (sit on V; walk-up A–B–C♯–E; chromatic drop) each landing the next chorus's beat 1 like an arrival, not an escape.",
+        "tempo": [72, 104],
+        "score": { "clef": "bass", "keySignature": "A", "time": "4/4", "tempo": 84,
+          "measures": [
+            { "chord": "A7 (walk-up)", "notes": [
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "I" },
+              { "keys": ["b/2"], "duration": "q", "fret": [{ "str": 4, "fret": 7 }] },
+              { "keys": ["c#/3"], "duration": "q", "fret": [{ "str": 3, "fret": 4 }] },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }] } ] },
+            { "chord": "E7", "notes": [
+              { "keys": ["e/3"], "duration": "h", "fret": [{ "str": 3, "fret": 7 }], "annotation": "V!" },
+              { "keys": ["e/2"], "duration": "h", "fret": [{ "str": 4, "fret": 0 }] } ] },
+            { "chord": "A7 (top!)", "notes": [
+              { "keys": ["a/2"], "duration": "w", "fret": [{ "str": 4, "fret": 5 }] } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "twelve-bar-blues",
+    "questions": [
+      { "q": "The three four-bar sentences of a standard blues are…",
+        "choices": ["I×4 · IV×2+I×2 · V–IV–I–V", "I×4 · V×4 · IV×4", "I–IV–V ×4"],
+        "answer": 0,
+        "explain": "Home for four, visit IV and return, then the V–IV–I resolution with the turnaround. Say it as a sentence and it stops being memorization." },
+      { "q": "\"Blues in G\" means the three chords are…",
+        "choices": ["G7, C7, D7", "G, Am, D", "G7, F7, C7"],
+        "answer": 0,
+        "explain": "I, IV, V of G — all dressed as dominant 7ths, because blues. (Count up the scale: G…C is 4, G…D is 5.)" },
+      { "q": "The turnaround (bar 12) exists to…",
+        "choices": ["launch the next chorus — usually via V7's pull back to I",
+                    "let the band rest",
+                    "end the song every time"],
+        "answer": 0,
+        "explain": "It's a loading spring. Whatever you play there, its one job is making the next bar 1 feel inevitable." },
+      { "q": "Blues plays dominant 7ths on ALL three chords, which diatonic theory wouldn't predict. The right conclusion:",
+        "choices": ["that restless everywhere-♭7 IS the blues sound — theory describes music, not the other way round",
+                    "blues musicians made an error that stuck",
+                    "the theory pages were wrong"],
+        "answer": 0,
+        "explain": "Genres bend rules on purpose; the bend is the identity. Knowing the rule is what lets you hear (and use) the bend." }
+    ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const NUMERALS = ["I","I","I","I","IV","IV","I","I","V","IV","I","V"];
+      const ROOTS =    [33,33,33,33, 38,38,33,33, 40,38,33,40]; // A D E as midi
+      const grid = document.getElementById("blues-bars");
+      const cells = NUMERALS.map((n) => {
+        const c = document.createElement("span");
+        c.className = "cell";
+        c.textContent = n;
+        grid.appendChild(c);
+        return c;
+      });
+      let handle = null;
+
+      document.getElementById("blues-play").addEventListener("click", () => {
+        if (handle) handle.stop();
+        const SPB = 0.6; // 100 bpm
+        const events = [];
+        ROOTS.forEach((midi, bar) => {
+          events.push({ midi, t: bar * 4, dur: 1.6 });
+          events.push({ midi, t: bar * 4 + 2, dur: 1.6 });
+        });
+        ROOTS.forEach((midi, bar) => {
+          BTAudio.chordPad([midi + 12, midi + 16, midi + 22],
+            { when: bar * 4 * SPB + 0.08, dur: 4 * SPB - 0.15, gain: 0.35 });
+        });
+        handle = BTAudio.playSeq(events, {
+          bpm: 100,
+          onStep(i) {
+            const bar = Math.floor(i / 2);
+            cells.forEach((c, j) => c.classList.toggle("now", j === bar));
+          },
+          onDone() { cells.forEach((c) => c.classList.remove("now")); handle = null; },
+        });
+      });
+      document.getElementById("blues-stop").addEventListener("click", () => {
+        if (handle) { handle.stop(); handle = null; }
+        BTAudio.stopAll();
+        cells.forEach((c) => c.classList.remove("now"));
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
