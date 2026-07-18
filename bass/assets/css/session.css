@@ -273,8 +273,11 @@ body.session main {
 /* ---------- Landscape ≥900px: right-edge thumb rail ---------- */
 
 @media (orientation: landscape) and (min-width: 900px) {
+  body.session {
+    padding-right: 104px;        /* reserve the rail strip; main stays centered
+                                    (site.css margin: 0 auto) in what's left */
+  }
   body.session main {
-    margin-right: 104px;         /* clear the rail */
     padding-bottom: 4rem;
     max-width: 52rem;
   }
@@ -284,7 +287,7 @@ body.session main {
     width: 92px;
     flex-direction: column;
     align-items: stretch;
-    justify-content: flex-start;
+    justify-content: center;     /* one balanced column, not two far-flung ends */
     gap: 0.5rem;
     padding: 4.2rem 0.5rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
     border-top: none;
@@ -295,7 +298,8 @@ body.session main {
   .session-bar .sb-next {
     flex: none;
     max-width: none;
-    min-height: 72px;            /* the thumb target */
+    min-height: 3.6rem;          /* same silhouette as its neighbors; the accent
+                                    fill carries the prominence */
   }
   .session-bar .sb-step {
     flex: none;
@@ -305,7 +309,12 @@ body.session main {
   }
   .session-bar .sb-title { display: none; }
   .session-bar .sb-count { font-size: 0.95rem; }
-  .session-bar .sb-spacer { flex: 1; }
+  .session-bar .sb-spacer {
+    flex: 0 1 9rem;              /* bounded gap between the nav and metronome
+                                    clusters — shrinks on short screens, never
+                                    balloons on tall ones */
+    min-height: 1.25rem;
+  }
   .session-bar .sb-label { display: none; }   /* "☾ Awake" → "☾" in the rail */
   .session-bar .sb-btn { padding-left: 0.3rem; padding-right: 0.3rem; }
 }
