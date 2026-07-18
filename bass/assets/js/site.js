@@ -7,6 +7,7 @@
      <meta name="bass:root"  content="../">          relative path to bass/ root
      <meta name="bass:prev"  content="../02-fretboard/positions-and-fingering.html|Positions">
      <meta name="bass:next"  content="major-scale.html|The major scale">
+     <meta name="bass:home"  content="reference.html">  optional Home override
 */
 (function () {
   "use strict";
@@ -16,6 +17,15 @@
     return el ? el.content : "";
   };
   const ROOT = meta("root") || "./";
+
+  // Two versions share one site: the hands-on sessions (bass/index.html, the
+  // default) and the reference course (bass/reference.html). Unit pages
+  // (00…08 except the shared 07-labs) belong to the reference course, so
+  // their Home is the reference landing; everything else Homes to the
+  // sessions landing. <meta name="bass:home"> overrides per page if needed.
+  const IN_REFERENCE = /\/(0[0-6]|08)-[a-z-]+\//.test(location.pathname) ||
+    /\/reference\.html$/.test(location.pathname);
+  const HOME = meta("home") || (IN_REFERENCE ? "reference.html" : "index.html");
 
   /* ---------- Theme ---------- */
 
@@ -57,7 +67,7 @@
 
     const brand = document.createElement("a");
     brand.className = "brand";
-    brand.href = ROOT + "index.html";
+    brand.href = ROOT + HOME;
     brand.innerHTML = "Bass<span>Tutor</span>";
     header.appendChild(brand);
 
@@ -67,8 +77,8 @@
     const unit = meta("unit");
     const title = document.querySelector("h1")?.textContent || document.title;
     crumb.innerHTML = unit
-      ? `<a href="${ROOT}index.html">Home</a> › ${unit} › ${title}`
-      : `<a href="${ROOT}index.html">Home</a> › ${title}`;
+      ? `<a href="${ROOT}${HOME}">Home</a> › ${unit} › ${title}`
+      : `<a href="${ROOT}${HOME}">Home</a> › ${title}`;
     header.appendChild(crumb);
 
     for (const [href, label] of [
@@ -83,6 +93,20 @@
       a.textContent = label;
       header.appendChild(a);
     }
+
+    // The other version of this course (sessions ⇄ reference)
+    const version = document.createElement("a");
+    version.className = "header-link version";
+    if (IN_REFERENCE) {
+      version.href = ROOT + "index.html";
+      version.textContent = "Sessions";
+      version.title = "The hands-on version: guided practice sessions, bass in hand";
+    } else {
+      version.href = ROOT + "reference.html";
+      version.textContent = "Reference";
+      version.title = "The reference course: every topic in full depth";
+    }
+    header.appendChild(version);
 
     // The sibling course living at the repo root
     const sister = document.createElement("a");

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session 12 · Keys and the circle — Bass Tutor</title>
+
+  <meta name="bass:unit" content="Phase 3 · Theory in your hands">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="session-11.html|Session 11 — The major scale under your hand">
+  <meta name="bass:next" content="session-13.html|Session 13 — Minor: the other home">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <link rel="stylesheet" href="../assets/css/session.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/viz/circle-of-fifths.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+  <script defer src="../assets/js/session.js"></script>
+</head>
+<body class="session">
+<main data-session-id="session-12" data-bpm="70">
+  <p class="unit-tag">Session 12 · Phase 3 — Theory in your hands</p>
+  <h1>Keys and the circle</h1>
+  <p class="lede">Move yesterday's box up a fifth and exactly one note
+  changes. Do that twelve times and you've walked through every key in music
+  and back home — that walk has a name, and today you play it.</p>
+
+  <section class="step" data-title="Tune up">
+    <h2>Tune up</h2>
+    <div class="demo" data-tuneup></div>
+  </section>
+
+  <section class="step" data-title="Warm-up">
+    <h2>Warm-up: the G box</h2>
+    <p>One octave of G major, up and down, degrees sung. It's the reference
+    point for everything today.</p>
+    <div class="demo">
+      <div class="score-block" data-score="warmup" aria-label="G major scale one octave"></div>
+      <div class="buttons"><button class="action" type="button" data-play="warmup">▶ Hear it</button></div>
+    </div>
+  </section>
+
+  <section class="step play" data-title="New: one note changes">
+    <h2>New thing: move up a fifth, listen for the click</h2>
+    <p>Play the G box. Now start the same shape from <strong>D</strong>
+    (A string, fret 5) and listen hard to the <strong>7th degree</strong>.
+    In G major that note was C; in D major it's C♯ — one semitone, one
+    single changed note, and everything else survives the move.</p>
+    <div data-practice-slot="s12-one-sharp"></div>
+  </section>
+
+  <section class="step why" data-title="Why that worked">
+    <h2>Why that worked</h2>
+    <p>A <dfn data-term="key">key</dfn> is a home note plus its major-scale
+    family. Move home <strong>up a fifth</strong> and the recipe forces
+    exactly one resident to sharpen (the new 7th). Move up another fifth,
+    one more sharp. Arrange all twelve homes by fifths and you get the
+    <dfn data-term="circle-of-fifths">circle of fifths</dfn> — music's
+    subway map. Neighbors share six of seven notes; opposite sides barely
+    speak.</p>
+    <p>The <dfn data-term="key-signature">key signature</dfn> — that cluster
+    of sharps or flats at the start of a staff — is just the changed
+    residents listed once, so the page doesn't nag you note by note.</p>
+    <div class="demo" id="cof-demo">
+      <div class="cof-wrap"></div>
+      <p class="readout" id="cof-readout">Tap any key — majors outside,
+      relative minors inside. Each tap shows the signature and plays the
+      root.</p>
+    </div>
+    <details class="layer">
+      <summary>And the flat direction?</summary>
+      <div class="layer-body">
+        <p>Walk the circle the other way — down a fifth (or up a fourth,
+        same thing) — and instead of gaining sharps you gain flats: F has
+        one, B♭ two, E♭ three… Bass players live on this side of the circle
+        more than most, because horns love flat keys. Deep dive with the
+        interactive signature builder in
+        <a href="../03-theory/keys-and-circle-of-fifths.html">keys &amp;
+        the circle of fifths</a>.</p>
+      </div>
+    </details>
+    <p class="go-deeper"><a href="../03-theory/keys-and-circle-of-fifths.html">Go
+    deeper: keys &amp; the circle of fifths →</a></p>
+  </section>
+
+  <section class="step play" data-title="Apply: walk the circle">
+    <h2>Apply it: walk the circle on the neck</h2>
+    <p>Here's the beautiful part: "up a fifth" is a <em>shape you already
+    own</em> — next string, two frets up (Session 9). So the circle isn't
+    abstract: it's a physical walk your hand can do.</p>
+    <div data-practice-slot="s12-circle-walk"></div>
+    <p class="hint">Say each root as you land. C–G–D–A–E one way,
+    C–F–B♭–E♭ the other — those eight cover ninety percent of the songs
+    you'll ever be handed.</p>
+  </section>
+
+  <section class="step check" data-title="Quick check">
+    <h2>Quick check</h2>
+    <div class="quiz-root"></div>
+  </section>
+
+  <section class="step done" data-title="Wrap up">
+    <h2>Wrap up</h2>
+    <p>Keys are moved boxes, signatures are their paperwork, and the circle
+    is a walk your fretting hand can physically do. Theory is turning out to
+    be geography.</p>
+    <p><strong>Next time:</strong> the other home — minor. Same notes,
+    different gravity, and the reason your day-one riff sounded moody.</p>
+    <div class="buttons">
+      <button class="action big" type="button" data-session-done>Mark Session 12 done</button>
+    </div>
+  </section>
+
+  <div class="practice-root" hidden></div>
+
+  <script type="application/json" class="scores">
+  { "warmup": { "clef": "bass", "keySignature": "G", "time": "4/4", "tempo": 70,
+      "measures": [
+        { "notes": [
+          { "keys": ["g/2"], "duration": "8", "fret": [{ "str": 4, "fret": 3 }], "annotation": "1" },
+          { "keys": ["a/2"], "duration": "8", "fret": [{ "str": 4, "fret": 5 }] },
+          { "keys": ["b/2"], "duration": "8", "fret": [{ "str": 3, "fret": 2 }] },
+          { "keys": ["c/3"], "duration": "8", "fret": [{ "str": 3, "fret": 3 }] },
+          { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 3, "fret": 5 }], "annotation": "5" },
+          { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 2, "fret": 2 }] },
+          { "keys": ["f#/3"], "duration": "8", "fret": [{ "str": 2, "fret": 4 }] },
+          { "keys": ["g/3"], "duration": "8", "fret": [{ "str": 2, "fret": 5 }], "annotation": "8" } ] } ] } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "session-12",
+    "exercises": [
+      { "id": "s12-one-sharp",
+        "title": "G box, D box — spot the changed note",
+        "goal": "Both scales fluent, and you can point at the one note that changed (C→C♯) and hear the difference it makes on the 7th degree's lean.",
+        "tempo": [60, 90],
+        "steps": [
+          "G major from fret 3 (the Session 11 box).",
+          "D major: identical fingering starting from D, A string fret 5.",
+          "Third pass: play G's C natural, then D's C♯, back to back. One fret, new key.",
+          "Say it out loud: \"D major has one sharp: F♯… wait, no — C♯ is new, F♯ came along from G.\" (G major already had F♯ — count them: D major has TWO sharps.)"
+        ],
+        "score": { "clef": "bass", "keySignature": "D", "time": "4/4", "tempo": 70,
+          "measures": [
+            { "notes": [
+              { "keys": ["d/3"], "duration": "8", "fret": [{ "str": 3, "fret": 5 }], "annotation": "1" },
+              { "keys": ["e/3"], "duration": "8", "fret": [{ "str": 3, "fret": 7 }], "annotation": "2" },
+              { "keys": ["f#/3"], "duration": "8", "fret": [{ "str": 2, "fret": 4 }], "annotation": "3" },
+              { "keys": ["g/3"], "duration": "8", "fret": [{ "str": 2, "fret": 5 }], "annotation": "4" },
+              { "keys": ["a/3"], "duration": "8", "fret": [{ "str": 2, "fret": 7 }], "annotation": "5" },
+              { "keys": ["b/3"], "duration": "8", "fret": [{ "str": 1, "fret": 4 }], "annotation": "6" },
+              { "keys": ["c#/4"], "duration": "8", "fret": [{ "str": 1, "fret": 6 }], "annotation": "7 — new!" },
+              { "keys": ["d/4"], "duration": "8", "fret": [{ "str": 1, "fret": 7 }], "annotation": "8" } ] } ] } },
+      { "id": "s12-circle-walk",
+        "title": "The circle walk",
+        "goal": "Roots around both sides of the circle from memory — sharps side C-G-D-A-E, flats side C-F-B♭-E♭ — each move played as its fifth/fourth shape, names said aloud.",
+        "tempo": [60, 92],
+        "steps": [
+          "Sharp side: C (A-string 3) → G (E-string 3) → D (A-string 5) → A (E-string 5) → E (A-string 7). Each hop is a fifth — hear the sturdiness.",
+          "Flat side: C → F (E-string 1... or A-string 8) → B♭ (A-string 1) → E♭ (A-string 6). Down a fifth = up a fourth: same-fret-next-string.",
+          "Loop each side until the names come before the frets do."
+        ],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 70,
+          "measures": [
+            { "notes": [
+              { "keys": ["c/3"], "duration": "q", "fret": [{ "str": 3, "fret": 3 }], "annotation": "C" },
+              { "keys": ["g/2"], "duration": "q", "fret": [{ "str": 4, "fret": 3 }], "annotation": "G" },
+              { "keys": ["d/3"], "duration": "q", "fret": [{ "str": 3, "fret": 5 }], "annotation": "D" },
+              { "keys": ["a/2"], "duration": "q", "fret": [{ "str": 4, "fret": 5 }], "annotation": "A" } ] },
+            { "notes": [
+              { "keys": ["e/3"], "duration": "h", "fret": [{ "str": 3, "fret": 7 }], "annotation": "E" },
+              { "keys": ["c/3"], "duration": "h", "fret": [{ "str": 3, "fret": 3 }], "annotation": "C (reset)" } ] },
+            { "notes": [
+              { "keys": ["f/2"], "duration": "q", "fret": [{ "str": 4, "fret": 1 }], "annotation": "F" },
+              { "keys": ["bb/2"], "duration": "q", "fret": [{ "str": 3, "fret": 1 }], "annotation": "B♭" },
+              { "keys": ["eb/3"], "duration": "h", "fret": [{ "str": 3, "fret": 6 }], "annotation": "E♭" } ] } ] } } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "session-12",
+    "questions": [
+      { "q": "Moving a major scale up a fifth changes…",
+        "choices": ["exactly one note — the new key's 7th degree sharpens",
+                    "every note",
+                    "nothing at all"],
+        "answer": 0,
+        "explain": "Six of seven residents survive the move. That one-note-per-step gentleness is why the circle of fifths is the natural way to order the keys." },
+      { "q": "A key signature is…",
+        "choices": ["the key's changed notes declared once at the start of the staff",
+                    "the tempo of the song",
+                    "a decoration with no meaning"],
+        "answer": 0,
+        "explain": "Two sharps at the front = every F and C in the piece is sharp = D major (or its minor twin — next session). Read the signature first, then the notes." },
+      { "q": "On the neck, \"up a fifth\" from any root is…",
+        "choices": ["next string, two frets up — so you can literally walk the circle",
+                    "the same fret two strings up",
+                    "seven frets down"],
+        "answer": 0,
+        "explain": "The Session 9 fifth shape IS the circle's step. Theory that lives in your hand sticks; that's the whole idea of this course." }
+    ] }
+  </script>
+</main>
+</body>
+</html>

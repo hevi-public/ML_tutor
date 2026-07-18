@@ -6,6 +6,16 @@ at the repo root: same architecture, same pedagogy, its own content, engines,
 and localStorage namespace. Open `bass/index.html` (or `npm run dev:bass`) and
 learn.
 
+The course ships in **two selectable versions** sharing one engine and one
+progress namespace:
+
+- **Hands-on sessions** (`bass/index.html`, the default): 34 guided practice
+  sessions in 6 phases — bass in hand from minute one, theory delivered
+  just-in-time around playing. See §7.
+- **Reference course** (`bass/reference.html`): the original concept-first
+  topic pages, every idea in full layered depth. Sessions link into it
+  everywhere ("go deeper"); the header cross-links the two versions both ways.
+
 ---
 
 ## 1. Goals
@@ -44,14 +54,22 @@ repetition over terms, symbols, and missed quiz questions).
 
 ```
 bass/
-├── index.html              # landing: path picker, progress resume
+├── index.html              # DEFAULT landing: hands-on sessions (continue button,
+│                           #   phase-grouped session list with progress ticks)
+├── reference.html          # reference-course landing: path picker, progress resume
+├── sessions/               # the hands-on course: session-01.html … session-34.html
 ├── PLAN.md
 ├── assets/
 │   ├── css/site.css        # adapted from the ML site: same theming, amber accent,
 │   │                       #   music components (fretboard, score, practice cards…)
+│   ├── css/session.css     # play-mode styles: big type, step cards, session bar
 │   ├── page-template.html  # the page contract — copy to start a new topic page
+│   ├── session-template.html # the SESSION contract — copy to start a new session
 │   └── js/
-│       ├── site.js         # nav injection, prev/next, theme ("bass:" meta prefix)
+│       ├── site.js         # nav injection, prev/next, theme ("bass:" meta prefix),
+│       │                   #   version-aware Home + Sessions⇄Reference header link
+│       ├── session.js      # session runtime: step tracking, session bar (metronome,
+│       │                   #   wake lock), tune-up widget — see §7
 │       ├── progress.js     # window.BassProgress, localStorage "bass-tutor:*"
 │       ├── quiz.js         # declarative quizzes (same engine as the ML site)
 │       ├── glossary.js     # term popovers + glossary page renderer
@@ -150,3 +168,45 @@ become flashcards automatically.
 - Serve via `file://` where possible; anything using `fetch()` (glossary,
   search, flashcards, routine builder) needs an http server and degrades with a
   friendly message, same as the ML site.
+
+## 7. Hands-on sessions (v2 — the default version)
+
+A second delivery of the same curriculum for a learner with the **bass in
+hand and a tablet on the music stand**: 34 numbered sessions (~20–30 min of
+playing each) in 6 phases — First sounds · Fretboard & rhythm · Theory in your
+hands · Grooves & lines · Styles · Expert moves. Playing comes first on every
+page; the concept lands right after, in a few sentences, with a "go deeper"
+link to the reference topic page. Every reference topic maps to at least one
+session, so the two versions cover the same information.
+
+**Session flow** (`assets/session-template.html`): *Tune up → Warm-up (last
+session's riff) → New thing to PLAY (practice card first) → Why that worked
+(3–4 sentences + at most one details layer + go-deeper link) → Apply it
+(variation / groove-machine deep link) → Quick check (1–3 questions) → Wrap
+up (mark done).*
+
+**Contract additions** on top of the unit-page contract:
+
+- `<body class="session">`, `<main data-session-id="session-NN" data-bpm="80">`;
+  steps are `<section class="step" data-title="…">` cards.
+- `session.js` (loaded last) numbers the steps, tracks the current one, and
+  injects the fixed **session bar**: prev/next step, metronome (`BTAudio`,
+  seeded from `data-bpm`), and a keep-awake toggle (Screen Wake Lock, hidden
+  where unsupported). Portrait: bottom bar; landscape ≥900px: right-edge
+  thumb rail. Type scale is bumped for music-stand distance (`session.css`).
+- `<div data-tuneup>` renders the shared tuning-pad widget (drone per string).
+- Practice cards render inside their step via `<div data-practice-slot="<id>">`
+  (practice.js falls back to the classic single `.practice-root` otherwise).
+- **Filename = slug = quiz id** (`session-07.html` → `"session-07"`), so
+  progress ticks, flashcards, and the landing's continue button unify with the
+  reference course. Exercise ids are prefixed `sNN-` (`npm run build:bass`
+  enforces global uniqueness).
+
+**Version selection**: `bass/index.html` is the sessions landing (default);
+the reference path picker lives at `bass/reference.html`. `site.js` infers the
+version-appropriate Home link from the path (unit folders `00…08` except the
+shared `07-labs` → `reference.html`; everything else → `index.html`;
+`<meta name="bass:home">` overrides per page) and injects a Sessions⇄Reference
+header link both ways. Labs, glossary, map, search, and flashcards are shared
+tools. The landing's `BUILT` constant marks how many sessions exist while the
+phases roll out.

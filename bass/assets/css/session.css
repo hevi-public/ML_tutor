@@ -1,0 +1,324 @@
+/* Bass Tutor — hands-on sessions. Styles for the session pages (big-type
+   "play mode" read from a music stand, step cards, the fixed session bar)
+   and the sessions landing. Loaded on top of site.css; every color comes
+   from the site's custom properties so both themes just work.
+
+   Layouts: portrait keeps a bottom control bar; landscape ≥900px moves the
+   controls to a right-edge thumb rail and lets the prose widen.            */
+
+/* ---------- Sessions landing ---------- */
+
+.continue-box { margin: 1.6rem 0; }
+
+.continue-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 0.8rem 1.4rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+}
+.continue-btn:hover { filter: brightness(1.08); }
+
+.continue-note {
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  margin: 0.6rem 0 0;
+}
+
+.phase-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+.phase-head .phase-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.session-list {
+  list-style: none;
+  margin: 1rem 0 2rem;
+  padding: 0;
+}
+.session-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  margin: 0.5rem 0;
+}
+.session-list a,
+.session-list .s-link {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.8rem;
+  min-height: 56px;              /* full-row touch target */
+  padding: 0.7rem 1rem 0.7rem 0;
+  text-decoration: none;
+  align-content: center;
+}
+.session-list .s-num {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.session-list .s-title { color: var(--text); font-weight: 600; }
+.session-list a:hover { color: inherit; }
+.session-list li:not(.soon):hover { border-color: var(--accent); }
+.session-list .tick {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-left: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+.session-list .tick.done {
+  background: var(--good-soft);
+  border-color: var(--good);
+  color: var(--good);
+  font-weight: 700;
+}
+.session-list li.soon { opacity: 0.55; }
+.session-list li.soon .s-title { font-weight: 400; }
+.session-list .badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-soft);
+}
+
+/* ---------- Session pages: play-mode type scale ---------- */
+
+body.session {
+  font-size: 19px;               /* readable from a music stand */
+  line-height: 1.6;
+}
+@media (min-width: 900px) {
+  body.session { font-size: 21px; }
+}
+body.session h1 { font-size: 2.1rem; }
+body.session .step h2 { font-size: 1.35rem; margin-top: 0; }
+body.session main { max-width: 48rem; }
+
+/* ---------- Step cards ---------- */
+
+.step {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 1.1rem 1.3rem 1.2rem;
+  margin: 1.1rem 0;
+  scroll-margin-top: 4.5rem;     /* clear the sticky site header */
+}
+.step.current { border-left: 4px solid var(--accent); }
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-right: 0.55rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  vertical-align: 0.12em;
+}
+
+/* nested panels sit on the page background inside the soft card */
+.step .demo,
+.step details.layer,
+.step .quiz-q { background: var(--bg); }
+.step .practice-card { background: var(--bg); margin: 0.9rem 0 0; }
+.step .quiz-root { margin: 0.8rem 0 0; }
+
+.go-deeper { margin: 0.9rem 0 0; }
+.go-deeper a {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  padding: 0.35rem 1rem;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+.go-deeper a:hover { border-color: var(--accent); }
+
+/* tune-up pads get bigger targets on session pages */
+body.session .pad { min-height: 64px; font-size: 1.05rem; }
+
+button.action.big {
+  min-height: 56px;
+  padding: 0.6rem 1.6rem;
+  font-size: 1.05rem;
+}
+button.action.big[disabled] { opacity: 1; border-color: var(--good); background: var(--good); }
+
+/* ---------- The session bar (portrait: fixed bottom) ---------- */
+
+body.session main {
+  /* room for the bottom bar */
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+}
+
+.session-bar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 15;
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+  padding: 0.5rem 0.8rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+}
+
+.session-bar .sb-btn {
+  min-height: 56px;
+  min-width: 56px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 0.3rem 0.7rem;
+  white-space: nowrap;
+}
+.session-bar .sb-btn:hover { border-color: var(--accent); }
+.session-bar .sb-btn:disabled { opacity: 0.4; cursor: default; }
+.session-bar .sb-btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.session-bar .sb-next {
+  flex: 1;
+  max-width: 11rem;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+.session-bar .sb-next:hover { filter: brightness(1.08); }
+.session-bar .sb-next.done { border-color: var(--good); background: var(--good); }
+
+.session-bar .sb-step {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.25;
+}
+.session-bar .sb-count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+.session-bar .sb-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-bar .sb-metro { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 560px) {
+  .session-bar { gap: 0.35rem; padding-left: 0.5rem; padding-right: 0.5rem; }
+  .session-bar .sb-btn { min-width: 48px; padding: 0.3rem 0.5rem; }
+}
+@media (max-width: 460px) {
+  /* phones: the tempo still shows on the toggle; ± trimming keeps rows on one line */
+  .session-bar .sb-bpm-down, .session-bar .sb-bpm-up { display: none; }
+}
+
+/* ---------- Landscape ≥900px: right-edge thumb rail ---------- */
+
+@media (orientation: landscape) and (min-width: 900px) {
+  body.session main {
+    margin-right: 104px;         /* clear the rail */
+    padding-bottom: 4rem;
+    max-width: 52rem;
+  }
+
+  .session-bar {
+    inset: 0 0 0 auto;
+    width: 92px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 4.2rem 0.5rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    border-top: none;
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .session-bar .sb-next {
+    flex: none;
+    max-width: none;
+    min-height: 72px;            /* the thumb target */
+  }
+  .session-bar .sb-step {
+    flex: none;
+    text-align: center;
+    align-items: center;
+    order: -1;                   /* count above Next, label hidden */
+  }
+  .session-bar .sb-title { display: none; }
+  .session-bar .sb-count { font-size: 0.95rem; }
+  .session-bar .sb-spacer { flex: 1; }
+  .session-bar .sb-label { display: none; }   /* "☾ Awake" → "☾" in the rail */
+  .session-bar .sb-btn { padding-left: 0.3rem; padding-right: 0.3rem; }
+}
+
+/* ---------- Motion & print ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .session-bar .sb-next:hover { filter: none; }
+}
+
+@media print {
+  .session-bar { display: none; }
+  body.session main { padding-bottom: 0; }
+  .step { break-inside: avoid; }
+  .step.current { border-left-color: var(--border); }
+}

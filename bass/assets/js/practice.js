@@ -13,6 +13,10 @@
                         "score": {…}, "steps": ["…"] } ] }
      </script>
 
+   Session pages (bass/sessions/) place cards inside their steps instead:
+   an exercise renders into <div data-practice-slot="<id>"> when one exists,
+   falling back to the shared .practice-root otherwise.
+
    scripts/build-bass-index.js reads the same block at build time to feed
    search and the routine-builder lab (bass/data/exercise-index.json).       */
 (function () {
@@ -147,7 +151,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     const dataEl = document.querySelector('script.practice[type="application/json"]');
     const root = document.querySelector(".practice-root");
-    if (!dataEl || !root) return;
+    if (!dataEl) return;
     let block;
     try {
       block = JSON.parse(dataEl.textContent);
@@ -155,7 +159,12 @@
       console.warn("practice.js: bad practice JSON", err);
       return;
     }
-    for (const ex of block.exercises || []) renderCard(ex, root);
+    for (const ex of block.exercises || []) {
+      const slot = ex.id &&
+        document.querySelector(`[data-practice-slot="${ex.id}"]`);
+      const target = slot || root;
+      if (target) renderCard(ex, target);
+    }
 
     // deep links like page.html#practice-<id> land on the card
     if (location.hash.startsWith("#practice-")) {
