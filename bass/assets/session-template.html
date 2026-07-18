@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!-- Bass Tutor SESSION template (the hands-on course, bass/sessions/).
+     Copy into bass/sessions/ as session-NN.html and fill in.
+
+     A session is 20–30 minutes with the bass in hand. Flow:
+       Tune up → Warm-up (last session's riff) → New thing to PLAY →
+       Why that worked (short!) → Apply it → Quick check → Wrap up.
+
+     Authoring rules (on top of bass/PLAN.md's plain-language rules):
+     - PLAY BEFORE THEORY. The practice card comes first; the "why" step
+       explains what their hands just did. Never the other way around.
+     - The "why" step is 3–4 sentences plus AT MOST one details.layer.
+       The full exposition lives in the reference course — always end the
+       why step with a .go-deeper link to the matching reference page.
+     - Every step ends with something sounding (a card, a score block, a
+       lab link). Steps read from a music stand: short lines, big ideas.
+     - Filename = slug = quiz id ("session-07"), so progress, flashcards
+       and the landing ticks line up. Exercise ids prefixed "s07-"
+       (npm run build:bass enforces global uniqueness).
+     - data-bpm on <main> seeds the session bar's metronome. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session NN · TITLE — Bass Tutor</title>
+
+  <!-- Page contract, read by site.js (same as unit pages) -->
+  <meta name="bass:unit" content="Phase N · PHASE NAME">
+  <meta name="bass:root" content="../">
+  <meta name="bass:prev" content="session-NN.html|Session NN — PREV TITLE">
+  <meta name="bass:next" content="session-NN.html|Session NN — NEXT TITLE">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <link rel="stylesheet" href="../assets/css/session.css">
+
+  <script defer src="../../node_modules/vexflow/build/cjs/vexflow.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/music/theory.js"></script>
+  <script defer src="../assets/js/music/audio.js"></script>
+  <!-- <script defer src="../assets/js/music/fretboard.js"></script>  only if the session shows a fretboard -->
+  <script defer src="../assets/js/music/score.js"></script>
+  <script defer src="../assets/js/practice.js"></script>
+  <script defer src="../assets/js/session.js"></script>  <!-- always LAST -->
+</head>
+<body class="session">
+<main data-session-id="session-NN" data-bpm="80">
+  <p class="unit-tag">Session NN · Phase N — PHASE NAME</p>
+  <h1>TITLE</h1>
+  <p class="lede">One sentence: what you'll be able to PLAY by the end.</p>
+
+  <section class="step" data-title="Tune up">
+    <h2>Tune up</h2>
+    <p>One line of context if needed.</p>
+    <div class="demo" data-tuneup></div>   <!-- rendered by session.js -->
+  </section>
+
+  <section class="step" data-title="Warm-up">
+    <h2>Warm-up: last session's riff</h2>
+    <p>One line: what to re-play and what to listen for.</p>
+    <div class="demo">
+      <div class="score-block" data-score="warmup" aria-label="DESCRIBE"></div>
+      <div class="buttons"><button class="action" type="button" data-play="warmup">▶ Hear it</button></div>
+    </div>
+  </section>
+
+  <section class="step play" data-title="New: SHORT LABEL">
+    <h2>New thing: PLAY THIS</h2>
+    <p>Set up the move in a line or two — hands first, names later.</p>
+    <div data-practice-slot="sNN-EXERCISE-ID"></div>
+  </section>
+
+  <section class="step why" data-title="Why that worked">
+    <h2>Why that worked</h2>
+    <p>Three or four sentences, everyday words, naming the
+    <strong><dfn data-term="TERM">term</dfn></strong> only after the idea.</p>
+    <details class="layer">
+      <summary>A bit more, if you're curious</summary>
+      <div class="layer-body"><p>…one short layer at most…</p></div>
+    </details>
+    <p class="go-deeper"><a href="../0N-UNIT/PAGE.html">Go deeper: PAGE TITLE →</a></p>
+  </section>
+
+  <section class="step" data-title="Apply it">
+    <h2>Apply it</h2>
+    <p>Variation, groove, or play-along.</p>
+    <div data-practice-slot="sNN-SECOND-EXERCISE"></div>
+    <p class="hint">Play along with the band:
+    <a href="../07-labs/groove-machine.html#prog=vamp&amp;key=E&amp;style=rock8&amp;bpm=80">groove machine</a>.</p>
+  </section>
+
+  <section class="step check" data-title="Quick check">
+    <h2>Quick check</h2>
+    <div class="quiz-root"></div>
+  </section>
+
+  <section class="step done" data-title="Wrap up">
+    <h2>Wrap up</h2>
+    <p>What just landed, in one line. What's next, in one line.</p>
+    <div class="buttons">
+      <button class="action big" type="button" data-session-done>Mark Session NN done</button>
+    </div>
+  </section>
+
+  <!-- Cards render into their [data-practice-slot] by id; this root only
+       catches exercises without a slot (session.js unhides it if used). -->
+  <div class="practice-root" hidden></div>
+
+  <script type="application/json" class="scores">
+  { "warmup": { "clef": "bass", "keySignature": "C", "time": "4/4", "tempo": 80,
+      "measures": [ { "notes": [ { "keys": ["e/2"], "duration": "q" } ] } ] } }
+  </script>
+
+  <script type="application/json" class="practice">
+  { "pageId": "session-NN",
+    "exercises": [
+      { "id": "sNN-EXERCISE-ID",
+        "title": "…",
+        "goal": "One sentence: what done sounds like.",
+        "tempo": [60, 90],
+        "score": { "clef": "bass", "keySignature": "C", "time": "4/4",
+                   "measures": [ { "notes": [ { "keys": ["e/2"], "duration": "q" } ] } ] },
+        "steps": ["Short, imperative, readable mid-practice."] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "session-NN",
+    "questions": [
+      { "q": "…?", "choices": ["…", "…", "…"], "answer": 0, "explain": "…" } ] }
+  </script>
+</main>
+</body>
+</html>

@@ -3,145 +3,179 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bass Tutor — bass guitar & music theory, in plain language</title>
+  <title>Bass Tutor — hands-on sessions</title>
 
   <meta name="bass:root" content="./">
 
   <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/session.css">
   <script defer src="assets/js/site.js"></script>
   <script defer src="assets/js/progress.js"></script>
 </head>
 <body>
-<main class="wide">
+<main class="wide sessions-landing">
   <div class="hero">
-    <h1>Bass guitar &amp; music theory, in plain language</h1>
-    <p class="lede">From "which one is the E string?" to walking through jazz
-    changes — one interactive page at a time. Every idea starts with everyday
-    words, every example is playable, and every page ends with something
-    concrete to practice.</p>
+    <h1>Pick up the bass. We'll talk while you play.</h1>
+    <p class="lede">Guided practice sessions, 20–30 minutes each, bass in hand
+    from the first minute. Every session: tune up, warm up, play something new,
+    then hear <em>why</em> it worked — with a link one tap deeper for the full
+    story. Made to sit on a music stand or a table while you play.</p>
   </div>
 
-  <div class="box" id="resume-box" hidden>
-    <span class="label">Welcome back</span>
-    <span id="resume-text"></span>
+  <div class="continue-box" id="continue-box">
+    <a class="continue-btn" id="continue-btn" href="sessions/session-01.html">
+      ▶ Start Session 1 — Day one: make it rumble
+    </a>
+    <p class="continue-note" id="continue-note">34 sessions · 6 phases · no
+    experience needed.</p>
   </div>
 
   <div class="box plain-english">
-    <span class="label">How this site works</span>
-    Each page: a plain-English explanation, something to hear and poke at
-    (fretboards and notation you can tap — sound starts after your first tap),
-    the theory in unfoldable layers, practice exercises with a log, and a short
-    quiz. Use ← → arrow keys to move between pages.
+    <span class="label">How a session works</span>
+    Big steps you can read from a distance, one thing to play at a time.
+    The bar at the bottom (or the side, in landscape) moves between steps,
+    runs the metronome, and can keep your screen awake. Sound starts after
+    your first tap. Played for years?
+    <a href="00-start/self-assessment.html">Find your starting point</a> and
+    skim ahead — the sessions are numbered, not locked.
   </div>
 
-  <h2>The path</h2>
+  <div id="session-phases">
+    <noscript><p>The session list needs JavaScript. Without it, start at
+    <a href="sessions/session-01.html">Session 1</a> or browse the
+    <a href="reference.html">reference course</a>.</p></noscript>
+  </div>
+
+  <h2>The other way in</h2>
   <ul class="unit-grid">
     <li class="unit-card">
-      <span class="num">UNIT 0</span><br>
-      <a href="00-start/welcome.html">Start here</a>
-      <p><a href="00-start/welcome.html">How to use this site</a> ·
-      <a href="00-start/gear-and-setup.html">gear &amp; setup</a> ·
-      <a href="00-start/tuning.html">tuning up</a> ·
-      <a href="00-start/self-assessment.html">find your starting point</a>.</p>
+      <span class="num">READ FIRST?</span><br>
+      <a href="reference.html">The reference course</a>
+      <p>The same material as concept-first topic pages, every idea in full
+      layered depth — <a href="03-theory/intervals.html">theory</a>,
+      <a href="01-reading/staff-and-clef.html">reading</a>,
+      <a href="04-technique/right-hand.html">technique</a> and more. Sessions
+      link into it everywhere ("go deeper").</p>
     </li>
     <li class="unit-card">
-      <span class="num">UNIT 1</span><br>
-      <a href="01-reading/staff-and-clef.html">Reading music</a>
-      <p><a href="01-reading/staff-and-clef.html">The staff &amp; bass clef</a> ·
-      <a href="01-reading/rhythm-and-counting.html">rhythm &amp; counting</a> ·
-      <a href="01-reading/tab-and-notation.html">tab ↔ notation</a> ·
-      <a href="01-reading/time-signatures.html">time signatures</a>.</p>
-    </li>
-    <li class="unit-card">
-      <span class="num">UNIT 2</span><br>
-      <a href="02-fretboard/strings-and-fret-math.html">The fretboard</a>
-      <p><a href="02-fretboard/strings-and-fret-math.html">Strings &amp; fret math</a> ·
-      <a href="02-fretboard/notes-on-the-fretboard.html">notes on the fretboard</a> ·
-      <a href="02-fretboard/intervals-as-shapes.html">intervals as shapes</a> ·
-      <a href="02-fretboard/positions-and-fingering.html">positions &amp; fingering</a>.</p>
-    </li>
-    <li class="unit-card">
-      <span class="num">UNIT 3</span><br>
-      <a href="03-theory/intervals.html">Theory core</a>
-      <p><a href="03-theory/intervals.html">Intervals</a> ·
-      <a href="03-theory/major-scale.html">the major scale</a> ·
-      <a href="03-theory/keys-and-circle-of-fifths.html">keys &amp; the circle</a> ·
-      <a href="03-theory/minor-scales.html">minor</a> ·
-      <a href="03-theory/pentatonics-and-blues.html">pentatonics</a> ·
-      <a href="03-theory/triads.html">triads</a> ·
-      <a href="03-theory/seventh-chords.html">7th chords</a> ·
-      <a href="03-theory/diatonic-harmony.html">diatonic harmony</a>.</p>
-    </li>
-    <li class="unit-card">
-      <span class="num">UNIT 4</span><br>
-      <a href="04-technique/right-hand.html">Technique</a>
-      <p><a href="04-technique/right-hand.html">Right hand</a> ·
-      <a href="04-technique/left-hand.html">left hand</a> ·
-      <a href="04-technique/timing-and-groove.html">timing &amp; groove</a> ·
-      <a href="04-technique/tone-and-dynamics.html">tone &amp; dynamics</a> ·
-      <a href="04-technique/how-to-practice.html">how to practice</a>.</p>
-    </li>
-    <li class="unit-card">
-      <span class="num">UNIT 5</span><br>
-      <a href="05-basslines/role-of-the-bass.html">Bass lines</a>
-      <p><a href="05-basslines/role-of-the-bass.html">The bassist's job</a> ·
-      <a href="05-basslines/roots-and-chord-tones.html">roots &amp; chord tones</a> ·
-      <a href="05-basslines/approach-notes.html">approach notes</a> ·
-      <a href="05-basslines/walking-bass-101.html">walking 101</a> ·
-      <a href="05-basslines/twelve-bar-blues.html">the 12-bar blues</a> ·
-      <a href="05-basslines/song-forms-and-charts.html">forms &amp; charts</a>.</p>
-    </li>
-    <li class="unit-card">
-      <span class="num">UNIT 6</span><br>
-      <a href="06-styles/rock.html">Styles</a>
-      <p><a href="06-styles/rock.html">Rock</a> ·
-      <a href="06-styles/blues-shuffle.html">blues shuffle</a> ·
-      <a href="06-styles/funk.html">funk</a> ·
-      <a href="06-styles/soul-motown.html">soul/Motown</a> ·
-      <a href="06-styles/reggae.html">reggae</a> ·
-      <a href="06-styles/jazz-walking.html">jazz walking</a> — playable
-      grooves for each.</p>
-    </li>
-    <li class="unit-card">
-      <span class="num">UNIT 7</span><br>
+      <span class="num">TOOLS</span><br>
       <a href="07-labs/groove-machine.html">Practice labs</a>
-      <p><a href="07-labs/fretboard-trainer.html">Fretboard trainer</a> ·
+      <p><a href="07-labs/tuner.html">Tuner</a> ·
+      <a href="07-labs/fretboard-trainer.html">fretboard trainer</a> ·
       <a href="07-labs/ear-trainer.html">ear trainer</a> ·
       <a href="07-labs/groove-machine.html">groove machine</a> ·
-      <a href="07-labs/tuner.html">tuner</a> ·
       <a href="07-labs/routine-builder.html">routine builder</a>.</p>
     </li>
     <li class="unit-card">
-      <span class="num">UNIT 8</span><br>
-      <a href="08-expert/modes.html">Expert track</a>
-      <p><a href="08-expert/modes.html">Modes</a> ·
-      <a href="08-expert/chord-extensions.html">extensions</a> ·
-      <a href="08-expert/harmonic-analysis.html">harmonic analysis</a> ·
-      <a href="08-expert/transcription.html">transcription</a> ·
-      <a href="08-expert/improvisation-and-fills.html">improv &amp; fills</a> ·
-      <a href="08-expert/advanced-techniques.html">slap &amp; beyond</a> ·
-      <a href="08-expert/next-steps.html">next steps</a>.</p>
+      <span class="num">LOOK IT UP</span><br>
+      <a href="glossary.html">Reference pages</a>
+      <p>The <a href="glossary.html">glossary</a> ·
+      <a href="notation.html">symbol guide</a> ·
+      <a href="map.html">concept map</a> ·
+      <a href="search.html">search</a> (press <code>/</code> anywhere) ·
+      <a href="flashcards.html">flashcards</a>.</p>
     </li>
   </ul>
 
-  <p>Reference pages, all live as the site grows: the
-  <a href="glossary.html">glossary</a> (every term, plain English first), the
-  <a href="notation.html">symbol guide</a> (every music symbol — searchable by
-  descriptions like "the fancy F"), the <a href="map.html">concept map</a>,
-  <a href="search.html">search</a> (press <code>/</code> anywhere), and
-  <a href="flashcards.html">flashcards</a> (spaced repetition over terms,
-  symbols, and the quiz questions you missed).</p>
-
   <script>
+    // The 34 sessions. BUILT = how many exist so far (they're written in
+    // order); the rest render as "coming soon". Flipped as milestones land.
+    const BUILT = 1;
+    const PHASES = ["First sounds", "Fretboard & rhythm", "Theory in your hands",
+                    "Grooves & lines", "Styles", "Expert moves"];
+    const SESSIONS = [
+      [1, "Day one: make it rumble", 0],
+      [2, "Two fingers, one steady beat", 0],
+      [3, "First frets, first landmarks", 0],
+      [4, "Your first bass line", 0],
+      [5, "Count it out loud", 0],
+      [6, "The fretboard is a machine", 1],
+      [7, "Read it: tab and staff", 1],
+      [8, "Meters you'll actually meet", 1],
+      [9, "Interval shapes and their sounds", 1],
+      [10, "One finger per fret", 1],
+      [11, "The major scale under your hand", 2],
+      [12, "Keys and the circle", 2],
+      [13, "Minor: the other home", 2],
+      [14, "Pentatonics: five safe notes", 2],
+      [15, "Triads: chords one note at a time", 2],
+      [16, "Seventh chords and chord symbols", 2],
+      [17, "Numbers for progressions", 3],
+      [18, "Tone is in your hands", 3],
+      [19, "The groove lab", 3],
+      [20, "Approach notes", 3],
+      [21, "Walking bass 101", 3],
+      [22, "The 12-bar blues", 3],
+      [23, "Forms and charts: play a whole song", 3],
+      [24, "Rock: drive the eighths", 4],
+      [25, "Blues shuffle: the triplet lean", 4],
+      [26, "Funk: the sixteenth grid", 4],
+      [27, "Soul & Motown: singable lines", 4],
+      [28, "Reggae: the space is the note", 4],
+      [29, "Jazz walking: your walk goes to work", 4],
+      [30, "Modes in your hands", 5],
+      [31, "Extensions: 9s, 11s, 13s", 5],
+      [32, "Analyze a song in four passes", 5],
+      [33, "Steal it, then say it back", 5],
+      [34, "Slap, tap, harmonics — and what's next", 5],
+    ];
+
     document.addEventListener("DOMContentLoaded", () => {
-      const pages = window.BassProgress ? BassProgress.all() : {};
-      const done = Object.keys(pages);
-      if (!done.length) return;
-      const box = document.getElementById("resume-box");
-      const text = document.getElementById("resume-text");
-      text.innerHTML = `You've completed <strong>${done.length}</strong> page${done.length > 1 ? "s" : ""} so far — ` +
-        `see them on <a href="map.html">the concept map</a>, or review with <a href="flashcards.html">flashcards</a>.`;
-      box.hidden = false;
+      const slug = (n) => "session-" + String(n).padStart(2, "0");
+      const doneSet = new Set();
+      if (window.BassProgress) {
+        for (const [n] of SESSIONS) {
+          if (BassProgress.isComplete(slug(n))) doneSet.add(n);
+        }
+      }
+
+      // Continue button: first built session not yet completed
+      const next = SESSIONS.find(([n]) => n <= BUILT && !doneSet.has(n));
+      const btn = document.getElementById("continue-btn");
+      const note = document.getElementById("continue-note");
+      if (next) {
+        const [n, title] = next;
+        btn.href = `sessions/${slug(n)}.html`;
+        btn.textContent = `▶ ${doneSet.size ? "Continue with" : "Start"} Session ${n} — ${title}`;
+      } else {
+        btn.href = "sessions/session-01.html";
+        btn.textContent = "▶ All done — replay Session 1, or roam free";
+      }
+      if (doneSet.size) {
+        note.textContent = `${doneSet.size} of ${SESSIONS.length} sessions done. ` +
+          (doneSet.size >= SESSIONS.length ? "Take a bow." : "Keep the streak alive.");
+      }
+
+      // Phase-grouped session list
+      const wrap = document.getElementById("session-phases");
+      PHASES.forEach((phaseName, pi) => {
+        const inPhase = SESSIONS.filter(([, , p]) => p === pi);
+        const h2 = document.createElement("h2");
+        h2.className = "phase-head";
+        h2.innerHTML = `<span class="phase-num">Phase ${pi + 1}</span> ${phaseName}`;
+        wrap.appendChild(h2);
+        const ol = document.createElement("ol");
+        ol.className = "session-list";
+        for (const [n, title] of inPhase) {
+          const li = document.createElement("li");
+          li.dataset.session = slug(n);
+          const tick = doneSet.has(n)
+            ? '<span class="tick done" aria-label="completed">✓</span>'
+            : '<span class="tick" aria-hidden="true"></span>';
+          if (n <= BUILT) {
+            li.innerHTML = `${tick}<a href="sessions/${slug(n)}.html">
+              <span class="s-num">Session ${n}</span>
+              <span class="s-title">${title}</span></a>`;
+          } else {
+            li.className = "soon";
+            li.innerHTML = `${tick}<span class="s-link"><span class="s-num">Session ${n}</span>
+              <span class="s-title">${title}</span>
+              <span class="badge">coming soon</span></span>`;
+          }
+          ol.appendChild(li);
+        }
+        wrap.appendChild(ol);
+      });
     });
   </script>
 </main>

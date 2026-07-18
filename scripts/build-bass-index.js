@@ -10,7 +10,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..", "bass");
 const DIRS = ["00-start", "01-reading", "02-fretboard", "03-theory",
               "04-technique", "05-basslines", "06-styles", "07-labs",
-              "08-expert"]
+              "08-expert", "sessions"]
   .filter((d) => fs.existsSync(path.join(ROOT, d)));
 
 function textify(html) {
