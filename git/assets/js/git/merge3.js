@@ -257,8 +257,13 @@
       `--- ${options.oldMissing ? "/dev/null" : "a/" + path}`,
       `+++ ${options.newMissing ? "/dev/null" : "b/" + path}`,
     ].filter(Boolean);
+    // git's hunk header: "start,count", with ",count" dropped when it is 1 and
+    // start forced to 0 when the range is empty (a new or deleted file).
+    const range = (start, count) =>
+      count === 0 ? "0,0" : count === 1 ? `${start}` : `${start},${count}`;
     const body = hunks.map((h) =>
-      [`@@ -${h.oldStart},${h.oldCount} +${h.newStart},${h.newCount} @@`, ...h.lines].join("\n"));
+      [`@@ -${range(h.oldStart, h.oldCount)} +${range(h.newStart, h.newCount)} @@`,
+        ...h.lines].join("\n"));
     return head.concat(body).join("\n") + "\n";
   }
 
