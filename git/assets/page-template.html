@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!-- Git Tutor page template. Copy into a unit folder (e.g. 02-rewriting/) and fill in.
+     Every topic page follows the same flow:
+       The idea → Try it (a real repository) → The details (layered) →
+       What git actually did → Lab → Quiz → Where this goes next.
+     House rules (git/PLAN.md):
+       · This learner already uses git. Skip "what is a commit"; go straight to the
+         mechanism, and respect that they have shipped work with the commands they know.
+       · Show the machinery. Where a lesson has a file behind it (.git/HEAD,
+         logs/HEAD, rebase-merge/git-rebase-todo), open that file on the page.
+       · Never fake a command. If the sandbox can't run it, say so in a
+         <div class="box sim-note"> and narrate it honestly.
+       · Never hard-code an object id in prose — the learner's ids differ from
+         ours. Refer to commits by subject, HEAD~n, or a short prefix they can copy. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAGE TITLE — Git Tutor</title>
+
+  <!-- Page contract, read by site.js -->
+  <meta name="git:unit" content="UNIT NAME">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="PREV.html|PREV TITLE">
+  <meta name="git:next" content="NEXT.html|NEXT TITLE">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox. Uncomment on any page with a lab: two vendored files, loaded
+       in order, then the engine. Unit pages sit two levels below the repo root,
+       hence ../../node_modules/. Pages without a lab shouldn't pay for this. -->
+  <!--
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+  -->
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit N · UNIT NAME</p>
+  <h1>PAGE TITLE</h1>
+  <p class="lede">One sentence saying what this page makes possible.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    What this page assumes, with links to the pages that cover it.
+  </div>
+
+  <h2>The idea</h2>
+  <p>What the mechanism is, in plain words, before any flags. Introduce the term
+  only after the idea, and make it a glossary term:
+  "…git calls this the
+  <strong><dfn data-term="reflog">reflog</dfn></strong>."
+  (data-term slugs must exist in git/data/glossary.json — add new entries there.)</p>
+
+  <h2>Try it</h2>
+  <p>What to type, and what to watch while you type it.</p>
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The short version</summary>
+    <div class="layer-body"><p>…</p></div>
+  </details>
+  <details class="layer">
+    <summary>What git writes to disk</summary>
+    <div class="layer-body">
+      <p>…</p>
+      <ul class="symbol-legend" data-symbols="COMMA,SEPARATED,SYNTAX"></ul>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>…</p>
+
+  <!-- Syntax used on this page: what it's called, how to say it, what it selects -->
+  <script type="application/json" class="symbols">
+  { "HEAD~3": { "name": "HEAD~3 — three back", "pron": "say: head tilde three",
+                "means": "three steps back along first parents", "short": "3 back" } }
+  </script>
+
+  <!-- Labs: rendered by lab.js, indexed by scripts/build-git-index.js.
+       Lab ids must be globally unique — prefix them with the page slug.
+       "fixture" names a history in git/assets/js/git/fixtures.js.
+       "check" names a predicate in git/assets/js/labs/checks.js — the build
+       script fails on an unknown fixture or check, so typos can't ship. -->
+  <script type="application/json" class="lab">
+  { "pageId": "PAGE-SLUG",
+    "labs": [
+      { "id": "PAGE-SLUG-first-lab",
+        "title": "…",
+        "fixture": "linear-5",
+        "task": "One sentence: what to achieve.",
+        "show": ["dag"],
+        "goals": [
+          { "text": "…", "check": { "commitCount": { "eq": 5 } } } ],
+        "hints": ["…"],
+        "solution": ["git …"] } ] }
+  </script>
+
+  <!-- Quiz: understanding, not vocabulary; id = the page slug -->
+  <script type="application/json" class="quiz">
+  { "id": "PAGE-SLUG",
+    "questions": [
+      { "q": "…?", "choices": ["…", "…", "…"], "answer": 0, "explain": "…" } ] }
+  </script>
+
+  <script>
+    // Page-specific wiring (bespoke checks, extra widgets) goes here.
+    // GTChecks.register("PAGE-SLUG-special", async (repo, params) => …);
+  </script>
+</main>
+</body>
+</html>

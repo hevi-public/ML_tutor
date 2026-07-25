@@ -66,9 +66,15 @@
   // LightningFS exposes promises under .promises, as does node:fs.
   const pfs = () => theFs().promises;
 
+  /** LightningFS debounces its superblock write and may apply file operations
+      out of order, so a tab that dies mid-command can leave a corrupt repo.
+      Flushing after every mutation is the documented fix. The promise form is
+      the one to call — fs.flush() itself is callback-style. */
   async function flush() {
     const fs = theFs();
-    if (typeof fs.flush === "function") await fs.flush();
+    if (fs.promises && typeof fs.promises.flush === "function") {
+      await fs.promises.flush();
+    }
   }
 
   /* ---------- paths ---------- */
