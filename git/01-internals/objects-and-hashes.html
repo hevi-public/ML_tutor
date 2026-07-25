@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Objects and hashes — Git Tutor</title>
+
+  <meta name="git:unit" content="Internals & plumbing">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="../00-start/mental-model.html|The one mental model">
+  <meta name="git:next" content="blobs-trees-commits.html|Blobs, trees and commits">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Internals & plumbing</p>
+  <h1>Objects and hashes</h1>
+  <p class="lede">Git is a key-value store where the key is the hash of the value. Once you have typed that hash out by hand, half of git's behaviour stops being surprising.</p>
+
+  <h2>The idea</h2>
+  <p>Git stores four kinds of <dfn data-term="object">object</dfn>: a
+  <dfn data-term="blob">blob</dfn> (a file's contents), a
+  <dfn data-term="tree">tree</dfn> (a directory listing), a commit, and an
+  <dfn data-term="annotated-tag">annotated tag</dfn>. Each one is stored under a
+  key, and the key is the SHA-1 hash of the object itself. That's the whole
+  storage layer.</p>
+
+  <p>The hash isn't taken over the file's bytes alone. Git prefixes a header —
+  the type, a space, the length in bytes, and a zero byte — and hashes the
+  lot:</p>
+
+  <pre>sha1("blob " + &lt;length&gt; + "\0" + &lt;contents&gt;)</pre>
+
+  <p>So a 12-byte file containing <code>hello world\n</code> is hashed as the
+  17 bytes <code>blob 12\0hello world\n</code>. You can reproduce this outside
+  git with any SHA-1 tool, and people do, as a sanity check.</p>
+
+  <p>Being <em>content-addressed</em> has consequences you rely on daily:</p>
+  <ul>
+    <li>Identical content is stored once, however many commits or branches
+    contain it.</li>
+    <li>An id cannot lie about what it names. Corruption is detectable: rehash
+    the object and compare.</li>
+    <li>Nothing can be edited in place. Every command that appears to modify
+    history actually writes new objects — which is why so much of what looks
+    destroyed is merely unnamed.</li>
+  </ul>
+
+  <h2>Try it</h2>
+  <p>Type this in the sandbox and watch the id show up as a filename:</p>
+
+  <pre>echo "hello world" &gt; hello.txt
+git hash-object hello.txt          # compute the id, store nothing
+git hash-object -w hello.txt       # compute it and write the object
+ls .git/objects/                   # the first two hex characters are the directory
+git cat-file -t &lt;paste the id&gt;      # what type is it?
+git cat-file -p &lt;paste the id&gt;      # print it back</pre>
+
+  <p>Note what did <em>not</em> happen: nothing was committed, nothing was staged,
+  and <code>git status</code> still shows an untracked file. You put an object in
+  the database directly.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Where the object actually lands</summary>
+    <div class="layer-body">
+      <p>An id like <code>3b18e512dba79e4c8300dd08aeb37f8e728b8dad</code> becomes
+      the path</p>
+      <pre>.git/objects/3b/18e512dba79e4c8300dd08aeb37f8e728b8dad</pre>
+      <p>The two-character directory exists purely so that no single directory
+      ends up with a hundred thousand entries. The file itself is the header plus
+      contents, zlib-compressed — so <code>cat</code> shows you binary, and
+      <code>git cat-file -p</code> is how you read it.</p>
+      <p>This form is called a <dfn data-term="loose-object">loose object</dfn>.
+      Git later bundles many of them into a
+      <dfn data-term="packfile">packfile</dfn>, which is
+      <a href="../06-expert/packfiles-and-gc.html">its own topic</a>.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>SHA-1, and why git isn't worried</summary>
+    <div class="layer-body">
+      <p>SHA-1 has been broken for collision resistance since 2017. Git's
+      exposure is smaller than it sounds — an attacker needs a collision between
+      two objects where you would accept either — but it is real, and git ships
+      collision detection that rejects the known attack patterns. The long-term
+      answer is SHA-256 repositories, which git supports and almost nobody uses
+      yet, because every hosting provider and tool would have to agree at once.</p>
+      <p>Practical upshot: the ids in your repository are fine. Don't build a
+      security boundary on them.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Why abbreviated ids work, and when they stop</summary>
+    <div class="layer-body">
+      <p>You can name an object by any unambiguous prefix of its id — usually
+      seven characters. Git resolves the prefix by looking for exactly one match
+      and errors if there are two. Very large repositories eventually need more
+      characters; git lengthens its own output automatically as a repository
+      grows, which is why the ids in <code>git log --oneline</code> are
+      occasionally eight or nine characters.</p>
+      <ul class="symbol-legend" data-symbols="&lt;sha&gt;,HEAD"></ul>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p><a href="blobs-trees-commits.html">Blobs, trees and commits</a> walks from a
+  commit down to a file's bytes, using nothing but <code>cat-file</code> — and
+  then <a href="commit-by-hand.html">A commit, by hand</a> builds one from
+  scratch with plumbing commands, which is the moment porcelain stops being
+  magic.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "<sha>": {
+      "name": "an abbreviated object id",
+      "pron": "say: the sha, or the hash",
+      "means": "any unambiguous prefix of a 40-character object id \u2014 7 characters is usually enough",
+      "short": "short id"
+    },
+    "HEAD": {
+      "name": "HEAD \u2014 where you are",
+      "pron": "say: head",
+      "means": "the commit you have checked out",
+      "short": "you are here"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "objects-and-hashes",
+    "labs": [
+      {
+        "id": "objects-and-hashes-write-a-blob",
+        "title": "Put an object in the database by hand",
+        "fixture": "two-files",
+        "task": "Write a blob containing the exact text <code>hello world</code> (with a trailing newline) into the object database \u2014 without staging or committing anything.",
+        "show": [
+          "objects"
+        ],
+        "inspect": "HEAD",
+        "goals": [
+          {
+            "text": "the blob exists in the object database",
+            "check": {
+              "objectExists": {
+                "oid": "3b18e512dba79e4c8300dd08aeb37f8e728b8dad",
+                "type": "blob"
+              }
+            }
+          },
+          {
+            "text": "you didn't commit anything (still one commit)",
+            "check": {
+              "commitCount": {
+                "eq": 1
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>echo \"hello world\" &gt; hello.txt</code> gives you the exact bytes, newline included.",
+          "<code>git hash-object</code> only computes the id. The <code>-w</code> flag is what writes it."
+        ],
+        "solution": [
+          "echo \"hello world\" > hello.txt",
+          "git hash-object -w hello.txt      # 3b18e512dba79e4c8300dd08aeb37f8e728b8dad",
+          "git cat-file -p 3b18e51"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "objects-and-hashes",
+    "questions": [
+      {
+        "q": "Two files in different directories have byte-identical contents. How many blobs does git store?",
+        "choices": [
+          "Two \u2014 one per path",
+          "One \u2014 the content is the key, and the paths live in trees",
+          "One, but only after gc runs"
+        ],
+        "answer": 1,
+        "explain": "A blob is addressed by its contents alone; it doesn't know its own name. The two paths appear in tree objects, both pointing at the same blob."
+      },
+      {
+        "q": "Why is `sha1(file contents)` not the file's git object id?",
+        "choices": [
+          "Git hashes the compressed bytes instead",
+          "Git prefixes a header \u2014 \"blob <length>\\\\0\" \u2014 and hashes that too",
+          "Git salts the hash with the repository id"
+        ],
+        "answer": 1,
+        "explain": "The header makes the type and length part of the identity, so a blob and a commit with the same payload can't collide. It's also why you can reproduce an id with a plain sha1sum if you construct the header yourself."
+      },
+      {
+        "q": "You run `git hash-object -w` on a file and then delete the file. What's in the repository?",
+        "choices": [
+          "Nothing \u2014 unwritten objects are discarded",
+          "A blob, unreachable from any ref, that gc would eventually prune",
+          "A commit containing that file"
+        ],
+        "answer": 1,
+        "explain": "The blob is real and stored, but no tree or commit references it, so it's unreachable. This is exactly the state `git fsck` reports as dangling."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

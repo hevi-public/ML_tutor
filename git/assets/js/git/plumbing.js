@@ -293,6 +293,33 @@
 
     if (spec === "" || spec === "@") spec = "HEAD";
 
+    // <rev>:<path> — the blob (or tree) at that path in that commit
+    const colon = spec.indexOf(":");
+    if (colon > 0) {
+      const rev = spec.slice(0, colon);
+      const path = spec.slice(colon + 1);
+      const commitOid = await revParse(dir, rev || "HEAD");
+      const files = await flattenTree(dir, await treeOfCommit(dir, commitOid));
+      const meta = files.get(path);
+      if (meta) return meta.oid;
+      // Could be a directory: resolve it to the subtree's own id.
+      const { tree } = await g().readTree({
+        ...GT.ctx(dir), oid: await treeOfCommit(dir, commitOid),
+      });
+      const walk = async (entries, parts) => {
+        const [head, ...rest] = parts;
+        const entry = entries.find((e) => e.path === head);
+        if (!entry) return null;
+        if (!rest.length) return entry.oid;
+        if (entry.type !== "tree") return null;
+        const sub = await g().readTree({ ...GT.ctx(dir), oid: entry.oid });
+        return walk(sub.tree, rest);
+      };
+      const found = await walk(tree, path.split("/"));
+      if (found) return found;
+      throw new Error(`path '${path}' does not exist in '${rev}'`);
+    }
+
     // :/text — search commit messages, newest first
     if (spec.startsWith(":/")) {
       const needle = spec.slice(2);

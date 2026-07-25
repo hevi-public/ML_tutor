@@ -1,0 +1,421 @@
+{
+  "object": {
+    "term": "object",
+    "plain": "One of the four things git stores: a file's contents, a directory listing, a commit, or a tag.",
+    "definition": "The unit of storage in git's database. Every object is stored under the SHA-1 hash of its own contents, which is why the same content is never stored twice and why an id can never disagree with what it names. The four types are blob, tree, commit and tag.",
+    "also": ["object database", "content-addressed"],
+    "see": ["blob", "tree", "commit", "loose-object"],
+    "taughtIn": { "href": "01-internals/objects-and-hashes.html", "title": "Objects and hashes" }
+  },
+  "blob": {
+    "term": "blob",
+    "plain": "A file's contents, with no name and no history attached.",
+    "definition": "The object type that stores file content. A blob knows nothing about its filename, its permissions or where it sits — a tree supplies all of that. Two identical files anywhere in history are one blob.",
+    "see": ["tree", "object"],
+    "taughtIn": { "href": "01-internals/blobs-trees-commits.html", "title": "Blobs, trees and commits" }
+  },
+  "tree": {
+    "term": "tree",
+    "plain": "A directory listing: names, permissions, and the object each name points at.",
+    "definition": "The object type that gives structure to blobs. Each entry has a mode, a name, and the id of a blob (a file) or another tree (a subdirectory). A commit points at exactly one tree: the complete state of the project at that moment.",
+    "see": ["blob", "commit", "mode"],
+    "taughtIn": { "href": "01-internals/blobs-trees-commits.html", "title": "Blobs, trees and commits" }
+  },
+  "commit": {
+    "term": "commit",
+    "plain": "A snapshot plus who made it, when, why, and what came before it.",
+    "definition": "An object holding one tree id, zero or more parent commit ids, an author, a committer, and a message. Because the parent ids are part of the hashed content, changing any commit changes every commit after it — the fact that makes rewriting history a rebuild rather than an edit.",
+    "see": ["tree", "parent", "rewrite"],
+    "taughtIn": { "href": "01-internals/blobs-trees-commits.html", "title": "Blobs, trees and commits" }
+  },
+  "annotated-tag": {
+    "term": "annotated tag",
+    "plain": "A tag that is its own object, with a tagger, a date and a message.",
+    "definition": "Created by `git tag -a`. Unlike a lightweight tag — which is just a ref pointing at a commit — an annotated tag is a fourth kind of object that points at a commit and carries its own metadata, and can be signed.",
+    "also": ["lightweight tag"],
+    "see": ["ref", "object"],
+    "taughtIn": { "href": "01-internals/refs-and-heads.html", "title": "Refs, HEAD and symbolic refs" }
+  },
+  "ref": {
+    "term": "ref",
+    "plain": "A name that points at a commit — a branch, a tag, or a remote-tracking name.",
+    "definition": "A file under .git/refs/ (or a line in .git/packed-refs) containing an object id. Branches are refs under refs/heads/, tags under refs/tags/, remote-tracking refs under refs/remotes/. Nearly every git command is, underneath, a way of moving a ref.",
+    "also": ["reference"],
+    "see": ["branch", "head", "symbolic-ref"],
+    "taughtIn": { "href": "01-internals/refs-and-heads.html", "title": "Refs, HEAD and symbolic refs" }
+  },
+  "branch": {
+    "term": "branch",
+    "plain": "A movable name for one commit — and, by following parents, all of its history.",
+    "definition": "A ref under refs/heads/. A branch holds exactly one commit id and moves forward when you commit on it. It is not a container of commits: deleting a branch deletes only the name, which is why the commits survive long enough for the reflog to find them.",
+    "see": ["ref", "head", "reflog"],
+    "taughtIn": { "href": "00-start/mental-model.html", "title": "The one mental model" }
+  },
+  "head": {
+    "term": "HEAD",
+    "plain": "Where you are: the commit you have checked out.",
+    "definition": "A symbolic ref in .git/HEAD, normally containing `ref: refs/heads/<branch>` — so it points at a branch, which points at a commit. Committing moves the branch HEAD names, which is how HEAD comes along for the ride.",
+    "see": ["detached-head", "symbolic-ref", "ref"],
+    "taughtIn": { "href": "01-internals/refs-and-heads.html", "title": "Refs, HEAD and symbolic refs" }
+  },
+  "detached-head": {
+    "term": "detached HEAD",
+    "plain": "HEAD points straight at a commit instead of at a branch.",
+    "definition": "The state after `git checkout <commit>`. Commits you make still get created, but no branch moves to include them, so they become unreachable the moment you leave — findable only through the reflog. Rebase and bisect both work in this state deliberately.",
+    "see": ["head", "reflog", "unreachable"],
+    "taughtIn": { "href": "01-internals/refs-and-heads.html", "title": "Refs, HEAD and symbolic refs" }
+  },
+  "symbolic-ref": {
+    "term": "symbolic ref",
+    "plain": "A ref that points at another ref instead of at a commit.",
+    "definition": "HEAD is the one you meet daily: it contains a ref name, not an object id. `git symbolic-ref HEAD` reads it; writing it is how `git checkout <branch>` switches branches without touching a single file's content.",
+    "see": ["head", "ref"],
+    "taughtIn": { "href": "01-internals/refs-and-heads.html", "title": "Refs, HEAD and symbolic refs" }
+  },
+  "index": {
+    "term": "the index",
+    "plain": "The list of exactly what your next commit will contain.",
+    "definition": "A binary file, .git/index, holding a full flat list of paths with the blob id and file stats for each. `git add` writes into it; `git commit` turns it into a tree. It is the third of the three trees — HEAD, the index, the working tree — and most confusing git states are a disagreement between them.",
+    "also": ["staging area", "cache"],
+    "see": ["worktree", "tree"],
+    "taughtIn": { "href": "01-internals/the-index.html", "title": "The index, properly" }
+  },
+  "worktree": {
+    "term": "working tree",
+    "plain": "The actual files on disk that you edit.",
+    "definition": "The checked-out copy of your project. Git compares it against the index to tell you what is unstaged, and against HEAD to tell you what has changed since the last commit. `git reset --hard` is the one common command that overwrites it.",
+    "also": ["working directory", "worktree"],
+    "see": ["index", "linked-worktree"],
+    "taughtIn": { "href": "01-internals/the-index.html", "title": "The index, properly" }
+  },
+  "reflog": {
+    "term": "reflog",
+    "plain": "A local diary of every position a ref has held.",
+    "definition": "Plain text under .git/logs/: one line per movement of a ref, with the old id, the new id, who moved it and why. It is what makes almost every git accident recoverable, because a commit dropped by reset, rebase or a deleted branch is still named in the log. It is local, private, and expires.",
+    "see": ["orig-head", "unreachable", "reset"],
+    "taughtIn": { "href": "02-rewriting/reflog-recovery.html", "title": "Recovering with the reflog" }
+  },
+  "orig-head": {
+    "term": "ORIG_HEAD",
+    "plain": "Where HEAD was just before the last big move.",
+    "definition": "A file git writes before operations that move HEAD a long way — reset, rebase, merge, pull. `git reset --hard ORIG_HEAD` is the one-step undo for the operation you just regretted.",
+    "see": ["reflog", "reset"],
+    "taughtIn": { "href": "02-rewriting/reset-vs-revert.html", "title": "reset versus revert" }
+  },
+  "parent": {
+    "term": "parent",
+    "plain": "The commit that came before this one.",
+    "definition": "Recorded inside the commit object. A normal commit has one parent, a merge commit has two or more, and the very first commit has none. The first parent is special: it is the branch you were on when you merged, and what `~` and --first-parent follow.",
+    "see": ["commit", "merge-commit", "first-parent"],
+    "taughtIn": { "href": "00-start/mental-model.html", "title": "The one mental model" }
+  },
+  "first-parent": {
+    "term": "first parent",
+    "plain": "For a merge commit, the branch you were standing on when you merged.",
+    "definition": "Parent number one. `HEAD~3` walks first parents only, and `git log --first-parent` shows the trunk's own story without every merged branch's commits mixed in.",
+    "see": ["parent", "merge-commit"],
+    "taughtIn": { "href": "01-internals/revision-syntax.html", "title": "Revision syntax" }
+  },
+  "merge-commit": {
+    "term": "merge commit",
+    "plain": "A commit with more than one parent, joining two lines of history.",
+    "definition": "What `git merge` creates when it can't fast-forward. Its tree is the combined result; its parents record both sides, which is what preserves the fact that the two branches existed.",
+    "see": ["fast-forward", "merge-base", "parent"],
+    "taughtIn": { "href": "02-rewriting/rebase-vs-merge.html", "title": "Rebase versus merge" }
+  },
+  "merge-base": {
+    "term": "merge base",
+    "plain": "The most recent commit both branches share.",
+    "definition": "The common ancestor a three-way merge measures from: git compares each side against the base to work out what each side changed. `git merge-base a b` prints it.",
+    "see": ["three-way-merge", "merge-commit"],
+    "taughtIn": { "href": "04-workflow/merge-strategies-and-rerere.html", "title": "Merge strategies and rerere" }
+  },
+  "three-way-merge": {
+    "term": "three-way merge",
+    "plain": "Combining two versions by looking at what each changed from a common starting point.",
+    "definition": "Compare base→ours and base→theirs. Where only one side changed a region, take that side; where both changed it the same way, take it once; where both changed it differently, that is a conflict. Merge, cherry-pick, revert and every step of rebase are all this operation.",
+    "see": ["merge-base", "conflict"],
+    "taughtIn": { "href": "02-rewriting/cherry-pick.html", "title": "Cherry-pick" }
+  },
+  "conflict": {
+    "term": "conflict",
+    "plain": "Both sides changed the same lines differently, so git stops and asks you.",
+    "definition": "Git writes both versions into the file between `<<<<<<<`, `=======` and `>>>>>>>` markers, leaves the path unstaged, and records the in-progress state in .git/. Resolving means editing the file, staging it, and continuing — the marker is a note to you, not a format git understands.",
+    "also": ["conflict markers"],
+    "see": ["three-way-merge", "rerere"],
+    "taughtIn": { "href": "04-workflow/merge-strategies-and-rerere.html", "title": "Merge strategies and rerere" }
+  },
+  "fast-forward": {
+    "term": "fast-forward",
+    "plain": "Moving a branch straight up to a commit that already contains it.",
+    "definition": "When your branch tip is an ancestor of what you're merging, git can simply slide the ref forward without making a merge commit. `--no-ff` forces a merge commit anyway; `--ff-only` refuses anything else. The same test decides whether a push is allowed.",
+    "see": ["non-fast-forward", "merge-commit", "ancestor"],
+    "taughtIn": { "href": "02-rewriting/rebase-vs-merge.html", "title": "Rebase versus merge" }
+  },
+  "non-fast-forward": {
+    "term": "non-fast-forward",
+    "plain": "The update would drop commits the other side already has, so git refuses.",
+    "definition": "The rejection you get pushing a rewritten branch: the remote's tip is not an ancestor of yours, so accepting your push would make its commits unreachable. Forcing overrides the check; --force-with-lease overrides it safely.",
+    "see": ["fast-forward", "force-with-lease"],
+    "taughtIn": { "href": "04-workflow/force-with-lease.html", "title": "--force-with-lease" }
+  },
+  "ancestor": {
+    "term": "ancestor",
+    "plain": "A commit you can reach by walking backwards from another one.",
+    "definition": "Reachability is the relation nearly every git decision rests on: whether a merge can fast-forward, whether a push is safe, whether an object survives gc, what a range means. `git merge-base --is-ancestor a b` tests it.",
+    "see": ["reachable", "fast-forward"],
+    "taughtIn": { "href": "00-start/mental-model.html", "title": "The one mental model" }
+  },
+  "reachable": {
+    "term": "reachable",
+    "plain": "Some ref can get to it by following parents and trees.",
+    "definition": "An object is reachable if a walk from any ref arrives at it. Reachable objects are permanent; unreachable ones are candidates for garbage collection. Reflog entries also count as starting points, which is exactly why they buy you recovery time.",
+    "see": ["unreachable", "dangling", "gc"],
+    "taughtIn": { "href": "03-forensics/fsck-and-dangling.html", "title": "fsck and dangling objects" }
+  },
+  "unreachable": {
+    "term": "unreachable",
+    "plain": "Still in the database, but no ref can find it any more.",
+    "definition": "What a commit becomes after the branch naming it is deleted or moved off it. It still exists byte-for-byte until git prunes it, which is why recovery is usually possible — via the reflog if it's still listed there, via `git fsck --unreachable` if it isn't.",
+    "see": ["dangling", "reachable", "reflog"],
+    "taughtIn": { "href": "03-forensics/fsck-and-dangling.html", "title": "fsck and dangling objects" }
+  },
+  "dangling": {
+    "term": "dangling",
+    "plain": "Unreachable, and nothing else unreachable points at it either.",
+    "definition": "git fsck's word for the tip of an orphaned chain. The distinction from plain 'unreachable' is useful in practice: dangling commits are the heads of lost work, so they are the ones worth looking at first.",
+    "see": ["unreachable", "fsck"],
+    "taughtIn": { "href": "03-forensics/fsck-and-dangling.html", "title": "fsck and dangling objects" }
+  },
+  "fsck": {
+    "term": "fsck",
+    "plain": "Checks the object database and lists what nothing points at.",
+    "definition": "`git fsck` verifies that objects are well-formed and connected, and reports dangling and unreachable ones. With --no-reflogs it ignores the reflog as a starting point, which reveals what is genuinely stranded rather than merely unnamed.",
+    "see": ["dangling", "unreachable", "gc"],
+    "taughtIn": { "href": "03-forensics/fsck-and-dangling.html", "title": "fsck and dangling objects" }
+  },
+  "loose-object": {
+    "term": "loose object",
+    "plain": "One object stored as one compressed file.",
+    "definition": "The simple storage form: .git/objects/ab/cdef… where the path is the object's own hash. Git periodically bundles many loose objects into a packfile to save space and speed up walks.",
+    "see": ["packfile", "gc", "object"],
+    "taughtIn": { "href": "01-internals/objects-and-hashes.html", "title": "Objects and hashes" }
+  },
+  "packfile": {
+    "term": "packfile",
+    "plain": "Many objects in one file, stored as differences from each other.",
+    "definition": "The compact storage form, with an index file beside it for lookups. Objects in a pack are often kept as deltas against a similar object, which is why a repository with thousands of versions of one file stays small.",
+    "see": ["loose-object", "gc"],
+    "taughtIn": { "href": "06-expert/packfiles-and-gc.html", "title": "Packfiles and gc" }
+  },
+  "gc": {
+    "term": "gc",
+    "plain": "Tidies the object database, and eventually deletes what nothing points at.",
+    "definition": "`git gc` packs loose objects and prunes unreachable ones older than a grace period (two weeks by default), after expiring old reflog entries. It is the only routine operation that actually destroys lost commits, which is why recovery is a race you almost always win.",
+    "see": ["packfile", "unreachable", "reflog"],
+    "taughtIn": { "href": "06-expert/packfiles-and-gc.html", "title": "Packfiles and gc" }
+  },
+  "plumbing": {
+    "term": "plumbing",
+    "plain": "The low-level commands git's own scripts are built from.",
+    "definition": "hash-object, cat-file, write-tree, commit-tree, update-ref and friends: stable, scriptable, and unconcerned with being friendly. The commands you use daily — 'porcelain' — are convenience layers over these.",
+    "also": ["porcelain"],
+    "see": ["object", "index"],
+    "taughtIn": { "href": "01-internals/commit-by-hand.html", "title": "A commit, by hand" }
+  },
+  "amend": {
+    "term": "amend",
+    "plain": "Replace the last commit with a new one.",
+    "definition": "`git commit --amend` does not edit a commit — it cannot, because a commit's id is its content. It builds a new commit with the same parent and moves the branch to it, leaving the old one unreachable and recoverable from the reflog.",
+    "see": ["rewrite", "reflog"],
+    "taughtIn": { "href": "02-rewriting/amend.html", "title": "Amending the last commit" }
+  },
+  "rewrite": {
+    "term": "rewriting history",
+    "plain": "Building replacement commits and pointing the branch at them.",
+    "definition": "What amend, rebase, cherry-pick and filter-repo all do. The originals are never modified; they are abandoned. This is why rewriting is safe on your own branch and rude on a shared one: everyone else's history still contains the commits you abandoned.",
+    "see": ["amend", "rebase", "unreachable"],
+    "taughtIn": { "href": "02-rewriting/rewriting-published-history.html", "title": "Rewriting published history" }
+  },
+  "rebase": {
+    "term": "rebase",
+    "plain": "Replay your commits on top of a different starting point.",
+    "definition": "For each commit in a range, git works out what it changed and applies that change onto a new base, creating a new commit with a new id. The result is a linear history that looks as if you had started from the newer base — a story that never actually happened, told more clearly.",
+    "see": ["interactive-rebase", "rewrite", "onto"],
+    "taughtIn": { "href": "02-rewriting/interactive-rebase.html", "title": "Interactive rebase" }
+  },
+  "interactive-rebase": {
+    "term": "interactive rebase",
+    "plain": "A rebase where you get to edit the list of steps first.",
+    "definition": "`git rebase -i` writes a todo list to .git/rebase-merge/git-rebase-todo and opens it in your editor. Changing a line's command — pick, reword, edit, squash, fixup, drop, exec — changes what happens to that commit. It is a small programming language for history.",
+    "see": ["rebase", "squash", "fixup", "todo-list"],
+    "taughtIn": { "href": "02-rewriting/interactive-rebase.html", "title": "Interactive rebase" }
+  },
+  "todo-list": {
+    "term": "todo list",
+    "plain": "The file that says what an interactive rebase will do, step by step.",
+    "definition": ".git/rebase-merge/git-rebase-todo. Git reads it top to bottom, and rewrites it as it goes, so `--continue` after a conflict simply resumes where the file says it got to. Because it is a file, you can inspect it mid-rebase.",
+    "see": ["interactive-rebase"],
+    "taughtIn": { "href": "02-rewriting/interactive-rebase.html", "title": "Interactive rebase" }
+  },
+  "squash": {
+    "term": "squash",
+    "plain": "Fold a commit into the one before it, keeping both messages.",
+    "definition": "A rebase todo command. The two commits become one whose tree is the later state and whose message you get to edit, combining both. Use fixup instead when the second message is just 'oops'.",
+    "see": ["fixup", "interactive-rebase", "autosquash"],
+    "taughtIn": { "href": "02-rewriting/squash-fixup-autosquash.html", "title": "squash, fixup, autosquash" }
+  },
+  "fixup": {
+    "term": "fixup",
+    "plain": "Fold a commit into the one before it and throw its message away.",
+    "definition": "Like squash without the message merge. `git commit --fixup=<commit>` writes a commit whose subject is `fixup! <that commit's subject>`, so a later `rebase --autosquash` knows where it belongs without you reordering anything.",
+    "see": ["squash", "autosquash"],
+    "taughtIn": { "href": "02-rewriting/squash-fixup-autosquash.html", "title": "squash, fixup, autosquash" }
+  },
+  "autosquash": {
+    "term": "autosquash",
+    "plain": "Moves every fixup! commit under the commit it names, automatically.",
+    "definition": "`git rebase -i --autosquash` reorders the todo list before showing it to you: each `fixup!`/`squash!` commit is placed directly after its target with its command changed. With rebase.autoSquash=true it is the default, and reviewing a branch becomes a two-command habit.",
+    "see": ["fixup", "interactive-rebase"],
+    "taughtIn": { "href": "02-rewriting/squash-fixup-autosquash.html", "title": "squash, fixup, autosquash" }
+  },
+  "onto": {
+    "term": "--onto",
+    "plain": "Says where the replayed commits should land, separately from which ones they are.",
+    "definition": "`git rebase --onto <newbase> <upstream> [branch]` splits the two questions rebase normally conflates: `<upstream>..branch` chooses the commits, `<newbase>` chooses the destination. The tool for lifting a branch off the wrong parent.",
+    "see": ["rebase"],
+    "taughtIn": { "href": "02-rewriting/rebase-onto.html", "title": "rebase --onto" }
+  },
+  "cherry-pick": {
+    "term": "cherry-pick",
+    "plain": "Copy one commit's change onto the branch you're on.",
+    "definition": "Applies the difference a commit made and commits the result — a new commit, with a new id, the same author and a new committer. `-x` records which commit it came from, which is the difference between a traceable backport and a mystery.",
+    "see": ["rewrite", "three-way-merge"],
+    "taughtIn": { "href": "02-rewriting/cherry-pick.html", "title": "Cherry-pick" }
+  },
+  "revert": {
+    "term": "revert",
+    "plain": "A new commit that undoes an old one, leaving the old one in place.",
+    "definition": "The safe undo for history other people already have: it adds, rather than rewrites. `git revert <commit>` applies that commit's change backwards. Reverting a merge needs -m to say which side to keep.",
+    "see": ["reset", "rewrite"],
+    "taughtIn": { "href": "02-rewriting/reset-vs-revert.html", "title": "reset versus revert" }
+  },
+  "reset": {
+    "term": "reset",
+    "plain": "Move the current branch, and optionally the index and your files with it.",
+    "definition": "`--soft` moves the branch only; `--mixed` (the default) also makes the index match; `--hard` also overwrites the working tree. Untracked files are never touched by any of them. Nothing is deleted from the database, so the reflog can undo it.",
+    "see": ["revert", "index", "reflog"],
+    "taughtIn": { "href": "02-rewriting/reset-vs-revert.html", "title": "reset versus revert" }
+  },
+  "bisect": {
+    "term": "bisect",
+    "plain": "Binary search through history for the commit that broke something.",
+    "definition": "You mark one commit good and one bad; git checks out the middle one and asks. Each answer halves the range, so a thousand commits take about ten tests. `git bisect run <script>` does the answering for you when the test can be automated.",
+    "see": ["reachable"],
+    "taughtIn": { "href": "03-forensics/bisect.html", "title": "bisect" }
+  },
+  "blame": {
+    "term": "blame",
+    "plain": "Shows which commit last touched each line of a file.",
+    "definition": "Useful, and misleading by default: a rename or a move makes every line look new. `-M` follows lines moved within a file, `-C` follows lines copied from other files in the same commit, and `-L` limits the search to a range of lines.",
+    "see": ["pickaxe"],
+    "taughtIn": { "href": "03-forensics/blame-moves-and-copies.html", "title": "blame, moves and copies" }
+  },
+  "pickaxe": {
+    "term": "pickaxe",
+    "plain": "Searches history for the commits where a string appeared or disappeared.",
+    "definition": "`git log -S<string>` reports commits that changed how many times the string occurs — the ones that added or removed it. `-G<regex>` is broader: every commit whose diff mentions it at all. -S answers 'who introduced this', -G answers 'who touched this'.",
+    "see": ["blame"],
+    "taughtIn": { "href": "03-forensics/pickaxe.html", "title": "The pickaxe" }
+  },
+  "stash": {
+    "term": "stash",
+    "plain": "Shelves your uncommitted changes so you can come back to them.",
+    "definition": "Records the working tree and index as commits parented off HEAD, pointed at by the refs/stash ref, then cleans your worktree. Because they are ordinary commits, a lost stash is recoverable through the stash reflog. `-u` includes untracked files, which the default deliberately doesn't.",
+    "see": ["index", "reflog"],
+    "taughtIn": { "href": "04-workflow/stash-tricks.html", "title": "Stash tricks" }
+  },
+  "linked-worktree": {
+    "term": "linked worktree",
+    "plain": "A second checkout of the same repository, in another directory.",
+    "definition": "`git worktree add` gives you another working tree and another HEAD sharing one object database and one set of refs. Cheaper than a clone, and unlike stashing it lets you have two branches genuinely open at once. Two worktrees cannot have the same branch checked out.",
+    "see": ["worktree", "head"],
+    "taughtIn": { "href": "04-workflow/worktrees.html", "title": "Worktrees" }
+  },
+  "refspec": {
+    "term": "refspec",
+    "plain": "A rule saying which ref maps to which, when you fetch or push.",
+    "definition": "`<src>:<dst>`, optionally prefixed with + to allow a non-fast-forward update. `refs/heads/*:refs/remotes/origin/*` is the fetch refspec that fills in your remote-tracking refs; `git push origin :old` has an empty source, which is how a push deletes a remote branch.",
+    "see": ["remote-tracking-ref", "upstream"],
+    "taughtIn": { "href": "04-workflow/refspecs-and-remotes.html", "title": "Refspecs and remotes" }
+  },
+  "remote-tracking-ref": {
+    "term": "remote-tracking ref",
+    "plain": "Your local note of where a branch on the remote was, last time you looked.",
+    "definition": "A ref under refs/remotes/, such as refs/remotes/origin/main. You never commit on it; fetch updates it. It is a cache, and its being a cache is the whole point: --force-with-lease compares against it to detect that someone else pushed.",
+    "see": ["upstream", "refspec", "force-with-lease"],
+    "taughtIn": { "href": "04-workflow/refspecs-and-remotes.html", "title": "Refspecs and remotes" }
+  },
+  "upstream": {
+    "term": "upstream",
+    "plain": "The remote branch your branch is set up to compare itself against.",
+    "definition": "Configured as branch.<name>.remote and branch.<name>.merge, and written `@{u}` or `@{upstream}`. It is what makes `git status` able to say 'ahead 2, behind 1' without you naming a branch.",
+    "see": ["remote-tracking-ref"],
+    "taughtIn": { "href": "04-workflow/refspecs-and-remotes.html", "title": "Refspecs and remotes" }
+  },
+  "force-with-lease": {
+    "term": "--force-with-lease",
+    "plain": "Force-push, but only if the remote is still where you last saw it.",
+    "definition": "Compares the remote's current tip against your remote-tracking ref and refuses if they differ. This is the difference between overwriting your own rewritten branch and silently deleting a colleague's commit — which is exactly what plain --force does.",
+    "see": ["non-fast-forward", "remote-tracking-ref"],
+    "taughtIn": { "href": "04-workflow/force-with-lease.html", "title": "--force-with-lease" }
+  },
+  "rerere": {
+    "term": "rerere",
+    "plain": "Remembers how you resolved a conflict and replays it next time.",
+    "definition": "'Reuse recorded resolution'. With rerere.enabled, git records the conflict's pre-image and your resolution under .git/rr-cache/ and reapplies it automatically when it sees the same conflict again — which happens constantly when you rebase a long-lived branch repeatedly.",
+    "see": ["conflict"],
+    "taughtIn": { "href": "04-workflow/merge-strategies-and-rerere.html", "title": "Merge strategies and rerere" }
+  },
+  "submodule": {
+    "term": "submodule",
+    "plain": "A pointer to one specific commit of another repository.",
+    "definition": "A tree entry with mode 160000 — a 'gitlink' — naming a commit id, plus a .gitmodules file saying where to clone it from. The superproject records which commit, not which branch, which is the source of both its precision and its reputation.",
+    "also": ["gitlink"],
+    "see": ["mode", "subtree"],
+    "taughtIn": { "href": "04-workflow/submodules-and-subtrees.html", "title": "Submodules and subtrees" }
+  },
+  "subtree": {
+    "term": "subtree",
+    "plain": "Another project's files copied into a subdirectory of yours, history and all.",
+    "definition": "The alternative to a submodule: the files are really in your tree, so a clone needs nothing extra, at the cost of a bigger repository and a more involved update procedure.",
+    "see": ["submodule"],
+    "taughtIn": { "href": "04-workflow/submodules-and-subtrees.html", "title": "Submodules and subtrees" }
+  },
+  "mode": {
+    "term": "mode",
+    "plain": "The number in a tree entry saying what kind of thing it is.",
+    "definition": "100644 a file, 100755 an executable file, 120000 a symlink, 040000 a subdirectory, 160000 a submodule. Git stores no other permissions — the executable bit is the only one that survives a clone.",
+    "see": ["tree", "submodule"],
+    "taughtIn": { "href": "01-internals/blobs-trees-commits.html", "title": "Blobs, trees and commits" }
+  },
+  "hook": {
+    "term": "hook",
+    "plain": "A script git runs at a particular moment, which can refuse to continue.",
+    "definition": "An executable in .git/hooks/ named for its moment: pre-commit, commit-msg, pre-push, post-checkout. A non-zero exit stops the operation. Hooks are not cloned, which is why teams distribute them separately.",
+    "taughtIn": { "href": "04-workflow/hooks.html", "title": "Hooks" }
+  },
+  "sparse-checkout": {
+    "term": "sparse checkout",
+    "plain": "Having only part of the repository's files in your working tree.",
+    "definition": "The index knows about every path, but only the patterns you list get written to disk. Combined with a partial clone (which also skips downloading the blobs you don't need) it is how very large repositories stay workable.",
+    "see": ["index", "worktree"],
+    "taughtIn": { "href": "06-expert/big-repositories.html", "title": "Big repositories" }
+  },
+  "notes": {
+    "term": "notes",
+    "plain": "Extra text attached to a commit without changing it.",
+    "definition": "`git notes` stores annotations in refs/notes/commits, keyed by the commit they describe, so `git log` can display them. Because the commit itself is untouched, its id doesn't change — the only way to add to a commit after the fact.",
+    "taughtIn": { "href": "06-expert/notes-and-replace.html", "title": "Notes and replace refs" }
+  }
+}
