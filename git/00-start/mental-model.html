@@ -155,13 +155,13 @@
   <script type="application/json" class="symbols">
   {
     "HEAD": {
-      "name": "HEAD \u2014 where you are",
+      "name": "HEAD — where you are",
       "pron": "say: head",
       "means": "the commit you have checked out, normally via the branch you're on",
       "short": "you are here"
     },
     "HEAD~3": {
-      "name": "HEAD~3 \u2014 three back",
+      "name": "HEAD~3 — three back",
       "pron": "say: head tilde three",
       "means": "three commits back, following first parents",
       "short": "3 back"
@@ -177,7 +177,7 @@
         "id": "mental-model-branch-is-a-note",
         "title": "Delete a branch without losing the work",
         "fixture": "dangling",
-        "task": "This repo already had a branch deleted \u2014 <code>experiment</code> is gone. Prove the commits survived it, and put a branch back on them.",
+        "task": "This repo already had a branch deleted — <code>experiment</code> is gone. Prove the commits survived it, and put a branch back on them.",
         "show": [
           "dag"
         ],
@@ -213,8 +213,8 @@
           }
         ],
         "hints": [
-          "The graph shows dimmed commits \u2014 those are the ones no branch points at any more. Click one.",
-          "<code>git reflog</code> still names them \u2014 deleting a branch didn't erase its history from HEAD's log. (<code>git fsck --unreachable</code> stays quiet precisely because the reflog can still reach them; add <code>--no-reflogs</code> to see what it says then.)",
+          "The graph shows dimmed commits — those are the ones no branch points at any more. Click one.",
+          "<code>git reflog</code> still names them — deleting a branch didn't erase its history from HEAD's log. (<code>git fsck --unreachable</code> stays quiet precisely because the reflog can still reach them; add <code>--no-reflogs</code> to see what it says then.)",
           "<code>git branch rescued &lt;commit&gt;</code> puts a sticky note back on a commit."
         ],
         "solution": [
@@ -236,7 +236,7 @@
         "q": "You run `git branch -D feature`, which had 4 commits nothing else pointed at. What just happened to those commits?",
         "choices": [
           "They were deleted from the repository",
-          "Nothing happened to them \u2014 only the name was deleted, so they're now unreachable but still stored",
+          "Nothing happened to them — only the name was deleted, so they're now unreachable but still stored",
           "They were merged into main first, automatically"
         ],
         "answer": 1,
@@ -247,7 +247,7 @@
         "choices": [
           "Git renumbers commits so history stays sequential",
           "Because each commit's hash includes its parent's hash, so a new parent id means a new child id, all the way up",
-          "It doesn't \u2014 only the edited commit changes"
+          "It doesn't — only the edited commit changes"
         ],
         "answer": 1,
         "explain": "A commit object contains its parent's id, and the id is a hash of that content. Change the parent and the child necessarily hashes differently. This is why rewriting near the root is expensive and rewriting shared history is antisocial."

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cherry-pick — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="reset-vs-revert.html|reset versus revert">
+  <meta name="git:next" content="interactive-rebase.html|Interactive rebase">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>Cherry-pick</h1>
+  <p class="lede">Copying one commit somewhere else. The mechanism is a three-way merge, which explains both why it usually just works and why the duplicate it leaves behind can bite you later.</p>
+
+  <h2>The idea</h2>
+  <p>You have a fix on one branch and you need it on another. <code>git cherry-pick
+  &lt;commit&gt;</code> applies what that commit changed, here, and commits the
+  result.</p>
+
+  <p>"What that commit changed" is computed, not stored. Git does a
+  <dfn data-term="three-way-merge">three-way merge</dfn> with:</p>
+
+  <table class="ref">
+    <tr><th>base</th><td>the commit's <em>parent</em> — the world before it</td></tr>
+    <tr><th>theirs</th><td>the commit itself — the world after it</td></tr>
+    <tr><th>ours</th><td>where you are now</td></tr>
+  </table>
+
+  <p>That's why a cherry-pick can succeed even when the surrounding code has
+  changed a lot: the merge only needs to reconcile the one region the commit
+  touched. And it's why a conflict here looks exactly like a merge conflict — it
+  <em>is</em> one.</p>
+
+  <p>The result is a <strong>new commit with a new id</strong>: same author, same
+  message, same tree change, different parent. The original stays where it was. You
+  now have the same change twice in your project's history, under two names.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has a <code>hotfix</code> branch with one commit you want on
+  <code>main</code>:</p>
+
+  <pre>git log --oneline --all
+git checkout main
+git cherry-pick hotfix
+git log --oneline                     # a new id, the same subject
+git show HEAD                         # same change
+git cherry-pick -x hotfix~0           # try -x and read the message it writes</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>-x, and why backports need it</summary>
+    <div class="layer-body">
+      <p><code>git cherry-pick -x</code> appends a line to the message:</p>
+      <pre>(cherry picked from commit 961c4c8…)</pre>
+      <p>It costs nothing and it's the only durable record of where the change came
+      from — the new commit has no structural link to the original. On a
+      maintenance branch six months later, that line is the difference between
+      "this was backported from main" and a mystery.</p>
+      <p>Git doesn't do it by default because on a shared feature branch the
+      referenced id may be one you rewrote away, making the note misleading. Rule
+      of thumb: use it when picking <em>from</em> a permanent branch,
+      skip it when picking from something you'll rebase.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Duplicates, and what git can spot</summary>
+    <div class="layer-body">
+      <p>Because the copy is a separate commit, merging the two branches later
+      means git sees two commits making the same change. Usually the merge
+      succeeds and does nothing the second time — the three-way merge notices both
+      sides agree. Sometimes it conflicts, and the conflict is baffling until you
+      realise you're looking at the same change twice.</p>
+      <p><code>git cherry main feature</code> (and <code>git log --cherry-mark
+      --left-right</code>) compare <em>patch ids</em> — a hash of the change rather
+      than of the commit — and mark commits whose change already exists on the
+      other side. This is how <code>git rebase</code> silently drops commits it can
+      tell you've already applied elsewhere.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>-n, ranges, and the useful variants</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>-n</th><td>apply and stage, don't commit. Pick several and make one commit, or edit before committing</td></tr>
+        <tr><th>A..B</th><td>pick a whole range, oldest first</td></tr>
+        <tr><th>--continue</th><td>after resolving a conflict and staging the fix</td></tr>
+        <tr><th>--abort</th><td>put everything back the way it was</td></tr>
+      </table>
+      <p>When a pick of a range stops on a conflict, <code>.git/sequencer/</code>
+      holds the remaining list — the same mechanism interactive rebase uses, which
+      is not a coincidence: <a href="interactive-rebase.html">rebase is
+      cherry-pick in a loop</a>.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p>You now know what rebase does, because <a href="interactive-rebase.html">rebase
+  is this operation applied to a run of commits</a> — with a todo list in front of
+  it so you can choose what happens to each one.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "A..B": {
+      "name": "A..B — a range",
+      "pron": "say: A dot dot B",
+      "means": "the commits in B that aren't in A — what cherry-pick replays, oldest first",
+      "short": "range"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "cherry-pick",
+    "labs": [
+      {
+        "id": "cherry-pick-onto-main",
+        "title": "Backport the hotfix, traceably",
+        "fixture": "diverged",
+        "start": "main",
+        "task": "Get the <code>hotfix</code> commit onto <code>main</code> so the message records where it came from — and leave the hotfix branch exactly where it is.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "main has the BOM-stripping change",
+            "check": {
+              "blobContains": {
+                "ref": "main",
+                "path": "count.py",
+                "text": "lstrip"
+              }
+            }
+          },
+          {
+            "text": "the new commit notes which commit it came from",
+            "check": {
+              "messageMatch": {
+                "ref": "main",
+                "pattern": "cherry picked from commit",
+                "count": 1
+              }
+            }
+          },
+          {
+            "text": "it's a different commit, not a merge",
+            "check": {
+              "notAncestor": {
+                "ancestor": "hotfix",
+                "of": "main"
+              }
+            }
+          },
+          {
+            "text": "hotfix is untouched",
+            "check": {
+              "commitCount": {
+                "ref": "hotfix",
+                "eq": 4
+              }
+            }
+          }
+        ],
+        "hints": [
+          "You want <code>-x</code> so the message records the original id.",
+          "<code>git cherry-pick -x hotfix</code> — then read the commit message with <code>git log -1</code>."
+        ],
+        "solution": [
+          "git checkout main",
+          "git cherry-pick -x hotfix",
+          "git log -1",
+          "git log --oneline --all      # hotfix still where it was; main has a copy"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "cherry-pick",
+    "questions": [
+      {
+        "q": "Which three versions does cherry-pick feed to its three-way merge?",
+        "choices": [
+          "The commit, its child, and your HEAD",
+          "The commit's parent (base), the commit itself (theirs), and your HEAD (ours)",
+          "The merge base of the two branches, and both tips"
+        ],
+        "answer": 1,
+        "explain": "Base is the world before the commit, theirs is the world after — that difference is what gets applied onto your HEAD. It's why a pick can land cleanly in quite different surrounding code."
+      },
+      {
+        "q": "After cherry-picking a commit from feature onto main, what links the two commits?",
+        "choices": [
+          "Nothing structural — only the message, and only if you used -x",
+          "main's commit records the original as a second parent",
+          "Git stores a cherry-pick reference in .git/"
+        ],
+        "answer": 0,
+        "explain": "The copy is an ordinary commit with one parent. -x writes the provenance into the message, which is the only durable record you get."
+      },
+      {
+        "q": "You cherry-picked a commit to main, then later merge feature into main. Why does it usually not conflict?",
+        "choices": [
+          "Git detects the duplicate id and skips it",
+          "The three-way merge sees both sides already contain that change, so there's nothing to reconcile",
+          "Merges always prefer main's version"
+        ],
+        "answer": 1,
+        "explain": "The merge compares content, not identity. Since both sides made the same change relative to the base, there's no disagreement. Occasionally the regions overlap awkwardly and you do get a confusing conflict."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

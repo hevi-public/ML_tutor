@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The index, properly — Git Tutor</title>
+
+  <meta name="git:unit" content="Internals & plumbing">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="refs-and-heads.html|Refs, HEAD and symbolic refs">
+  <meta name="git:next" content="revision-syntax.html|Revision syntax">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Internals & plumbing</p>
+  <h1>The index, properly</h1>
+  <p class="lede">The index isn't a queue of changes — it's a complete proposed snapshot. That one correction fixes most confusion about staging.</p>
+
+  <h2>The idea</h2>
+  <p>People picture the <dfn data-term="index">index</dfn> as a list of changes
+  waiting to be committed. It is actually a full flat list of <em>every</em> path
+  in your project, each with a blob id and some cached file stats:</p>
+
+  <pre>$ git ls-files -s
+100644 8d0e41234f24b6da002d962a26c2495ea16a425f 0	README.md
+100644 151e2f818f2f6a619a0049dec48becf86b836ca7 0	count.py</pre>
+
+  <p>Read that as a proposed tree. <code>git commit</code> doesn't gather your
+  changes; it turns the index into a tree object and points a commit at it. That's
+  why <code>git write-tree</code> works at any moment, and why an empty
+  <code>git add</code> session still produces a complete snapshot.</p>
+
+  <p>So <code>git status</code> is two comparisons against this middle thing:</p>
+  <table class="ref">
+    <tr><th>index vs HEAD</th><td>"Changes to be committed"</td></tr>
+    <tr><th>working tree vs index</th><td>"Changes not staged for commit"</td></tr>
+    <tr><th>in neither</th><td>"Untracked files"</td></tr>
+  </table>
+
+  <p>And it explains the situation everyone hits: a file can appear in both lists
+  at once. You staged version 2, then edited it into version 3. The index holds
+  v2, disk holds v3, and committing gets you v2 — which is a feature, and the
+  entire basis of <code>git add -p</code>.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox starts dirty on purpose: one staged change, one unstaged, one
+  untracked file. Take it apart:</p>
+
+  <pre>git status
+git ls-files -s                 # the index as a proposed snapshot
+git diff                        # worktree vs index
+git diff --staged               # index vs HEAD
+git write-tree                  # the tree the index would become
+git cat-file -p &lt;that tree id&gt;   # a real tree object that isn't in any commit</pre>
+
+  <p>Then stage the README edit, edit it again before committing, and look at
+  <code>git status</code>. Both lists mention it.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The stat cache, and why status is fast</summary>
+    <div class="layer-body">
+      <p>Each index entry stores the file's size and modification time as of the
+      last <code>add</code>. To answer "did this file change?", git compares stats
+      first and only reads the file if they differ. That's how
+      <code>git status</code> stays quick in a repository with 100,000 files.</p>
+      <p>It's also why a mangled clock or a filesystem with odd timestamps can make
+      git think everything changed, and why <code>git status</code> occasionally
+      writes to <code>.git/index</code> even though you only asked it to look.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Stage numbers: the 0 in ls-files -s</summary>
+    <div class="layer-body">
+      <p>That third column is the stage. Normally it's 0. During a conflict the
+      same path gets three entries at once:</p>
+      <table class="ref">
+        <tr><th>1</th><td>the merge base's version</td></tr>
+        <tr><th>2</th><td>ours</td></tr>
+        <tr><th>3</th><td>theirs</td></tr>
+      </table>
+      <p>All three sides of the <dfn data-term="three-way-merge">three-way
+      merge</dfn> are sitting in the index, which is how tools like
+      <code>git checkout --ours</code> and a merge tool get at each version
+      without re-reading commits. <code>git add</code>ing the resolved file
+      collapses them back to a single stage-0 entry — which is precisely what
+      "marking a conflict resolved" means.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Unstaging, and the three commands that do it</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>git restore --staged &lt;file&gt;</th><td>index ← HEAD; worktree untouched. The modern spelling.</td></tr>
+        <tr><th>git reset &lt;file&gt;</th><td>the same thing, in the older spelling</td></tr>
+        <tr><th>git restore &lt;file&gt;</th><td>worktree ← index. Throws away your edit — the one to be careful with.</td></tr>
+      </table>
+      <p>In this sandbox use <code>git reset &lt;file&gt;</code> and
+      <code>git checkout -- &lt;file&gt;</code>; <code>restore</code> isn't
+      implemented here, and typing it will tell you so.</p>
+      <ul class="symbol-legend" data-symbols="--,&lt;rev&gt;:&lt;path&gt;"></ul>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p><a href="revision-syntax.html">Revision syntax</a> is the vocabulary for
+  naming commits precisely — the thing that turns "I think it was about four
+  commits ago" into a command.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "--": {
+      "name": "-- — end of options",
+      "pron": "say: dash dash",
+      "means": "everything after this is a path, not a revision",
+      "short": "paths follow"
+    },
+    "<rev>:<path>": {
+      "name": "<rev>:<path> — a file at a revision",
+      "pron": "say: rev colon path",
+      "means": "the blob for that path in that commit",
+      "short": "old version"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "the-index",
+    "labs": [
+      {
+        "id": "the-index-three-trees",
+        "title": "Put HEAD, the index and the worktree in three different states",
+        "fixture": "dirty",
+        "task": "Get <code>count.py</code> into the state where HEAD, the index and the working tree all hold <em>different</em> content — then commit only what's in the index, and confirm your worktree edit survived.",
+        "show": [
+          "dag",
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "the commit contains the staged version (reads from argv)",
+            "check": {
+              "blobContains": {
+                "path": "count.py",
+                "text": "sys.argv[1]"
+              }
+            }
+          },
+          {
+            "text": "your worktree still has an edit that isn't committed",
+            "check": {
+              "worktreeClean": {
+                "ignoreUntracked": true
+              }
+            }
+          },
+          {
+            "text": "scratch.txt is still untracked, not committed",
+            "check": {
+              "blobContains": {
+                "path": "scratch.txt",
+                "absent": true
+              }
+            }
+          }
+        ],
+        "hints": [
+          "The fixture already staged one version of <code>count.py</code>. Edit the file again — <code>edit count.py</code> opens it — without staging.",
+          "<code>git diff</code> shows worktree vs index; <code>git diff --staged</code> shows index vs HEAD. Both should be non-empty before you commit.",
+          "Plain <code>git commit -m …</code> commits the index. Note that <code>-a</code> would defeat the exercise by staging your second edit too."
+        ],
+        "solution": [
+          "git status                       # count.py staged, README.md not, scratch.txt untracked",
+          "edit count.py                    # add a comment line, save, don't stage it",
+          "git diff --staged                # index vs HEAD: the argv change",
+          "git diff                         # worktree vs index: your new line",
+          "git commit -m \"Read the file from argv\"",
+          "git diff                         # still there — the worktree edit was never staged"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "the-index",
+    "questions": [
+      {
+        "q": "Best description of the index?",
+        "choices": [
+          "A queue of the changes you've staged",
+          "A complete proposed snapshot of every tracked path, which commit turns into a tree",
+          "A cache of the last commit, for speed"
+        ],
+        "answer": 1,
+        "explain": "It's a full path list with a blob id each. `git write-tree` turns it into a tree object at any moment — that's literally what commit does."
+      },
+      {
+        "q": "A file appears under both “Changes to be committed” and “Changes not staged”. What happened?",
+        "choices": [
+          "The index is corrupt",
+          "You staged one version and then edited the file again — index and worktree now differ from each other and from HEAD",
+          "The file has a merge conflict"
+        ],
+        "answer": 1,
+        "explain": "Three different contents in three places. Committing takes the staged version; your later edit stays in the worktree."
+      },
+      {
+        "q": "During a conflict, `git ls-files -s` shows the same path three times with stages 1, 2 and 3. What are they?",
+        "choices": [
+          "Three failed merge attempts",
+          "The merge base, our version and their version — all three sides kept in the index",
+          "The file's last three commits"
+        ],
+        "answer": 1,
+        "explain": "The index holds all three sides so tools can reach each one. `git add` on the resolved file collapses them to stage 0, which is how git knows you resolved it."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

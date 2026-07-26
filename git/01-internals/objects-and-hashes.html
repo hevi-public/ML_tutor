@@ -142,11 +142,11 @@ git cat-file -p &lt;paste the id&gt;      # print it back</pre>
     "<sha>": {
       "name": "an abbreviated object id",
       "pron": "say: the sha, or the hash",
-      "means": "any unambiguous prefix of a 40-character object id \u2014 7 characters is usually enough",
+      "means": "any unambiguous prefix of a 40-character object id — 7 characters is usually enough",
       "short": "short id"
     },
     "HEAD": {
-      "name": "HEAD \u2014 where you are",
+      "name": "HEAD — where you are",
       "pron": "say: head",
       "means": "the commit you have checked out",
       "short": "you are here"
@@ -162,7 +162,7 @@ git cat-file -p &lt;paste the id&gt;      # print it back</pre>
         "id": "objects-and-hashes-write-a-blob",
         "title": "Put an object in the database by hand",
         "fixture": "two-files",
-        "task": "Write a blob containing the exact text <code>hello world</code> (with a trailing newline) into the object database \u2014 without staging or committing anything.",
+        "task": "Write a blob containing the exact text <code>hello world</code> (with a trailing newline) into the object database — without staging or committing anything.",
         "show": [
           "objects"
         ],
@@ -207,8 +207,8 @@ git cat-file -p &lt;paste the id&gt;      # print it back</pre>
       {
         "q": "Two files in different directories have byte-identical contents. How many blobs does git store?",
         "choices": [
-          "Two \u2014 one per path",
-          "One \u2014 the content is the key, and the paths live in trees",
+          "Two — one per path",
+          "One — the content is the key, and the paths live in trees",
           "One, but only after gc runs"
         ],
         "answer": 1,
@@ -218,7 +218,7 @@ git cat-file -p &lt;paste the id&gt;      # print it back</pre>
         "q": "Why is `sha1(file contents)` not the file's git object id?",
         "choices": [
           "Git hashes the compressed bytes instead",
-          "Git prefixes a header \u2014 \"blob <length>\\\\0\" \u2014 and hashes that too",
+          "Git prefixes a header — \"blob <length>\\\\0\" — and hashes that too",
           "Git salts the hash with the repository id"
         ],
         "answer": 1,
@@ -227,7 +227,7 @@ git cat-file -p &lt;paste the id&gt;      # print it back</pre>
       {
         "q": "You run `git hash-object -w` on a file and then delete the file. What's in the repository?",
         "choices": [
-          "Nothing \u2014 unwritten objects are discarded",
+          "Nothing — unwritten objects are discarded",
           "A blob, unreachable from any ref, that gc would eventually prune",
           "A commit containing that file"
         ],

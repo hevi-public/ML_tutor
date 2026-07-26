@@ -34,8 +34,19 @@
       host.appendChild(el("p", "hint", `Nothing here resolves to "${spec}".`));
       return;
     }
-    const type = await P().objectType(dir, oid);
-    const pretty = await P().catFilePretty(dir, oid);
+    let type;
+    let pretty;
+    try {
+      type = await P().objectType(dir, oid);
+      pretty = await P().catFilePretty(dir, oid);
+    } catch (error) {
+      // A ref can point at a missing object mid-experiment. Say so rather than
+      // taking the page down with us.
+      host.appendChild(el("p", "hint",
+        `${oid.slice(0, 7)} resolves, but the object isn't in the database: ` +
+        `${error.message || error}`));
+      return;
+    }
     const bytes = new TextEncoder().encode(pretty).length;
 
     const head = el("div", "obj-head");

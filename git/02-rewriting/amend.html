@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amending the last commit — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="../01-internals/commit-by-hand.html|A commit, by hand">
+  <meta name="git:next" content="reset-vs-revert.html|reset versus revert">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>Amending the last commit</h1>
+  <p class="lede">git commit --amend doesn't edit your commit. It builds a replacement and abandons the original — and everything else in this unit is that same move, at larger scale.</p>
+
+  <h2>The idea</h2>
+  <p>You commit, then notice the typo. <code>git commit --amend</code> fixes it,
+  and the mental model most people carry away is "amend edits the last commit".
+  It can't. A commit's id is a hash of its contents, so an edited commit is a
+  <em>different</em> commit.</p>
+
+  <p>What actually happens:</p>
+  <ol>
+    <li>Git builds a new commit from the current index, with the
+    <strong>same parent</strong> as the old one and whatever message you give.</li>
+    <li>It moves your branch to the new commit.</li>
+    <li>The old commit is now <dfn data-term="unreachable">unreachable</dfn>. It is
+    still there, byte for byte, named in the <dfn data-term="reflog">reflog</dfn>.</li>
+  </ol>
+
+  <p>Two useful consequences fall straight out. An amend is always recoverable —
+  <code>git reset --hard HEAD@{1}</code> puts you back. And an amend is a
+  <dfn data-term="rewrite">rewrite</dfn>: if you already pushed, your branch and
+  the remote's now disagree about a commit that exists in both, which is why the
+  next push is rejected.</p>
+
+  <h2>Try it</h2>
+  <pre>git log --oneline
+git commit --amend -m "A better message"
+git log --oneline                 # same position, different id
+git reflog                        # both ids are here: the new one and the old
+git cat-file -p HEAD@{1}          # the "gone" commit, still perfectly readable</pre>
+
+  <p>Amending content works the same way: stage something first, and it joins the
+  replacement commit instead of becoming a new one.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Amend keeps the author, replaces the committer</summary>
+    <div class="layer-body">
+      <p>The new commit inherits the original's author name, email and date, and
+      gets you and now as <strong>committer</strong>. So <code>git log</code> still
+      shows the original date while <code>git log --format=%cd</code> shows today.
+      This is the same mechanism as
+      <a href="cherry-pick.html">cherry-pick</a> and rebase — anything that
+      replays a commit preserves authorship and records who moved it.</p>
+      <p>Use <code>--reset-author</code> when you genuinely wrote it now, which
+      mostly matters when you're amending someone else's commit.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Amending a commit that isn't the last one</summary>
+    <div class="layer-body">
+      <p>You can't, directly — but the answer is mechanical rather than clever:</p>
+      <ul>
+        <li><code>git commit --fixup=&lt;commit&gt;</code> now, then
+        <code>git rebase -i --autosquash</code> later. The fix goes into the
+        history at the right place, and you never have to interrupt what you're
+        doing. See <a href="squash-fixup-autosquash.html">squash, fixup,
+        autosquash</a>.</li>
+        <li>Or <code>git rebase -i &lt;commit&gt;~</code> and mark that line
+        <code>edit</code>, which stops the rebase there and lets you amend
+        normally.</li>
+      </ul>
+      <p>Both do the same underlying thing: rebuild every commit from that point
+      on. Amending the tip is cheap because there's nothing after it to rebuild.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The one genuinely dangerous amend</summary>
+    <div class="layer-body">
+      <p><code>git commit --amend</code> with a dirty index amends in whatever is
+      staged, which is easy to do by accident when you meant to make a new commit.
+      Nothing is lost — the previous commit is in the reflog — but the mistake can
+      be confusing to spot, because <code>git log</code> looks almost right.</p>
+      <p>If a branch you pushed looks wrong after an amend, resist the urge to
+      force-push until you have read
+      <a href="../04-workflow/force-with-lease.html">--force-with-lease</a>. Plain
+      <code>--force</code> is how amends destroy other people's commits.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p><a href="reset-vs-revert.html">reset versus revert</a> is the other pair
+  people mix up, and the distinction is the same one: rewriting history versus
+  adding to it.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "HEAD@{1} — one move ago",
+      "pron": "say: head at brace one",
+      "means": "where HEAD pointed before your last command — the amended-away commit",
+      "short": "one move ago"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "amend",
+    "labs": [
+      {
+        "id": "amend-and-undo",
+        "title": "Amend a commit, then undo the amend",
+        "fixture": "linear-5",
+        "task": "Amend the last commit so its subject is <code>Report the longest line as well</code> — then put the original commit back exactly as it was, using the reflog.",
+        "show": [
+          "dag"
+        ],
+        "showUnreachable": true,
+        "goals": [
+          {
+            "text": "main is back on the original commit",
+            "check": {
+              "messageMatch": {
+                "pattern": "^Report the longest line too",
+                "count": 1
+              }
+            }
+          },
+          {
+            "text": "still five commits, not six",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 5
+              }
+            }
+          },
+          {
+            "text": "the reflog proves you amended and came back",
+            "check": {
+              "reflogContains": {
+                "pattern": "commit \\\\(amend\\\\)"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git commit --amend -m \"Report the longest line as well\"</code> does the first half.",
+          "<code>git reflog</code> shows both ids. The commit you amended away is one movement back: <code>HEAD@{1}</code>.",
+          "<code>git reset --hard HEAD@{1}</code> moves the branch back to it."
+        ],
+        "solution": [
+          "git commit --amend -m \"Report the longest line as well\"",
+          "git log --oneline           # same position, new id",
+          "git reflog                  # the old id is still named here",
+          "git reset --hard HEAD@{1}",
+          "git log --oneline           # the original is back"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "amend",
+    "questions": [
+      {
+        "q": "After `git commit --amend`, what happened to the original commit?",
+        "choices": [
+          "It was modified in place",
+          "It still exists untouched but nothing points at it, so it's recoverable from the reflog",
+          "It was deleted from the object database"
+        ],
+        "answer": 1,
+        "explain": "Amend builds a replacement with the same parent and moves the branch. The original becomes unreachable, which is why HEAD@{1} gets it back."
+      },
+      {
+        "q": "Why does `git log` show the old date after an amend, while the id changed?",
+        "choices": [
+          "Log caches dates",
+          "The author (and their date) is inherited; the committer and its date are new — and both are hashed, so the id changes",
+          "Amend deliberately preserves the timestamp so the id stays stable"
+        ],
+        "answer": 1,
+        "explain": "Two identities per commit. log shows the author by default; %cd shows the committer date, which is when the amend happened."
+      },
+      {
+        "q": "You want to fix a commit five back. What's the least disruptive route?",
+        "choices": [
+          "git commit --amend five times",
+          "Commit the fix with --fixup=<that commit>, then rebase -i --autosquash when convenient",
+          "Reset to that commit and redo the last five commits by hand"
+        ],
+        "answer": 1,
+        "explain": "--fixup records where the fix belongs so autosquash can place it later. You keep working now and rewrite once, deliberately."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

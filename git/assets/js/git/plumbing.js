@@ -353,14 +353,26 @@
     }
 
     const direct = await GT.resolve(dir, spec);
-    if (direct) return direct;
+    // resolveRef hands a full-length id straight back without looking for it, so
+    // an id-shaped spec still has to go through the existence check below.
+    if (direct && !(direct === spec && OID_RE.test(spec))) return direct;
 
     if (OID_RE.test(spec)) {
+      let oid;
       try {
-        return await g().expandOid({ ...GT.ctx(dir), oid: spec });
+        oid = await g().expandOid({ ...GT.ctx(dir), oid: spec });
       } catch {
         throw new Error(`unknown revision or path not in the working tree: ${spec}`);
       }
+      // expandOid is happy with a full-length id it has never seen, so confirm
+      // the object is really there. Without this, `git update-ref` would accept
+      // a typo and leave the repository pointing at nothing — real git refuses.
+      try {
+        await g().readObject({ ...GT.ctx(dir), oid, format: "content" });
+      } catch {
+        throw new Error(`not a valid object name: '${spec}'`);
+      }
+      return oid;
     }
     throw new Error(`unknown revision or path not in the working tree: ${spec}`);
   }

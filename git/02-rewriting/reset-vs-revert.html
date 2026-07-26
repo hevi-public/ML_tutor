@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>reset versus revert — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="amend.html|Amending the last commit">
+  <meta name="git:next" content="cherry-pick.html|Cherry-pick">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>reset versus revert</h1>
+  <p class="lede">Both undo. One rewrites history and one adds to it — and choosing wrong is how teams lose an afternoon.</p>
+
+  <h2>The idea</h2>
+  <p>Two questions, and the answers are unrelated:</p>
+
+  <div class="box plain-english">
+    <span class="label">The distinction</span>
+    <p><strong>reset</strong> moves your branch to a different commit. History
+    changes shape; the undone commits are no longer on the branch.</p>
+    <p><strong>revert</strong> makes a <em>new</em> commit that undoes an old one.
+    History grows; nothing is removed.</p>
+  </div>
+
+  <p>So the choice is not about safety — reset is perfectly safe on a branch nobody
+  else has — it's about whether the commits are already somewhere else. If they
+  are, reverting is the only honest option: rewriting would break everyone who
+  already has them.</p>
+
+  <h3>The three resets</h3>
+  <p><code>reset</code> takes a commit and moves up to three things to match it:</p>
+
+  <table class="ref">
+    <tr><th>--soft</th><td>branch only</td><td>index and worktree untouched, so the undone changes are all staged, ready to recommit</td></tr>
+    <tr><th>--mixed</th><td>branch + index</td><td>the default. Changes survive in your files, unstaged</td></tr>
+    <tr><th>--hard</th><td>branch + index + worktree</td><td>your files are overwritten. The one that discards work</td></tr>
+  </table>
+
+  <p>Two things it never does, both worth knowing precisely: it never touches
+  <strong>untracked</strong> files (so <code>reset --hard</code> won't remove that
+  build directory), and it never deletes commits from the object database (so the
+  reflog can undo it).</p>
+
+  <p><code>git reset --soft HEAD~3</code> is the useful one people don't know:
+  three commits collapse into a fully staged change, and one
+  <code>git commit</code> makes them one. That's a squash without a rebase.</p>
+
+  <h2>Try it</h2>
+  <pre>git log --oneline
+git reset --soft HEAD~2      # look at git status: everything staged
+git reset --mixed HEAD       # keep going: now unstaged
+git status
+git reset --hard HEAD        # and now clean — the changes are gone from your files
+git reflog                   # every one of those moves is recorded
+git reset --hard HEAD@{3}    # back to where you started</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Reverting a merge, and why it needs -m</summary>
+    <div class="layer-body">
+      <p>A merge commit has two parents, so "undo this commit" is ambiguous:
+      undo relative to which side? <code>git revert -m 1 &lt;merge&gt;</code> keeps
+      the first parent's line and undoes what the second brought in — almost always
+      what you want, since parent 1 is the branch you were on.</p>
+      <p>The trap: reverting a merge records that those changes are unwanted, so
+      merging the same branch again brings in <em>nothing</em>. Git considers it
+      already merged. Re-merging after a revert-of-a-merge needs the revert
+      reverted, which is as confusing as it sounds and worth avoiding by not
+      merging half-finished branches.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>ORIG_HEAD, the one-step undo</summary>
+    <div class="layer-body">
+      <p>Before any big move — reset, rebase, merge, pull — git writes the previous
+      HEAD to <code>.git/ORIG_HEAD</code>. So:</p>
+      <pre>git reset --hard ORIG_HEAD</pre>
+      <p>undoes the operation you just regretted, without your having to read the
+      reflog. It's overwritten by the next big move, so it's a one-shot: use it
+      immediately or use <code>HEAD@{n}</code> instead.</p>
+      <ul class="symbol-legend" data-symbols="ORIG_HEAD,HEAD@{1}"></ul>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>reset with paths is a different command</summary>
+    <div class="layer-body">
+      <p><code>git reset &lt;paths&gt;</code> doesn't move any branch. It copies
+      those paths from HEAD into the index — that is, it unstages them. Same word,
+      different operation, which is exactly why modern git added
+      <code>git restore --staged</code> to say it unambiguously.</p>
+      <p>Rule of thumb: <code>reset</code> with a commit moves your branch;
+      <code>reset</code> with paths moves files into the index.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p><a href="cherry-pick.html">Cherry-pick</a> is the other half of moving
+  commits around: instead of undoing one where it is, copy one to where you need
+  it.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the last big move",
+      "pron": "say: orig head",
+      "means": "where HEAD was before a reset, rebase, merge or pull",
+      "short": "undo point"
+    },
+    "HEAD@{1}": {
+      "name": "HEAD@{1} — one move ago",
+      "pron": "say: head at brace one",
+      "means": "where HEAD pointed before your last command",
+      "short": "one move ago"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "reset-vs-revert",
+    "labs": [
+      {
+        "id": "reset-vs-revert-soft-squash",
+        "title": "Collapse three commits with reset --soft",
+        "fixture": "wip-3",
+        "start": "feature/report",
+        "task": "The three WIP commits on <code>feature/report</code> should be one commit called <code>Add the report module</code> — and the files must come out identical. Do it with <code>reset</code>, not rebase.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "one commit on top of main",
+            "check": {
+              "commitCount": {
+                "ref": "feature/report",
+                "since": "main",
+                "eq": 1
+              }
+            }
+          },
+          {
+            "text": "it's called “Add the report module”",
+            "check": {
+              "messageMatch": {
+                "pattern": "^Add the report module",
+                "count": 1,
+                "since": "main"
+              }
+            }
+          },
+          {
+            "text": "the files are byte-identical to before",
+            "check": {
+              "custom": {
+                "name": "reset-vs-revert-same-tree"
+              }
+            }
+          },
+          {
+            "text": "nothing left uncommitted",
+            "check": {
+              "worktreeClean": {}
+            }
+          }
+        ],
+        "hints": [
+          "<code>--soft</code> moves the branch and leaves the index alone — so after resetting, everything the three commits did is staged.",
+          "<code>git reset --soft HEAD~3</code>, then <code>git status</code> to see what you have, then one commit."
+        ],
+        "solution": [
+          "git log --oneline",
+          "git reset --soft HEAD~3",
+          "git status                  # all three commits' changes, staged",
+          "git commit -m \"Add the report module\"",
+          "git log --oneline"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "reset-vs-revert",
+    "questions": [
+      {
+        "q": "You pushed a bad commit to a shared branch an hour ago. reset or revert?",
+        "choices": [
+          "reset --hard, then force-push",
+          "revert — the commit is already in other people's history, so undo it by adding a commit, not by rewriting",
+          "Either; they're equivalent"
+        ],
+        "answer": 1,
+        "explain": "Reset plus force-push rewrites history others already have, and their next pull will try to put your bad commit back. Revert is additive and needs no coordination."
+      },
+      {
+        "q": "`git reset --hard HEAD~2` in a repo with an untracked build/ directory and 2 commits of work. What's gone?",
+        "choices": [
+          "The 2 commits' changes are gone from your files, and build/ is untouched — the commits themselves are still recoverable via the reflog",
+          "The 2 commits and build/ are both deleted permanently",
+          "Nothing; --hard only moves the branch"
+        ],
+        "answer": 0,
+        "explain": "--hard overwrites tracked files, never untracked ones, and never removes objects. The commits are unreachable, not deleted — HEAD@{1} brings them back."
+      },
+      {
+        "q": "What does `git reset --soft HEAD~3` leave you with?",
+        "choices": [
+          "A clean worktree three commits back",
+          "The branch three back, with all three commits' changes staged and ready to commit as one",
+          "Three commits' changes as unstaged edits"
+        ],
+        "answer": 1,
+        "explain": "--soft moves only the branch, so the index still describes the newer state — everything shows up staged. It's the simplest way to squash a run of commits at the tip."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    // "Same files, different history" is the point of the exercise, so compare
+    // against the tree the fixture started with rather than any literal id.
+    GTChecks.register("reset-vs-revert-same-tree", async (repo) => {
+      const now = await GTPlumb.treeOfCommit(repo.dir, await GT.resolve(repo.dir, "HEAD"));
+      const before = await GTPlumb.treeOfCommit(repo.dir, repo.fixtureTip);
+      return now === before
+        ? { pass: true, detail: "identical tree" }
+        : { pass: false, detail: "the content changed along the way" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

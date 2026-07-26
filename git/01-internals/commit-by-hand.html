@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A commit, by hand — Git Tutor</title>
+
+  <meta name="git:unit" content="Internals & plumbing">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="revision-syntax.html|Revision syntax">
+  <meta name="git:next" content="../02-rewriting/amend.html|Amending the last commit">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Internals & plumbing</p>
+  <h1>A commit, by hand</h1>
+  <p class="lede">Build a commit with four plumbing commands and no git commit anywhere. This is the page that makes the rest of git stop being magic.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    This page uses everything in Unit 1: objects, trees, the index and refs. It's the payoff for them, so it's worth having read them first.
+  </div>
+
+  <h2>The idea</h2>
+  <p><code>git commit</code> is a wrapper. Underneath, it does four things, each of
+  which is a separate command you can run yourself:</p>
+
+  <table class="ref">
+    <tr><th>1</th><td><code>git hash-object -w &lt;file&gt;</code></td><td>store the contents as a blob</td></tr>
+    <tr><th>2</th><td><code>git update-index --add …</code></td><td>put that blob at a path in the index</td></tr>
+    <tr><th>3</th><td><code>git write-tree</code></td><td>turn the index into a tree object</td></tr>
+    <tr><th>4</th><td><code>git commit-tree &lt;tree&gt; -p &lt;parent&gt; -m …</code></td><td>make a commit object pointing at that tree</td></tr>
+    <tr><th>5</th><td><code>git update-ref refs/heads/…</code></td><td>move the branch to it</td></tr>
+  </table>
+
+  <p>Notice where the boundary falls. Steps 1–4 only <em>add</em> objects; nothing
+  about your repository's visible state changes. Only step 5 moves a ref — and
+  that is the step that makes the commit part of history. A commit object that no
+  ref reaches is exactly what "dangling" means, and you can create one on purpose
+  here.</p>
+
+  <p>This split is not trivia. It's why the reflog can undo things, why rebase is
+  implementable at all, and why <code>commit-tree</code> is what tools like
+  filter-repo are built out of.</p>
+
+  <h2>Try it</h2>
+  <p>Work through it in the sandbox, pasting each id into the next command:</p>
+
+  <pre>echo "print('hi')" &gt; hi.py
+git hash-object -w hi.py                  # → blob id
+git update-index --add hi.py              # index now proposes it
+git write-tree                            # → tree id
+git commit-tree &lt;tree id&gt; -p HEAD -m "Add hi.py"   # → commit id
+git log --oneline                         # nothing changed! the commit is unreferenced
+git update-ref refs/heads/main &lt;commit id&gt;
+git log --oneline                         # now it's history</pre>
+
+  <p>Between the fourth and sixth commands you have a real commit that no branch
+  can see. <code>git cat-file -p</code> it, and try
+  <code>git fsck --no-reflogs</code> before you run <code>update-ref</code>.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>What commit-tree needs, and what it invents</summary>
+    <div class="layer-body">
+      <p><code>commit-tree</code> takes a tree, zero or more <code>-p</code>
+      parents, and a message. It fills in the author and committer from your
+      config and the clock. Everything else about a commit — that it belongs to a
+      branch, that it's "the latest", that it's on your current line of work — is
+      not stored anywhere in the commit. Those are facts about refs.</p>
+      <p>Pass two <code>-p</code> flags and you have made a merge commit. There is
+      nothing else to a merge commit: the merging is work you do to produce the
+      tree, and the second parent is a claim you're making about history.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Why write-tree needs the index at all</summary>
+    <div class="layer-body">
+      <p>You could imagine a <code>make-tree-from-directory</code> command, and git
+      doesn't have one, because the index is where the decisions live: which paths
+      exist, which blob each one holds, what mode it has. <code>write-tree</code>
+      is a pure function of the index — it reads no files from disk.</p>
+      <p>Which is why <code>git write-tree</code> immediately after
+      <code>git add -p</code> gives you the tree of your <em>partial</em> staging,
+      and why a commit can contain something that isn't on your disk at all.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The same five steps, as a shell one-liner</summary>
+    <div class="layer-body">
+      <pre>git update-ref refs/heads/main \
+  $(git commit-tree $(git write-tree) -p HEAD -m "Add hi.py")</pre>
+      <p>That is, modulo hooks, config and error handling, what
+      <code>git commit -m "Add hi.py"</code> does. Plumbing commands are designed
+      to be composed like this — stable output, one thing per command — which is
+      why so much of git was originally shell scripts over exactly these
+      primitives.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 1 is done: you can read every object in a repository and write new ones.
+  <a href="../02-rewriting/amend.html">Unit 2</a> is the practical half —
+  every command in it is a way of doing what you just did, with better
+  ergonomics.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD": {
+      "name": "HEAD — the parent to use",
+      "pron": "say: head",
+      "means": "in commit-tree -p HEAD, the commit your new one will point back at",
+      "short": "the parent"
+    },
+    "<rev>^{tree}": {
+      "name": "<rev>^{tree} — peel to the tree",
+      "pron": "say: rev caret brace tree",
+      "means": "the tree object of a commit",
+      "short": "its tree"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "commit-by-hand",
+    "labs": [
+      {
+        "id": "commit-by-hand-plumbing-only",
+        "title": "Commit without using git commit",
+        "fixture": "two-files",
+        "task": "Add a file <code>hi.py</code> containing <code>print('hi')</code> to main, using only <code>hash-object</code>, <code>update-index</code>, <code>write-tree</code>, <code>commit-tree</code> and <code>update-ref</code>. <code>git commit</code> is off-limits.",
+        "show": [
+          "dag",
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "main has two commits now",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "the new commit contains hi.py",
+            "check": {
+              "blobContains": {
+                "ref": "main",
+                "path": "hi.py",
+                "text": "print"
+              }
+            }
+          },
+          {
+            "text": "the original two files are still there",
+            "check": {
+              "blobContains": {
+                "ref": "main",
+                "path": "notes/plan.md",
+                "text": "learn plumbing"
+              }
+            }
+          },
+          {
+            "text": "it was made with plumbing, not git commit",
+            "check": {
+              "reflogContains": {
+                "pattern": "update-ref"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "Order matters: blob first, then the index, then the tree, then the commit, then the ref.",
+          "<code>git update-index --add hi.py</code> is enough once the file exists on disk — it reads the file and stores the blob for you. (<code>hash-object -w</code> first if you want to see the id.)",
+          "<code>git commit-tree $(git write-tree) -p HEAD -m \"…\"</code> prints the new commit's id. Nothing is history until you <code>git update-ref refs/heads/main &lt;that id&gt;</code>."
+        ],
+        "solution": [
+          "echo \"print('hi')\" > hi.py",
+          "git hash-object -w hi.py",
+          "git update-index --add hi.py",
+          "git write-tree                         # → <tree>",
+          "git commit-tree <tree> -p HEAD -m \"Add hi.py\"   # → <commit>",
+          "git fsck --no-reflogs                  # the commit exists and nothing points at it",
+          "git update-ref refs/heads/main <commit>",
+          "git log --oneline"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "commit-by-hand",
+    "questions": [
+      {
+        "q": "You run commit-tree and get a commit id back, but `git log` doesn't show it. Why not?",
+        "choices": [
+          "commit-tree only prints what it would do",
+          "The commit exists, but no ref reaches it — log walks back from refs, so it can't be found",
+          "It needs git gc to become visible"
+        ],
+        "answer": 1,
+        "explain": "That's the whole lesson: creating a commit and making it part of history are two separate steps. Until update-ref, the commit is dangling."
+      },
+      {
+        "q": "What does `git write-tree` read?",
+        "choices": [
+          "The working directory",
+          "The index, and nothing else",
+          "The last commit's tree"
+        ],
+        "answer": 1,
+        "explain": "It's a pure function of the index — which is why partial staging works, and why a commit can contain content that isn't on your disk."
+      },
+      {
+        "q": "How do you make a merge commit with plumbing?",
+        "choices": [
+          "git merge-tree, then commit-tree",
+          "Pass commit-tree two -p flags — a merge commit is just a commit with two parents",
+          "You can't; merges need the porcelain command"
+        ],
+        "answer": 1,
+        "explain": "A merge commit has no special structure. Producing the merged tree is the work; the second parent is simply a claim about where the content came from."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

@@ -127,31 +127,31 @@ Add the greeter</pre>
   <script type="application/json" class="symbols">
   {
     "100644": {
-      "name": "100644 \u2014 an ordinary file",
+      "name": "100644 — an ordinary file",
       "pron": "say: one hundred six forty-four",
       "means": "a regular, non-executable file",
       "short": "file"
     },
     "100755": {
-      "name": "100755 \u2014 an executable file",
+      "name": "100755 — an executable file",
       "pron": "say: one hundred seven fifty-five",
-      "means": "a regular file with the executable bit set \u2014 the only permission git records",
+      "means": "a regular file with the executable bit set — the only permission git records",
       "short": "executable"
     },
     "120000": {
-      "name": "120000 \u2014 a symlink",
+      "name": "120000 — a symlink",
       "pron": "say: one twenty thousand",
       "means": "the blob's contents are the path it points at",
       "short": "symlink"
     },
     "040000": {
-      "name": "040000 \u2014 a subdirectory",
+      "name": "040000 — a subdirectory",
       "pron": "say: forty thousand",
       "means": "the entry names another tree object",
       "short": "directory"
     },
     "160000": {
-      "name": "160000 \u2014 a submodule",
+      "name": "160000 — a submodule",
       "pron": "say: one sixty thousand",
       "means": "a gitlink: names a commit in another repository",
       "short": "submodule"
@@ -167,7 +167,7 @@ Add the greeter</pre>
         "id": "blobs-trees-commits-walk-down",
         "title": "Walk from the commit to the file",
         "fixture": "two-files",
-        "task": "Using only <code>cat-file</code> and <code>rev-parse</code>, get from <code>HEAD</code> to the contents of <code>notes/plan.md</code> \u2014 then prove you found the right blob by committing its id into a file called <code>found.txt</code>.",
+        "task": "Using only <code>cat-file</code> and <code>rev-parse</code>, get from <code>HEAD</code> to the contents of <code>notes/plan.md</code> — then prove you found the right blob by committing its id into a file called <code>found.txt</code>.",
         "show": [
           "objects"
         ],
@@ -192,7 +192,7 @@ Add the greeter</pre>
         ],
         "hints": [
           "<code>git cat-file -p HEAD</code> shows the tree id. Then <code>cat-file -p</code> that.",
-          "The root tree has a <code>notes</code> entry of type tree \u2014 go through it.",
+          "The root tree has a <code>notes</code> entry of type tree — go through it.",
           "<code>git rev-parse HEAD:notes/plan.md</code> gets the same answer in one step, which is a fine way to check your walk."
         ],
         "solution": [
@@ -216,7 +216,7 @@ Add the greeter</pre>
         "q": "A commit contains how many tree ids?",
         "choices": [
           "One per changed file",
-          "Exactly one \u2014 the root of the whole project at that moment",
+          "Exactly one — the root of the whole project at that moment",
           "One per directory in the project"
         ],
         "answer": 1,
@@ -226,7 +226,7 @@ Add the greeter</pre>
         "q": "After a rebase, `git log` shows the same author dates as before but every commit id changed. Why?",
         "choices": [
           "Git regenerates ids on every rebase for uniqueness",
-          "The author is preserved while the committer and its timestamp are new \u2014 and committer data is part of the hashed content",
+          "The author is preserved while the committer and its timestamp are new — and committer data is part of the hashed content",
           "The dates shown are cached from before the rebase"
         ],
         "answer": 1,
@@ -236,7 +236,7 @@ Add the greeter</pre>
         "q": "Why can't you commit an empty directory?",
         "choices": [
           "Git refuses as a matter of policy, configurable with core.emptyDirs",
-          "The tree format has no way to say \"directory with no entries\" \u2014 a directory exists only because its contents do",
+          "The tree format has no way to say \"directory with no entries\" — a directory exists only because its contents do",
           "You can, but only with git add -f"
         ],
         "answer": 1,
@@ -247,6 +247,9 @@ Add the greeter</pre>
   </script>
 
   <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
     // The id of a fixture blob is stable, but writing it into the page would
     // date the moment the fixture changes — so ask the repository instead.
     GTChecks.register("blobs-trees-commits-found-it", async (repo) => {
@@ -258,6 +261,7 @@ Add the greeter</pre>
       return text && want.startsWith(text)
         ? { pass: true, detail: want.slice(0, 7) + " — that's the one" }
         : { pass: false, detail: "that isn't plan.md's blob id" };
+    });
     });
   </script>
 </main>
