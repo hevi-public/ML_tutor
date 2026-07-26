@@ -106,9 +106,24 @@ const pages = fs.readdirSync(ROOT).filter((f) => f.endsWith(".html"))
   .concat(...DIRS.map((d) => fs.readdirSync(path.join(ROOT, d))
     .filter((f) => f.endsWith(".html")).map((f) => d + "/" + f)));
 
+/* A page's trailing <script> registers its custom lab checks. A syntax error in
+   there is silent apart from one console message, and the symptom is a lab that
+   can never pass — so parse it here instead of finding out in the browser. */
+function checkPageScript(html, rel) {
+  const match = html.match(/<script>\n([\s\S]*?)<\/script>\s*<\/main>/);
+  if (!match) return;
+  try {
+    // eslint-disable-next-line no-new-func
+    new Function(match[1]);
+  } catch (err) {
+    throw new Error(`the page script in ${rel} doesn't parse: ${err.message}`);
+  }
+}
+
 for (const rel of pages) {
   const html = fs.readFileSync(path.join(ROOT, rel), "utf8");
   checkPlaceholders(html, rel);
+  checkPageScript(html, rel);
   const title = (html.match(/<title>(.*?)<\/title>/) || [, rel])[1]
     .replace(/\s*—\s*Git Tutor\s*$/, "");
   const unit = (html.match(/name="git:unit" content="([^"]+)"/) || [, ""])[1]

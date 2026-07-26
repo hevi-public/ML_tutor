@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reflog archaeology — Git Tutor</title>
+
+  <meta name="git:unit" content="Debugging & forensics">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="pickaxe.html|The pickaxe">
+  <meta name="git:next" content="fsck-and-dangling.html|fsck and dangling objects">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Debugging & forensics</p>
+  <h1>Reflog archaeology</h1>
+  <p class="lede">Your local history of commands, used as evidence. Where was this branch on Tuesday, and what was I standing on when I made that commit?</p>
+
+  <h2>The idea</h2>
+  <p><a href="../02-rewriting/reflog-recovery.html">Unit 2 used the reflog as a
+  rescue tool.</a> It's also a record, and reading it as one answers questions the
+  commit graph can't:</p>
+
+  <ul>
+    <li><em>What did I do to this branch this morning?</em> Every movement, with a
+    reason attached: <code>commit:</code>, <code>rebase (finish):</code>,
+    <code>reset: moving to</code>, <code>checkout: moving from X to Y</code>.</li>
+    <li><em>Where was main when I branched?</em> <code>main@{n}</code> walks the
+    branch's own log, separately from HEAD's.</li>
+    <li><em>What was I doing on Tuesday?</em> The selectors take dates:
+    <code>main@{yesterday}</code>, <code>HEAD@{2.hours.ago}</code>,
+    <code>main@{2026-07-01}</code>.</li>
+  </ul>
+
+  <p>The distinction to keep straight: <strong>HEAD's log records where you
+  were</strong>, and <strong>each branch's log records where that branch
+  was</strong>. They diverge constantly — every time you commit on another branch,
+  HEAD's log gains an entry and this branch's doesn't.</p>
+
+  <pre>git reflog                        # HEAD's log: everywhere you've been
+git reflog show main              # main's log: everywhere main has been
+git reflog --date=iso             # with real timestamps rather than @{n}
+git log -g --oneline              # the reflog as commits, so log's flags work</pre>
+
+  <p>That last one is worth remembering: <code>git log -g</code> walks the reflog
+  instead of the parent chain, so you can grep it, patch it, or format it like any
+  other log.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has a history of moves in it already. Read it as a story:</p>
+
+  <pre>git reflog
+git reflog show main
+git log -g --oneline main
+git reflog --date=iso
+cat .git/logs/HEAD                # the raw file, one line per movement
+cat .git/logs/refs/heads/main</pre>
+
+  <p>Notice that the file has both the old and new id on every line. That's the
+  property that makes recovery work: the log records what each ref moved
+  <em>away from</em>.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Reading the raw format</summary>
+    <div class="layer-body">
+      <pre>d1cf19b 587bc61 Ada Rivera &lt;ada@example.com&gt; 1709543400 +0000	commit: fix typo
+587bc61 26a5243 Ada Rivera &lt;ada@example.com&gt; 1709543460 +0000	reset: moving to HEAD~2</pre>
+      <p>Old id, new id, who, unix timestamp, timezone, tab, message. All zeros in
+      the old-id column means the ref was created.</p>
+      <p>Because it's a plain file, you can read it when git's own tooling isn't
+      cooperating — a corrupted index or a half-finished rebase doesn't stop
+      <code>cat .git/logs/HEAD</code> from working. It's the first place to look
+      when a repository is in a state you don't recognise.</p>
+      <ul class="symbol-legend" data-symbols="HEAD@{1},main@{2},@{-1},ORIG_HEAD"></ul>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Expiry, and the two different clocks</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>gc.reflogExpire</th><td>90 days — for entries still reachable from the ref</td></tr>
+        <tr><th>gc.reflogExpireUnreachable</th><td>30 days — for entries pointing at commits nothing else reaches</td></tr>
+      </table>
+      <p>Both are enforced by <code>git gc</code> rather than by a timer, so an
+      untouched repository can hold entries for years. Conversely, a repository
+      where something ran <code>git gc --prune=now</code> may have lost them
+      already.</p>
+      <p>If you're about to do something frightening to a repository you care
+      about, the cheapest insurance is a copy of the directory. The reflog is very
+      good, and it is not a backup.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>What the reflog tells you about someone else's repository: nothing</summary>
+    <div class="layer-body">
+      <p>Reflogs are never transferred. They aren't in a clone, aren't fetched,
+      aren't pushed. A fresh clone has exactly one entry per ref — "clone:
+      from …".</p>
+      <p>Which has an investigative consequence worth knowing: on a build server or
+      in a fresh clone, the reflog can't tell you what happened, and the questions
+      you'd have asked it have to go to
+      <a href="fsck-and-dangling.html">fsck</a> or to the forge's own logs
+      instead.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p><a href="fsck-and-dangling.html">fsck and dangling objects</a> is where you
+  look when even the reflog has nothing — the objects that exist but that nothing
+  at all points at.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "HEAD@{1} — one move ago",
+      "pron": "say: head at brace one",
+      "means": "where HEAD pointed before your last command",
+      "short": "one move ago"
+    },
+    "main@{2}": {
+      "name": "main@{2} — the branch's own log",
+      "pron": "say: main at brace two",
+      "means": "where main pointed two of its own movements ago — not the same as HEAD@{2}",
+      "short": "branch log"
+    },
+    "@{-1}": {
+      "name": "@{-1} — the previous branch",
+      "pron": "say: at brace minus one",
+      "means": "the branch you were on before this one",
+      "short": "last branch"
+    },
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the last big move",
+      "pron": "say: orig head",
+      "means": "a one-shot undo pointer written before reset, rebase, merge and pull",
+      "short": "undo point"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "reflog-archaeology",
+    "labs": [
+      {
+        "id": "reflog-archaeology-reconstruct",
+        "title": "Reconstruct what happened to this repository",
+        "fixture": "dangling",
+        "task": "Using only the reflog, work out the id the deleted <code>experiment</code> branch pointed at when it was last committed to, and write it into <code>found.txt</code>.",
+        "show": [
+          "dag"
+        ],
+        "showUnreachable": true,
+        "goals": [
+          {
+            "text": "found.txt holds the right id",
+            "check": {
+              "custom": {
+                "name": "reflog-archaeology-tip"
+              }
+            }
+          },
+          {
+            "text": "you didn't just recreate the branch",
+            "check": {
+              "noRef": {
+                "ref": "experiment"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git reflog</code> shows HEAD's movements. You were on <code>experiment</code> when its commits were made, so they're in there.",
+          "The entry you want is the newest <code>commit:</code> line that happened while HEAD was on experiment — look for “Handle short reads”.",
+          "<code>echo &lt;that id&gt; &gt; found.txt</code>. A short id is fine."
+        ],
+        "solution": [
+          "git reflog",
+          "cat .git/logs/HEAD            # the same thing, raw",
+          "echo <the id from 'commit: Handle short reads'> > found.txt"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "reflog-archaeology",
+    "questions": [
+      {
+        "q": "You commit five times on branch feature. How many entries does main's reflog gain?",
+        "choices": [
+          "Five",
+          "None — main didn't move",
+          "One, when you switched away"
+        ],
+        "answer": 1,
+        "explain": "A branch's reflog records that branch's movements. HEAD's log gains entries for all of it, which is why the two logs diverge and why HEAD@{n} and main@{n} rarely name the same commit."
+      },
+      {
+        "q": "You clone a repository. What's in the clone's reflog?",
+        "choices": [
+          "The original's full reflog",
+          "One entry per ref, recording the clone",
+          "Nothing at all"
+        ],
+        "answer": 1,
+        "explain": "Reflogs are strictly local and never transferred. It's why the reflog can't help you investigate what happened on a build server."
+      },
+      {
+        "q": "Which finds where main pointed yesterday?",
+        "choices": [
+          "main~1",
+          "main@{yesterday}",
+          "git log --since=yesterday main"
+        ],
+        "answer": 1,
+        "explain": "@{} selectors accept dates and read the reflog. main~1 is a graph question — the parent of the current tip — which is a different thing entirely."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("reflog-archaeology-tip", async (repo) => {
+      let text;
+      try {
+        text = (await GT.readFile(repo.dir, "found.txt")).trim().split(/\s+/)[0];
+      } catch {
+        return { pass: false, detail: "found.txt isn't there yet" };
+      }
+      if (!text) return { pass: false, detail: "found.txt is empty" };
+      // The tip of the deleted branch is the newest commit HEAD's reflog records
+      // that no ref can reach any more.
+      const entries = await GT.readReflog(repo.dir, "HEAD");
+      const report = await GTPorc.fsck(repo.dir, { includeReflogs: false });
+      const stranded = new Set(report.unreachable.filter((o) => o.type === "commit").map((o) => o.oid));
+      const want = entries.map((e) => e.newOid).find((oid) => stranded.has(oid));
+      if (!want) return { pass: false, detail: "nothing stranded to find" };
+      return want.startsWith(text)
+        ? { pass: true, detail: want.slice(0, 7) + " — the deleted branch's tip" }
+        : { pass: false, detail: "that isn't the tip of the deleted branch" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

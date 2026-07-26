@@ -555,30 +555,34 @@
     return { bad, good, skip, started: Boolean(await readState(dir, "BISECT_START")) };
   }
 
-  /** The commits still suspected, oldest first. */
+  /** The commits still worth testing, oldest first.
+      The known-bad commit is excluded: its verdict is already in, so offering it
+      again would leave the search stuck on one commit forever. */
   async function bisectCandidates(dir) {
     const { bad, good, skip } = await bisectState(dir);
     if (!bad || !good.length) return [];
     const entries = await P().revList(dir, {
       include: [bad], exclude: good, reverse: true, firstParent: false,
     });
-    return entries.map((e) => e.oid).filter((oid) => !skip.includes(oid));
+    return entries
+      .map((e) => e.oid)
+      .filter((oid) => oid !== bad && !skip.includes(oid));
   }
 
   async function bisectNext(dir) {
     const candidates = await bisectCandidates(dir);
     const { bad, good } = await bisectState(dir);
     if (!bad || !good.length) return { needs: !bad ? "bad" : "good" };
+    // Nothing left to test means the known-bad commit is the first bad one.
     if (!candidates.length) return { done: true, first: bad };
-    if (candidates.length === 1) {
-      // Nothing left to test: the remaining candidate is the first bad commit.
-      return { done: true, first: candidates[0] };
-    }
     const mid = candidates[Math.floor(candidates.length / 2)];
     await GT.setHead(dir, mid, `checkout: moving to ${mid.slice(0, 7)} (bisect)`);
     await P().checkoutFiles(dir, await P().filesOfCommit(dir, mid));
+    // git reports how many candidates would be left after this test — roughly
+    // half — not how many there are now.
+    const remaining = Math.floor((candidates.length - 1) / 2);
     const steps = Math.max(0, Math.ceil(Math.log2(candidates.length)) - 1);
-    return { testing: mid, remaining: candidates.length - 1, steps };
+    return { testing: mid, remaining, steps };
   }
 
   async function bisectReset(dir) {

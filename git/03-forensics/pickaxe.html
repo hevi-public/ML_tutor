@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The pickaxe — Git Tutor</title>
+
+  <meta name="git:unit" content="Debugging & forensics">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="blame-moves-and-copies.html|blame, moves and copies">
+  <meta name="git:next" content="reflog-archaeology.html|Reflog archaeology">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Debugging & forensics</p>
+  <h1>The pickaxe</h1>
+  <p class="lede">Search history by content instead of by path: when did this string appear, and which commit took it out again?</p>
+
+  <h2>The idea</h2>
+  <p><code>git grep</code> searches your working tree. The pickaxe searches
+  <em>history</em>, and it comes in two flavours that answer different questions:</p>
+
+  <table class="ref">
+    <tr><th>-S&lt;string&gt;</th><td>commits where the <strong>number of occurrences</strong> of that string changed — so, where it was introduced or removed</td></tr>
+    <tr><th>-G&lt;regex&gt;</th><td>commits whose <strong>diff mentions</strong> it at all, including lines merely moved around</td></tr>
+  </table>
+
+  <p>The distinction is sharper than it looks. Move a line containing
+  <code>API_KEY</code> from one file to another: the occurrence count across the
+  commit is unchanged, so <code>-S</code> says nothing and <code>-G</code> reports
+  it. So <code>-S</code> answers "who introduced this?" and <code>-G</code>
+  answers "who touched anything to do with this?"</p>
+
+  <p>In practice <code>-S</code> is the one you want, and it's astonishingly
+  effective at the question that comes up most: <em>this line exists, why?</em></p>
+
+  <pre>git log -S'DEPRECATED_FLAG' --oneline        # who added it, who removed it
+git log -S'password' --all --oneline         # across every branch
+git log -S'foo' -p                           # with the diffs, to read the context</pre>
+
+  <h2>Try it</h2>
+  <p>The sandbox has a deploy script that briefly contained a hard-coded password.
+  It's gone from the tip. Find both ends of its life:</p>
+
+  <pre>cat deploy.sh                    # clean now
+git log --oneline
+git log -S'hunter2' --oneline    # two commits: the one that added it and the one that removed it
+git log -S'hunter2' -p           # read what actually happened
+git log -G'PASSWORD' --oneline   # a wider net</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The two commits -S always finds</summary>
+    <div class="layer-body">
+      <p>Searching for a removed string typically returns exactly two commits: the
+      one where the count went 0 → 1, and the one where it went 1 → 0. Which is
+      what makes it the right tool for a leaked credential — you learn <em>when it
+      was exposed</em> and <em>for how long</em>, which is what the incident writeup
+      needs.</p>
+      <p>Add <code>--all</code> so branches and tags are searched too, and
+      <code>--reverse</code> to read oldest-first, which is the natural order for a
+      story.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Narrowing it: paths, pathspec magic and -L</summary>
+    <div class="layer-body">
+      <pre>git log -S'timeout' -- src/            # only under src/
+git log -S'x' -- . ':(exclude)*.lock'  # skip the noisy generated files
+git log -L 10,20:config.ini            # the history of those lines specifically</pre>
+      <p><code>-L</code> is the underused one: it prints the successive diffs of a
+      line range, following the lines as they move within the file. For "how did
+      this function get like this" it's better than blame, because it shows the
+      sequence rather than only the last step.</p>
+      <ul class="symbol-legend" data-symbols=":(exclude)pattern,--,&lt;rev&gt;:&lt;path&gt;"></ul>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Why it's slower, and when to care</summary>
+    <div class="layer-body">
+      <p>The pickaxe has to diff every commit it considers. On a large repository
+      that's slow — noticeably so on <code>--all</code>. Mitigations, in order of
+      usefulness: give it a path, give it a range
+      (<code>git log -S'x' v2.0..HEAD</code>), and use <code>--</code> before the
+      path so git doesn't have to guess.</p>
+      <p>It also only ever sees text diffs, so a string inside a binary blob won't
+      be found unless you've told git how to diff that format.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p><a href="reflog-archaeology.html">Reflog archaeology</a> is the same
+  investigative instinct pointed at your own local history, for the times the
+  thing you're looking for was never committed to a branch at all.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    ":(exclude)pattern": {
+      "name": ":(exclude) — leave these out",
+      "pron": "say: colon paren exclude",
+      "means": "pathspec magic that excludes matching paths",
+      "short": "exclude"
+    },
+    "--": {
+      "name": "-- — paths follow",
+      "pron": "say: dash dash",
+      "means": "separates revisions from paths, and speeds up the search",
+      "short": "paths follow"
+    },
+    "<rev>:<path>": {
+      "name": "<rev>:<path> — a file at a revision",
+      "pron": "say: rev colon path",
+      "means": "read the old version the pickaxe pointed you at",
+      "short": "old version"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "pickaxe",
+    "labs": [
+      {
+        "id": "pickaxe-find-the-password",
+        "title": "Work out how long the password was exposed",
+        "fixture": "lost-string",
+        "task": "The string <code>hunter2</code> was committed and later removed. Find both commits and record, in <code>incident.txt</code>, the subjects of the commit that introduced it and the commit that removed it — one per line, introduced first.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "incident.txt is committed with two lines",
+            "check": {
+              "custom": {
+                "name": "pickaxe-two-lines"
+              }
+            }
+          },
+          {
+            "text": "the first line names the commit that added it",
+            "check": {
+              "custom": {
+                "name": "pickaxe-introduced"
+              }
+            }
+          },
+          {
+            "text": "the second names the commit that removed it",
+            "check": {
+              "custom": {
+                "name": "pickaxe-removed"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git log -S'hunter2' --oneline</code> gives you exactly two commits.",
+          "The log is newest-first, so the removal is listed above the introduction.",
+          "<code>git log -S'hunter2' -p</code> shows the diffs, which confirms which is which."
+        ],
+        "solution": [
+          "git log -S'hunter2' --oneline",
+          "git log -S'hunter2' -p              # read which one added and which removed",
+          "echo 'Automate the upload' > incident.txt",
+          "echo 'Read credentials from the environment' >> incident.txt",
+          "git add incident.txt && git commit -m 'Write up the exposure window'"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "pickaxe",
+    "questions": [
+      {
+        "q": "A commit moves a line containing `API_KEY` from one file to another. Which finds it?",
+        "choices": [
+          "-S'API_KEY'",
+          "-G'API_KEY'",
+          "Both"
+        ],
+        "answer": 1,
+        "explain": "-S looks for a change in the number of occurrences, and a move leaves the count the same. -G matches the diff text, so it catches moves."
+      },
+      {
+        "q": "You search `git log -S'secret'` for a string that's no longer in the tree. How many commits do you typically get?",
+        "choices": [
+          "One — the commit that removed it",
+          "Two — the one that introduced it and the one that removed it",
+          "All commits that ever contained it"
+        ],
+        "answer": 1,
+        "explain": "The count changed at exactly two points: 0→1 and 1→0. That gives you the exposure window, which is the useful output for a leaked credential."
+      },
+      {
+        "q": "Which shows the sequence of changes to lines 10–20 of a file, following them as they move?",
+        "choices": [
+          "git blame -L 10,20 file",
+          "git log -L 10,20:file",
+          "git log -S'' -- file"
+        ],
+        "answer": 1,
+        "explain": "log -L prints successive diffs for that range. blame -L only tells you who last touched each of those lines."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    // The three checks share one parse of the file the learner wrote.
+    async function lines(repo) {
+      const head = await GT.resolve(repo.dir, "HEAD");
+      const files = await GTPlumb.filesOfCommit(repo.dir, head);
+      const meta = files.get("incident.txt");
+      if (!meta) return null;
+      return (await GTPlumb.readBlobText(repo.dir, meta.oid))
+        .split("\n").map((l) => l.trim()).filter(Boolean);
+    }
+
+    // Ask the repository which commits changed the occurrence count, rather than
+    // hard-coding subjects that a fixture edit would invalidate.
+    async function pickaxeHits(repo) {
+      const hits = await GTPorc.pickaxe(repo.dir, { string: "hunter2" });
+      // newest first, as git log prints them
+      return hits.map((h) => h.commit.message.split("\n")[0]);
+    }
+
+    GTChecks.register("pickaxe-two-lines", async (repo) => {
+      const got = await lines(repo);
+      if (!got) return { pass: false, detail: "incident.txt isn't committed yet" };
+      return got.length === 2
+        ? { pass: true, detail: "two lines" }
+        : { pass: false, detail: `${got.length} line(s), expected 2` };
+    });
+
+    GTChecks.register("pickaxe-introduced", async (repo) => {
+      const got = await lines(repo);
+      const hits = await pickaxeHits(repo);
+      if (!got || !hits.length) return { pass: false, detail: "not yet" };
+      const introduced = hits[hits.length - 1];
+      return got[0] && introduced.toLowerCase().includes(got[0].toLowerCase())
+        ? { pass: true, detail: `“${introduced}”` }
+        : { pass: false, detail: "line 1 isn't the commit that added it" };
+    });
+
+    GTChecks.register("pickaxe-removed", async (repo) => {
+      const got = await lines(repo);
+      const hits = await pickaxeHits(repo);
+      if (!got || hits.length < 2) return { pass: false, detail: "not yet" };
+      const removed = hits[0];
+      return got[1] && removed.toLowerCase().includes(got[1].toLowerCase())
+        ? { pass: true, detail: `“${removed}”` }
+        : { pass: false, detail: "line 2 isn't the commit that removed it" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

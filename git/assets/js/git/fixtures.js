@@ -373,14 +373,15 @@
     ].join("\n");
   };
 
+  // One entry per commit from the 2nd to the 12th, so index i is commit i + 2.
   SRC.bugMessages = [
     "Document the tokenizer",
     "Strip punctuation",
     "Lowercase the tokens",
     "Add a fast path for short input",
     "Handle tabs",
-    "Cache the compiled pattern",     // commit 8 — the regression
-    "Add type hints",
+    "Cache the compiled pattern",
+    "Add type hints",                 // commit 8 — the commit that plants the bug
     "Tidy the imports",
     "Handle None",
     "Add a docstring example",
