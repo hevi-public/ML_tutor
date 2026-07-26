@@ -166,10 +166,11 @@ for (const rel of pages) {
           `lab "${lab.id}" in ${rel} wants fixture "${lab.fixture}", which ` +
           `fixtures.js doesn't define (have: ${[...FIXTURES].join(", ")})`);
       }
-      if (!lab.goals || !lab.goals.length) {
+      // A free-play lab is a sandbox rather than an exercise, so it has no goals.
+      if (!lab.free && (!lab.goals || !lab.goals.length)) {
         throw new Error(`lab "${lab.id}" in ${rel} has no goals, so it can never pass`);
       }
-      for (const goal of lab.goals) {
+      for (const goal of lab.goals || []) {
         const name = Object.keys(goal.check || {})[0];
         if (!name) throw new Error(`goal without a check in lab "${lab.id}" (${rel})`);
         if (!CHECKS.has(name)) {
@@ -182,7 +183,7 @@ for (const rel of pages) {
       labs.push({
         id: lab.id, title: lab.title, task: lab.task || "",
         fixture: lab.fixture, page: rel, pageTitle: title, unit,
-        goals: lab.goals.length,
+        goals: (lab.goals || []).length,
       });
       entries.push({
         t: `Lab: ${lab.title}`, u: `${rel}#lab-${lab.id}`,

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Submodules and subtrees — Git Tutor</title>
+
+  <meta name="git:unit" content="Workflow & collaboration">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="hooks.html|Hooks">
+  <meta name="git:next" content="../05-labs/recovery-drill.html|Recovery drill">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Workflow & collaboration</p>
+  <h1>Submodules and subtrees</h1>
+  <p class="lede">A submodule is one tree entry with an unusual mode. Most of its reputation comes from people not knowing that.</p>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="submodule">submodule</dfn> is two things, and neither is
+  complicated:</p>
+
+  <ol>
+    <li>A <strong>gitlink</strong>: a tree entry with mode <code>160000</code>,
+    naming <em>one commit</em> in another repository. Not a branch — a commit.</li>
+    <li>A line in <code>.gitmodules</code> saying where to clone that repository
+    from.</li>
+  </ol>
+
+  <pre>$ git cat-file -p HEAD^{tree}
+100644 blob 8d0e412…	README.md
+100644 blob 5cff6c5…	count.py
+160000 commit 3bf7b3a…	vendor/parser</pre>
+
+  <p>That's the whole data model. Everything people find awkward follows from the
+  first point: the superproject pins an exact commit, so a clone doesn't get the
+  submodule's content (only its id), your worktree can hold a submodule checkout
+  that doesn't match the pin, and updating means committing a new gitlink in the
+  superproject.</p>
+
+  <p>The commands are consequences of that:</p>
+  <table class="ref">
+    <tr><th>clone --recurse-submodules</th><td>clone, then fetch each pinned commit. Without it, the directories are empty</td></tr>
+    <tr><th>submodule update --init</th><td>the same thing after the fact</td></tr>
+    <tr><th>submodule update --remote</th><td>move the pin to the submodule's latest upstream — then commit the changed gitlink</td></tr>
+    <tr><th>git diff</th><td>shows gitlink changes as <code>-Subproject commit a1b2…</code> / <code>+Subproject commit c3d4…</code></td></tr>
+  </table>
+
+  <h2>Try it</h2>
+  <p>The sandbox's repository has a real submodule: a gitlink pointing at a commit
+  in a separate repository next door. Look at it as data:</p>
+
+  <pre>git cat-file -p HEAD^{tree}          # spot the 160000 entry
+git ls-tree -r HEAD                   # …and its path
+cat .gitmodules                       # where it would be cloned from
+git rev-parse HEAD:vendor/parser      # the pinned commit id</pre>
+
+  <div class="box sim-note">
+    <span class="label">What's real here and what isn't</span>
+    The gitlink and <code>.gitmodules</code> are genuine — real git reads this
+    repository and reports <code>160000 commit … vendor/parser</code>. What the
+    sandbox doesn't implement is the <code>git submodule</code> porcelain, since
+    it's mostly clone orchestration. Typing it says so.
+  </div>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Subtrees: the other answer</summary>
+    <div class="layer-body">
+      <p><dfn data-term="subtree">git subtree</dfn> takes the opposite trade: copy
+      the other project's files <em>into</em> your tree, history and all, under a
+      prefix.</p>
+      <table class="ref">
+        <tr><th>Submodule</th><td>small repository, exact pin, but every clone needs an extra step and every contributor needs to understand it</td></tr>
+        <tr><th>Subtree</th><td>a plain clone just works and nobody needs to know, at the cost of a bigger repository and a fiddlier update procedure</td></tr>
+      </table>
+      <pre>git subtree add --prefix=vendor/parser &lt;url&gt; main --squash
+git subtree pull --prefix=vendor/parser &lt;url&gt; main --squash</pre>
+      <p>The rule of thumb that holds up: if the people cloning your repository
+      shouldn't have to know, use a subtree. If the dependency has its own life and
+      the pin matters, use a submodule. If you're just vendoring a small library
+      you never update, copying the files in is fine and honest.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The failure modes, and what each one actually is</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>Empty submodule directory</th><td>you cloned without <code>--recurse-submodules</code>. The gitlink is there; the content isn't</td></tr>
+        <tr><th>"modified: vendor/parser (new commits)"</th><td>the checkout is on a different commit from the pin. Either commit the new pin or check the pinned one out</td></tr>
+        <tr><th>Detached HEAD inside the submodule</th><td>normal and correct: it's checked out <em>at a commit</em>, not on a branch</td></tr>
+        <tr><th>A colleague's pin doesn't exist locally</th><td>they committed a pin without pushing the submodule. Push the submodule first, always</td></tr>
+      </table>
+      <p>That last one is the genuinely painful one, and the only real discipline
+      submodules require: <strong>push the submodule before you push the
+      superproject commit that pins it.</strong></p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Useful config</summary>
+    <div class="layer-body">
+      <pre>git config --global submodule.recurse true       # update submodules on checkout/pull
+git config --global diff.submodule log          # show submodule changes as commits
+git config --global status.submoduleSummary true</pre>
+      <p>Those three remove most day-to-day submodule friction. The first in
+      particular: it makes <code>git checkout</code> and <code>git pull</code>
+      bring the submodules along, which is what people assume happens anyway.</p>
+      <ul class="symbol-legend" data-symbols="160000,040000,&lt;rev&gt;:&lt;path&gt;"></ul>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>That's Unit 4, and the four areas are covered.
+  <a href="../05-labs/recovery-drill.html">Unit 5</a> is drills — scenarios with a
+  clock on them — and <a href="../06-expert/packfiles-and-gc.html">Unit 6</a> is
+  the expert track.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "160000": {
+      "name": "160000 — a gitlink",
+      "pron": "say: one sixty thousand",
+      "means": "a tree entry naming a commit in another repository",
+      "short": "submodule"
+    },
+    "040000": {
+      "name": "040000 — a subdirectory",
+      "pron": "say: forty thousand",
+      "means": "an ordinary subtree, for contrast",
+      "short": "directory"
+    },
+    "<rev>:<path>": {
+      "name": "<rev>:<path>",
+      "pron": "say: rev colon path",
+      "means": "resolves to the pinned commit id when the path is a gitlink",
+      "short": "the pin"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "submodules-and-subtrees",
+    "labs": [
+      {
+        "id": "submodules-read-the-gitlink",
+        "title": "Read a submodule as data",
+        "fixture": "with-submodule",
+        "task": "Find the commit id this repository pins for <code>vendor/parser</code>, and write it into <code>pinned.txt</code>. Nothing needs committing.",
+        "show": [
+          "objects"
+        ],
+        "inspect": "HEAD",
+        "goals": [
+          {
+            "text": "pinned.txt holds the pinned commit id",
+            "check": {
+              "custom": {
+                "name": "submodule-pin"
+              }
+            }
+          },
+          {
+            "text": "you found it in the tree, not by guessing",
+            "check": {
+              "fileContains": {
+                "path": "pinned.txt",
+                "pattern": "^[0-9a-f]{7,40}"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git cat-file -p HEAD^{tree}</code> shows the root tree. Look for the entry whose mode is 160000.",
+          "It's inside <code>vendor/</code>, so you'll need to follow that subtree — or use <code>git ls-tree -r HEAD</code>.",
+          "<code>git rev-parse HEAD:vendor/parser</code> gets it in one step."
+        ],
+        "solution": [
+          "git ls-tree -r HEAD                  # spot the 160000 commit entry",
+          "cat .gitmodules",
+          "git rev-parse HEAD:vendor/parser",
+          "echo <that id> > pinned.txt"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "submodules-and-subtrees",
+    "questions": [
+      {
+        "q": "What does a submodule store in the superproject's tree?",
+        "choices": [
+          "A copy of the submodule's files",
+          "A single entry with mode 160000 naming one commit in the other repository",
+          "A URL and a branch name"
+        ],
+        "answer": 1,
+        "explain": "One gitlink entry. The URL lives separately in .gitmodules, and no content from the other repository is stored at all."
+      },
+      {
+        "q": "You commit a submodule pin and push, and a colleague can't check it out. Most likely reason?",
+        "choices": [
+          "They need --recurse-submodules",
+          "You didn't push the submodule repository, so the commit you pinned doesn't exist anywhere they can fetch it from",
+          "Their git is too old"
+        ],
+        "answer": 1,
+        "explain": "The pin is just an id. Push the submodule before the superproject commit that references it — the one real discipline submodules demand."
+      },
+      {
+        "q": "Main trade-off of a subtree versus a submodule?",
+        "choices": [
+          "Subtrees are faster to clone",
+          "A subtree puts the files in your repository, so a plain clone just works — at the cost of size and a fiddlier update procedure",
+          "Subtrees can't track upstream changes"
+        ],
+        "answer": 1,
+        "explain": "The question is really who bears the cost: submodules push it onto everyone cloning, subtrees onto whoever updates the dependency."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("submodule-pin", async (repo) => {
+      let text;
+      try {
+        text = (await GT.readFile(repo.dir, "pinned.txt")).trim().split(/\s+/)[0];
+      } catch {
+        return { pass: false, detail: "pinned.txt isn't there yet" };
+      }
+      const want = await GTPlumb.revParse(repo.dir, "HEAD:vendor/parser");
+      return text && want.startsWith(text)
+        ? { pass: true, detail: want.slice(0, 7) + " — the pinned commit" }
+        : { pass: false, detail: "that isn't the id in the gitlink" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

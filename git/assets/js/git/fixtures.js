@@ -237,6 +237,24 @@
       ],
     },
 
+    /* Unit 4 — a real gitlink: a tree entry naming a commit in another repo. */
+    "with-submodule": {
+      title: "A project with a submodule",
+      about: "vendor/parser is a gitlink — mode 160000 — naming a commit that " +
+        "lives in a different repository.",
+      steps: [
+        { message: "Add the word counter", write: { "count.py": SRC.count1 } },
+        { message: "Add a README", write: { "README.md": SRC.readme1 } },
+        {
+          submodule: {
+            path: "vendor/parser",
+            message: "Add the parser as a submodule",
+            file: { "parse.py": SRC.report },
+          },
+        },
+      ],
+    },
+
     /* Unit 4 — a dirty worktree to stash. */
     "dirty": {
       title: "Half-finished work in the worktree",
@@ -455,6 +473,11 @@
         });
       }
 
+      if (step.submodule) {
+        n++;
+        await addSubmodule(dir, step.submodule, { ...when(), author });
+      }
+
       if (step.publish) {
         await publish(dir, name);
       }
@@ -488,6 +511,67 @@
   }
 
   const basename = (dir) => dir.slice(dir.lastIndexOf("/") + 1);
+
+  /* ---------- submodules ----------
+
+     A submodule is two things: a line in .gitmodules saying where to clone from,
+     and a tree entry with mode 160000 — a "gitlink" — naming one commit in that
+     other repository. Both are built here for real: the sub-repository is an
+     actual repository next door on the same filesystem, and the gitlink names
+     one of its commits, so `git cat-file -p` and real git both read it as
+     "160000 commit <id> <path>".                                            */
+
+  async function addSubmodule(dir, spec, when) {
+    const subDir = `${dir}.sub`;
+    await GT.mkdirp(subDir);
+    await root.git.init({ fs: GT.fs(), dir: subDir, defaultBranch: "main" });
+    for (const [path, contents] of Object.entries(spec.file || {})) {
+      await GT.writeFile(subDir, path, contents);
+      await root.git.add({ fs: GT.fs(), dir: subDir, filepath: path });
+    }
+    const subOid = await GT.commit(subDir, {
+      message: "Initial parser",
+      author: GT.FIXTURE_AUTHOR,
+      committer: GT.FIXTURE_AUTHOR,
+      when,
+    });
+
+    const gitmodules = [
+      `[submodule "${spec.path}"]`,
+      `\tpath = ${spec.path}`,
+      `\turl = ${subDir}`,
+      "",
+    ].join("\n");
+    await GT.writeFile(dir, ".gitmodules", gitmodules);
+    await root.git.add({ fs: GT.fs(), dir, filepath: ".gitmodules" });
+
+    // Build the tree from the index, then add the gitlink entry by hand —
+    // there is no porcelain for "stage a commit id at this path".
+    const files = new Map();
+    for (const filepath of await root.git.listFiles({ fs: GT.fs(), dir })) {
+      const [oid] = await root.git.walk({
+        fs: GT.fs(),
+        dir,
+        trees: [root.git.STAGE()],
+        map: async (p, [stage]) => (p === filepath && stage ? stage.oid() : undefined),
+      });
+      if (oid) files.set(filepath, { oid, mode: "100644", type: "blob" });
+    }
+    files.set(spec.path, { oid: subOid, mode: "160000", type: "commit" });
+
+    const tree = await root.GTPlumb.buildTree(dir, files);
+    await GT.commit(dir, {
+      message: spec.message,
+      tree,
+      parent: [await GT.resolve(dir, "HEAD")],
+      author: GT.FIXTURE_AUTHOR,
+      committer: GT.FIXTURE_AUTHOR,
+      when,
+      reflog: `commit: ${spec.message}`,
+    });
+    await GT.flush();
+    return subOid;
+  }
 
   /* ---------- the fake remote ----------
 

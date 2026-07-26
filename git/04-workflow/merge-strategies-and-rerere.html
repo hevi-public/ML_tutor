@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Merge strategies and rerere — Git Tutor</title>
+
+  <meta name="git:unit" content="Workflow & collaboration">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="force-with-lease.html|--force-with-lease">
+  <meta name="git:next" content="hooks.html|Hooks">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Workflow & collaboration</p>
+  <h1>Merge strategies and rerere</h1>
+  <p class="lede">What to do when git can't decide by itself — and how to stop resolving the same conflict every time you rebase.</p>
+
+  <h2>The idea</h2>
+  <p>A merge is a <dfn data-term="three-way-merge">three-way merge</dfn> per file:
+  compare the <dfn data-term="merge-base">merge base</dfn> against each side, take
+  whichever side changed, and stop when both changed the same lines differently.
+  The <em>strategy</em> is how git handles the awkward cases around that.</p>
+
+  <p>Since git 2.34 the default strategy is <strong>ort</strong> ("ostensibly
+  recursive's twin"), a rewrite of the old <code>recursive</code>. It's faster,
+  handles renames better, and — usefully — can compute a merge without touching
+  your worktree at all. You rarely need to name a strategy; the options are what
+  matter:</p>
+
+  <table class="ref">
+    <tr><th>-X ours</th><td>on conflicting <em>hunks</em>, take our side. Everything non-conflicting from both sides is still merged</td></tr>
+    <tr><th>-X theirs</th><td>the same, favouring theirs</td></tr>
+    <tr><th>-s ours</th><td>completely different: take our tree wholesale and ignore theirs, while still recording the merge. Used to declare a branch merged without taking its content</td></tr>
+    <tr><th>-X ignore-space-change</th><td>the answer to a whitespace-only conflict</td></tr>
+    <tr><th>-X patience</th><td>a different diff algorithm; sometimes untangles a conflict that looks worse than it is</td></tr>
+  </table>
+
+  <p>The distinction to keep is <code>-X ours</code> versus <code>-s ours</code>.
+  The first resolves conflicts in our favour; the second throws their changes away
+  entirely. They are one character apart and not remotely the same.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has two branches that both edited the cache size in
+  <code>config.ini</code>. Watch a real conflict, then resolve it three ways:</p>
+
+  <pre>git log --oneline --all
+git merge tune-cache             # conflict — read the markers
+cat config.ini
+git merge --abort
+git merge -X ours tune-cache      # our value wins, no prompt
+git reset --hard ORIG_HEAD
+git merge -X theirs tune-cache    # theirs wins</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Reading a conflict properly</summary>
+    <div class="layer-body">
+      <pre>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+cache = 16
+=======
+cache = 512
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; tune-cache</pre>
+      <p>Between <code>&lt;&lt;&lt;</code> and <code>===</code> is yours; between
+      <code>===</code> and <code>&gt;&gt;&gt;</code> is theirs. The markers are a
+      note to you — git doesn't parse them back, so resolving means editing the file
+      into what you want and staging it.</p>
+      <p><code>git config merge.conflictStyle zdiff3</code> is worth turning on: it
+      adds the base version as a third section, so you can see what each side
+      actually changed rather than guessing. And remember the index holds all three
+      versions during a conflict — <code>git show :1:file</code>,
+      <code>:2:file</code>, <code>:3:file</code> get at base, ours and theirs.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>rerere — reuse recorded resolution</summary>
+    <div class="layer-body">
+      <p>Rebase a long-lived branch repeatedly and you resolve the same conflict
+      every time, because each rebase replays your commits from scratch.</p>
+      <pre>git config --global rerere.enabled true</pre>
+      <p>With that on, git records a hash of the conflict's "pre-image" and the
+      resolution you produced, under <code>.git/rr-cache/&lt;hash&gt;/</code>. Next
+      time it meets an identical conflict, it applies your old resolution
+      automatically and tells you it did:</p>
+      <pre>Resolved 'config.ini' using previous resolution.</pre>
+      <p>It still leaves the result staged for you to check, which is the right
+      balance — you review, you don't retype. For anyone maintaining a branch
+      against a moving trunk this is the single highest-value line of git config
+      there is.</p>
+      <div class="box sim-note">
+        <span class="label">Not runnable in this sandbox</span>
+        <code>rerere</code> isn't implemented here. The conflicts, the markers, the
+        merge strategies and <code>-X</code> options all are, and the lab below uses
+        them; the resolution cache is the part you'll have to turn on in your own
+        config to see.
+      </div>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Merge drivers, for files that shouldn't be merged line by line</summary>
+    <div class="layer-body">
+      <p>Some files conflict every time and should never be merged textually — lock
+      files, generated code, notebooks. <code>.gitattributes</code> can say so:</p>
+      <pre>package-lock.json merge=ours
+*.ipynb           merge=nbdime</pre>
+      <p>with the driver defined in config. The built-in <code>union</code> driver
+      (keep both sides' lines) is right for append-only files like changelogs, and
+      <code>binary</code> is right for anything where a half-merged file would be
+      worse than picking a side.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="hooks.html">Hooks</a> — running your own code at git's decision
+  points, so the mistakes this unit is about get caught before they're pushed.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the merge",
+      "pron": "say: orig head",
+      "means": "where you were before the merge — the undo for a finished one",
+      "short": "undo point"
+    },
+    "<rev>^2": {
+      "name": "<rev>^2 — their side",
+      "pron": "say: rev caret two",
+      "means": "the second parent of a merge commit: the branch that was merged in",
+      "short": "their side"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "merge-strategies-and-rerere",
+    "labs": [
+      {
+        "id": "merge-strategies-resolve-three-ways",
+        "title": "Hit a conflict, then resolve it deliberately",
+        "fixture": "conflicting",
+        "task": "Merge <code>tune-cache</code> into <code>main</code>. It will conflict on <code>config.ini</code>. Resolve it so the file ends up with <code>cache = 256</code> — neither side's value — and commit the merge.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "there's a merge commit on main",
+            "check": {
+              "messageMatch": {
+                "pattern": "^Merge",
+                "count": 1
+              }
+            }
+          },
+          {
+            "text": "the merged config has the compromise value",
+            "check": {
+              "blobContains": {
+                "path": "config.ini",
+                "text": "cache = 256"
+              }
+            }
+          },
+          {
+            "text": "no conflict markers left in the committed file",
+            "check": {
+              "blobContains": {
+                "path": "config.ini",
+                "pattern": "<<<<<<<",
+                "absent": true
+              }
+            }
+          },
+          {
+            "text": "both branches' histories are joined",
+            "check": {
+              "isAncestor": {
+                "ancestor": "tune-cache",
+                "of": "main"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git merge tune-cache</code> stops with the conflict. <code>cat config.ini</code> to see the markers.",
+          "<code>edit config.ini</code> opens the file. Delete the markers and both values, and put <code>cache = 256</code> in their place.",
+          "Then <code>git add config.ini</code> and <code>git commit -m \"Merge tune-cache\"</code> — staging the file is what tells git the conflict is resolved."
+        ],
+        "solution": [
+          "git merge tune-cache            # CONFLICT",
+          "cat config.ini",
+          "edit config.ini                 # resolve to cache = 256, remove the markers",
+          "git add config.ini",
+          "git commit -m \"Merge tune-cache with a compromise cache size\"",
+          "git log --oneline --graph"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "merge-strategies-and-rerere",
+    "questions": [
+      {
+        "q": "Difference between `-X ours` and `-s ours`?",
+        "choices": [
+          "None — one is shorthand",
+          "-X ours resolves conflicting hunks in our favour while still merging everything else; -s ours takes our tree wholesale and ignores theirs entirely",
+          "-s ours is the older spelling of -X ours"
+        ],
+        "answer": 1,
+        "explain": "One character, completely different outcomes. -s ours is for declaring a branch merged without taking its content — useful, and catastrophic by accident."
+      },
+      {
+        "q": "What does rerere store?",
+        "choices": [
+          "Every merge commit you've made",
+          "A hash of each conflict's pre-image alongside the resolution you produced, so an identical conflict is resolved automatically next time",
+          "A cache of merge bases, to speed up merging"
+        ],
+        "answer": 1,
+        "explain": "Which is why it pays off most when repeatedly rebasing a long-lived branch: each replay hits the same conflicts, and you resolve them once."
+      },
+      {
+        "q": "During a conflict, how do you see the base version of a file — what it looked like before either side changed it?",
+        "choices": [
+          "git show HEAD:file",
+          "git show :1:file",
+          "git diff --base file"
+        ],
+        "answer": 1,
+        "explain": "The index holds all three versions during a conflict: :1: base, :2: ours, :3: theirs. Setting merge.conflictStyle=zdiff3 puts the base into the markers so you don't have to ask."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

@@ -107,10 +107,13 @@
       return { goal, li };
     });
 
-    const goalsBox = el("section", "lab-goals");
-    goalsBox.appendChild(el("h4", null, "Done when"));
-    goalsBox.appendChild(goalList);
-    host.appendChild(goalsBox);
+    // A free-play lab has nothing to prove — it's a sandbox with a reset button.
+    if (!spec.free) {
+      const goalsBox = el("section", "lab-goals");
+      goalsBox.appendChild(el("h4", null, "Done when"));
+      goalsBox.appendChild(goalList);
+      host.appendChild(goalsBox);
+    }
 
     /* widgets */
 
@@ -159,6 +162,7 @@
     const buttons = el("div", "buttons");
     const check = el("button", "action", "Check my work");
     check.type = "button";
+    if (spec.free) check.hidden = true;
     const hintButton = el("button", "action secondary", "Hint");
     hintButton.type = "button";
     const solutionButton = el("button", "action secondary", "Show one solution");
@@ -216,7 +220,7 @@
     /* the check loop */
 
     async function refresh() {
-      let allPass = goalRows.length > 0;
+      let allPass = goalRows.length > 0 && !spec.free;
       for (const row of goalRows) {
         const result = await root.GTChecks.evaluate(repo, row.goal.check);
         row.li.dataset.state = result.pass ? "pass" : "todo";

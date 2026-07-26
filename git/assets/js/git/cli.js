@@ -331,6 +331,46 @@
     },
   });
 
+  /* ---------- hooks ----------
+
+     A browser has no shell, so a hook here is JavaScript rather than a shell
+     script: the file at .git/hooks/pre-commit is treated as a function body
+     called with { staged, fail }. The path, the timing and the veto are real —
+     returning false or calling fail() cancels the commit exactly as a non-zero
+     exit would, and --no-verify skips it. What's missing is the environment:
+     no $PATH, no linters, no exit codes. 04-workflow/hooks.html says so. */
+
+  async function runPreCommitHook(dir) {
+    let source;
+    try {
+      source = await GT.readFile(dir, ".git/hooks/pre-commit");
+    } catch {
+      return null; // no hook, nothing to say
+    }
+    if (!source.trim()) return null;
+
+    const staged = [];
+    for (const filepath of await g().listFiles(GT.ctx(dir))) {
+      const oid = await indexOid(dir, filepath);
+      if (oid) staged.push({ path: filepath, text: await P().readBlobText(dir, oid) });
+    }
+
+    let refusal = null;
+    const fail = (message) => {
+      refusal = message || "pre-commit hook refused the commit";
+      return false;
+    };
+    try {
+      // eslint-disable-next-line no-new-func
+      const hook = new Function("ctx", `"use strict";\nconst { staged, fail } = ctx;\n${source}\n`);
+      const result = await hook({ staged, fail });
+      if (result === false && !refusal) refusal = "pre-commit hook refused the commit";
+    } catch (error) {
+      refusal = `pre-commit hook threw: ${error.message || error}`;
+    }
+    return refusal;
+  }
+
   define("commit", {
     summary: "record staged changes",
     async run(ctx) {
@@ -367,6 +407,15 @@
         const subject = (await g().readCommit({ ...GT.ctx(dir), oid })).commit.message.split("\n")[0];
         const branch = (await GT.headRef(dir))?.replace("refs/heads/", "") || "HEAD detached";
         return ok(`[${branch} ${short(oid)}] ${subject}\n`);
+      }
+
+      if (!flags.get("no-verify") && !flags.get("n")) {
+        const refusal = await runPreCommitHook(dir);
+        if (refusal) {
+          return err(`${refusal}\n` +
+            "error: the pre-commit hook refused this commit " +
+            "(use --no-verify to skip it)\n");
+        }
       }
 
       const { staged } = await statusRows(dir);

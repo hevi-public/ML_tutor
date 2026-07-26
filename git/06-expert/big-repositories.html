@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Big repositories — Git Tutor</title>
+
+  <meta name="git:unit" content="Expert track">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="notes-and-replace.html|Notes and replace refs">
+  <meta name="git:next" content="when-not-to-rewrite.html|When not to rewrite">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Expert track</p>
+  <h1>Big repositories</h1>
+  <p class="lede">Partial clone, sparse checkout, and the other features that exist because some repositories are far larger than git's original assumptions.</p>
+
+  <h2>The idea</h2>
+  <p>Git assumes you want every object in the history and every file in the tree.
+  For most repositories that's right, and it's why clones are self-contained and
+  everything is fast offline. Past a certain size it stops being right, and two
+  independent features relax the two halves of the assumption:</p>
+
+  <table class="ref">
+    <tr><th><dfn data-term="sparse-checkout">Sparse checkout</dfn></th><td>fewer files <em>in your worktree</em>. The index still knows every path; only what you've asked for is written to disk</td></tr>
+    <tr><th>Partial clone</th><td>fewer objects <em>downloaded</em>. Git fetches the commits and trees, and fetches blobs on demand when something actually needs one</td></tr>
+  </table>
+
+  <p>They're usually used together, and the combination is what makes a
+  hundred-gigabyte monorepo workable:</p>
+
+  <pre>git clone --filter=blob:none --sparse &lt;url&gt;
+cd repo
+git sparse-checkout set services/payments libs/common</pre>
+
+  <p>Now you have the full history graph, a worktree with two directories in it, and
+  blobs arriving only when you check something out or run a diff that needs them.</p>
+
+  <div class="box sim-note">
+    <span class="label">Not runnable in this sandbox</span>
+    Both features are about what gets transferred and written, and this sandbox has
+    no network and a handful of tiny files — so <code>sparse-checkout</code> and
+    <code>--filter</code> aren't implemented here. This page is a map of what
+    exists and when to reach for it; the mechanisms it builds on — the index,
+    trees, refspecs — are all things you've already used.
+  </div>
+
+  <h2>The details</h2>
+
+  <details class="layer" open>
+    <summary>The filters, and what each one keeps</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>--filter=blob:none</th><td>no file contents at all up front. The usual choice: commits and trees are small, blobs are the bulk</td></tr>
+        <tr><th>--filter=blob:limit=1m</th><td>everything except large blobs — the pragmatic version when a few big files dominate</td></tr>
+        <tr><th>--filter=tree:0</th><td>commits only. Very fast, very limited: almost any operation needs a tree, so most things trigger a fetch</td></tr>
+        <tr><th>--depth=1</th><td>a shallow clone: recent commits only. Different axis, and much more limiting — history operations either fail or silently see nothing</td></tr>
+      </table>
+      <p>Prefer a partial clone to a shallow one where you can. A partial clone has
+      the whole graph, so <code>log</code>, <code>blame</code> and
+      <code>bisect</code> all work; it just fetches content lazily. A shallow clone
+      doesn't have the history at all, which is why <code>git log</code> stops
+      abruptly and bisect is useless.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Sparse checkout, cone mode, and why it got usable</summary>
+    <div class="layer-body">
+      <p>The original sparse checkout took arbitrary gitignore-style patterns, which
+      meant git had to match every path in the index against every pattern — slow,
+      on the repositories that needed it most.</p>
+      <p><strong>Cone mode</strong> (the default since 2.27) restricts you to whole
+      directories, which lets git skip entire subtrees without matching. Faster, and
+      the restriction costs almost nothing in practice.</p>
+      <pre>git sparse-checkout init --cone
+git sparse-checkout set services/payments
+git sparse-checkout list
+git sparse-checkout disable       # back to a full checkout</pre>
+      <p>Files outside the cone get the <code>SKIP_WORKTREE</code> bit in the index.
+      They're still tracked, still committed, still in every commit you make — they
+      just aren't on your disk. Which is the source of the one confusing symptom:
+      <code>git status</code> shows nothing wrong for a file that isn't there.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The rest of the large-repository toolkit</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>git maintenance start</th><td>background repack, commit-graph and prefetch. The first thing to turn on</td></tr>
+        <tr><th>commit-graph</th><td>cached ancestry, which is what makes log and merge-base fast at scale</td></tr>
+        <tr><th>fsmonitor</th><td>a filesystem watcher, so status doesn't have to stat a million files</td></tr>
+        <tr><th>untracked cache</th><td>caches directory scans for the same reason</td></tr>
+        <tr><th>Git LFS</th><td>stores large binaries outside the repository, leaving a pointer file. Fixes the "someone committed a 2GB asset" problem that partial clone only mitigates</td></tr>
+      </table>
+      <p>If a repository is slow, the order to try things in is: turn on
+      <code>git maintenance</code>, check whether a huge blob is the real problem
+      (<code>git count-objects -vH</code>), then reach for partial clone and sparse
+      checkout. Rewriting history to remove the blob is a last resort, because it's
+      a migration for everyone.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>One page left: <a href="when-not-to-rewrite.html">when not to rewrite</a> —
+  the judgement half of everything in Unit 2, and where to go after this course.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "100644": {
+      "name": "100644 — a file in the index",
+      "pron": "say: one hundred six forty-four",
+      "means": "still tracked under sparse checkout, even when it isn't on disk",
+      "short": "tracked"
+    },
+    "<src>:<dst>": {
+      "name": "a refspec",
+      "pron": "say: source colon destination",
+      "means": "how a partial clone still fetches every ref, just not every blob",
+      "short": "mapping"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "big-repositories",
+    "questions": [
+      {
+        "q": "Difference between a partial clone and a shallow clone?",
+        "choices": [
+          "None — different names for the same thing",
+          "A partial clone has the whole commit graph and fetches file contents lazily; a shallow clone doesn't have the history at all",
+          "A shallow clone omits branches; a partial clone omits tags"
+        ],
+        "answer": 1,
+        "explain": "Which is why log, blame and bisect work in a partial clone and are useless in a shallow one. Prefer --filter=blob:none to --depth=1 whenever you have the choice."
+      },
+      {
+        "q": "Under a sparse checkout, what happens to files outside your cone?",
+        "choices": [
+          "They're removed from the repository",
+          "They stay tracked and committed — the index marks them SKIP_WORKTREE and they simply aren't written to disk",
+          "They become untracked"
+        ],
+        "answer": 1,
+        "explain": "Every commit you make still contains them. It's why git status looks clean for a file that isn't on your disk, which is the one genuinely confusing symptom."
+      },
+      {
+        "q": "A colleague's clone is slow and enormous. What's the first thing to check?",
+        "choices": [
+          "Whether they need a faster disk",
+          "Whether a large binary was committed once, years ago — `git count-objects -vH` and a look at the biggest objects in the pack",
+          "Whether their git version is current"
+        ],
+        "answer": 1,
+        "explain": "It's almost always one accidentally committed artefact. Knowing that decides everything else: LFS or a rewrite for the blob, partial clone if the history is genuinely just big."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

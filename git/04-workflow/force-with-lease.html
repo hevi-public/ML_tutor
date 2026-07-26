@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>--force-with-lease — Git Tutor</title>
+
+  <meta name="git:unit" content="Workflow & collaboration">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="refspecs-and-remotes.html|Refspecs and remotes">
+  <meta name="git:next" content="merge-strategies-and-rerere.html|Merge strategies and rerere">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Workflow & collaboration</p>
+  <h1>--force-with-lease</h1>
+  <p class="lede">The difference between overwriting your own rewritten branch and silently deleting a colleague's commit. One flag, and it should be the only one you ever type.</p>
+
+  <h2>The idea</h2>
+  <p>You rebased a branch you'd already pushed, so your history and the remote's
+  disagree. A normal push is rejected — correctly, because accepting it would make
+  the remote's commits unreachable:</p>
+
+  <pre>! [rejected]        main -&gt; main (non-fast-forward)
+error: failed to push some refs</pre>
+
+  <p><code>--force</code> makes it go through. It also makes it go through when the
+  thing you'd be overwriting is a commit your colleague pushed ten minutes ago,
+  which you never fetched and therefore have never seen. That commit becomes
+  unreachable on the remote, and nothing tells anyone.</p>
+
+  <p><code>--force-with-lease</code> adds one check:</p>
+
+  <div class="box plain-english">
+    <span class="label">What the lease is</span>
+    Push only if the remote's branch is still exactly where my
+    <code>origin/&lt;branch&gt;</code> says it is. If someone else has pushed since
+    my last fetch, refuse.
+  </div>
+
+  <p>So it permits exactly the case you meant — <em>I know what's there, I fetched
+  it, and I intend to replace it</em> — and refuses the case you didn't. The
+  rejection reads:</p>
+
+  <pre>! [rejected]        main -&gt; main (stale info)</pre>
+
+  <p>which means "fetch and look again". It costs nothing and it turns a whole class
+  of incident into an error message.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has a remote that's moved on since you last looked. Watch all three
+  outcomes:</p>
+
+  <pre>git log --oneline --all
+git push                          # rejected: non-fast-forward
+git push --force-with-lease       # also rejected: stale info — you haven't fetched
+git fetch                         # now you can see what they did
+git log --oneline --left-right main...origin/main
+# then decide: rebase onto theirs (keeps their work), or lease-force (replaces it)</pre>
+
+  <p>That middle step is the whole point. <code>--force</code> would have gone
+  through and thrown away the remote's commit without mentioning it.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Why the lease can lie, and the flag that fixes it</summary>
+    <div class="layer-body">
+      <p>The lease is checked against your remote-tracking ref, which means it's
+      only as trustworthy as the last thing that updated it. If a background
+      <code>git fetch</code> — an IDE, a shell prompt, a scheduled job — runs
+      between your last look and your push, your tracking ref quietly advances to
+      include your colleague's commit, and the lease then approves overwriting it.</p>
+      <p>Git's answer is to state the expectation explicitly:</p>
+      <pre>git push --force-with-lease=main:&lt;the id I actually saw&gt;</pre>
+      <p>Newer git also has <code>--force-if-includes</code>, which additionally
+      requires that whatever the remote has is already reachable from what you're
+      pushing — closing the auto-fetch hole without your having to name an id.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Make it the default</summary>
+    <div class="layer-body">
+      <pre>git config --global alias.pushf "push --force-with-lease"</pre>
+      <p>There is no config that turns plain <code>--force</code> into the safe
+      version, so an alias — plus the habit of never typing <code>-f</code> — is the
+      practical answer. On the receiving end, the durable fix is on the server:
+      protected branches, or <code>receive.denyNonFastForwards</code> on a bare
+      repository, so nobody's local habits can rewrite the trunk at all.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>When it does happen: recovering an overwritten branch</summary>
+    <div class="layer-body">
+      <p>Someone force-pushed over a commit. It isn't lost — it's just unreferenced
+      on the remote:</p>
+      <ul>
+        <li>Whoever made the commit still has it locally, reflog and all. Easiest
+        route: they push it again.</li>
+        <li>The remote's own reflog knows, if you have shell access to it —
+        <code>git reflog show main</code> on the server.</li>
+        <li>Forges keep unreachable commits addressable for a long time; the id in a
+        pull request comment usually still resolves, and can be fetched by id.</li>
+      </ul>
+      <p>Which is worth knowing mainly so the response to "I force-pushed over
+      main" is a procedure rather than a panic.</p>
+      <ul class="symbol-legend" data-symbols="+&lt;src&gt;:&lt;dst&gt;,@{u},refs/remotes/origin/main"></ul>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="merge-strategies-and-rerere.html">Merge strategies and rerere</a> — the
+  options for when git can't work out a merge by itself, and how to avoid resolving
+  the same conflict twice.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "+<src>:<dst>": {
+      "name": "+ — force, in refspec form",
+      "pron": "say: plus",
+      "means": "allow a non-fast-forward update — the same thing as --force, with none of the lease's safety",
+      "short": "force"
+    },
+    "@{u}": {
+      "name": "@{u} — the upstream",
+      "pron": "say: at brace you",
+      "means": "the remote-tracking ref the lease is checked against",
+      "short": "upstream"
+    },
+    "refs/remotes/origin/main": {
+      "name": "refs/remotes/origin/main",
+      "pron": "say: refs remotes origin main",
+      "means": "the ref the lease compares the remote against — which is why a stale one is dangerous",
+      "short": "origin/main"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "force-with-lease",
+    "labs": [
+      {
+        "id": "force-with-lease-refused-then-earned",
+        "title": "Get a lease refused, then earn it",
+        "fixture": "with-remote",
+        "task": "First try to push, and try again with <code>--force-with-lease</code> — both should be refused. Then fetch, integrate the remote's commit, and push successfully without ever using plain <code>--force</code>.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "you fetched, so origin/main is current",
+            "check": {
+              "custom": {
+                "name": "fwl-fetched"
+              }
+            }
+          },
+          {
+            "text": "the remote's commit is in your history",
+            "check": {
+              "blobContains": {
+                "path": "README.md",
+                "text": "Counts the words"
+              }
+            }
+          },
+          {
+            "text": "your own commit is still there too",
+            "check": {
+              "blobContains": {
+                "path": "report.py",
+                "text": "def report"
+              }
+            }
+          },
+          {
+            "text": "the remote now matches your branch",
+            "check": {
+              "remoteRefIs": {
+                "ref": "main",
+                "equals": "main"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "Try <code>git push</code> first, and read the rejection. Then <code>git push --force-with-lease</code> — note that it's refused for a <em>different</em> reason.",
+          "<code>git fetch</code>, then <code>git log --oneline --left-right main...origin/main</code> to see what each side has.",
+          "<code>git rebase origin/main</code> puts your commit on top of theirs. After that the push is an ordinary fast-forward — no force needed at all."
+        ],
+        "solution": [
+          "git push                       # rejected: non-fast-forward",
+          "git push --force-with-lease    # rejected: stale info",
+          "git fetch",
+          "git log --oneline --left-right main...origin/main",
+          "git rebase origin/main",
+          "git push                       # a plain fast-forward now"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "force-with-lease",
+    "questions": [
+      {
+        "q": "What does --force-with-lease actually compare?",
+        "choices": [
+          "Your branch against the remote's branch",
+          "The remote's branch against your remote-tracking ref — refusing if someone pushed since your last fetch",
+          "The commit timestamps on both sides"
+        ],
+        "answer": 1,
+        "explain": "It's a check that your picture of the remote is current. That's why the rejection says 'stale info' and why fetching is the fix."
+      },
+      {
+        "q": "An IDE runs `git fetch` in the background every minute. What does that do to your lease?",
+        "choices": [
+          "Nothing",
+          "It can quietly advance your tracking ref to include a colleague's new commit, so the lease then approves overwriting it",
+          "It makes the lease stricter"
+        ],
+        "answer": 1,
+        "explain": "The lease trusts your tracking ref. Auto-fetch updates that ref without your having looked, which is what --force-if-includes and an explicit --force-with-lease=<ref>:<id> exist to close."
+      },
+      {
+        "q": "A colleague force-pushed over your commit on a shared branch. Is it gone?",
+        "choices": [
+          "Yes, permanently",
+          "No — it's unreferenced on the remote, and you still have it locally with its reflog, so pushing it again is usually the whole fix",
+          "Only recoverable by the server administrator"
+        ],
+        "answer": 1,
+        "explain": "Nothing was deleted, just unreferenced. The person who made the commit almost always still has it, which makes the recovery a procedure rather than an emergency."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("fwl-fetched", async (repo) => {
+      const remote = GT.remoteDirFor(repo.labId);
+      const there = await GT.resolve(remote, "refs/heads/main");
+      const tracked = await GT.resolve(repo.dir, "refs/remotes/origin/main");
+      if (!tracked) return { pass: false, detail: "no origin/main yet — fetch first" };
+      return tracked === there || (await GTPlumb.isAncestor(repo.dir, there, tracked))
+        ? { pass: true, detail: "origin/main is current" }
+        : { pass: false, detail: "origin/main is stale — git fetch" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>
