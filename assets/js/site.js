@@ -83,6 +83,19 @@
       header.appendChild(a);
     }
 
+    // The sibling courses on this site
+    for (const [href, label, title] of [
+      ["bass/index.html", "Bass ↗", "The bass guitar course on this site"],
+      ["git/index.html", "Git ↗", "The advanced git course on this site"],
+    ]) {
+      const sister = document.createElement("a");
+      sister.className = "header-link sister";
+      sister.href = ROOT + href;
+      sister.title = title;
+      sister.textContent = label;
+      header.appendChild(sister);
+    }
+
     themeButton = document.createElement("button");
     themeButton.type = "button";
     themeButton.className = "theme-toggle";
