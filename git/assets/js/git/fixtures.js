@@ -214,7 +214,12 @@
         { message: "Add a README", write: { "README.md": SRC.readme1 } },
         { publish: true },
         { message: "Add the report", write: { "report.py": SRC.report } },
-        { publishAhead: { message: "Fix the README typo", write: { "README.md": SRC.readme1.replace("counts", "counts up") } } },
+        {
+          publishAhead: {
+            message: "Spell out what it counts",
+            write: { "README.md": SRC.readme1.replace("Counts words", "Counts the words") },
+          },
+        },
       ],
     },
 

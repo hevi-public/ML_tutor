@@ -58,6 +58,33 @@ const CHECKS = checkNames();
 if (!FIXTURES.size) throw new Error("no fixtures found in fixtures.js");
 if (!CHECKS.size) throw new Error("no checks found in checks.js");
 
+/* ---------- unescaped placeholders ----------
+
+   These pages are full of things like <upstream> and <rev>:<path>. Written
+   literally in prose or a <pre>, a browser eats them as unknown tags and the
+   reader sees a sentence with a hole in it — which is invisible in the source and
+   obvious on the page. Anything that isn't a tag we actually use gets flagged. */
+
+const HTML_TAGS = new Set(`a abbr b body br button circle code dd details div dfn dl
+dt em form g h1 h2 h3 h4 h5 head hr html i input kbd label li link main meta nav ol
+p path pre rect script section span strong style sub summary sup svg table tbody td
+text textarea th thead title tr tspan ul`.split(/\s+/).filter(Boolean));
+
+function checkPlaceholders(html, rel) {
+  const prose = html.replace(/<script[\s\S]*?<\/script>/g, "");
+  const found = [];
+  for (const match of prose.matchAll(/<\/?([A-Za-z][\w-]*)/g)) {
+    const tag = match[1].toLowerCase();
+    if (HTML_TAGS.has(tag)) continue;
+    const line = prose.slice(0, match.index).split("\n").length;
+    found.push(`${rel}:${line}: <${match[1]}… should be &lt;${match[1]}&gt;`);
+  }
+  if (found.length) {
+    throw new Error("unescaped placeholder(s) — a browser will treat these as " +
+      "tags and drop them:\n  " + found.join("\n  "));
+  }
+}
+
 const entries = [];
 const labs = [];
 const seenLabIds = new Set();
@@ -81,6 +108,7 @@ const pages = fs.readdirSync(ROOT).filter((f) => f.endsWith(".html"))
 
 for (const rel of pages) {
   const html = fs.readFileSync(path.join(ROOT, rel), "utf8");
+  checkPlaceholders(html, rel);
   const title = (html.match(/<title>(.*?)<\/title>/) || [, rel])[1]
     .replace(/\s*—\s*Git Tutor\s*$/, "");
   const unit = (html.match(/name="git:unit" content="([^"]+)"/) || [, ""])[1]

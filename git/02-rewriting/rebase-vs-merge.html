@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rebase versus merge — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="rebase-onto.html|rebase --onto">
+  <meta name="git:next" content="reflog-recovery.html|Recovering with the reflog">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>Rebase versus merge</h1>
+  <p class="lede">Not a matter of taste, exactly. They record different claims about what happened, and only one of them is safe on history other people have.</p>
+
+  <h2>The idea</h2>
+  <p>Your branch and main have both moved. You need them combined. Two options,
+  and they differ in what ends up in the repository:</p>
+
+  <table class="ref">
+    <tr><th>merge</th><td>one new <dfn data-term="merge-commit">merge commit</dfn> with two parents. Your commits keep their ids. History records that two lines of work existed and were joined.</td></tr>
+    <tr><th>rebase</th><td>your commits are rebuilt on top of main, with new ids. History records a single line, as though you had started from today's main.</td></tr>
+  </table>
+
+  <p>So merge preserves what happened, and rebase presents what you wish had
+  happened. Both are legitimate. The interesting question is not which is nicer to
+  read but which facts you're prepared to lose.</p>
+
+  <p>Where the answer is not a matter of taste:</p>
+  <ul>
+    <li><strong>Unpushed local work: rebase freely.</strong> Nobody has those
+    commits, so replacing them costs nothing, and you get a history that's
+    reviewable.</li>
+    <li><strong>Anything others have based work on: merge.</strong> Rebasing
+    changes the ids they're building on, and their next pull will try to reconcile
+    two copies of every commit.</li>
+    <li><strong>A long-lived shared branch: merge, and stop asking.</strong> The
+    "clean history" argument is not worth the recovery work.</li>
+  </ul>
+
+  <h2>Try it</h2>
+  <p>The sandbox has diverged branches. Do it both ways and compare the graphs —
+  the shape is the argument:</p>
+
+  <pre>git checkout feature
+git merge main                      # a merge commit appears, two parents
+git log --oneline --graph
+git reset --hard ORIG_HEAD           # undo
+git rebase main                     # same content, one line, new ids
+git log --oneline --graph</pre>
+
+  <p>Look at <code>git log --oneline</code> after each: the merge leaves your
+  original ids in place, the rebase replaces every one of them.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Fast-forward, and why --no-ff exists</summary>
+    <div class="layer-body">
+      <p>If your branch tip is already an ancestor of what you're merging, there is
+      nothing to combine: git can just slide the ref forward. That's a
+      <dfn data-term="fast-forward">fast-forward</dfn>, and it produces no merge
+      commit at all.</p>
+      <table class="ref">
+        <tr><th>--ff (default)</th><td>fast-forward when possible, merge commit otherwise</td></tr>
+        <tr><th>--no-ff</th><td>always make a merge commit, so the branch is visible in history even when it needn't be</td></tr>
+        <tr><th>--ff-only</th><td>refuse anything that isn't a fast-forward. The safe setting for `git pull`</td></tr>
+      </table>
+      <p><code>git config pull.ff only</code> is worth setting: it turns a
+      surprise merge commit from a routine <code>git pull</code> into an error
+      message that makes you choose.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The third option: rebase then merge --no-ff</summary>
+    <div class="layer-body">
+      <p>Many projects want both — tidy commits <em>and</em> a record that a branch
+      existed. The recipe:</p>
+      <pre>git rebase -i main        # tidy your own commits into a reviewable series
+git checkout main
+git merge --no-ff feature  # one merge commit recording the branch</pre>
+      <p>Which is what most forge "merge pull request" buttons do, and why "squash
+      and merge" versus "rebase and merge" versus "create a merge commit" is a
+      choice your project makes once rather than an argument you have per pull
+      request.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>What a merge does that a rebase can't</summary>
+    <div class="layer-body">
+      <p>A merge commit records the <dfn data-term="merge-base">merge base</dfn>
+      implicitly, which means a <em>second</em> merge of the same branches only has
+      to reconcile what changed since the last one. Rebase has no such memory —
+      each rebase re-applies every commit and can hit the same conflict again.</p>
+      <p>This is why long-running integration branches are merged rather than
+      rebased, and why <a href="../04-workflow/merge-strategies-and-rerere.html">rerere</a>
+      exists: it gives repeated rebases the conflict memory that merges get for
+      free.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p>You've now got every rewriting tool in the box. The next page is the one that
+  makes them safe to use: <a href="reflog-recovery.html">recovering with the
+  reflog</a>.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the merge or rebase",
+      "pron": "say: orig head",
+      "means": "where HEAD was before the operation — the undo",
+      "short": "undo point"
+    },
+    "<rev>^2": {
+      "name": "<rev>^2 — the merged-in side",
+      "pron": "say: rev caret two",
+      "means": "the second parent of a merge commit",
+      "short": "their side"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "rebase-vs-merge",
+    "labs": [
+      {
+        "id": "rebase-vs-merge-both-ways",
+        "title": "Do it both ways and keep the evidence",
+        "fixture": "diverged",
+        "start": "feature",
+        "task": "First merge <code>main</code> into <code>feature</code>. Then undo that and rebase instead — so the branch ends up rebased, and the reflog shows you tried both.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "feature is rebased: linear on top of main",
+            "check": {
+              "isAncestor": {
+                "ancestor": "main",
+                "of": "feature"
+              }
+            }
+          },
+          {
+            "text": "no merge commit left behind",
+            "check": {
+              "noMessageMatch": {
+                "ref": "feature",
+                "pattern": "^Merge branch"
+              }
+            }
+          },
+          {
+            "text": "two commits of yours, replayed",
+            "check": {
+              "commitCount": {
+                "ref": "feature",
+                "since": "main",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "the reflog shows the merge you undid",
+            "check": {
+              "reflogContains": {
+                "pattern": "merge main"
+              }
+            }
+          },
+          {
+            "text": "…and the rebase that replaced it",
+            "check": {
+              "reflogContains": {
+                "pattern": "rebase"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "Merge first: <code>git merge main</code>. Look at <code>git log --oneline --graph</code>.",
+          "<code>git reset --hard ORIG_HEAD</code> undoes the merge and leaves it in the reflog.",
+          "Then <code>git rebase main</code>. Compare the two graphs — that comparison is the lesson."
+        ],
+        "solution": [
+          "git merge main",
+          "git log --oneline --graph        # a merge commit, your original ids intact",
+          "git reset --hard ORIG_HEAD",
+          "git rebase main",
+          "git log --oneline --graph        # one line, all-new ids",
+          "git reflog                       # both attempts recorded"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "rebase-vs-merge",
+    "questions": [
+      {
+        "q": "A colleague has commits based on your feature branch. You rebase it and force-push. What breaks for them?",
+        "choices": [
+          "Nothing — git reconciles it automatically",
+          "Their work is parented on commits that no longer exist on your branch, so their next pull tries to reconcile two copies of every commit",
+          "Their clone becomes unusable"
+        ],
+        "answer": 1,
+        "explain": "Rebase replaces commits with new ids. Anyone who built on the old ones now has a divergent history — recoverable, but a mess you inflicted on them."
+      },
+      {
+        "q": "What does `--no-ff` do that the default doesn't?",
+        "choices": [
+          "Prevents conflicts",
+          "Forces a merge commit even when the branch could just be fast-forwarded, keeping the branch visible in history",
+          "Refuses to merge unless it's a fast-forward"
+        ],
+        "answer": 1,
+        "explain": "--no-ff always makes the merge commit. --ff-only is the opposite: refuse anything else. Setting pull.ff=only is a good way to stop surprise merges."
+      },
+      {
+        "q": "Why is merging a long-lived branch repeatedly less painful than repeatedly rebasing it?",
+        "choices": [
+          "Merges are faster",
+          "Each merge records the base it merged, so the next merge only reconciles what changed since — a rebase re-applies every commit each time",
+          "Rebase can't handle branches with many commits"
+        ],
+        "answer": 1,
+        "explain": "That structural memory is what rerere approximates for rebases: remembering how you resolved a conflict so you don't resolve it again on every replay."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

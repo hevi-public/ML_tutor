@@ -398,7 +398,7 @@
         path: paths[0] || rest.find((r) => r.includes(".")),
         rev: rest.find((r) => !r.includes(".")) || "HEAD",
       });
-      return { entries: hits, flags, pickaxe: true };
+      return { entries: hits, flags, rest, pickaxe: true };
     }
 
     const revs = rest.length ? rest : ["HEAD"];
@@ -413,26 +413,38 @@
     if (grep) entries = entries.filter((e) => e.commit.message.includes(grep));
     const limit = Number(flags.get("n") || flags.get("max-count") || 0);
     if (limit) entries = entries.slice(0, limit);
-    return { entries, flags };
+    return { entries, flags, rest };
   }
 
   define("log", {
     summary: "show commit history",
     async run(ctx) {
       const { dir } = ctx;
-      const { entries, flags, pickaxe } = await logEntries(ctx);
+      const { entries, flags, rest, pickaxe } = await logEntries(ctx);
       if (!entries.length) return ok("");
 
       const oneline = flags.get("oneline");
       const graph = flags.get("graph");
       const out = [];
 
+      // --left-right marks which side of a symmetric range each commit is on,
+      // which is the whole point of asking about A...B.
+      let leftSide = null;
+      if (flags.get("left-right")) {
+        const range = await P().parseRange(dir, rest.length ? rest : ["HEAD"]);
+        if (range.symmetric) {
+          leftSide = new Set(
+            (await P().ancestors(dir, range.symmetric.left)).map((e) => e.oid));
+        }
+      }
+      const side = (oid) => (leftSide ? (leftSide.has(oid) ? "< " : "> ") : "");
+
       for (const entry of entries) {
         const { oid, commit } = entry;
         const decoration = await refDecorations(dir, oid);
         const subject = commit.message.split("\n")[0];
         if (oneline) {
-          out.push(`${graph ? "* " : ""}${short(oid)}${decoration} ${subject}`);
+          out.push(`${graph ? "* " : ""}${side(oid)}${short(oid)}${decoration} ${subject}`);
           continue;
         }
         out.push(`${graph ? "* " : ""}commit ${oid}${decoration}`);

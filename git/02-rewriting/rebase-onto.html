@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>rebase --onto — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="squash-fixup-autosquash.html|squash, fixup, autosquash">
+  <meta name="git:next" content="rebase-vs-merge.html|Rebase versus merge">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>rebase --onto</h1>
+  <p class="lede">Rebase normally conflates two questions. --onto separates them: which commits to move, and where to put them.</p>
+
+  <h2>The idea</h2>
+  <p><code>git rebase main</code> means two things at once: take the commits that
+  aren't in <code>main</code>, and put them on top of <code>main</code>. Usually
+  that's what you want, so the conflation goes unnoticed.</p>
+
+  <p>It stops being what you want when your branch was started from the wrong
+  place. Say you branched <code>feature</code> off <code>feature-base</code>,
+  wrote three commits, and now <code>feature-base</code> is abandoned. A plain
+  rebase onto main would replay <em>everything</em> not in main — including
+  feature-base's commits, which you don't want.</p>
+
+  <p>The three-argument form splits the question:</p>
+
+  <pre>git rebase --onto &lt;newbase&gt; &lt;upstream&gt; [&lt;branch&gt;]
+                  │           │
+                  │           └── which commits: &lt;upstream&gt;..branch
+                  └── where they land</pre>
+
+  <p>So "move just my three commits onto main" is:</p>
+  <pre>git rebase --onto main feature-base feature</pre>
+
+  <p>Read it as: <em>replay the commits after feature-base up to feature, on top of
+  main.</em> Once you can read that sentence off the command, --onto stops being
+  intimidating.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has <code>main</code>, <code>feature</code> (branched off an older
+  main) and <code>hotfix</code>. Try both forms and compare:</p>
+
+  <pre>git log --oneline --all
+git checkout feature
+git rebase main                     # the ordinary form
+git reset --hard ORIG_HEAD           # undo it
+git rebase --onto main HEAD~1 feature   # move only the newest commit
+git log --oneline --all</pre>
+
+  <p>The second one is the other everyday use: <strong>dropping the older commits
+  of your own branch</strong> by choosing an upstream inside it.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The three uses worth remembering</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>Transplant a branch</th><td><code>git rebase --onto main old-base feature</code> — my commits, onto main, ignoring the old base's</td></tr>
+        <tr><th>Drop early commits</th><td><code>git rebase --onto main~3 main~6 main</code> — keep the last three, throw the middle away</td></tr>
+        <tr><th>Excise one commit</th><td><code>git rebase --onto &lt;bad&gt;~ &lt;bad&gt;</code> — replay everything after the bad commit onto its parent, removing it from history</td></tr>
+      </table>
+      <p>That last one is the surgical alternative to <code>revert</code>: instead
+      of adding a commit that undoes it, the commit stops existing. Only sane on
+      history you haven't shared.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Why the middle argument is exclusive</summary>
+    <div class="layer-body">
+      <p><code>&lt;upstream&gt;</code> is the commit <em>before</em> the first one
+      you want to move — the same exclusive endpoint as in a
+      <code>&lt;upstream&gt;..branch</code> range. So to move a commit
+      <code>X</code> and everything after it, you name <code>X~</code>, not
+      <code>X</code>. Off-by-one here is the most common --onto mistake, and it
+      shows up as "why did it skip my first commit?"</p>
+      <p>The safe habit: run <code>git log --oneline &lt;upstream&gt;..&lt;branch&gt;</code>
+      first. Whatever that prints is exactly what will move.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The undo, and why it's reliable</summary>
+    <div class="layer-body">
+      <p><code>git reset --hard ORIG_HEAD</code>, every time. A rebase doesn't
+      modify the original commits — it builds new ones and moves the branch — so
+      the old chain is still there, reachable through the reflog until gc gets
+      round to it.</p>
+      <p>If you've already rebased twice and lost track,
+      <code>git reflog</code> shows every position with a
+      <code>rebase (start)</code> / <code>rebase (finish)</code> label, so you can
+      pick the one you want.</p>
+      <ul class="symbol-legend" data-symbols="ORIG_HEAD,A..B,&lt;rev&gt;~"></ul>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p><a href="rebase-vs-merge.html">Rebase versus merge</a> steps back from the
+  mechanics to the choice — what each one does to the shape of history, and which
+  argument about it is actually worth having.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the rebase",
+      "pron": "say: orig head",
+      "means": "where your branch was before the rebase started",
+      "short": "undo point"
+    },
+    "A..B": {
+      "name": "<upstream>..<branch> — what will move",
+      "pron": "say: dot dot",
+      "means": "run git log on this first, and you'll know exactly what the rebase will replay",
+      "short": "the commits"
+    },
+    "<rev>~": {
+      "name": "<rev>~ — one before",
+      "pron": "say: rev tilde",
+      "means": "the parent — what you name as <upstream> to include <rev> itself",
+      "short": "one before"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "rebase-onto",
+    "labs": [
+      {
+        "id": "rebase-onto-transplant",
+        "title": "Move one commit and leave the rest behind",
+        "fixture": "diverged",
+        "start": "feature",
+        "task": "Get <em>only</em> feature's newest commit (“Sort the report output”) onto <code>main</code>, leaving the older “Start the report module” commit out of the branch entirely.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "feature has exactly one commit beyond main",
+            "check": {
+              "commitCount": {
+                "ref": "feature",
+                "since": "main",
+                "eq": 1
+              }
+            }
+          },
+          {
+            "text": "it's the sorting commit",
+            "check": {
+              "messageMatch": {
+                "ref": "feature",
+                "since": "main",
+                "pattern": "^Sort the report output",
+                "count": 1
+              }
+            }
+          },
+          {
+            "text": "feature now sits on top of main",
+            "check": {
+              "isAncestor": {
+                "ancestor": "main",
+                "of": "feature"
+              }
+            }
+          },
+          {
+            "text": "the rebase is in the reflog",
+            "check": {
+              "reflogContains": {
+                "pattern": "rebase"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "The commits that move are <code>&lt;upstream&gt;..&lt;branch&gt;</code>. Run <code>git log --oneline HEAD~1..feature</code> to see what naming <code>HEAD~1</code> as upstream would move.",
+          "<code>git rebase --onto &lt;where it lands&gt; &lt;the commit before the first one to move&gt; &lt;branch&gt;</code>.",
+          "<code>git rebase --onto main feature~1 feature</code>. Undo with <code>git reset --hard ORIG_HEAD</code> if you want another go."
+        ],
+        "solution": [
+          "git log --oneline --all",
+          "git log --oneline feature~1..feature      # exactly what will move",
+          "git rebase --onto main feature~1 feature",
+          "git log --oneline --all"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "rebase-onto",
+    "questions": [
+      {
+        "q": "In `git rebase --onto A B C`, what do A, B and C mean?",
+        "choices": [
+          "A is the branch, B the base, C the target",
+          "A is where the commits land; B..C is which commits move",
+          "A, B and C are three commits to replay in order"
+        ],
+        "answer": 1,
+        "explain": "--onto takes the destination; the other two form the familiar exclusive range. Reading it as 'replay B..C on top of A' makes the command say what it does."
+      },
+      {
+        "q": "You want to remove commit X from the middle of your unshared branch. Which command?",
+        "choices": [
+          "git rebase --onto X~ X",
+          "git revert X",
+          "git reset --hard X~"
+        ],
+        "answer": 0,
+        "explain": "Replay everything after X onto X's parent, so X drops out of history. revert would add an undo commit instead, and reset --hard would throw away everything after X too."
+      },
+      {
+        "q": "Why does naming X as <upstream> not move X itself?",
+        "choices": [
+          "A bug preserved for compatibility",
+          "<upstream> is an exclusive endpoint, exactly as in the range <upstream>..branch — so you name X~ to include X",
+          "It does move X; the docs are wrong"
+        ],
+        "answer": 1,
+        "explain": "Same semantics as the two-dot range. Running git log on that range before rebasing is the reliable way to avoid the off-by-one."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

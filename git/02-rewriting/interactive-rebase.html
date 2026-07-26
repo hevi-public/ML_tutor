@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive rebase — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="cherry-pick.html|Cherry-pick">
+  <meta name="git:next" content="squash-fixup-autosquash.html|squash, fixup, autosquash">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>Interactive rebase</h1>
+  <p class="lede">The todo list is a file, the commands are a tiny language, and the whole thing is cherry-pick in a loop. Once you've seen the file, rebase -i stops being the scary one.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="cherry-pick.html">Cherry-pick</a>, because that is literally what each step of a rebase does.
+  </div>
+
+  <h2>The idea</h2>
+  <p><code>git rebase -i &lt;upstream&gt;</code> does three things in order:</p>
+
+  <ol>
+    <li>Works out which commits are yours — the range
+    <code>&lt;upstream&gt;..HEAD</code> — and writes them, oldest first, into a file:
+    <code>.git/rebase-merge/git-rebase-todo</code>.</li>
+    <li>Opens that file in your editor. You change it. That's the whole
+    "interactive" part.</li>
+    <li>Detaches HEAD onto the new base and works down the list, replaying each
+    commit as instructed, then moves your branch to the result.</li>
+  </ol>
+
+  <p>The file looks like this:</p>
+
+  <pre>pick 88f724f wip report
+pick b23dc77 more wip
+pick 587bc61 fix typo, tidy up, works now
+
+# Commands:
+#  p, pick   = use commit as it is
+#  r, reword = use commit, but edit the message
+#  e, edit   = stop here to amend the commit
+#  s, squash = meld into the previous commit, keeping both messages
+#  f, fixup  = meld into the previous commit, discarding this message
+#  d, drop   = remove commit
+#  x, exec   = run a shell command
+#
+# Lines are executed from top to bottom.</pre>
+
+  <p>Three things about that file are worth internalising. It's ordered
+  <strong>oldest first</strong> — the opposite of <code>git log</code>, which
+  catches everyone once. <strong>Reordering the lines reorders history.</strong> And
+  <strong>deleting a line drops the commit</strong>, which is why an accidentally
+  empty file makes git say "Nothing to do" and abort rather than destroy your
+  branch.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox is on <code>feature/report</code>, three messy commits ahead of
+  main. Run <code>git rebase -i HEAD~3</code>: an editor opens on the real todo
+  file. Change the second and third <code>pick</code> to <code>squash</code>, save,
+  and watch the graph.</p>
+
+  <div class="box sim-note">
+    <span class="label">One difference here</span>
+    Real git opens a second editor after a <code>squash</code>, so you can write
+    the combined message. This sandbox simply joins the messages together, which
+    means the squashed commit ends up with the first commit's subject. Follow it
+    with <code>git commit --amend -m "…"</code> to get the message you want —
+    that's exactly what the editor would have let you type.
+  </div>
+
+  <p>Then try the other commands — <code>drop</code> a line,
+  <code>reword</code> one, or swap two lines round — and after each attempt use
+  <code>git reset --hard ORIG_HEAD</code> to get back and try another. That loop,
+  rebase then reset, is how to learn this without fear.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>What each command actually does</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>pick</th><td>cherry-pick this commit onto whatever the rebase has built so far</td></tr>
+        <tr><th>reword</th><td>pick, then amend the message. Nothing else changes</td></tr>
+        <tr><th>edit</th><td>pick, then <em>stop</em> and hand you the prompt. Amend, add commits, then <code>git rebase --continue</code></td></tr>
+        <tr><th>squash</th><td>pick, then fold into the previous result, and open an editor with both messages</td></tr>
+        <tr><th>fixup</th><td>squash without the message editor — the earlier message wins</td></tr>
+        <tr><th>drop</th><td>skip it. Deleting the line does the same thing</td></tr>
+        <tr><th>exec</th><td>run a command after that point. A non-zero exit stops the rebase, which is how you test every commit in a series</td></tr>
+        <tr><th>break</th><td>stop here for no reason other than that you asked</td></tr>
+      </table>
+      <p><code>exec</code> is the underused one. <code>git rebase -i --exec 'npm
+      test' main</code> appends a test run after every commit, so you find out
+      which commit in a nine-commit branch breaks the build — without doing it by
+      hand.</p>
+      <p><em>In this sandbox <code>exec</code> is accepted but only runs the
+      sandbox's own commands, since there's no shell behind it.</em></p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Conflicts, and why --continue knows where it was</summary>
+    <div class="layer-body">
+      <p>Each step is a three-way merge, so any step can conflict. When one does,
+      git stops with the conflict in your worktree and the remaining todo list
+      still on disk. That's the mechanism: <code>.git/rebase-merge/</code> holds
+      the todo, what's done, the original HEAD and the commit it stopped on. So</p>
+      <table class="ref">
+        <tr><th>git rebase --continue</th><td>after you've staged the resolution — reads the file and carries on</td></tr>
+        <tr><th>git rebase --skip</th><td>abandon that one commit and continue</td></tr>
+        <tr><th>git rebase --abort</th><td>put the branch back where it was, from <code>orig-head</code></td></tr>
+      </table>
+      <p>Nothing is lost by aborting, ever, because the original commits are
+      untouched — the rebase has been building <em>new</em> ones alongside them.
+      That's also why <code>git reset --hard ORIG_HEAD</code> undoes a rebase that
+      already finished.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Why the ids all change, and what that costs you</summary>
+    <div class="layer-body">
+      <p>Every replayed commit gets a new committer timestamp and, after the first
+      one, a new parent — so every id downstream changes, even for commits you
+      marked plain <code>pick</code>. A ten-commit rebase where you edited one
+      commit still produces ten new commits.</p>
+      <p>Which is why rebasing a branch other people have based work on is
+      antisocial: their commits point at parents that no longer exist on your
+      branch. On your own unpushed work it costs nothing.
+      <a href="rewriting-published-history.html">Rewriting published history</a>
+      covers the negotiation.</p>
+    </div>
+  </details>
+
+  <h2>Where this goes next</h2>
+  <p>Doing this by hand every time is tedious, and
+  <a href="squash-fixup-autosquash.html">squash, fixup and autosquash</a> is the
+  workflow that makes it a two-command habit instead.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the rebase",
+      "pron": "say: orig head",
+      "means": "where your branch was before the rebase started — the way back",
+      "short": "undo point"
+    },
+    "A..B": {
+      "name": "<upstream>..HEAD — the commits being replayed",
+      "pron": "say: dot dot",
+      "means": "the range rebase turns into a todo list",
+      "short": "your commits"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "interactive-rebase",
+    "labs": [
+      {
+        "id": "interactive-rebase-squash-wip",
+        "title": "Turn three WIP commits into one clean commit",
+        "fixture": "wip-3",
+        "start": "feature/report",
+        "task": "Run <code>git rebase -i HEAD~3</code> and squash the three commits into a single commit whose subject is <code>Add the report module</code>. The files must not change.",
+        "show": [
+          "dag",
+          "objects"
+        ],
+        "inspect": "HEAD",
+        "goals": [
+          {
+            "text": "one commit on top of main",
+            "check": {
+              "commitCount": {
+                "ref": "feature/report",
+                "since": "main",
+                "eq": 1
+              }
+            }
+          },
+          {
+            "text": "no “wip” left in the messages",
+            "check": {
+              "noMessageMatch": {
+                "since": "main",
+                "pattern": "wip",
+                "flags": "i"
+              }
+            }
+          },
+          {
+            "text": "subject is “Add the report module”",
+            "check": {
+              "messageMatch": {
+                "pattern": "^Add the report module",
+                "count": 1,
+                "since": "main"
+              }
+            }
+          },
+          {
+            "text": "the files are byte-identical to before",
+            "check": {
+              "custom": {
+                "name": "interactive-rebase-same-tree"
+              }
+            }
+          },
+          {
+            "text": "the rebase is recorded in the reflog",
+            "check": {
+              "reflogContains": {
+                "pattern": "rebase"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "The editor that opens is the real <code>.git/rebase-merge/git-rebase-todo</code>. The first line stays <code>pick</code> — you can't squash into nothing.",
+          "Change lines 2 and 3 from <code>pick</code> to <code>squash</code>, then save.",
+          "Squashing keeps both messages joined together. To get one clean subject, follow up with <code>git commit --amend -m \"Add the report module\"</code>."
+        ],
+        "solution": [
+          "git rebase -i HEAD~3",
+          "# in the editor: leave line 1 as pick, change lines 2 and 3 to squash, save",
+          "git commit --amend -m \"Add the report module\"",
+          "git log --oneline",
+          "# gone wrong? git reset --hard ORIG_HEAD and try again"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "interactive-rebase",
+    "questions": [
+      {
+        "q": "In what order does the todo list show your commits?",
+        "choices": [
+          "Newest first, like git log",
+          "Oldest first — the order they'll be replayed in",
+          "Alphabetically by subject"
+        ],
+        "answer": 1,
+        "explain": "Replay order, which is the opposite of git log. It's why 'squash the second one into the first' means squashing a line into the line above it."
+      },
+      {
+        "q": "A rebase stops on a conflict. Where does `git rebase --continue` find out what's left to do?",
+        "choices": [
+          "It recomputes the range from scratch",
+          "From .git/rebase-merge/ — the remaining todo list, what's done, and the original HEAD are all files on disk",
+          "From the reflog"
+        ],
+        "answer": 1,
+        "explain": "The state is a directory of plain files, which is why the operation is resumable and why --abort can put everything back exactly."
+      },
+      {
+        "q": "You rebase 10 commits and mark 9 of them plain `pick`. How many commit ids change?",
+        "choices": [
+          "One — only the commit you edited",
+          "All ten",
+          "None; pick preserves ids"
+        ],
+        "answer": 1,
+        "explain": "Each replayed commit gets a new committer timestamp, and each one after the first also gets a new parent. Both are hashed, so every id downstream of the first change is new."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("interactive-rebase-same-tree", async (repo) => {
+      const now = await GTPlumb.treeOfCommit(repo.dir, await GT.resolve(repo.dir, "HEAD"));
+      const before = await GTPlumb.treeOfCommit(repo.dir, repo.fixtureTip);
+      return now === before
+        ? { pass: true, detail: "identical tree" }
+        : { pass: false, detail: "the content changed along the way" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>
