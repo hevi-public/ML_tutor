@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Config &amp; gotchas — Web Dev Reference</title>
+
+  <meta name="web:section" content="pnpm">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="workspaces.html|Workspaces, filters & catalogs">
+  <meta name="web:next" content="angular-and-pnpm.html|pnpm with Angular">
+  <meta name="web:versions" content="pnpm 11.17.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">pnpm</p>
+  <h1>Config &amp; gotchas</h1>
+  <p class="lede">v11 moved where settings live. If you upgraded from 10 and
+  your configuration stopped applying, this is why.</p>
+
+  <div class="at-glance">
+    <span class="label">The v11 config break</span>
+    <ul>
+      <li><code>.npmrc</code> is now <strong>registry and auth only</strong>.</li>
+      <li>Everything else moves to <code>pnpm-workspace.yaml</code> (per project)
+      or <code>~/.config/pnpm/config.yaml</code> (global).</li>
+      <li>The <code>pnpm</code> field in <code>package.json</code> is no longer
+      read.</li>
+      <li>Environment variables use <code>pnpm_config_*</code>, not
+      <code>npm_config_*</code>.</li>
+      <li>These are <strong>silent</strong> — old settings are ignored, not
+      warned about.</li>
+    </ul>
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="pn.config-location">
+    <p class="change-note">Worth checking deliberately after an upgrade rather
+    than waiting to notice. Anything you set in <code>.npmrc</code> that is not
+    a registry or auth setting — <code>auto-install-peers</code>,
+    <code>node-linker</code>, <code>shamefully-hoist</code>,
+    <code>strict-peer-dependencies</code> — has stopped applying.</p>
+  </div>
+
+  <div class="change" data-change="pn.lifecycle-scripts"></div>
+
+  <div class="change" data-change="pn.supply-chain-defaults"></div>
+
+  <h2>Where each setting goes now</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>File</th><th>Holds</th></tr></thead>
+      <tbody>
+        <tr><td><code>.npmrc</code></td><td>Registry URLs, auth tokens, scoped registries. Nothing else</td></tr>
+        <tr><td><code>pnpm-workspace.yaml</code></td><td>Every pnpm setting for this project, plus workspace packages and catalogs</td></tr>
+        <tr><td><code>~/.config/pnpm/config.yaml</code></td><td>Your machine-wide defaults</td></tr>
+        <tr><td><code>package.json</code></td><td><code>packageManager</code>, and your dependencies. The <code>pnpm</code> field is dead</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<pre><code class="language-yaml"># pnpm-workspace.yaml
+packages:
+  - 'apps/*'
+
+# packages allowed to run install scripts
+allowBuilds:
+  - esbuild
+  - '@angular/build'
+
+# strictness
+strictPeerDependencies: false
+autoInstallPeers: true
+
+# supply chain (these are the v11 defaults, shown for clarity)
+minimumReleaseAge: 1440
+blockExoticSubdeps: true</code></pre>
+
+<pre><code class="language-ini"># .npmrc — auth and registry only
+@acme:registry=https://npm.acme.internal/
+//npm.acme.internal/:_authToken=${NPM_TOKEN}</code></pre>
+
+  <h2>The settings worth knowing</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Setting</th><th>Does</th><th>Use when</th></tr></thead>
+      <tbody>
+        <tr><td><code>allowBuilds</code></td><td>Packages permitted to run install scripts</td><td>esbuild, sharp, native modules</td></tr>
+        <tr><td><code>strictPeerDependencies</code></td><td>Unmet peers are an error</td><td>Default is strict; loosen only deliberately</td></tr>
+        <tr><td><code>autoInstallPeers</code></td><td>Install missing peers automatically</td><td>Convenient; hides genuine conflicts</td></tr>
+        <tr><td><code>shamefullyHoist</code></td><td>Flat <code>node_modules</code> like npm</td><td>Last resort for a tool that scans the tree</td></tr>
+        <tr><td><code>nodeLinker</code></td><td><code>isolated</code> (default), <code>hoisted</code>, <code>pnp</code></td><td><code>hoisted</code> for React Native and similar</td></tr>
+        <tr><td><code>overrides</code></td><td>Force a version anywhere in the tree</td><td>Patching a transitive vulnerability</td></tr>
+        <tr><td><code>packageExtensions</code></td><td>Add missing metadata to someone else's package</td><td>A dependency with wrong or absent peers</td></tr>
+        <tr><td><code>minimumReleaseAgeExclude</code></td><td>Packages exempt from the quarantine</td><td>Your own scoped packages in CI</td></tr>
+        <tr><td><code>verifyDepsBeforeRun</code></td><td>Check <code>node_modules</code> matches the lockfile before running scripts</td><td>Defaults to <code>install</code> in v11</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Overrides</h2>
+
+<pre><code class="language-yaml"># pnpm-workspace.yaml
+overrides:
+  # everywhere in the tree
+  minimist: '^1.2.8'
+  # only under a specific parent
+  'some-pkg>lodash': '^4.17.21'</code></pre>
+
+  <p>The blunt instrument for a transitive vulnerability you cannot wait on.
+  Leave a comment saying why and when it can go, because an override that has
+  outlived its reason is a version pin nobody understands.</p>
+
+  <h2>Patching a dependency</h2>
+
+<pre><code class="language-bash">pnpm patch some-broken-pkg@2.1.0
+# edit the files in the temp directory pnpm prints
+pnpm patch-commit /path/that/pnpm/printed</code></pre>
+
+  <p>Writes a patch file and records it, so the fix is reapplied on every
+  install. Vastly better than forking, and unlike editing
+  <code>node_modules</code> directly it survives a reinstall and does not
+  corrupt the shared store. Note that v11 removed
+  <code>ignorePatchFailures</code>: a patch that no longer applies is now an
+  error rather than a warning, which is right — a silently skipped patch is a
+  bug that reappears.</p>
+
+  <h2>Common failures</h2>
+
+  <div class="gotcha">
+    <span class="label">"Cannot find module X" after switching from npm</span>
+    A <a href="../glossary.html#phantom-dependency">phantom dependency</a> —
+    the code imports something it never declared. Add it to
+    <code>package.json</code>. Do not reach for <code>shamefullyHoist</code>.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">A package's install script did not run</span>
+    Blocked by default since v10. Add it to <code>allowBuilds</code>. In v11
+    <code>strictDepBuilds</code> defaults to true, so this is an error rather
+    than a silent skip — which is an improvement, since the v10 version failed
+    later and further away.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">CI cannot install a package published this morning</span>
+    <code>minimumReleaseAge</code> quarantines new versions for 24 hours by
+    default in v11. Intentional. If it is your own package, add it to
+    <code>minimumReleaseAgeExclude</code>.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">A bundler or test runner cannot resolve a linked package</span>
+    Some tools resolve paths themselves rather than through Node, and the
+    symlinked layout confuses them. For Vite and Vitest the answer is usually
+    <code>optimizeDeps.include</code> or <code>server.deps.inline</code> — see
+    <a href="angular-and-pnpm.html">pnpm with Angular</a>.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Two lockfiles in one repository</span>
+    A stray <code>package-lock.json</code> next to <code>pnpm-lock.yaml</code>
+    means someone ran <code>npm install</code>. They will drift, and CI will
+    install something different from your machine. Delete the npm one and add it
+    to <code>.gitignore</code>.
+  </div>
+
+  <h2>CI</h2>
+
+<pre><code class="language-yaml">- uses: pnpm/action-setup@v4          # reads packageManager from package.json
+- uses: actions/setup-node@v4
+  with:
+    node-version: 22
+    cache: pnpm
+- run: pnpm ci                        # or pnpm install --frozen-lockfile</code></pre>
+
+  <p>Order matters: <code>pnpm/action-setup</code> must come before
+  <code>setup-node</code>, because <code>cache: pnpm</code> needs pnpm on the
+  PATH to locate the store.</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://pnpm.io/migration" data-doc="pn.migration"></a></li>
+    <li><a class="doc-chip" href="https://pnpm.io/blog/releases/11.0" data-doc="pn.blog.v11"></a></li>
+    <li><a class="doc-chip" href="https://github.com/orgs/pnpm/discussions/8945" data-doc="pn.discussion.v10"></a></li>
+    <li><a class="doc-chip" href="https://github.com/orgs/pnpm/discussions/11377" data-doc="pn.discussion.v11"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How pnpm works — Web Dev Reference</title>
+
+  <meta name="web:section" content="pnpm">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="../03-vitest/browser-mode.html|Browser mode">
+  <meta name="web:next" content="commands.html|The command reference">
+  <meta name="web:versions" content="pnpm 11.17.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">pnpm</p>
+  <h1>How pnpm works</h1>
+  <p class="lede">Two design decisions — a shared content-addressable store and
+  a non-flat <code>node_modules</code> — explain almost every way pnpm differs
+  from npm, including the ones that look like bugs.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li>One copy of each package version on disk globally, hard-linked into
+      each project. Ten projects on the same version cost the space of one.</li>
+      <li><code>node_modules</code> contains <strong>only your declared
+      dependencies</strong>. Everything else lives in
+      <code>node_modules/.pnpm</code> and is symlinked.</li>
+      <li>That is why an import you never declared stops resolving — a
+      <a href="../glossary.html#phantom-dependency">phantom dependency</a>.
+      It is the feature working.</li>
+      <li>In v11 the store index is a single SQLite database rather than a file
+      per package.</li>
+    </ul>
+  </div>
+
+  <h2>The store</h2>
+  <p>npm downloads and extracts a copy of every package into every project. pnpm
+  extracts each package version <em>once</em>, into a global content-addressable
+  store keyed by hash, and builds each project's <code>node_modules</code> from
+  hard links into it. The files are shared, so a second project using the same
+  version costs essentially nothing.</p>
+
+  <p>The practical consequences: installs are fast when the store is warm
+  (nothing to download or extract), disk usage across many projects is a
+  fraction of npm's, and offline installs work for anything you have installed
+  before.</p>
+
+  <div class="gotcha">
+    <span class="label">Hard links mean edits are shared</span>
+    Editing a file inside <code>node_modules</code> to debug something edits the
+    copy in the store, and therefore every project using that version. Use
+    <code>pnpm patch</code> instead — it takes a copy, lets you edit it, and
+    produces a patch file that is reapplied on install.
+  </div>
+
+  <h2>The layout</h2>
+  <p>This is the part that changes behaviour rather than just performance. With
+  npm's flat <code>node_modules</code>, every transitive dependency is hoisted
+  to the top level, so <code>require('lodash')</code> works whether or not you
+  declared lodash — as long as something in your tree depends on it.</p>
+
+<pre><code class="language-text">npm — flat and hoisted            pnpm — only what you declared
+node_modules/                     node_modules/
+├── express/                      ├── express -> .pnpm/express@5.1.0/…
+├── body-parser/   ← transitive   └── .pnpm/
+├── cookie/        ← transitive       ├── express@5.1.0/
+├── lodash/        ← transitive       │   └── node_modules/
+└── …  (hundreds more)                │       ├── express/
+                                      │       ├── body-parser -> …
+   any of these is importable         │       └── cookie -> …
+   whether you declared it or not     └── body-parser@2.2.0/…</code></pre>
+
+  <p>In pnpm the top level contains only your direct dependencies. Each package
+  gets its own <code>node_modules</code> under <code>.pnpm</code> containing
+  symlinks to exactly what <em>it</em> declared. Node resolves through the
+  symlinks and finds only what should be visible.</p>
+
+  <div class="gotcha">
+    <span class="label">"It works with npm but not pnpm"</span>
+    Nearly always a phantom dependency: the code imports a package it never
+    declared, and npm's hoisting happened to make it available. The fix is to
+    add it to <code>package.json</code>. It is worth doing rather than working
+    around, because the npm version was already broken — it would break the day
+    the transitive dependency changed or was removed.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">shamefullyHoist is the escape hatch, not the fix</span>
+    Setting <code>shamefullyHoist: true</code> makes pnpm build a flat
+    <code>node_modules</code> like npm's. The name is a joke with a point. It is
+    occasionally necessary for a tool that scans <code>node_modules</code>
+    directly, but reaching for it to fix a missing import is choosing to keep
+    the bug.
+  </div>
+
+  <h2>Symlinks and tooling</h2>
+  <p>The symlinked layout occasionally confuses tools that resolve paths
+  themselves rather than asking Node. In an Angular project the one you may meet
+  is Vite's dependency optimiser, which can miss a linked workspace package —
+  the answer is usually adding it to <code>optimizeDeps.include</code> or
+  <code>server.deps.inline</code> rather than flattening the whole tree.
+  See <a href="config-and-gotchas.html">config &amp; gotchas</a>.</p>
+
+  <h2>What changed in v11</h2>
+
+  <div class="change" data-change="pn.supply-chain-defaults"></div>
+
+  <p>Also in v11, from the release notes: pnpm itself is pure ESM and requires
+  Node 22.13 or later; the store index moved from a JSON file per package to a
+  single SQLite database (store version 11); global installs are isolated with
+  their own lockfile; and there are new first-class commands including
+  <code>pnpm ci</code>, <code>pnpm sbom</code>, <code>pnpm clean</code> and
+  <code>pnpm peers check</code>.</p>
+
+  <h2>Why choose it</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>pnpm</th><th>npm</th></tr></thead>
+      <tbody>
+        <tr><td>Disk per project</td><td>Links into a shared store</td><td>A full copy</td></tr>
+        <tr><td>Undeclared imports</td><td>Fail immediately</td><td>Work until they don't</td></tr>
+        <tr><td>Install scripts</td><td>Blocked unless allow-listed</td><td>Run by default</td></tr>
+        <tr><td>New releases</td><td>Quarantined 24h by default</td><td>Installable instantly</td></tr>
+        <tr><td>Monorepo support</td><td>Built in — workspaces, filters, catalogs</td><td>Workspaces, no catalogs</td></tr>
+        <tr><td>Cost</td><td>Phantom dependencies surface as errors you must fix</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://pnpm.io" data-doc="pn.home"></a></li>
+    <li><a class="doc-chip" href="https://pnpm.io/blog/releases/11.0" data-doc="pn.blog.v11"></a></li>
+    <li><a class="doc-chip" href="https://pnpm.io/migration" data-doc="pn.migration"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

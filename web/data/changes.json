@@ -446,7 +446,7 @@
       "now": "Blocked by default; opt packages in explicitly",
       "was": "Every dependency's preinstall/install/postinstall ran automatically",
       "since": "10", "deprecated": null, "removed": null,
-      "why": "A postinstall script is arbitrary code execution at install time, and the Rspack supply-chain attack used exactly that to ship a cryptominer. pnpm 10 turned it off by default. In v10 you allow-list with pnpm.onlyBuiltDependencies; v11 replaced that whole family of settings with allowBuilds.",
+      "why": "A postinstall script is arbitrary code execution at install time, and the Rspack supply-chain attack used exactly that to ship a cryptominer. pnpm 10 turned it off by default. In v10 you allow-listed with pnpm.onlyBuiltDependencies; v11 removed that whole family — onlyBuiltDependencies, onlyBuiltDependenciesFile, neverBuiltDependencies, ignoredBuiltDependencies and ignoreDepScripts are all gone — and replaced them with a single allowBuilds list. v11 also defaults strictDepBuilds to true, so a package needing a build that you have not allowed is an error rather than a warning.",
       "migration": null,
       "code": {
         "now": "# pnpm 11 — pnpm-workspace.yaml\nallowBuilds:\n  - esbuild\n  - fsevents",
@@ -466,6 +466,36 @@
       "code": {
         "now": "# pnpm-workspace.yaml\npackages:\n  - 'packages/*'\nallowBuilds:\n  - esbuild",
         "was": "// package.json\n{\n  \"pnpm\": {\n    \"onlyBuiltDependencies\": [\"esbuild\"]\n  }\n}\n\n# .npmrc\nauto-install-peers=true"
+      },
+      "docs": ["pn.blog.v11", "pn.migration"]
+    },
+    {
+      "id": "pn.ci-command",
+      "tool": "pnpm", "topic": "commands", "page": "04-pnpm/commands.html",
+      "title": "A reproducible install in CI",
+      "now": "pnpm ci",
+      "was": "pnpm install --frozen-lockfile",
+      "since": "11", "deprecated": null, "removed": null,
+      "why": "The flag form worked but had to be remembered, and forgetting it in CI means the lockfile can be silently rewritten by the build — which is exactly the thing a lockfile exists to prevent. v11 added a first-class command, matching what npm and yarn already had. The flag still works.",
+      "migration": null,
+      "code": {
+        "now": "pnpm ci",
+        "was": "pnpm install --frozen-lockfile"
+      },
+      "docs": ["pn.blog.v11"]
+    },
+    {
+      "id": "pn.supply-chain-defaults",
+      "tool": "pnpm", "topic": "security", "page": "04-pnpm/config-and-gotchas.html",
+      "title": "Protection against a compromised release",
+      "now": "On by default — a 24-hour quarantine on new versions",
+      "was": "Nothing; a version published a minute ago was installable a minute ago",
+      "since": "11", "deprecated": null, "removed": null,
+      "why": "Most supply-chain compromises are caught and yanked within hours, so simply not installing anything published in the last day removes most of the exposure for free. v11 defaults minimumReleaseAge to 1440 minutes and blockExoticSubdeps to true, the latter rejecting transitive dependencies that resolve to a git URL or tarball rather than the registry. Expect a CI surprise the first time you try to install a package published this morning.",
+      "migration": null,
+      "code": {
+        "now": "# pnpm-workspace.yaml — defaults in v11, shown explicitly\nminimumReleaseAge: 1440\nblockExoticSubdeps: true\n\n# packages you need without waiting out the quarantine\nminimumReleaseAgeExclude:\n  - '@my-org/*'",
+        "was": "# no equivalent — anything on the registry installed immediately"
       },
       "docs": ["pn.blog.v11", "pn.migration"]
     }

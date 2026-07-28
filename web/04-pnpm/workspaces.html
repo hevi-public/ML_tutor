@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workspaces, filters &amp; catalogs — Web Dev Reference</title>
+
+  <meta name="web:section" content="pnpm">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="commands.html|The command reference">
+  <meta name="web:next" content="config-and-gotchas.html|Config & gotchas">
+  <meta name="web:versions" content="pnpm 11.17.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">pnpm</p>
+  <h1>Workspaces, filters &amp; catalogs</h1>
+  <p class="lede">Catalogs are the reason to use pnpm for an Angular monorepo:
+  one place to say which version of <code>@angular/*</code> everything uses.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>pnpm-workspace.yaml</code> lists the packages — and, since v11,
+      holds all pnpm settings too.</li>
+      <li><code>workspace:*</code> means "the copy in this repo", and fails
+      loudly if there isn't one.</li>
+      <li><code>catalog:</code> names a version once for the whole repo.</li>
+      <li><code>--filter</code> selects packages, including by dependency
+      relationship and by what git says changed.</li>
+    </ul>
+  </div>
+
+  <h2>The workspace file</h2>
+
+<pre><code class="language-yaml"># pnpm-workspace.yaml
+packages:
+  - 'apps/*'
+  - 'libs/*'
+  - '!**/dist/**'
+
+# One version per dependency, for the whole repo.
+catalog:
+  typescript: ~7.0.2
+  rxjs: ^7.8.2
+
+# Named catalogs, when one version genuinely is not enough.
+catalogs:
+  angular22:
+    '@angular/core': ^22.0.8
+    '@angular/common': ^22.0.8
+    '@angular/router': ^22.0.8
+
+# v11: pnpm settings live here too, not in .npmrc
+allowBuilds:
+  - esbuild
+  - '@angular/build'</code></pre>
+
+<pre><code class="language-json">// apps/web/package.json
+{
+  "dependencies": {
+    "@angular/core": "catalog:angular22",
+    "@angular/common": "catalog:angular22",
+    "rxjs": "catalog:",
+    "@acme/ui": "workspace:*"
+  }
+}</code></pre>
+
+  <h2>Why catalogs matter for Angular</h2>
+  <p>Angular packages must move in lockstep — <code>@angular/core</code> at 22
+  with <code>@angular/router</code> at 21 fails at runtime in ways that are
+  tedious to diagnose. In a monorepo with eight packages that each list eight
+  Angular dependencies, that is 64 version strings to keep identical, and
+  upgrading means editing all of them.</p>
+
+  <p>With a catalog it is one block. Drift becomes impossible rather than
+  merely discouraged, and the upgrade is a single edit.</p>
+
+  <div class="gotcha">
+    <span class="label">catalog: is rewritten on publish</span>
+    A published package cannot carry <code>"catalog:"</code> — consumers have no
+    catalog. pnpm replaces it with the resolved version when packing, the same
+    way it handles <code>workspace:</code>. This is only a concern for packages
+    you actually publish.
+  </div>
+
+  <h2>The workspace protocol</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Specifier</th><th>Means</th><th>Published as</th></tr></thead>
+      <tbody>
+        <tr><td><code>workspace:*</code></td><td>The local package, any version</td><td>The exact version</td></tr>
+        <tr><td><code>workspace:^</code></td><td>The local package</td><td><code>^</code> plus the version</td></tr>
+        <tr><td><code>workspace:~</code></td><td>The local package</td><td><code>~</code> plus the version</td></tr>
+        <tr><td><code>workspace:../ui</code></td><td>A specific path</td><td>The version</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The value over a plain version range is that it <strong>fails</strong> if
+  no local package matches, instead of quietly downloading a same-named package
+  from the registry — which is both a confusing bug and a
+  dependency-confusion attack vector.</p>
+
+  <h2>Filters</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Selector</th><th>Selects</th></tr></thead>
+      <tbody>
+        <tr><td><code>--filter web</code></td><td>The package named <code>web</code></td></tr>
+        <tr><td><code>--filter "./apps/*"</code></td><td>By directory glob</td></tr>
+        <tr><td><code>--filter "@acme/*"</code></td><td>By name pattern</td></tr>
+        <tr><td><code>--filter web...</code></td><td><code>web</code> and everything it depends on</td></tr>
+        <tr><td><code>--filter ...web</code></td><td><code>web</code> and everything that depends on it</td></tr>
+        <tr><td><code>--filter ...web...</code></td><td>Both directions</td></tr>
+        <tr><td><code>--filter "web^..."</code></td><td>Its dependencies, excluding <code>web</code> itself</td></tr>
+        <tr><td><code>--filter "...[origin/main]"</code></td><td>Packages changed since a git ref, plus their dependents</td></tr>
+        <tr><td><code>--filter "!web"</code></td><td>Everything except <code>web</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<pre><code class="language-bash"># build a lib and everything that consumes it
+pnpm --filter ...@acme/ui build
+
+# test only what this branch could have broken
+pnpm --filter "...[origin/main]" test
+
+# run every app's dev server at once
+pnpm --filter "./apps/*" --parallel dev</code></pre>
+
+  <div class="gotcha">
+    <span class="label">The <code>...[origin/main]</code> filter is the CI win</span>
+    On a large monorepo, testing only packages whose code changed <em>plus
+    everything downstream of them</em> is the difference between a two-minute
+    and a forty-minute pipeline — without the risk of missing a dependent, which
+    is what makes naive "only test what changed" schemes unsafe.
+  </div>
+
+  <h2>Ordering</h2>
+  <p><code>pnpm -r build</code> runs in topological order: a package builds after
+  everything it depends on. That is usually what you want and is why
+  <code>--parallel</code> (which ignores order) should be reserved for things
+  like dev servers that have no build-order relationship.</p>
+
+  <h2>Deploying one package</h2>
+
+<pre><code class="language-bash">pnpm --filter web deploy --prod ./out</code></pre>
+
+  <p>Produces a self-contained directory with the package and its production
+  dependencies, workspace links resolved to real copies. For a Docker image this
+  replaces copying the whole monorepo and hoping the layer cache saves you.</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://pnpm.io" data-doc="pn.home"></a></li>
+    <li><a class="doc-chip" href="https://pnpm.io/blog/releases/11.0" data-doc="pn.blog.v11"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

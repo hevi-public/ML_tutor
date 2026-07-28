@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pnpm with Angular — Web Dev Reference</title>
+
+  <meta name="web:section" content="pnpm">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="config-and-gotchas.html|Config & gotchas">
+  <meta name="web:versions" content="pnpm 11.17.0 · Angular 22.0.8 · Vitest 4.1.10">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">pnpm</p>
+  <h1>pnpm with Angular</h1>
+  <p class="lede">The practical intersection: making the CLI use pnpm, keeping
+  <code>@angular/*</code> in lockstep, and the two places the symlinked layout
+  causes real friction.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>ng new --package-manager pnpm</code>, or set it in
+      <code>angular.json</code> afterwards.</li>
+      <li><code>ng update</code> works normally — it shells out to whichever
+      package manager the workspace is configured for.</li>
+      <li>Angular's build needs <code>esbuild</code> in
+      <code>allowBuilds</code>.</li>
+      <li>Use a <strong>catalog</strong> for <code>@angular/*</code>: they must
+      all be the same version.</li>
+    </ul>
+  </div>
+
+  <h2>Setting up</h2>
+
+<pre><code class="language-bash">pnpm dlx @angular/cli@22 new my-app --package-manager pnpm</code></pre>
+
+<pre><code class="language-json">// angular.json — for an existing workspace
+{
+  "cli": { "packageManager": "pnpm" }
+}</code></pre>
+
+  <p>That setting is what makes <code>ng add</code>, <code>ng update</code> and
+  the CLI's own install prompts use pnpm rather than shelling out to npm and
+  producing a second lockfile.</p>
+
+<pre><code class="language-yaml"># pnpm-workspace.yaml — Angular's builder needs esbuild to build itself
+allowBuilds:
+  - esbuild</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Symptom: the build fails on a fresh clone but works after a rebuild</span>
+    Usually <code>esbuild</code> missing from <code>allowBuilds</code> — its
+    postinstall fetches the platform binary, and without it the build fails at
+    the point it tries to use it. In v11 <code>strictDepBuilds</code> defaults
+    to true, so you get a clear error at install time instead.
+  </div>
+
+  <h2>Keeping Angular versions in lockstep</h2>
+  <p>Every <code>@angular/*</code> package must be on the same minor. In a
+  monorepo, a catalog makes that structural rather than a convention people
+  have to remember:</p>
+
+<pre><code class="language-yaml"># pnpm-workspace.yaml
+catalogs:
+  ng:
+    '@angular/animations': ^22.0.8
+    '@angular/common': ^22.0.8
+    '@angular/compiler': ^22.0.8
+    '@angular/core': ^22.0.8
+    '@angular/forms': ^22.0.8
+    '@angular/platform-browser': ^22.0.8
+    '@angular/router': ^22.0.8
+    '@angular/cdk': ^22.0.6
+    '@angular/aria': ^22.0.6</code></pre>
+
+<pre><code class="language-json">// every app and lib
+{
+  "dependencies": {
+    "@angular/core": "catalog:ng",
+    "@angular/router": "catalog:ng"
+  }
+}</code></pre>
+
+  <div class="gotcha">
+    <span class="label">ng update does not know about catalogs</span>
+    It rewrites versions in <code>package.json</code>, where it will find
+    <code>"catalog:ng"</code> rather than a range. Upgrade by editing the
+    catalog block yourself, then run
+    <code>ng update --migrate-only --from=21 --to=22</code> to get the code
+    migrations without the version rewriting. Worth knowing before your first
+    catalog upgrade.
+  </div>
+
+  <h2>Peer dependencies</h2>
+  <p>pnpm is stricter about unmet peers than npm, which surfaces real conflicts
+  that npm hid. Angular libraries peer-depend on <code>@angular/core</code>, so
+  a library that has not published support for your major will say so at install
+  time rather than failing mysteriously at runtime.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Situation</th><th>Do</th></tr></thead>
+      <tbody>
+        <tr><td>A library genuinely does not support your Angular version</td><td>Wait, or find an alternative. The error is correct</td></tr>
+        <tr><td>It works fine but the range is stale</td><td><code>packageExtensions</code> to widen its declared peer range</td></tr>
+        <tr><td>You are mid-upgrade and need to proceed</td><td><code>strictPeerDependencies: false</code>, temporarily</td></tr>
+        <tr><td>A peer is genuinely optional</td><td><code>autoInstallPeers: false</code> and install it yourself</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<pre><code class="language-yaml">packageExtensions:
+  some-angular-lib@1.2.3:
+    peerDependencies:
+      '@angular/core': '>=20 &lt;23'</code></pre>
+
+  <h2>Vitest and the symlinked layout</h2>
+  <p>Vite resolves some paths itself rather than through Node, and a symlinked
+  workspace package can end up outside its dependency optimisation — which
+  surfaces as a module resolution failure or a duplicated Angular instance in
+  tests. The fix is to tell Vite about it rather than to flatten the tree:</p>
+
+<pre><code class="language-typescript">// vitest.config.ts — only if you actually hit this;
+// remember to point the builder at it with runnerConfig
+export default defineConfig({
+  test: {
+    server: {
+      deps: {
+        inline: [/^@acme\//],       // process linked workspace packages
+      },
+    },
+  },
+});</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Two copies of @angular/core</span>
+    If a linked library resolves its own copy rather than sharing the
+    application's, DI breaks in confusing ways — an
+    <code>InjectionToken</code> from one copy will not match a provider from the
+    other. Check with <code>pnpm why @angular/core</code>; the answer is
+    normally a peer dependency declared as a regular dependency in the library.
+  </div>
+
+  <h2>CI</h2>
+
+<pre><code class="language-yaml">jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm ci
+      - run: pnpm exec ng build
+      - run: pnpm exec ng test --no-watch</code></pre>
+
+  <p>In a monorepo, add a filter so pull requests only build what could have
+  broken: <code>pnpm --filter "...[origin/main]" test</code>.</p>
+
+  <h2>Docker</h2>
+
+<pre><code class="language-dockerfile">FROM node:22-slim AS build
+RUN corepack enable
+WORKDIR /app
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json apps/web/
+RUN pnpm ci
+COPY . .
+RUN pnpm --filter web build
+
+FROM nginx:alpine
+COPY --from=build /app/apps/web/dist/browser /usr/share/nginx/html</code></pre>
+
+  <p>Copying the lockfile and manifests before the source keeps the install layer
+  cached across source changes. For a Node server rather than a static build,
+  <code>pnpm --filter web deploy --prod ./out</code> produces a directory with
+  only that package and its production dependencies.</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://pnpm.io" data-doc="pn.home"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/update-guide" data-doc="ng.update"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/reference/versions" data-doc="ng.versions"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>
