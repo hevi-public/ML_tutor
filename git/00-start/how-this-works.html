@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How this tutor works — Git Tutor</title>
+
+  <meta name="git:unit" content="Start here">
+  <meta name="git:root" content="../">
+  <meta name="git:next" content="mental-model.html|The one mental model">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start here</p>
+  <h1>How this tutor works</h1>
+  <p class="lede">Every exercise on this site runs against a real git repository
+  in your browser. Nothing is simulated, and nothing you type can hurt anything.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    You've used git — you commit, branch, push, and you've googled your way out of
+    at least one mess. That's the level this course starts from. It spends its time
+    on the half of git that most people never get taught: rewriting history on
+    purpose, the object database underneath, digging through the past, and the
+    collaboration commands that stop you losing other people's work.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The awkward thing about learning advanced git is that the interesting
+  commands are the frightening ones. Nobody wants to practise
+  <code>rebase --onto</code> on the repository they get paid to look after, so
+  most people learn these commands the hard way — at 6pm, on a branch that
+  matters, from a Stack Overflow answer written in 2013.</p>
+
+  <p>So this site gives you a repository to break instead. Each page comes with a
+  sandbox: a small history, already committed, with a prompt attached. You type
+  real git commands, they really run, and the graph beside them really moves.
+  When you wreck it, a button puts it back.</p>
+
+  <h2>It really is git</h2>
+  <p>That claim is worth being precise about, because a fake would teach you
+  wrong. The engine here is
+  <a href="https://isomorphic-git.org">isomorphic-git</a>, a full
+  reimplementation of git in JavaScript, writing to a filesystem that lives in
+  your browser's storage. It writes real
+  <dfn data-term="object">objects</dfn>, hashed with SHA-1 exactly as git hashes
+  them, into real <code>.git/objects/</code> directories, with real
+  <dfn data-term="ref">refs</dfn> in <code>.git/refs/</code>.</p>
+
+  <p>The proof is in the repository this site is built from:
+  <code>scripts/verify-fixtures.js</code> builds every sandbox history with this
+  engine, then hands the result to the actual <code>git</code> binary. Real git
+  runs <code>fsck --strict</code> over it, agrees on every ref, and — given the
+  same author and timestamps — produces <em>the same commit, tree and blob
+  ids</em>. The object ids you're about to see are the ids git would have made.</p>
+
+  <details class="layer">
+    <summary>Where the tutor adds its own code, and why that matters</summary>
+    <div class="layer-body">
+      <p>isomorphic-git stops short of several commands this course is largely
+      about: it has no <code>reset</code>, <code>revert</code>,
+      <code>rebase</code>, <code>bisect</code>, <code>reflog</code> or
+      <code>fsck</code>. Those are implemented in this tutor's own layer, on top
+      of the same real plumbing — a rebase here builds genuine commit objects and
+      moves genuine refs, and <code>git reflog</code> parses a real
+      <code>.git/logs/HEAD</code> file that this engine wrote in git's format.</p>
+      <p>Two consequences you should know about, since a tutor that hides its
+      seams is a tutor you can't trust:</p>
+      <ul>
+        <li><strong>Nothing is ever packed.</strong> Every object stays loose, so
+        <code>git gc</code> isn't available. That's honest about a real
+        consequence: in this sandbox, "lost" objects never actually get collected.
+        <a href="../06-expert/packfiles-and-gc.html">The gc page</a> covers what
+        would happen on your machine.</li>
+        <li><strong>There is no network.</strong> A static site has no server to
+        clone from, so remotes are a second repository next door on the same
+        filesystem, and <code>fetch</code>/<code>push</code> copy objects between
+        them under git's real fast-forward and lease rules. Everything about
+        refspecs and <code>--force-with-lease</code> works; the wire protocol is
+        the part you don't get.</li>
+      </ul>
+      <p>Anything else the sandbox can't do says so when you type it, by name.
+      It will never quietly pretend a command worked.</p>
+    </div>
+  </details>
+
+  <h2>Try it</h2>
+  <p>Here's a sandbox with five commits in it. Try the four commands below — or
+  anything else you fancy; <code>git help</code> lists what this prompt
+  understands, and <kbd>Tab</kbd> completes commands, branches and filenames.</p>
+
+  <ul>
+    <li><code>git log --oneline</code> — the history you've been given</li>
+    <li><code>git cat-file -p HEAD</code> — the actual bytes of the latest commit</li>
+    <li><code>echo "a change" &gt;&gt; README.md</code> then <code>git status</code></li>
+    <li><code>git commit -am "My first sandbox commit"</code> — watch the graph move</li>
+  </ul>
+
+  <div class="lab-root"></div>
+
+  <h2>What's on a page</h2>
+  <p>Each topic page has the same shape, so you can skim to whichever part you
+  need:</p>
+  <table class="ref">
+    <tr><th>The idea</th><td>the mechanism in plain words, no flags yet</td></tr>
+    <tr><th>Try it</th><td>the sandbox, with something specific to attempt</td></tr>
+    <tr><th>The details</th><td>collapsed layers: the files git writes, the edge cases, the flags</td></tr>
+    <tr><th>Lab</th><td>a goal checked against the real repository, with hints if you want them</td></tr>
+    <tr><th>Check your understanding</th><td>a few questions; the ones you miss become flashcards</td></tr>
+  </table>
+
+  <p>Progress is kept in your browser only, and the sandbox keeps whatever state
+  you left it in, so you can walk away mid-rebase and come back to it.</p>
+
+  <div class="box">
+    <span class="label">Two housekeeping notes</span>
+    <p>The sandbox needs your browser's storage, which browsers refuse to pages
+    opened directly off disk. If a page says so, serve the site instead
+    (<code>npm run dev:git</code>) and it comes alive.</p>
+    <p>Every sandbox is separate and disposable. <strong>Reset sandbox</strong>
+    rebuilds this page's repository from scratch — the fastest way out of a mess,
+    and the reason you should feel free to make one.</p>
+  </div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p><a href="mental-model.html">One mental model</a> is the only piece of
+  theory this course insists on up front: commits, trees and refs as a graph of
+  snapshots, because every command in the four units after it is a way of moving
+  refs around that graph. Then pick a unit — they're independent.</p>
+
+  <script type="application/json" class="symbols">
+  { "HEAD": { "name": "HEAD — where you are",
+              "pron": "say: head",
+              "means": "the commit you have checked out, usually via the branch you're on",
+              "short": "you are here" },
+    "cat-file": { "name": "git cat-file -p — print an object",
+                  "pron": "say: cat file dash p",
+                  "means": "pretty-print any object in the database, given its id",
+                  "short": "read an object" } }
+  </script>
+
+  <script type="application/json" class="lab">
+  { "pageId": "how-this-works",
+    "labs": [
+      { "id": "how-this-works-first-commit",
+        "title": "Make a commit in the sandbox",
+        "fixture": "linear-5",
+        "task": "Change a file and commit it. The goals below are checked against the repository itself, not against what you typed.",
+        "show": ["dag", "objects"],
+        "goals": [
+          { "text": "six commits on main",
+            "check": { "commitCount": { "ref": "main", "eq": 6 } } },
+          { "text": "nothing left uncommitted",
+            "check": { "worktreeClean": {} } },
+          { "text": "your commit is in the reflog",
+            "check": { "reflogContains": { "pattern": "^commit:" } } } ],
+        "hints": [
+          "<code>echo \"anything\" &gt;&gt; README.md</code> gives you something to commit.",
+          "<code>git commit -am \"…\"</code> stages tracked changes and commits in one step." ],
+        "solution": [
+          "echo \"a change\" >> README.md",
+          "git commit -am \"My first sandbox commit\"" ] } ] }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "how-this-works",
+    "questions": [
+      { "q": "You type a command in a sandbox and the graph doesn't change. What does that tell you?",
+        "choices": [
+          "The page is out of date and needs reloading",
+          "The command genuinely didn't move any ref — the graph is drawn from the repository, not from a script",
+          "Nothing; the graph only updates when you press Check my work"],
+        "answer": 1,
+        "explain": "The graph is rebuilt from the repository's refs after every command. If it didn't move, no ref moved." },
+      { "q": "Why can't this sandbox run `git gc`?",
+        "choices": [
+          "gc is too dangerous to let learners run",
+          "The engine only ever writes loose objects, so there is nothing to pack — and the page says so rather than faking it",
+          "gc needs a network connection"],
+        "answer": 1,
+        "explain": "Packing is the one part of git this engine doesn't implement. That's disclosed instead of simulated, and it's why nothing here is ever really collected." },
+      { "q": "You've made a mess of a sandbox halfway through a rebase. What's the cost of starting over?",
+        "choices": [
+          "Nothing — Reset sandbox rebuilds that page's repository from scratch",
+          "You lose your progress on the whole course",
+          "You have to reload the page and redo the quiz"],
+        "answer": 0,
+        "explain": "Each page's sandbox is independent and disposable. Breaking one is free, which is the entire point of having it." }] }
+  </script>
+</main>
+</body>
+</html>

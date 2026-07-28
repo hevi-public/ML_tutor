@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notes and replace refs — Git Tutor</title>
+
+  <meta name="git:unit" content="Expert track">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="packfiles-and-gc.html|Packfiles and gc">
+  <meta name="git:next" content="big-repositories.html|Big repositories">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Expert track</p>
+  <h1>Notes and replace refs</h1>
+  <p class="lede">Two ways to change what git shows you without changing a single commit. Both are niche, and both are the right answer when you need them.</p>
+
+  <h2>The idea</h2>
+  <p>A commit is immutable. Its id is a hash of its content, so adding anything —
+  a review link, a build number, a correction — normally means rewriting it and
+  everything after it.</p>
+
+  <p>Git has two escape hatches that avoid that, and they work in opposite
+  directions.</p>
+
+  <h3>Notes: attach something alongside</h3>
+  <pre>git notes add -m "Reviewed by Priya; deployed 2026-07-04" &lt;commit&gt;
+git log                      # the note appears under the message
+git notes show &lt;commit&gt;</pre>
+
+  <p><dfn data-term="notes">Notes</dfn> live in <code>refs/notes/commits</code>: a
+  parallel tree whose paths are commit ids and whose blobs are your text. The commit
+  is untouched, its id is unchanged, and <code>git log</code> knows to look the note
+  up and display it.</p>
+
+  <p>The catch is distribution. Notes are not fetched or pushed by default —
+  they're a separate ref, and the default refspec doesn't cover it:</p>
+  <pre>git push origin refs/notes/commits
+git fetch origin refs/notes/commits:refs/notes/commits</pre>
+  <p>which is why notes work beautifully for CI metadata (a machine can push the
+  ref) and disappointingly for team annotations (a human has to remember).</p>
+
+  <h3>replace: pretend a commit is a different one</h3>
+  <pre>git replace &lt;old-commit&gt; &lt;new-commit&gt;</pre>
+
+  <p>Creates a ref under <code>refs/replace/&lt;old-id&gt;</code>, and from then on
+  every read of that object transparently gets the other one. History <em>appears</em>
+  to change; nothing was rewritten. Turn it off with <code>--no-replace-objects</code>
+  and the original is right there.</p>
+
+  <p>The classic use is grafting an old repository onto a new one: convert the
+  history, then replace the new root commit with the old tip, and
+  <code>git log</code> reads through as one continuous story without anyone having
+  to rewrite ten years of commits.</p>
+
+  <div class="box sim-note">
+    <span class="label">Not runnable in this sandbox</span>
+    Neither <code>git notes</code> nor <code>git replace</code> is implemented
+    here; typing them says so. Both are ordinary refs and ordinary objects
+    underneath, though, and you can build a notes tree by hand with the plumbing
+    from <a href="../01-internals/commit-by-hand.html">Unit 1</a> — which the lab
+    below does.
+  </div>
+
+  <h2>Try it</h2>
+  <p>A note is a blob at a path named after a commit, in a tree, in a commit,
+  pointed at by <code>refs/notes/commits</code>. All of which you can make with
+  plumbing:</p>
+
+  <pre>git rev-parse HEAD                       # the commit to annotate
+echo "Reviewed by Priya" &gt; note.txt
+git hash-object -w note.txt              # → a blob
+# then: build a tree whose entry name is the commit id,
+# commit that tree, and point refs/notes/commits at it</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Notes in practice, and where they actually get used</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>Gerrit</th><td>stores review metadata in notes refs — the canonical large-scale use</td></tr>
+        <tr><th>CI systems</th><td>attach build results or artefact ids to commits after the fact</td></tr>
+        <tr><th>git notes --ref=&lt;name&gt;</th><td>several independent namespaces, so tools don't collide</td></tr>
+      </table>
+      <p>What defeats them for human use is the fetch problem plus rebase: notes are
+      attached to commit ids, so rewriting history orphans every note on it.
+      <code>notes.rewriteRef</code> can copy them across a rewrite, and knowing that
+      it exists is usually the difference between notes being useful and notes being
+      a disappointment.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>replace versus grafts versus filter-repo</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>replace refs</th><td>a real ref, pushable, reversible, and read transparently. The supported mechanism</td></tr>
+        <tr><th>.git/info/grafts</th><td>the old version of the same idea: a local file, unpushable, deprecated. Don't</td></tr>
+        <tr><th>filter-repo</th><td>actually rewrites, so ids change and everyone re-clones. Permanent, and a migration</td></tr>
+      </table>
+      <p>The way to think about it: replace changes what readers see, filter-repo
+      changes what's there. If the goal is "the history should read correctly",
+      replace is cheaper and reversible. If the goal is "this content must not
+      exist", only rewriting counts — and even then, see
+      <a href="../02-rewriting/rewriting-published-history.html">what survives a
+      rewrite</a>.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="big-repositories.html">Big repositories</a> — partial clones, sparse
+  checkouts, and the features that exist because some repositories are much larger
+  than git's original assumptions.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "refs/tags/v1.0": {
+      "name": "refs/notes/commits — a ref like any other",
+      "pron": "say: refs notes commits",
+      "means": "where notes live: a parallel tree keyed by commit id",
+      "short": "notes ref"
+    },
+    "<rev>:<path>": {
+      "name": "<rev>:<path>",
+      "pron": "say: rev colon path",
+      "means": "how you read a note's blob out of the notes tree",
+      "short": "at path"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "notes-and-replace",
+    "labs": [
+      {
+        "id": "notes-build-one-by-hand",
+        "title": "Build a note with plumbing",
+        "fixture": "linear-5",
+        "task": "Attach a note to the tip commit the way <code>git notes</code> would: a blob containing <code>Reviewed by Priya</code>, at a path named after the commit's full id, in a tree, in a commit, pointed at by <code>refs/notes/commits</code>.",
+        "show": [
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "refs/notes/commits exists",
+            "check": {
+              "refExists": {
+                "ref": "refs/notes/commits"
+              }
+            }
+          },
+          {
+            "text": "it holds a note for the tip commit",
+            "check": {
+              "custom": {
+                "name": "notes-attached-to-head"
+              }
+            }
+          },
+          {
+            "text": "main itself is untouched — still five commits",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 5
+              }
+            }
+          }
+        ],
+        "hints": [
+          "The note's <em>filename</em> is the full 40-character commit id. <code>git rev-parse HEAD</code> gives you it.",
+          "Write the file, <code>git add</code> it, and <code>git write-tree</code> — but that tree would also contain the project's files. Make the note in a clean state instead: <code>git rm --cached</code> everything else first, or build the tree with the file alone.",
+          "Simplest route: <code>mkdir notes-tmp</code> is not needed — just remove the other paths from the index with <code>git rm --cached count.py README.md</code>, add the note file under the commit-id name, <code>git write-tree</code>, <code>git commit-tree &lt;tree&gt; -m \"Notes added by hand\"</code>, then <code>git update-ref refs/notes/commits &lt;commit&gt;</code>. Afterwards <code>git reset</code> puts your index back."
+        ],
+        "solution": [
+          "git rev-parse HEAD                       # → <id>",
+          "echo \"Reviewed by Priya\" > <id>",
+          "git rm --cached count.py README.md",
+          "git add <id>",
+          "git write-tree                           # → <tree>",
+          "git commit-tree <tree> -m \"Notes added by hand\"   # → <commit>",
+          "git update-ref refs/notes/commits <commit>",
+          "git reset                                # put the index back"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "notes-and-replace",
+    "questions": [
+      {
+        "q": "Where does a note live?",
+        "choices": [
+          "Inside the commit object it annotates",
+          "In a parallel tree under refs/notes/commits, keyed by commit id — the commit is untouched",
+          "In .git/notes/, outside the object database"
+        ],
+        "answer": 1,
+        "explain": "Which is exactly why the commit's id doesn't change, and why notes have to be pushed and fetched as a separate ref."
+      },
+      {
+        "q": "Why do notes so often disappoint teams?",
+        "choices": [
+          "They're slow",
+          "They aren't fetched or pushed by the default refspec, and rewriting history orphans them",
+          "Only one note per commit is allowed"
+        ],
+        "answer": 1,
+        "explain": "Both problems are fixable — an explicit refspec, and notes.rewriteRef — but neither is on by default, so notes tend to work for machines and not for humans."
+      },
+      {
+        "q": "What does `git replace A B` do?",
+        "choices": [
+          "Rewrites A's content to match B",
+          "Creates refs/replace/A so that reads of A transparently return B — reversibly, with nothing rewritten",
+          "Deletes A and moves B into its place"
+        ],
+        "answer": 1,
+        "explain": "It changes what readers see, not what's stored. --no-replace-objects turns it off, and the original is still right there."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("notes-attached-to-head", async (repo) => {
+      const notesRef = await GT.resolve(repo.dir, "refs/notes/commits");
+      if (!notesRef) return { pass: false, detail: "no notes ref yet" };
+      const head = await GT.resolve(repo.dir, "refs/heads/main");
+      let files;
+      try {
+        files = await GTPlumb.filesOfCommit(repo.dir, notesRef);
+      } catch {
+        return { pass: false, detail: "the notes ref doesn't point at a commit" };
+      }
+      const meta = files.get(head);
+      if (!meta) {
+        return { pass: false, detail: "no entry named after main's tip commit" };
+      }
+      const text = await GTPlumb.readBlobText(repo.dir, meta.oid);
+      return text.trim()
+        ? { pass: true, detail: `“${text.trim().slice(0, 40)}”` }
+        : { pass: false, detail: "the note is empty" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hooks — Git Tutor</title>
+
+  <meta name="git:unit" content="Workflow & collaboration">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="merge-strategies-and-rerere.html|Merge strategies and rerere">
+  <meta name="git:next" content="submodules-and-subtrees.html|Submodules and subtrees">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Workflow & collaboration</p>
+  <h1>Hooks</h1>
+  <p class="lede">Your own code at git's decision points. The mechanism is simple; the interesting part is which hook runs when, and what it's allowed to stop.</p>
+
+  <h2>The idea</h2>
+  <p>A <dfn data-term="hook">hook</dfn> is an executable file in
+  <code>.git/hooks/</code> named after the moment it runs. Git runs it, and for some
+  hooks a <strong>non-zero exit code cancels the operation</strong>. There is no
+  configuration, no registry, and no language requirement — if it's executable,
+  it runs.</p>
+
+  <pre>.git/hooks/pre-commit          # before a commit is made — can refuse
+.git/hooks/commit-msg          # gets the message file; can edit or refuse it
+.git/hooks/pre-push            # before objects are sent — can refuse
+.git/hooks/post-checkout       # after a checkout; can't refuse anything
+.git/hooks/pre-rebase          # can refuse to rebase a protected branch</pre>
+
+  <p>The ones that earn their keep:</p>
+  <table class="ref">
+    <tr><th>pre-commit</th><td>format, lint, reject debugger statements or a stray secret. Runs before the commit exists</td></tr>
+    <tr><th>commit-msg</th><td>enforce a message convention, or append an issue number from the branch name</td></tr>
+    <tr><th>pre-push</th><td>run the test suite, or refuse to push to main. Gets the refs being pushed on stdin</td></tr>
+    <tr><th>post-checkout / post-merge</th><td>re-install dependencies when the lock file changed</td></tr>
+  </table>
+
+  <p>The important limitation: <strong>hooks are not cloned</strong>.
+  <code>.git/</code> isn't part of the repository's content, so a hook you write
+  protects only you. Teams distribute them with a committed directory plus
+  <code>git config core.hooksPath .githooks</code>, or a tool like
+  <a href="https://pre-commit.com">pre-commit</a> that does the wiring.</p>
+
+  <h2>Try it</h2>
+  <p>Write a hook that refuses to commit anything containing the word
+  <code>TODO</code>, then watch it work:</p>
+
+  <pre>edit .git/hooks/pre-commit
+# put a check in it, save
+echo "x = 1  # TODO fix this" &gt;&gt; count.py
+git add count.py
+git commit -m "This should be refused"</pre>
+
+  <div class="box sim-note">
+    <span class="label">How hooks work in this sandbox</span>
+    <p>There's no shell in a browser, so a hook here is <strong>JavaScript</strong>
+    rather than a shell script. The path, the timing, and the veto are real: the
+    file lives at <code>.git/hooks/pre-commit</code>, it runs before the commit is
+    made, and returning <code>false</code> (or throwing) cancels it exactly as a
+    non-zero exit would.</p>
+    <p>Your hook is called with one argument, an object with
+    <code>staged</code> (an array of <code>{path, text}</code>) and
+    <code>fail(message)</code>. What you won't get here is the real thing's
+    environment: no <code>$PATH</code>, no linters, no exit codes.</p>
+  </div>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Which hooks can say no</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>Can veto</th><td>pre-commit, prepare-commit-msg, commit-msg, pre-rebase, pre-push, pre-merge-commit, pre-applypatch, and server-side pre-receive / update</td></tr>
+        <tr><th>Can't</th><td>post-commit, post-checkout, post-merge, post-rewrite, post-receive — they run after the fact, and their exit code is ignored</td></tr>
+      </table>
+      <p>So "reject this" has to happen in a pre- hook, and "react to this" belongs
+      in a post- one. Trying to undo something in a post- hook is the classic
+      mistake — by then the commit exists and you'd be rewriting history behind the
+      user's back.</p>
+      <p>And every client-side hook can be skipped with <code>--no-verify</code>,
+      which is why client hooks are a convenience for the author and never a
+      security control. The enforcement point is the server:
+      <code>pre-receive</code> can't be bypassed by the person pushing.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Sharing hooks with a team</summary>
+    <div class="layer-body">
+      <pre>mkdir .githooks
+# write .githooks/pre-commit, commit it
+git config core.hooksPath .githooks</pre>
+      <p>The config line is per-clone, so it still needs to be run once by each
+      person — usually from a <code>make setup</code> or a bootstrap script. That's
+      the whole of what hook-management tools automate, plus a runner and a version
+      pin.</p>
+      <p>Keep shared hooks fast. A pre-commit hook that takes eight seconds trains
+      everyone to type <code>--no-verify</code>, at which point you have the
+      slowness and none of the checking.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The .sample files, and why nothing is running</summary>
+    <div class="layer-body">
+      <p>A fresh <code>.git/hooks/</code> is full of <code>*.sample</code> files.
+      They're inert examples: git looks for <code>pre-commit</code>, not
+      <code>pre-commit.sample</code>. Remove the suffix and make it executable to
+      activate one.</p>
+      <p>The most common "my hook isn't running" causes, in order: the file isn't
+      executable, the name has an extension, the shebang points at a missing
+      interpreter, or <code>core.hooksPath</code> is set somewhere and git is
+      looking elsewhere entirely.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="submodules-and-subtrees.html">Submodules and subtrees</a> — the last
+  page of the unit, and the one where you build a submodule's gitlink by hand to
+  see what it really is.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "100755": {
+      "name": "100755 — executable",
+      "pron": "say: one hundred seven fifty-five",
+      "means": "the mode a committed hook needs, and the only permission git records",
+      "short": "executable"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "hooks",
+    "labs": [
+      {
+        "id": "hooks-refuse-a-commit",
+        "title": "Write a pre-commit hook that refuses bad commits",
+        "fixture": "linear-5",
+        "task": "Write <code>.git/hooks/pre-commit</code> so that committing anything containing the text <code>TODO</code> is refused. Then prove it: try a commit that should fail, and make one that succeeds.",
+        "show": [
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "the hook file exists",
+            "check": {
+              "fileContains": {
+                "path": ".git/hooks/pre-commit",
+                "pattern": "TODO"
+              }
+            }
+          },
+          {
+            "text": "a clean commit went through",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "min": 6
+              }
+            }
+          },
+          {
+            "text": "nothing containing TODO got committed",
+            "check": {
+              "blobContains": {
+                "path": "count.py",
+                "text": "TODO",
+                "absent": true
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>edit .git/hooks/pre-commit</code> opens an editor. In this sandbox the hook is JavaScript: write a function body that gets <code>{ staged, fail }</code>.",
+          "Something like: <code>for (const f of staged) if (f.text.includes(\"TODO\")) return fail(\"TODO found in \" + f.path);</code>",
+          "Then <code>echo \"# TODO fix\" &gt;&gt; count.py</code>, stage and commit — it should be refused. Undo that edit with <code>git checkout -- count.py</code> and commit something clean instead."
+        ],
+        "solution": [
+          "edit .git/hooks/pre-commit",
+          "# body: for (const f of staged) if (f.text.includes(\"TODO\")) return fail(\"TODO in \" + f.path);",
+          "echo \"# TODO fix this\" >> count.py",
+          "git add count.py",
+          "git commit -m \"Should be refused\"      # the hook says no",
+          "git checkout -- count.py",
+          "echo \"# tidy\" >> README.md",
+          "git commit -am \"A commit the hook is happy with\""
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "hooks",
+    "questions": [
+      {
+        "q": "You write a pre-commit hook and push. Does it run for your colleagues?",
+        "choices": [
+          "Yes, hooks are part of the repository",
+          "No — .git/hooks isn't cloned. Sharing needs a committed directory plus core.hooksPath, set once per clone",
+          "Only if they're on the same git version"
+        ],
+        "answer": 1,
+        "explain": "Hooks live in .git/, which isn't content. That's the whole reason hook-management tools exist."
+      },
+      {
+        "q": "Why can't a client-side hook be a security control?",
+        "choices": [
+          "Hooks can't read the staged content",
+          "Anyone can skip them with --no-verify, or just delete the file — enforcement has to be server-side, in pre-receive",
+          "They only run on commit, not on push"
+        ],
+        "answer": 1,
+        "explain": "Client hooks are a convenience for the author. pre-receive runs on the server and can't be bypassed by the person pushing."
+      },
+      {
+        "q": "Which hook can stop a commit from being created?",
+        "choices": [
+          "post-commit",
+          "pre-commit",
+          "post-checkout"
+        ],
+        "answer": 1,
+        "explain": "Only pre- hooks can veto; post- hooks run after the fact and their exit code is ignored. Trying to undo something in post-commit means rewriting history behind the user's back."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

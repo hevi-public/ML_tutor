@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Revision syntax — Git Tutor</title>
+
+  <meta name="git:unit" content="Internals & plumbing">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="the-index.html|The index, properly">
+  <meta name="git:next" content="commit-by-hand.html|A commit, by hand">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Internals & plumbing</p>
+  <h1>Revision syntax</h1>
+  <p class="lede">~ and ^, two dots and three, @{1} and @{u}. The notation experienced git users trade without ever having been taught it out loud.</p>
+
+  <h2>The idea</h2>
+  <p>Every command that takes a commit takes this grammar, so learning it once
+  pays off everywhere. Two rules cover most of it.</p>
+
+  <p><strong><code>~</code> goes back. <code>^</code> picks a parent.</strong> For
+  an ordinary commit with one parent they're the same thing, which is why people
+  use them interchangeably and then get surprised at a merge:</p>
+
+  <table class="ref">
+    <tr><th>HEAD~</th><td>the first parent — one step back</td></tr>
+    <tr><th>HEAD~3</th><td>three steps back, always taking the first parent</td></tr>
+    <tr><th>HEAD^</th><td>the first parent. Same as HEAD~</td></tr>
+    <tr><th>HEAD^2</th><td>the <em>second</em> parent. Only a merge commit has one</td></tr>
+    <tr><th>HEAD~2^2</th><td>two back, then the second parent of that</td></tr>
+  </table>
+
+  <p>So on a merge commit, <code>HEAD^</code> is the branch you were on and
+  <code>HEAD^2</code> is the branch you merged in. <code>HEAD~2</code> is
+  <em>not</em> "two commits ago" in any general sense — it's two steps down the
+  first-parent line, ignoring everything that was merged in.</p>
+
+  <p><strong>Two dots is a range; three dots is "how we diverged".</strong></p>
+
+  <table class="ref">
+    <tr><th>main..feature</th><td>commits in feature that aren't in main — "my branch's own work"</td></tr>
+    <tr><th>main...feature</th><td>commits in either but not both — the full picture of the divergence</td></tr>
+    <tr><th>^main feature</th><td>the long form of <code>main..feature</code>, and it takes any number of terms</td></tr>
+  </table>
+
+  <p>The one that trips people up: <code>git diff a..b</code> and
+  <code>git diff a b</code> mean the same thing, but <code>git log a..b</code> and
+  <code>git log a b</code> do not. For <code>log</code>, a range is a set of
+  commits to walk; for <code>diff</code>, it's just two endpoints.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has diverged branches, so all of this has something to bite on:</p>
+
+  <pre>git log --oneline --all
+git rev-parse HEAD~2
+git rev-parse main..feature       # try it: what does rev-parse make of a range?
+git rev-list --count main..feature
+git rev-list --left-right --oneline main...feature
+git show :/README                 # find a commit by its message
+git rev-parse HEAD^{tree}</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>@{…} — asking about the past instead of the graph</summary>
+    <div class="layer-body">
+      <p>Everything above navigates the commit graph. The <code>@{…}</code> family
+      navigates the <dfn data-term="reflog">reflog</dfn> instead, which is a
+      different question: not "what came before this commit" but "where was this
+      ref before".</p>
+      <ul class="symbol-legend" data-symbols="HEAD@{1},main@{2},@{-1},@{u},ORIG_HEAD"></ul>
+      <p><code>HEAD~1</code> and <code>HEAD@{1}</code> are almost never the same
+      commit. The first is the parent of where you are; the second is wherever you
+      were standing one command ago. After a <code>reset --hard</code>, the second
+      is your rescue and the first is not.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Peeling: ^{tree}, ^{commit}, ^{}</summary>
+    <div class="layer-body">
+      <p><code>&lt;rev&gt;^{tree}</code> gives the tree of that commit rather than
+      the commit, which is how you compare trees or read a file without checking
+      anything out. <code>^{commit}</code> follows an annotated tag through to the
+      commit it names — necessary because an
+      <dfn data-term="annotated-tag">annotated tag</dfn> is its own object, so
+      <code>v1.0</code> and <code>v1.0^{commit}</code> are two different ids.</p>
+      <p><code>&lt;rev&gt;^!</code> is a range containing that commit and nothing
+      else: handy for <code>git log v1.0^!</code> when you want one commit's entry
+      and no ancestors.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Naming things without ids at all</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>:/fix the parser</th><td>the newest commit whose message contains that text</td></tr>
+        <tr><th>@{-1}</th><td>the branch you were on before this one — what <code>git checkout -</code> uses</td></tr>
+        <tr><th>@{u}</th><td>your branch's <dfn data-term="upstream">upstream</dfn>, usually origin/&lt;same name&gt;</td></tr>
+        <tr><th>HEAD:src/app.py</th><td>the blob at that path in that commit</td></tr>
+      </table>
+      <p>Two are worth building a habit around: <code>git log @{u}..</code> is "my
+      unpushed commits", and <code>git diff @{u}...</code> is "what a pull request
+      would show".</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="commit-by-hand.html">A commit, by hand</a> is the payoff for this
+  whole unit: build a commit out of plumbing commands, with no
+  <code>git commit</code> anywhere.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "HEAD@{1} — one move ago",
+      "pron": "say: head at brace one",
+      "means": "where HEAD pointed before your last command — not the same as HEAD~1",
+      "short": "one move ago"
+    },
+    "main@{2}": {
+      "name": "main@{2} — a branch's own reflog",
+      "pron": "say: main at brace two",
+      "means": "where main pointed two of its own movements ago",
+      "short": "branch reflog"
+    },
+    "@{-1}": {
+      "name": "@{-1} — the previous branch",
+      "pron": "say: at brace minus one",
+      "means": "the branch you were on before this one",
+      "short": "last branch"
+    },
+    "@{u}": {
+      "name": "@{u} — the upstream branch",
+      "pron": "say: at brace you",
+      "means": "the remote-tracking branch yours compares against",
+      "short": "upstream"
+    },
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the last big move",
+      "pron": "say: orig head",
+      "means": "where HEAD was before a reset, rebase, merge or pull",
+      "short": "undo point"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "revision-syntax",
+    "labs": [
+      {
+        "id": "revision-syntax-name-it",
+        "title": "Name four commits four different ways",
+        "fixture": "diverged",
+        "task": "Write a file <code>answers.txt</code> with four lines, each the <em>full</em> id of: (1) the commit two back from main, (2) the tip of feature, (3) the commit whose message mentions the README, (4) the tree of main. Commit it.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "answers.txt is committed with four ids",
+            "check": {
+              "custom": {
+                "name": "revision-syntax-four-ids"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git rev-parse</code> takes several revisions at once and prints one id per line — you can do all four in one command.",
+          "For the third, <code>:/README</code> searches commit messages. For the fourth, <code>main^{tree}</code> peels the commit to its tree.",
+          "<code>git rev-parse main~2 feature :/README main^{tree} > answers.txt</code> — then stage and commit."
+        ],
+        "solution": [
+          "git rev-parse main~2 feature :/README 'main^{tree}' > answers.txt",
+          "git add answers.txt",
+          "git commit -m \"Name four commits four ways\""
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "revision-syntax",
+    "questions": [
+      {
+        "q": "On a merge commit M, what's the difference between M^ and M^2?",
+        "choices": [
+          "M^ is the merge base; M^2 is the merge commit's tree",
+          "M^ is the first parent — the branch you were on; M^2 is the second — the branch you merged in",
+          "They're the same; ^2 just means two steps back"
+        ],
+        "answer": 1,
+        "explain": "^n picks the nth parent. Two steps back is ~2. This is the distinction that matters when reverting a merge, where -m 1 or -m 2 chooses which side to keep."
+      },
+      {
+        "q": "You just ran `git reset --hard HEAD~3` by mistake. Which gets your commits back?",
+        "choices": [
+          "HEAD~3",
+          "HEAD@{1}",
+          "HEAD^3"
+        ],
+        "answer": 1,
+        "explain": "HEAD@{1} is where HEAD pointed one movement ago — the reflog, not the graph. HEAD~3 walks the graph from where you now are, which is exactly the wrong direction."
+      },
+      {
+        "q": "`git log main..feature` shows 3 commits. What are they?",
+        "choices": [
+          "The 3 newest commits on feature",
+          "Commits reachable from feature but not from main — feature's own work since it diverged",
+          "Commits that differ between the two branches, in either direction"
+        ],
+        "answer": 1,
+        "explain": "Two dots is asymmetric: in the right, not in the left. Three dots (main...feature) would be the symmetric version, showing both sides."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    // Four independent ids, so one custom check rather than four brittle ones.
+    GTChecks.register("revision-syntax-four-ids", async (repo) => {
+      const head = await GT.resolve(repo.dir, "HEAD");
+      const files = await GTPlumb.filesOfCommit(repo.dir, head);
+      const meta = files.get("answers.txt");
+      if (!meta) return { pass: false, detail: "answers.txt isn't committed yet" };
+      const lines = (await GTPlumb.readBlobText(repo.dir, meta.oid))
+        .split("\n").map((l) => l.trim()).filter(Boolean);
+      if (lines.length !== 4) {
+        return { pass: false, detail: `${lines.length} line(s), expected 4` };
+      }
+      const want = [];
+      for (const spec of ["main~2", "feature", ":/README", "main^{tree}"]) {
+        want.push(await GTPlumb.revParse(repo.dir, spec));
+      }
+      const wrong = want.map((w, i) => (w === lines[i] ? null : i + 1)).filter(Boolean);
+      return wrong.length
+        ? { pass: false, detail: `line(s) ${wrong.join(", ")} don't match` }
+        : { pass: true, detail: "all four resolve correctly" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

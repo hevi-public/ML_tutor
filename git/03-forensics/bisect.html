@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bisect — Git Tutor</title>
+
+  <meta name="git:unit" content="Debugging & forensics">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="../02-rewriting/rewriting-published-history.html|Rewriting published history">
+  <meta name="git:next" content="blame-moves-and-copies.html|blame, moves and copies">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Debugging & forensics</p>
+  <h1>bisect</h1>
+  <p class="lede">Ten questions to find one bad commit in a thousand. The command is easy; the skill is choosing a test that answers cleanly.</p>
+
+  <h2>The idea</h2>
+  <p>Something worked in March and doesn't now. There are 800 commits in between.
+  Reading them is hopeless; binary search isn't:</p>
+
+  <pre>git bisect start
+git bisect bad                 # the current commit is broken
+git bisect good v2.1           # this one was fine
+# git checks out a commit halfway between. You test it.
+git bisect good                # or: git bisect bad
+# …repeat. About 10 rounds for 800 commits.
+git bisect reset               # back to where you were</pre>
+
+  <p>Each answer halves the range, so the cost is log₂(n) tests: 800 commits is
+  ten. Git tracks the state in <code>.git/BISECT_*</code> and
+  <code>refs/bisect/*</code>, checks out the midpoint for you, and at the end
+  prints "<code>&lt;id&gt; is the first bad commit</code>".</p>
+
+  <p>What makes bisect work is the assumption that the property is
+  <strong>monotone</strong> — good, good, good, bad, bad, bad. When it isn't
+  (flaky test, a bug fixed and reintroduced), bisect will still give you an answer,
+  and the answer will be wrong. That's the thing to be careful about, not the
+  commands.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has twelve commits. The tokenizer test passes at the start and
+  fails at the tip; exactly one commit broke it. Find it:</p>
+
+  <pre>git log --oneline
+git bisect start
+git bisect bad
+git bisect good HEAD~11
+cat tok.py                     # is the bug here? look at how it splits
+git bisect good                # or bad
+# …keep going until git names the culprit
+git bisect reset</pre>
+
+  <p>The bug: at some point <code>text.split()</code> became
+  <code>text.split(" ")</code>, which keeps an empty string when there are two
+  spaces in a row. So your test each round is: does <code>tok.py</code> split on
+  the literal <code>" "</code>?</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>bisect run — let a script answer</summary>
+    <div class="layer-body">
+      <p>If the test can be automated, don't sit through ten rounds:</p>
+      <pre>git bisect start HEAD HEAD~11
+git bisect run python -m pytest tests/test_tok.py</pre>
+      <p>The convention is the shell one: <strong>exit 0 means good</strong>,
+      anything from 1 to 124 means bad. Two special codes matter —
+      <strong>125</strong> means "can't test this one, skip it" (use it when the
+      build is broken for unrelated reasons), and <strong>anything ≥ 128</strong>
+      aborts the bisect.</p>
+      <p>The trick that makes this genuinely powerful: your test script doesn't
+      have to be in the repository. Keep it in <code>/tmp</code>, so the same
+      script runs against every commit even at revisions where it didn't exist
+      yet.</p>
+      <div class="box sim-note">
+        <span class="label">In this sandbox</span>
+        There's no shell to run a script in, so <code>git bisect run</code> isn't
+        available here — typing it says so rather than pretending. In the lab below
+        you play the part of the test script: at each step, read
+        <code>tok.py</code> and answer <code>good</code> or <code>bad</code>. The
+        search itself, and the state it keeps in <code>.git/</code>, is real.
+      </div>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>skip, and what it does to the answer</summary>
+    <div class="layer-body">
+      <p><code>git bisect skip</code> says "this commit can't be tested" — it
+      doesn't build, or the feature doesn't exist yet. Git excludes it and picks
+      another midpoint.</p>
+      <p>Skip enough commits and bisect can only narrow the answer to a range
+      rather than a commit, and it says so: <em>"There are only 'skip'ped commits
+      left to test"</em>. That's an honest result, not a failure — it tells you the
+      break is inside a region you can't test, which is itself worth knowing.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The state files, and bisecting without leaving your work</summary>
+    <div class="layer-body">
+      <p>Bisect keeps everything on disk, so you can look:</p>
+      <table class="ref">
+        <tr><th>.git/BISECT_START</th><td>the branch to return to at reset</td></tr>
+        <tr><th>.git/BISECT_LOG</th><td>every answer you gave — replayable with <code>git bisect replay</code></td></tr>
+        <tr><th>refs/bisect/bad</th><td>the current known-bad commit</td></tr>
+        <tr><th>refs/bisect/good-&lt;id&gt;</th><td>one ref per known-good commit</td></tr>
+      </table>
+      <p>Because it works by checking out commits, bisect needs a clean worktree.
+      If you're mid-change, <a href="../04-workflow/stash-tricks.html">stash</a>
+      first — or bisect in a
+      <a href="../04-workflow/worktrees.html">linked worktree</a>, which is the
+      better habit: your main checkout stays exactly as it was.</p>
+      <p>And <code>git bisect log &gt; bisect.log</code> before you give up for the
+      day. <code>git bisect replay bisect.log</code> puts you back mid-search
+      tomorrow.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>Bisect tells you <em>which commit</em>. <a href="blame-moves-and-copies.html">blame</a>
+  tells you which <em>line</em> — and why its default answer is often a lie after a
+  refactor.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "A..B": {
+      "name": "good..bad — the search range",
+      "pron": "say: dot dot",
+      "means": "the commits bisect will search through",
+      "short": "the range"
+    },
+    "HEAD~3": {
+      "name": "HEAD~3 — a known-good candidate",
+      "pron": "say: head tilde three",
+      "means": "handy for naming an older commit to mark good",
+      "short": "3 back"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "bisect",
+    "labs": [
+      {
+        "id": "bisect-find-the-regression",
+        "title": "Find the commit that broke the tokenizer",
+        "fixture": "bug-hunt",
+        "task": "Twelve commits; one introduced <code>text.split(&quot; &quot;)</code> where <code>text.split()</code> belongs. Bisect until git names it, then <code>git bisect reset</code> and record the culprit's id (or its subject) in <code>culprit.txt</code>.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "culprit.txt names the commit that broke it",
+            "check": {
+              "custom": {
+                "name": "bisect-named-the-culprit"
+              }
+            }
+          },
+          {
+            "text": "you finished up: no bisect in progress",
+            "check": {
+              "custom": {
+                "name": "bisect-finished"
+              }
+            }
+          },
+          {
+            "text": "back on main afterwards",
+            "check": {
+              "headIs": {
+                "branch": "main"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "Start with <code>git bisect start</code>, then <code>git bisect bad</code> (the tip is broken) and <code>git bisect good HEAD~11</code> (the first commit was fine).",
+          "Each round, <code>cat tok.py</code>. If it contains <code>split(&quot; &quot;)</code> the commit is bad; if it contains plain <code>split()</code> it's good.",
+          "When git prints “is the first bad commit”, note the id, then <code>git bisect reset</code> to get back to main.",
+          "Then <code>echo &lt;that id&gt; &gt; culprit.txt</code> — the file doesn't need committing."
+        ],
+        "solution": [
+          "git bisect start",
+          "git bisect bad",
+          "git bisect good HEAD~11",
+          "cat tok.py            # judge it, then:",
+          "git bisect good       # …or git bisect bad",
+          "# repeat until git names the first bad commit",
+          "git bisect reset",
+          "echo <the id it named> > culprit.txt"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "bisect",
+    "questions": [
+      {
+        "q": "Roughly how many tests does bisect need for 1000 commits?",
+        "choices": [
+          "About 30",
+          "About 10",
+          "About 500"
+        ],
+        "answer": 1,
+        "explain": "log₂(1000) ≈ 10. Each answer halves the range, which is why bisect is worth the setup even for large ranges."
+      },
+      {
+        "q": "Your test is flaky — it fails about one run in five even on good commits. What does bisect do?",
+        "choices": [
+          "Detects the inconsistency and warns you",
+          "Gives you a confident answer that is probably wrong, because it assumes the property is monotone",
+          "Refuses to continue"
+        ],
+        "answer": 1,
+        "explain": "Bisect trusts your answers. Make the test reliable first — run it several times per step, or narrow it — or you'll spend the afternoon investigating an innocent commit."
+      },
+      {
+        "q": "In `git bisect run`, what does exit code 125 mean?",
+        "choices": [
+          "Bad commit",
+          "Skip this commit — it can't be tested",
+          "Abort the bisect"
+        ],
+        "answer": 1,
+        "explain": "0 is good, 1–124 bad, 125 skip, and ≥128 aborts. 125 is what you exit when the build is broken for reasons unrelated to what you're hunting."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    // Bisect's own state is the answer here, so check it directly: has the
+    // search narrowed to the commit that introduced the bad split?
+    const BUG = 'text.split(" ")';
+
+    async function culprit(repo) {
+      // The first commit (oldest first) whose tok.py contains the bug.
+      const head = await GT.resolve(repo.dir, "refs/heads/main");
+      const entries = await GTPlumb.revList(repo.dir, { include: [head], reverse: true });
+      for (const entry of entries) {
+        const text = await GTPorc.fileAt(repo.dir, entry.oid, "tok.py");
+        if (text && text.includes(BUG)) return entry.oid;
+      }
+      return null;
+    }
+
+    GTChecks.register("bisect-named-the-culprit", async (repo) => {
+      const want = await culprit(repo);
+      if (!want) return { pass: false, detail: "couldn't find the planted bug" };
+      let text;
+      try {
+        text = (await GT.readFile(repo.dir, "culprit.txt")).trim();
+      } catch {
+        return { pass: false, detail: "culprit.txt isn't there yet" };
+      }
+      const { commit } = await git.readCommit({ ...GT.ctx(repo.dir), oid: want });
+      const subject = commit.message.split("\n")[0];
+      const named = text.length >= 4 && want.startsWith(text.split(/\s+/)[0]);
+      const bySubject = text.toLowerCase().includes(subject.toLowerCase());
+      return named || bySubject
+        ? { pass: true, detail: `${want.slice(0, 7)} “${subject}”` }
+        : { pass: false, detail: "that isn't the commit that introduced it" };
+    });
+
+    GTChecks.register("bisect-finished", async (repo) => {
+      const state = await GTPorc.bisectState(repo.dir);
+      return state.started
+        ? { pass: false, detail: "still bisecting — finish with git bisect reset" }
+        : { pass: true, detail: "no bisect in progress" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

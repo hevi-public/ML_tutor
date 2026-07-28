@@ -1,0 +1,148 @@
+{
+  "revisions": {
+    "title": "Naming a commit",
+    "entries": [
+      { "sym": "HEAD", "name": "HEAD", "say": "head",
+        "means": "the commit you have checked out — normally via the branch you're on",
+        "aliases": ["@", "where I am", "current commit"] },
+      { "sym": "@", "name": "@ — short for HEAD", "say": "at",
+        "means": "exactly the same thing as HEAD, two fewer keystrokes",
+        "aliases": ["at sign"] },
+      { "sym": "<rev>~", "name": "tilde — one step back", "say": "rev tilde",
+        "means": "the first parent of <rev>. HEAD~ is the commit before HEAD",
+        "aliases": ["squiggle", "one back", "previous commit"] },
+      { "sym": "<rev>~3", "name": "tilde n — n steps back", "say": "rev tilde three",
+        "means": "walk back 3 commits, always taking the first parent. HEAD~3 is three commits ago on this line of history",
+        "aliases": ["three back", "tilde number"] },
+      { "sym": "<rev>^", "name": "caret — first parent", "say": "rev caret",
+        "means": "the same as <rev>~ for an ordinary commit: its first parent",
+        "aliases": ["hat", "circumflex"] },
+      { "sym": "<rev>^2", "name": "caret n — the nth parent", "say": "rev caret two",
+        "means": "the second parent of a merge commit — the branch that was merged in. Only merge commits have one",
+        "aliases": ["other side of the merge", "second parent"] },
+      { "sym": "<rev>^{tree}", "name": "peel to the tree", "say": "rev caret brace tree",
+        "means": "the tree object of that commit, rather than the commit itself. HEAD^{tree} is the root directory of your last commit",
+        "aliases": ["the tree of", "curly braces"] },
+      { "sym": "<rev>^{commit}", "name": "peel to a commit", "say": "rev caret brace commit",
+        "means": "follow tags until you reach an actual commit. Useful because an annotated tag is an object in its own right",
+        "aliases": ["dereference the tag"] },
+      { "sym": ":/text", "name": "search messages", "say": "colon slash text",
+        "means": "the newest commit whose message contains that text. :/fix typo finds it without you looking up an id",
+        "aliases": ["find by message", "colon slash"] },
+      { "sym": "<sha>", "name": "an abbreviated object id", "say": "the sha, or the hash",
+        "means": "any unambiguous prefix of a full 40-character id — usually 7 characters is plenty",
+        "aliases": ["short hash", "abbreviated sha", "prefix"] }
+    ]
+  },
+  "reflog": {
+    "title": "Naming where a ref used to be",
+    "entries": [
+      { "sym": "HEAD@{1}", "name": "at brace n — the nth reflog entry", "say": "head at brace one",
+        "means": "where HEAD pointed one move ago. HEAD@{0} is now, HEAD@{1} is before your last command — the undo button's address",
+        "aliases": ["at braces", "reflog entry", "one move ago"] },
+      { "sym": "main@{2}", "name": "a branch's own reflog", "say": "main at brace two",
+        "means": "where the branch main pointed two of its own movements ago. Each ref has a separate log, so main@{2} and HEAD@{2} usually differ",
+        "aliases": ["branch reflog"] },
+      { "sym": "@{-1}", "name": "the previous branch", "say": "at brace minus one",
+        "means": "the branch you were on before this one — what `git checkout -` uses",
+        "aliases": ["last branch", "go back"] },
+      { "sym": "@{u}", "name": "the upstream branch", "say": "at brace you, or at upstream",
+        "means": "the remote-tracking branch your branch is set to compare against, usually origin/<same name>",
+        "aliases": ["@{upstream}", "the tracking branch", "upstream"] },
+      { "sym": "@{push}", "name": "where a push would go", "say": "at brace push",
+        "means": "the ref `git push` would update — the same as @{u} in ordinary setups, different under triangular workflows",
+        "aliases": ["push destination"] },
+      { "sym": "ORIG_HEAD", "name": "ORIG_HEAD", "say": "orig head",
+        "means": "where HEAD was before the last big move (reset, rebase, merge, pull). `git reset --hard ORIG_HEAD` undoes it",
+        "aliases": ["original head", "undo the last operation"] }
+    ]
+  },
+  "ranges": {
+    "title": "Naming a set of commits",
+    "entries": [
+      { "sym": "A..B", "name": "two dots — in B but not A", "say": "A dot dot B",
+        "means": "the commits reachable from B that aren't reachable from A. main..feature is 'my branch's own commits'",
+        "aliases": ["two dots", "range", "what's new on this branch"] },
+      { "sym": "A...B", "name": "three dots — in either but not both", "say": "A dot dot dot B",
+        "means": "the symmetric difference: everything either side has that the other doesn't. With --left-right, git marks which side each commit came from",
+        "aliases": ["three dots", "symmetric difference", "how we diverged"] },
+      { "sym": "^A B", "name": "caret prefix — exclude", "say": "not A, B",
+        "means": "the long form of a range: include B, exclude A. Takes any number of each, unlike ..",
+        "aliases": ["exclude", "not"] },
+      { "sym": "<rev>^!", "name": "just that commit", "say": "rev caret bang",
+        "means": "the commit and none of its ancestors — a range containing exactly one commit",
+        "aliases": ["only this commit", "caret exclamation"] },
+      { "sym": "--first-parent", "name": "--first-parent", "say": "first parent",
+        "means": "when walking, only ever follow parent number one — the trunk's own story, without the commits merged into it",
+        "aliases": ["trunk only", "ignore merged branches"] }
+    ]
+  },
+  "refs": {
+    "title": "Full ref names",
+    "entries": [
+      { "sym": "refs/heads/main", "name": "a branch's full name", "say": "refs heads main",
+        "means": "what the branch 'main' is really called. Branches live under refs/heads/",
+        "aliases": ["branch path", "full branch name"] },
+      { "sym": "refs/tags/v1.0", "name": "a tag's full name", "say": "refs tags v one point oh",
+        "means": "tags live under refs/tags/ and, by convention, don't move",
+        "aliases": ["tag path"] },
+      { "sym": "refs/remotes/origin/main", "name": "a remote-tracking ref", "say": "refs remotes origin main",
+        "means": "your local note of where origin's main was when you last fetched. Written origin/main for short",
+        "aliases": ["origin/main", "tracking ref"] },
+      { "sym": "refs/stash", "name": "refs/stash", "say": "refs stash",
+        "means": "the ref pointing at your most recent stash. Its reflog holds the older ones — which is why a dropped stash is recoverable",
+        "aliases": ["the stash ref"] }
+    ]
+  },
+  "refspecs": {
+    "title": "Refspecs — what maps to what over the wire",
+    "entries": [
+      { "sym": "<src>:<dst>", "name": "a refspec", "say": "source colon destination",
+        "means": "push or fetch the ref on the left into the ref on the right. `git push origin main:main` is the explicit form of the everyday push",
+        "aliases": ["colon", "mapping"] },
+      { "sym": "+<src>:<dst>", "name": "leading plus — allow non-fast-forward", "say": "plus source colon destination",
+        "means": "update even if it isn't a fast-forward. This is what --force does, written into the refspec itself",
+        "aliases": ["plus", "force in a refspec"] },
+      { "sym": ":<dst>", "name": "empty source — delete", "say": "colon destination",
+        "means": "push nothing into that ref, which deletes it. `git push origin :old-branch` removes the remote branch",
+        "aliases": ["delete a remote branch", "empty source"] },
+      { "sym": "refs/heads/*:refs/remotes/origin/*", "name": "the default fetch refspec", "say": "wildcard refspec",
+        "means": "every branch on the remote becomes a remote-tracking ref locally. This line in .git/config is why origin/* exists",
+        "aliases": ["wildcard", "star"] }
+    ]
+  },
+  "pathspecs": {
+    "title": "Naming files",
+    "entries": [
+      { "sym": "--", "name": "double dash — end of options", "say": "dash dash",
+        "means": "everything after this is a path, not a revision. `git checkout -- file` means the file, even if a branch shares its name",
+        "aliases": ["double dash", "path separator", "disambiguate"] },
+      { "sym": "<rev>:<path>", "name": "a file at a revision", "say": "rev colon path",
+        "means": "the blob for that path in that commit. `git show HEAD~2:src/app.py` prints the old version without checking anything out",
+        "aliases": ["file at a commit", "old version of a file"] },
+      { "sym": ":(exclude)pattern", "name": "pathspec magic — exclude", "say": "colon paren exclude",
+        "means": "everything except this. `git log -- . ':(exclude)*.lock'` skips the noisy files",
+        "aliases": [":!", "exclude a path", "pathspec magic"] }
+    ]
+  },
+  "modes": {
+    "title": "Tree entry modes",
+    "entries": [
+      { "sym": "100644", "name": "100644 — an ordinary file", "say": "one hundred six forty-four",
+        "means": "a regular, non-executable file. The commonest thing in any tree",
+        "aliases": ["normal file", "regular file"] },
+      { "sym": "100755", "name": "100755 — an executable file", "say": "one hundred seven fifty-five",
+        "means": "a regular file with the executable bit set. The only permission git records",
+        "aliases": ["executable", "chmod +x"] },
+      { "sym": "120000", "name": "120000 — a symlink", "say": "one twenty thousand",
+        "means": "the 'file' content is the path it points at",
+        "aliases": ["symbolic link", "symlink"] },
+      { "sym": "040000", "name": "040000 — a subdirectory", "say": "forty thousand",
+        "means": "the entry is another tree object",
+        "aliases": ["directory", "tree entry"] },
+      { "sym": "160000", "name": "160000 — a submodule", "say": "one sixty thousand",
+        "means": "a 'gitlink': the entry names a commit in another repository rather than any content in this one",
+        "aliases": ["gitlink", "submodule entry"] }
+    ]
+  }
+}

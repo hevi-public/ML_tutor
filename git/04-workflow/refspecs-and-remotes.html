@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Refspecs and remotes — Git Tutor</title>
+
+  <meta name="git:unit" content="Workflow & collaboration">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="worktrees.html|Worktrees">
+  <meta name="git:next" content="force-with-lease.html|--force-with-lease">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Workflow & collaboration</p>
+  <h1>Refspecs and remotes</h1>
+  <p class="lede">origin/main is a local file, not a live view of the server. Once that lands, fetch, push and 'ahead 2, behind 1' all stop being mysterious.</p>
+
+  <h2>The idea</h2>
+  <p><code>origin/main</code> is a ref in <em>your</em> repository:
+  <code>refs/remotes/origin/main</code>. It records where origin's main was the last
+  time you fetched. It is a cache, it can be out of date, and nothing about it is
+  live.</p>
+
+  <p>So three things that look similar are quite different:</p>
+  <table class="ref">
+    <tr><th>main</th><td>your branch</td></tr>
+    <tr><th>origin/main</th><td>your note of where their branch was at last contact</td></tr>
+    <tr><th>origin's main</th><td>what's actually on the server right now, which you cannot see without asking</td></tr>
+  </table>
+
+  <p>"Your branch is ahead of 'origin/main' by 2 commits" is a comparison against
+  the middle one. It can be wrong the moment a colleague pushes, and
+  <code>git fetch</code> is how you refresh it. This is also why
+  <code>git fetch</code> is safe: it only updates remote-tracking refs and touches
+  nothing of yours.</p>
+
+  <h3>Refspecs</h3>
+  <p>A <dfn data-term="refspec">refspec</dfn> is the mapping that says which ref
+  becomes which:</p>
+
+  <pre>&lt;src&gt;:&lt;dst&gt;</pre>
+
+  <p>Your <code>.git/config</code> contains the fetch refspec that creates all
+  those remote-tracking refs:</p>
+
+  <pre>[remote "origin"]
+	url = git@example.com:project.git
+	fetch = +refs/heads/*:refs/remotes/origin/*</pre>
+
+  <p>Read it as: <em>take every branch on the remote and store it under
+  refs/remotes/origin/, allowing non-fast-forward updates (the +).</em> That single
+  line is why <code>origin/*</code> exists at all.</p>
+
+  <table class="ref">
+    <tr><th>git push origin main</th><td>shorthand for <code>main:refs/heads/main</code></td></tr>
+    <tr><th>git push origin HEAD:refs/heads/spike</th><td>push what I'm on, call it spike over there</td></tr>
+    <tr><th>git push origin :old-branch</th><td>empty source — <strong>delete</strong> the remote branch</td></tr>
+    <tr><th>git push origin +main</th><td>the leading plus is --force, written into the refspec</td></tr>
+    <tr><th>git fetch origin main:refs/remotes/origin/main</th><td>the explicit form of what a plain fetch does</td></tr>
+  </table>
+
+  <h2>Try it</h2>
+  <p>The sandbox has a remote whose main has moved on:</p>
+
+  <pre>git remote -v
+cat .git/config                   # the refspec is right there
+git branch -a                     # remote-tracking refs listed separately
+git fetch
+git status                        # ahead/behind, computed against your local note
+git log --oneline --left-right main...origin/main
+git rev-parse @{u}                # the upstream, by name</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Upstream, and the @{u} shorthand</summary>
+    <div class="layer-body">
+      <p>A branch's <dfn data-term="upstream">upstream</dfn> is two config values:</p>
+      <pre>[branch "main"]
+	remote = origin
+	merge = refs/heads/main</pre>
+      <p>That's what makes bare <code>git push</code> and <code>git pull</code> know
+      where to go, and what <code>@{u}</code> resolves to. Set it with
+      <code>git push -u</code> or <code>git branch --set-upstream-to</code>.</p>
+      <p>Two habits worth having:</p>
+      <pre>git log @{u}..           # my commits that aren't pushed yet
+git diff @{u}...         # what a pull request would show</pre>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>fetch versus pull</summary>
+    <div class="layer-body">
+      <p><code>git pull</code> is <code>git fetch</code> followed by an integration
+      of <code>@{u}</code> into your branch — a merge by default, or a rebase with
+      <code>pull.rebase=true</code>. The second half is the part that can surprise
+      you, which is the argument for fetching first and looking:</p>
+      <pre>git fetch
+git log --oneline --left-right main...@{u}    # what happened on each side
+git rebase @{u}          # or merge, deliberately</pre>
+      <p>If you do use pull, set <code>git config pull.ff only</code>. It turns a
+      silent surprise merge into an error that makes you choose.</p>
+      <ul class="symbol-legend" data-symbols="&lt;src&gt;:&lt;dst&gt;,+&lt;src&gt;:&lt;dst&gt;,:&lt;dst&gt;,@{u},refs/remotes/origin/main"></ul>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Pruning, and the branch that isn't there any more</summary>
+    <div class="layer-body">
+      <p>Deleting a branch on the server doesn't delete your remote-tracking ref, so
+      <code>git branch -a</code> keeps showing branches that no longer exist.
+      <code>git fetch --prune</code> removes them, and
+      <code>git config --global fetch.prune true</code> makes that the default —
+      which is one of the highest-value lines in anyone's git config.</p>
+      <div class="box sim-note">
+        <span class="label">In this sandbox</span>
+        The "remote" is a second repository on the same filesystem, and
+        fetch/push copy objects between the two under git's real fast-forward and
+        lease rules. Refspec parsing, deletion pushes and upstream config all work;
+        <code>--prune</code> and the wire protocol don't.
+      </div>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="force-with-lease.html">--force-with-lease</a> is the direct payoff:
+  it works by comparing the remote against your remote-tracking ref, which is
+  exactly the cache this page is about.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "<src>:<dst>": {
+      "name": "<src>:<dst> — a refspec",
+      "pron": "say: source colon destination",
+      "means": "push or fetch the left ref into the right one",
+      "short": "mapping"
+    },
+    "+<src>:<dst>": {
+      "name": "+ — allow non-fast-forward",
+      "pron": "say: plus",
+      "means": "update even if it isn't a fast-forward — --force in refspec form",
+      "short": "force"
+    },
+    ":<dst>": {
+      "name": ":<dst> — delete",
+      "pron": "say: colon destination",
+      "means": "push nothing into that ref, which deletes it",
+      "short": "delete"
+    },
+    "@{u}": {
+      "name": "@{u} — the upstream",
+      "pron": "say: at brace you",
+      "means": "the remote-tracking branch your branch compares against",
+      "short": "upstream"
+    },
+    "refs/remotes/origin/main": {
+      "name": "refs/remotes/origin/main",
+      "pron": "say: refs remotes origin main",
+      "means": "your local note of where origin's main was at last fetch",
+      "short": "origin/main"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "refspecs-and-remotes",
+    "labs": [
+      {
+        "id": "refspecs-push-under-another-name",
+        "title": "Push your branch to the remote under a different name",
+        "fixture": "with-remote",
+        "task": "Publish your local <code>main</code> to the remote as a branch called <code>review/main</code>, without touching the remote's own <code>main</code>. Then delete it again with a refspec.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "the remote's main is untouched",
+            "check": {
+              "custom": {
+                "name": "refspecs-remote-main-untouched"
+              }
+            }
+          },
+          {
+            "text": "review/main was created on the remote, then deleted again",
+            "check": {
+              "custom": {
+                "name": "refspecs-review-gone"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "The explicit form of a push is <code>git push origin &lt;src&gt;:&lt;dst&gt;</code>. The destination doesn't have to share the source's name.",
+          "<code>git push origin main:refs/heads/review/main</code>",
+          "A push with an empty source deletes: <code>git push origin :review/main</code>."
+        ],
+        "solution": [
+          "git push origin main:refs/heads/review/main",
+          "git push origin :review/main"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "refspecs-and-remotes",
+    "questions": [
+      {
+        "q": "What is `origin/main`?",
+        "choices": [
+          "A live view of the branch on the server",
+          "A local ref recording where origin's main was at your last fetch",
+          "An alias for your own main branch"
+        ],
+        "answer": 1,
+        "explain": "refs/remotes/origin/main is a file in your repository. It's why 'ahead 2, behind 1' can be stale, and why fetch is the command that refreshes it."
+      },
+      {
+        "q": "What does `git push origin :old-feature` do?",
+        "choices": [
+          "Pushes old-feature to a branch with an empty name",
+          "Deletes old-feature on the remote — an empty source means 'push nothing into that ref'",
+          "Nothing; it's a syntax error"
+        ],
+        "answer": 1,
+        "explain": "A refspec is <src>:<dst>. With no source, the destination gets nothing, which is deletion. The modern spelling is --delete."
+      },
+      {
+        "q": "Why is `git fetch` safe to run at any time?",
+        "choices": [
+          "It's read-only",
+          "It only updates remote-tracking refs and downloads objects — none of your branches or files move",
+          "It asks before changing anything"
+        ],
+        "answer": 1,
+        "explain": "It writes to refs/remotes/* and the object database only. git pull is the one that also integrates the result into your branch."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("refspecs-remote-main-untouched", async (repo) => {
+      const remote = GT.remoteDirFor(repo.labId);
+      const there = await GT.resolve(remote, "refs/heads/main");
+      const tracked = await GT.resolve(repo.dir, "refs/remotes/origin/main");
+      // The fixture's remote is ahead of us; pushing over it would make them equal
+      // to our own main, which is what this goal is watching for.
+      const ours = await GT.resolve(repo.dir, "refs/heads/main");
+      if (!there) return { pass: false, detail: "the remote has no main any more" };
+      return there !== ours
+        ? { pass: true, detail: "remote main still at " + there.slice(0, 7) }
+        : { pass: false, detail: "you overwrote the remote's main" };
+    });
+
+    GTChecks.register("refspecs-review-gone", async (repo) => {
+      const remote = GT.remoteDirFor(repo.labId);
+      const there = await GT.resolve(remote, "refs/heads/review/main");
+      if (there) return { pass: false, detail: "review/main is still on the remote" };
+      // Only counts if it was created in the first place.
+      const log = await GT.readReflog(remote, "refs/heads/review/main");
+      return log.length
+        ? { pass: true, detail: "created, then deleted" }
+        : { pass: false, detail: "create it first, then delete it" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

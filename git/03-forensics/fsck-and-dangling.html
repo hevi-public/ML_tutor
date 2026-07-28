@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fsck and dangling objects — Git Tutor</title>
+
+  <meta name="git:unit" content="Debugging & forensics">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="reflog-archaeology.html|Reflog archaeology">
+  <meta name="git:next" content="../04-workflow/stash-tricks.html|Stash tricks">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Debugging & forensics</p>
+  <h1>fsck and dangling objects</h1>
+  <p class="lede">The last resort, and a genuinely useful one: everything in the database that nothing points at.</p>
+
+  <h2>The idea</h2>
+  <p>Git deletes objects only when <code>gc</code> runs, and <code>gc</code> only
+  deletes objects nothing can reach. So between losing something and gc noticing,
+  the object is still there — and <code>git fsck</code> is how you list what's in
+  that state.</p>
+
+  <pre>git fsck --unreachable --no-reflogs</pre>
+
+  <p>Two words that get used loosely and mean different things:</p>
+
+  <table class="ref">
+    <tr><th><dfn data-term="unreachable">unreachable</dfn></th><td>no ref can get to it by walking parents and trees</td></tr>
+    <tr><th><dfn data-term="dangling">dangling</dfn></th><td>unreachable, <em>and</em> nothing unreachable points at it either — so it's the tip of a lost chain</td></tr>
+  </table>
+
+  <p>Dangling is the more useful list: a lost branch of six commits produces six
+  unreachable commits but only one dangling one, and that one is the tip you want
+  to put a branch on.</p>
+
+  <p><code>--no-reflogs</code> is not optional in practice. By default the reflog
+  counts as a starting point, so anything the reflog remembers is "reachable" and
+  fsck stays quiet — which is exactly the case where you didn't need fsck anyway.
+  Excluding reflogs shows what's genuinely orphaned.</p>
+
+  <h2>Try it</h2>
+  <p>This sandbox had a branch deleted. Compare what fsck says with and without
+  reflogs, then rescue the work:</p>
+
+  <pre>git fsck --unreachable                # quiet: the reflog still reaches them
+git fsck --unreachable --no-reflogs   # there they are
+git cat-file -p &lt;one of the commit ids&gt;
+git show &lt;that id&gt;                    # what was in it?
+git branch rescued &lt;the newest one&gt;    # give it a name and it's history again</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Where lost work actually comes from</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>A deleted branch</th><td>the commits, plus the branch's own reflog, are gone. HEAD's log usually still names them</td></tr>
+        <tr><th>Commits on a detached HEAD</th><td>if HEAD was never on a branch, only HEAD's reflog knew — and once that expires, only fsck</td></tr>
+        <tr><th>A dropped stash</th><td>a stash is a commit; dropping it unreferences it. <code>git fsck</code> finds it and <code>git stash apply &lt;id&gt;</code> takes it back</td></tr>
+        <tr><th>An abandoned rebase</th><td>the pre-rebase chain, findable via <code>ORIG_HEAD</code> or the reflog first</td></tr>
+        <tr><th><code>git add</code>ed but never committed</th><td>the <em>blob</em> exists, with no tree or commit around it. fsck lists it as a dangling blob and <code>cat-file -p</code> prints your file back</td></tr>
+      </table>
+      <p>That last row is the one people don't know, and it's saved many an
+      afternoon: <code>git add</code> writes a real object, so work you staged and
+      then destroyed is recoverable even though it was never committed.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>--lost-found, and turning a list into files</summary>
+    <div class="layer-body">
+      <p><code>git fsck --lost-found</code> writes what it finds into
+      <code>.git/lost-found/</code> — dangling commits as refs, dangling blobs as
+      files you can open in an editor. When you're facing forty dangling blobs and
+      you don't know which one is your work, having them as files to grep is much
+      better than forty <code>cat-file</code> invocations.</p>
+      <div class="box sim-note">
+        <span class="label">In this sandbox</span>
+        <code>--lost-found</code> isn't implemented here; <code>fsck</code> lists
+        objects and you inspect them with <code>cat-file</code> or the object
+        explorer. Nothing in this sandbox is ever packed either, so fsck sees every
+        object as a loose file.
+      </div>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The other job fsck does: integrity</summary>
+    <div class="layer-body">
+      <p>Reachability is the everyday use, but fsck's actual purpose is verifying
+      the database: rehashing objects and confirming they hash to their own names,
+      and checking that every referenced object exists. <code>--strict</code> turns
+      on the pedantic checks (odd modes, malformed trees, duplicate entries).</p>
+      <p>Corruption in git is rare and, when it happens, usually the disk's fault
+      rather than git's. If fsck reports a missing object, the fix is almost always
+      to fetch it from a clone that still has it — one of the quiet benefits of a
+      distributed system: every clone is a backup that can be verified by hash.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>That's Unit 3.
+  <a href="../04-workflow/stash-tricks.html">Unit 4</a> moves from investigating
+  history to working with other people in it: stash, worktrees, refspecs, and the
+  flags that stop a force-push from being an incident.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "HEAD@{1} — one move ago",
+      "pron": "say: head at brace one",
+      "means": "the reflog address that usually beats fsck to the answer",
+      "short": "one move ago"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "fsck-and-dangling",
+    "labs": [
+      {
+        "id": "fsck-rescue-the-dangling-tip",
+        "title": "Rescue lost work with fsck alone",
+        "fixture": "dangling",
+        "task": "Find the stranded commits with <code>fsck</code> and put a branch called <code>recovered</code> on the newest one — the tip of the lost chain, not one of its ancestors.",
+        "show": [
+          "dag",
+          "objects"
+        ],
+        "showUnreachable": true,
+        "goals": [
+          {
+            "text": "recovered exists",
+            "check": {
+              "refExists": {
+                "ref": "recovered"
+              }
+            }
+          },
+          {
+            "text": "it's the tip: two commits beyond main",
+            "check": {
+              "commitCount": {
+                "ref": "recovered",
+                "since": "main",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "it has the later of the two commits",
+            "check": {
+              "messageMatch": {
+                "ref": "recovered",
+                "pattern": "Handle short reads",
+                "count": 1
+              }
+            }
+          },
+          {
+            "text": "nothing is stranded any more",
+            "check": {
+              "danglingCount": {
+                "eq": 0
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git fsck --unreachable --no-reflogs</code> — without <code>--no-reflogs</code> it will find nothing, because the reflog still reaches these commits.",
+          "Two commits come back. <code>git show</code> each to see which is the tip — the one whose message mentions short reads.",
+          "<code>git branch recovered &lt;that id&gt;</code>. Once a ref reaches them, both commits stop being stranded."
+        ],
+        "solution": [
+          "git fsck --unreachable --no-reflogs",
+          "git show <the first id>",
+          "git show <the second id>",
+          "git branch recovered <the tip id>",
+          "git fsck --unreachable --no-reflogs     # quiet now: a ref reaches them"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "fsck-and-dangling",
+    "questions": [
+      {
+        "q": "Difference between an unreachable object and a dangling one?",
+        "choices": [
+          "Dangling means corrupt; unreachable means orphaned",
+          "Dangling objects are unreachable AND nothing unreachable points at them — so they're the tips of lost chains",
+          "They're two names for the same thing"
+        ],
+        "answer": 1,
+        "explain": "A lost six-commit branch gives six unreachable commits and one dangling one. The dangling one is the tip, which is what you want to put a branch on."
+      },
+      {
+        "q": "You lost work you had staged with `git add` but never committed. Recoverable?",
+        "choices": [
+          "No — only commits are recoverable",
+          "Often yes: git add wrote a blob, so `git fsck` can list it as a dangling blob and cat-file prints the contents",
+          "Only if you had also stashed it"
+        ],
+        "answer": 1,
+        "explain": "Staging writes a real object into the database. There's no filename and no commit around it, but the contents are there."
+      },
+      {
+        "q": "Why does plain `git fsck --unreachable` often find nothing right after you lose a commit?",
+        "choices": [
+          "It needs gc to run first",
+          "Reflog entries count as starting points by default, so a commit the reflog remembers is 'reachable' — add --no-reflogs",
+          "fsck ignores commits younger than two weeks"
+        ],
+        "answer": 1,
+        "explain": "Same command, different definition of reachable. It's also why your lost commits survive gc for weeks: the reflog is keeping them alive."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

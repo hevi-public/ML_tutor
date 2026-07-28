@@ -26,7 +26,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      # Runtime deps only (katex, highlight.js assets, vexflow).
+      # Runtime deps only (katex, highlight.js assets, vexflow, and the git
+      # tutor's engine: isomorphic-git + lightning-fs).
       # The index builders use Node built-ins, so dev deps aren't needed.
       - name: Install vendored libraries
         run: npm ci --omit=dev
@@ -35,6 +36,13 @@ jobs:
         run: |
           npm run build:index
           npm run build:bass
+          npm run build:git
+
+      # The git tutor's sandbox claims to be real git, so prove it on every
+      # deploy: build every fixture with the browser engine and hand the
+      # repositories to the runner's own git binary.
+      - name: Verify the git sandbox against real git
+        run: npm run verify:git
 
       # Stage the site. node_modules is gitignored but the pages reference it
       # by relative path, so copy exactly the vendored files the pages use.
@@ -61,6 +69,13 @@ jobs:
              _site/node_modules/@highlightjs/cdn-assets/styles/
           cp node_modules/vexflow/build/cjs/vexflow.js \
              _site/node_modules/vexflow/build/cjs/
+
+          mkdir -p _site/node_modules/isomorphic-git \
+                   _site/node_modules/@isomorphic-git/lightning-fs/dist
+          cp node_modules/isomorphic-git/index.umd.min.js \
+             _site/node_modules/isomorphic-git/
+          cp node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js \
+             _site/node_modules/@isomorphic-git/lightning-fs/dist/
 
       - uses: actions/configure-pages@v5
         with:

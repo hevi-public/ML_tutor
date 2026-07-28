@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Free sandbox — Git Tutor</title>
+
+  <meta name="git:unit" content="Drills">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="recovery-drill.html|Recovery drill">
+  <meta name="git:next" content="../06-expert/packfiles-and-gc.html|Packfiles and gc">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Drills</p>
+  <h1>Free sandbox</h1>
+  <p class="lede">Every fixture on the site, no goals, nothing to prove. For trying the thing you're about to do at work.</p>
+
+  <h2>Three repositories to break</h2>
+  <p>These are the same sandboxes the lessons use, with the goals taken off. Each
+  keeps whatever state you leave it in, and <strong>Reset sandbox</strong> rebuilds
+  it from scratch.</p>
+
+  <p><code>git help</code> lists every command this prompt understands.
+  <kbd>Tab</kbd> completes commands, branches and filenames; <kbd>↑</kbd> walks back
+  through what you've typed. Anything real git has that isn't implemented will tell
+  you so by name rather than failing quietly.</p>
+
+  <h3>A straight line of five commits</h3>
+  <p>The simplest thing to experiment on: resets, amends, tags, detached HEAD.</p>
+  <div data-lab-slot="sandbox-linear"></div>
+
+  <h3>Two branches, diverged</h3>
+  <p>For merges, rebases, <code>--onto</code>, cherry-picks and range syntax.</p>
+  <div data-lab-slot="sandbox-diverged"></div>
+
+  <h3>A repository with a remote</h3>
+  <p>The remote has a commit you don't. For fetch, refspecs, force-with-lease and
+  everything in Unit 4.</p>
+  <div data-lab-slot="sandbox-remote"></div>
+
+  <div class="lab-root"></div>
+
+  <h2>Things worth trying</h2>
+  <ul>
+    <li>Break something on purpose and recover it without using the hint button.</li>
+    <li><code>git rebase -i HEAD~4</code> and use a command you've never used —
+    <code>exec</code>, <code>break</code>, or reordering two lines.</li>
+    <li>Make a commit with plumbing only, then check
+    <code>git fsck --no-reflogs</code> before you move a ref onto it.</li>
+    <li>Look at <code>.git/</code> in the object explorer while you work: watch
+    <code>MERGE_HEAD</code> and <code>rebase-merge/</code> appear and vanish.</li>
+    <li>Write a <code>.git/hooks/pre-commit</code> that enforces something you
+    actually want at work.</li>
+  </ul>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "HEAD@{1}",
+      "pron": "say: head at brace one",
+      "means": "the undo address for whatever you just did",
+      "short": "one move ago"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "sandbox",
+    "labs": [
+      {
+        "id": "sandbox-linear",
+        "title": "Linear history",
+        "fixture": "linear-5",
+        "free": true,
+        "show": [
+          "dag",
+          "objects"
+        ],
+        "task": "Five commits on one branch. Nothing to achieve — break it however you like."
+      },
+      {
+        "id": "sandbox-diverged",
+        "title": "Diverged branches",
+        "fixture": "diverged",
+        "free": true,
+        "show": [
+          "dag"
+        ],
+        "task": "main, feature and hotfix, all pointing at different places."
+      },
+      {
+        "id": "sandbox-remote",
+        "title": "With a remote",
+        "fixture": "with-remote",
+        "free": true,
+        "show": [
+          "dag"
+        ],
+        "task": "origin has a commit you don't. Try pushing, and see what it takes to get it through."
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "sandbox",
+    "questions": [
+      {
+        "q": "You're about to do something risky in a real repository. What's the cheapest insurance?",
+        "choices": [
+          "Trust the reflog",
+          "Copy the directory first — the reflog is very good, and it is not a backup",
+          "Push to a remote"
+        ],
+        "answer": 1,
+        "explain": "The reflog covers nearly everything and expires; a copy of the directory covers everything and doesn't. For a one-off frightening operation, `cp -r` costs nothing."
+      },
+      {
+        "q": "Which of these is safe to run at any time, on any repository?",
+        "choices": [
+          "git fetch",
+          "git pull",
+          "git reset --hard"
+        ],
+        "answer": 0,
+        "explain": "fetch only updates remote-tracking refs and downloads objects. pull also integrates the result into your branch, which is the part that can surprise you."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

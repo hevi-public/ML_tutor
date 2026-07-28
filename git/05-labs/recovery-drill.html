@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recovery drill — Git Tutor</title>
+
+  <meta name="git:unit" content="Drills">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="../04-workflow/submodules-and-subtrees.html|Submodules and subtrees">
+  <meta name="git:next" content="sandbox.html|Free sandbox">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Drills</p>
+  <h1>Recovery drill</h1>
+  <p class="lede">Four scenarios, each one a mess someone has had at 6pm on a Friday. No new material — just the units so far, under time pressure.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Units 2 and 3. Every drill here is solvable with reset, reflog, fsck, rebase and branch — nothing you haven't already used.
+  </div>
+
+  <h2>How to use this page</h2>
+  <p>Each drill starts from a broken state. Read the goals, then fix it — hints are
+  there if you want them, but try the first move from memory. If you wreck it
+  further, <strong>Reset sandbox</strong> puts the mess back exactly as it was,
+  which is the point of practising here rather than at work.</p>
+
+  <p>The habit worth building is the first move, not the whole solution. In almost
+  every case it's one of:</p>
+  <table class="ref">
+    <tr><th><code>git reflog</code></th><td>where was I before this went wrong?</td></tr>
+    <tr><th><code>git status</code></th><td>what state does git think it's in?</td></tr>
+    <tr><th><code>git log --oneline --all --graph</code></th><td>what does the history actually look like?</td></tr>
+    <tr><th><code>git fsck --unreachable --no-reflogs</code></th><td>what's stranded that nothing names?</td></tr>
+  </table>
+
+  <h2>Drill 1 — the branch that isn't there any more</h2>
+  <div data-lab-slot="drill-deleted-branch"></div>
+
+  <h2>Drill 2 — the reset that went too far</h2>
+  <div data-lab-slot="drill-overzealous-reset"></div>
+
+  <h2>Drill 3 — the commit on the wrong branch</h2>
+  <div data-lab-slot="drill-wrong-branch"></div>
+
+  <h2>Drill 4 — nine commits, one reviewable change</h2>
+  <div data-lab-slot="drill-history-surgery"></div>
+
+  <div class="lab-root"></div>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="sandbox.html">The free sandbox</a> has every fixture on the site and
+  no goals at all — for trying the thing you're about to do at work.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "HEAD@{1} — one move ago",
+      "pron": "say: head at brace one",
+      "means": "the first thing to try in most of these drills",
+      "short": "one move ago"
+    },
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD",
+      "pron": "say: orig head",
+      "means": "where HEAD was before the last big operation",
+      "short": "undo point"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "recovery-drill",
+    "labs": [
+      {
+        "id": "drill-deleted-branch",
+        "title": "Drill 1 — the branch that isn't there any more",
+        "fixture": "dangling",
+        "task": "Someone deleted the <code>experiment</code> branch. Two commits of work went with it. Get them back on a branch called <code>experiment</code> again — same name, same tip.",
+        "show": [
+          "dag"
+        ],
+        "showUnreachable": true,
+        "goals": [
+          {
+            "text": "experiment exists again",
+            "check": {
+              "refExists": {
+                "ref": "experiment"
+              }
+            }
+          },
+          {
+            "text": "with both commits on it",
+            "check": {
+              "commitCount": {
+                "ref": "experiment",
+                "since": "main",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "and the streaming parser intact",
+            "check": {
+              "blobContains": {
+                "ref": "experiment",
+                "path": "stream.py",
+                "text": "yield chunk"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "First move: <code>git reflog</code>. HEAD was on that branch when the commits were made.",
+          "<code>git branch experiment &lt;the tip id&gt;</code>."
+        ],
+        "solution": [
+          "git reflog",
+          "git branch experiment <the 'Handle short reads' id>",
+          "git log --oneline experiment"
+        ]
+      },
+      {
+        "id": "drill-overzealous-reset",
+        "title": "Drill 2 — the reset that went too far",
+        "fixture": "linear-5",
+        "task": "Run <code>git reset --hard HEAD~4</code> — then put main back where it was, with all five commits and the files intact.",
+        "show": [
+          "dag"
+        ],
+        "showUnreachable": true,
+        "goals": [
+          {
+            "text": "five commits on main again",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 5
+              }
+            }
+          },
+          {
+            "text": "the reporting code is back in the worktree",
+            "check": {
+              "fileContains": {
+                "path": "count.py",
+                "text": "most_common"
+              }
+            }
+          },
+          {
+            "text": "nothing left uncommitted",
+            "check": {
+              "worktreeClean": {}
+            }
+          },
+          {
+            "text": "the reflog shows both the damage and the repair",
+            "check": {
+              "reflogContains": {
+                "pattern": "reset: moving to"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "Do the damage first — the drill isn't much use otherwise.",
+          "<code>HEAD@{1}</code> is where you were one movement ago. <code>ORIG_HEAD</code> works too.",
+          "<code>git reset --hard HEAD@{1}</code>."
+        ],
+        "solution": [
+          "git reset --hard HEAD~4      # the mistake",
+          "git log --oneline            # one commit left",
+          "git reflog",
+          "git reset --hard HEAD@{1}",
+          "git log --oneline            # all five back"
+        ]
+      },
+      {
+        "id": "drill-wrong-branch",
+        "title": "Drill 3 — the commit on the wrong branch",
+        "fixture": "diverged",
+        "task": "Commit something on <code>main</code> that belonged on <code>feature</code> — add a line to <code>report.py</code> and commit it as <code>Add a docstring</code>. Then move that commit to <code>feature</code> and leave main as it was.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "the commit is on feature",
+            "check": {
+              "messageMatch": {
+                "ref": "feature",
+                "pattern": "^Add a docstring",
+                "count": 1
+              }
+            }
+          },
+          {
+            "text": "main doesn't have it any more",
+            "check": {
+              "noMessageMatch": {
+                "ref": "main",
+                "pattern": "^Add a docstring"
+              }
+            }
+          },
+          {
+            "text": "main is back to three commits",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 3
+              }
+            }
+          },
+          {
+            "text": "main's worktree is clean",
+            "check": {
+              "worktreeClean": {}
+            }
+          }
+        ],
+        "hints": [
+          "Two routes. Either cherry-pick it onto feature and reset main back, or move a branch pointer.",
+          "The reset route: <code>git checkout feature</code>, <code>git cherry-pick main</code>, then <code>git checkout main</code> and <code>git reset --hard HEAD~1</code>.",
+          "Careful with the order — reset main <em>after</em> the commit exists somewhere else, not before."
+        ],
+        "solution": [
+          "echo '# counts per word' >> report.py    # oops, on main",
+          "git add report.py && git commit -m 'Add a docstring'",
+          "git checkout feature",
+          "git cherry-pick main",
+          "git checkout main",
+          "git reset --hard HEAD~1",
+          "git log --oneline --all --graph"
+        ]
+      },
+      {
+        "id": "drill-history-surgery",
+        "title": "Drill 4 — nine commits, one reviewable change",
+        "fixture": "fixup-chain",
+        "task": "This branch has five commits, two of which are corrections marked <code>fixup!</code> and <code>squash!</code>. Turn it into three clean commits with no marker subjects, without changing any file.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "three commits",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 3
+              }
+            }
+          },
+          {
+            "text": "no fixup!/squash! subjects",
+            "check": {
+              "noMessageMatch": {
+                "pattern": "^(fixup|squash)!"
+              }
+            }
+          },
+          {
+            "text": "the files are byte-identical to the start",
+            "check": {
+              "custom": {
+                "name": "drill-same-tree"
+              }
+            }
+          },
+          {
+            "text": "you rebased rather than starting over",
+            "check": {
+              "reflogContains": {
+                "pattern": "rebase"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "The markers name the commits they belong to, and there's a flag that reads them.",
+          "<code>git rebase -i --autosquash HEAD~5</code>. The reordering happens before the editor opens.",
+          "Gone wrong? <code>git reset --hard ORIG_HEAD</code> and try again."
+        ],
+        "solution": [
+          "git log --oneline",
+          "git rebase -i --autosquash HEAD~5",
+          "# the todo list arrives already reordered — save it",
+          "git log --oneline"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "recovery-drill",
+    "questions": [
+      {
+        "q": "You've just done something to a repository and you don't know what state it's in. Best first command?",
+        "choices": [
+          "git log",
+          "git status, then git reflog",
+          "git fsck"
+        ],
+        "answer": 1,
+        "explain": "status names the state git thinks it's in — mid-rebase, mid-merge, detached — and the reflog says how you got there. fsck is for when those two come up empty."
+      },
+      {
+        "q": "Which of these genuinely destroys work with no recovery?",
+        "choices": [
+          "git reset --hard, over changes that were never committed or staged",
+          "git branch -D on a branch with unmerged commits",
+          "An interactive rebase that drops a commit"
+        ],
+        "answer": 0,
+        "explain": "The other two leave commits in the object database, findable via the reflog or fsck. Uncommitted, unstaged changes were never written anywhere, so there's nothing to find."
+      },
+      {
+        "q": "You committed to main and it belonged on feature. What's the safe order of operations?",
+        "choices": [
+          "Reset main first, then find the commit again",
+          "Get the commit onto feature first, then move main back",
+          "Force-push feature, then fix main"
+        ],
+        "answer": 1,
+        "explain": "Make it exist in the new place before removing it from the old one. Both orders are recoverable, but only one avoids a reflog hunt."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("drill-same-tree", async (repo) => {
+      const now = await GTPlumb.treeOfCommit(repo.dir, await GT.resolve(repo.dir, "HEAD"));
+      const before = await GTPlumb.treeOfCommit(repo.dir, repo.fixtureTip);
+      return now === before
+        ? { pass: true, detail: "identical tree" }
+        : { pass: false, detail: "the content changed along the way" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

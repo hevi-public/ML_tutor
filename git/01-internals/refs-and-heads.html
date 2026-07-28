@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Refs, HEAD and symbolic refs — Git Tutor</title>
+
+  <meta name="git:unit" content="Internals & plumbing">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="blobs-trees-commits.html|Blobs, trees and commits">
+  <meta name="git:next" content="the-index.html|The index, properly">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Internals & plumbing</p>
+  <h1>Refs, HEAD and symbolic refs</h1>
+  <p class="lede">Branches are one-line text files. Once you have edited one with echo, the difference between checkout, reset and branch -f stops mattering very much.</p>
+
+  <h2>The idea</h2>
+  <p>An object id is 40 characters of hex, so git gives you names for the ones you
+  care about. A <dfn data-term="ref">ref</dfn> is a name holding one object id,
+  stored as a file:</p>
+
+  <pre>.git/refs/heads/main            → a branch
+.git/refs/tags/v1.0             → a tag
+.git/refs/remotes/origin/main   → a remote-tracking ref</pre>
+
+  <p>Each contains one line: a 40-character id and a newline. That's it. A branch
+  is not a container, a list, or a lineage — it is a filename with a hash in
+  it.</p>
+
+  <p><dfn data-term="head">HEAD</dfn> is the interesting one, because it usually
+  doesn't contain an id at all:</p>
+
+  <pre>$ cat .git/HEAD
+ref: refs/heads/main</pre>
+
+  <p>That's a <dfn data-term="symbolic-ref">symbolic ref</dfn> — a ref pointing at
+  another ref. It's the indirection that makes committing work: <code>git
+  commit</code> updates whatever ref HEAD names, so the branch moves and HEAD
+  follows for free.</p>
+
+  <h2>Try it</h2>
+  <p>Read the files yourself, then move a branch by writing to one. The
+  <code>.git</code> tab under the prompt shows every ref and the contents of
+  HEAD as you go.</p>
+
+  <pre>cat .git/HEAD
+cat .git/refs/heads/main
+git symbolic-ref HEAD                # the polite way to read it
+git update-ref refs/heads/spike HEAD~2   # make a branch with plumbing
+git checkout --detach HEAD~1          # now look at .git/HEAD again
+cat .git/HEAD</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Why checkout is two different operations</summary>
+    <div class="layer-body">
+      <p><code>git checkout main</code> writes <code>ref: refs/heads/main</code>
+      into HEAD and updates your files. <code>git checkout &lt;commit&gt;</code>
+      writes the raw id instead. That single difference is
+      <dfn data-term="detached-head">detached HEAD</dfn>, and it explains the
+      behaviour that follows from it: committing works, but nothing is following
+      you, so the commits become unreachable as soon as you leave.</p>
+      <p>Modern git splits the two jobs into two commands —
+      <code>git switch</code> for branches, <code>git restore</code> for files —
+      precisely because <code>checkout</code> doing both is how people accidentally
+      throw away uncommitted work.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>packed-refs, and refs that aren't files</summary>
+    <div class="layer-body">
+      <p>A repository with thousands of tags would need thousands of tiny files, so
+      git periodically moves them into a single <code>.git/packed-refs</code>:</p>
+      <pre># pack-refs with: peeled fully-peeled sorted
+a3f5c1... refs/heads/main
+b91d20... refs/tags/v1.0
+^c00ffe...</pre>
+      <p>The <code>^</code> line is the commit an annotated tag points at, cached
+      so readers don't have to open the tag object. A ref can therefore live in
+      either place, which is why you should read refs with
+      <code>git rev-parse</code> or <code>git for-each-ref</code> rather than
+      <code>cat</code> in a script — the file may simply not be there.</p>
+      <p><em>In this sandbox nothing is ever packed, so every ref is a file.</em></p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The whole family of ref-moving commands</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>git branch x &lt;rev&gt;</th><td>create the ref, refuse if it exists</td></tr>
+        <tr><th>git branch -f x &lt;rev&gt;</th><td>move it, even if it exists</td></tr>
+        <tr><th>git reset &lt;rev&gt;</th><td>move the ref HEAD names, and the index too</td></tr>
+        <tr><th>git update-ref refs/heads/x &lt;rev&gt;</th><td>move any ref, no safety checks, no worktree changes</td></tr>
+        <tr><th>git symbolic-ref HEAD refs/heads/x</th><td>change which branch HEAD names, without touching files</td></tr>
+      </table>
+      <p>They differ in what else they touch, not in what they fundamentally do.
+      Every one of them writes a <dfn data-term="reflog">reflog</dfn> entry, which
+      is what makes all of them survivable.</p>
+      <ul class="symbol-legend" data-symbols="refs/heads/main,refs/tags/v1.0,refs/remotes/origin/main,HEAD"></ul>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="the-index.html">The index</a> is the third of the three trees, and
+  the one people find hardest — largely because it's the only one that isn't a
+  directory you can look at.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "refs/heads/main": {
+      "name": "refs/heads/main — a branch's full name",
+      "pron": "say: refs heads main",
+      "means": "the file holding the branch main's commit id",
+      "short": "a branch"
+    },
+    "refs/tags/v1.0": {
+      "name": "refs/tags/v1.0 — a tag's full name",
+      "pron": "say: refs tags v one point oh",
+      "means": "tags live here and by convention don't move",
+      "short": "a tag"
+    },
+    "refs/remotes/origin/main": {
+      "name": "refs/remotes/origin/main — a remote-tracking ref",
+      "pron": "say: refs remotes origin main",
+      "means": "where origin's main was when you last fetched",
+      "short": "origin/main"
+    },
+    "HEAD": {
+      "name": "HEAD — normally a symbolic ref",
+      "pron": "say: head",
+      "means": "contains 'ref: refs/heads/<branch>', or a raw id when detached",
+      "short": "you are here"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "refs-and-heads",
+    "labs": [
+      {
+        "id": "refs-and-heads-move-by-hand",
+        "title": "Create and move a branch with plumbing only",
+        "fixture": "linear-5",
+        "task": "Without using <code>git branch</code>, <code>checkout</code>, <code>switch</code> or <code>reset</code>: create a branch <code>spike</code> pointing three commits back, then make HEAD point at it.",
+        "show": [
+          "dag",
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "spike exists, three commits back from main",
+            "check": {
+              "isAncestor": {
+                "ancestor": "spike",
+                "of": "main"
+              }
+            }
+          },
+          {
+            "text": "spike is exactly HEAD~0 of a 2-commit history",
+            "check": {
+              "commitCount": {
+                "ref": "spike",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "HEAD points at spike, not at a raw commit",
+            "check": {
+              "headIs": {
+                "branch": "spike"
+              }
+            }
+          },
+          {
+            "text": "the spike reflog records the creation",
+            "check": {
+              "reflogContains": {
+                "ref": "spike",
+                "pattern": "update-ref|branch"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git update-ref &lt;full ref name&gt; &lt;rev&gt;</code> writes a ref. The full name of a branch starts with <code>refs/heads/</code>.",
+          "<code>git symbolic-ref HEAD refs/heads/spike</code> changes which branch HEAD names. Note that it doesn't touch your files — check <code>git status</code> afterwards and think about why."
+        ],
+        "solution": [
+          "git update-ref refs/heads/spike main~3",
+          "git symbolic-ref HEAD refs/heads/spike",
+          "cat .git/HEAD",
+          "git status        # the worktree still has main's files: symbolic-ref moved a name, not your work"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "refs-and-heads",
+    "questions": [
+      {
+        "q": "What's inside .git/refs/heads/main?",
+        "choices": [
+          "A list of the commits on main",
+          "One commit id and a newline",
+          "A compressed copy of the branch's history"
+        ],
+        "answer": 1,
+        "explain": "One id. Everything else about the branch — which commits are 'on' it — is derived by walking parents from there."
+      },
+      {
+        "q": "You run `git symbolic-ref HEAD refs/heads/other` while your worktree has main's files. What state are you in?",
+        "choices": [
+          "On branch other, with the worktree still showing main's content — so git reports differences against other",
+          "On branch other with its files checked out",
+          "In detached HEAD"
+        ],
+        "answer": 0,
+        "explain": "symbolic-ref changes the name HEAD points at and nothing else. checkout is that plus updating the index and worktree, which is exactly why doing it by hand looks alarming in git status."
+      },
+      {
+        "q": "A script does `cat .git/refs/heads/main` and sometimes fails with 'no such file'. Why?",
+        "choices": [
+          "The branch was deleted between runs",
+          "The ref may have been moved into .git/packed-refs — use git rev-parse instead",
+          "Refs are only written on push"
+        ],
+        "answer": 1,
+        "explain": "Refs live in loose files or in packed-refs, and git moves them between the two whenever it likes. rev-parse and for-each-ref read both."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

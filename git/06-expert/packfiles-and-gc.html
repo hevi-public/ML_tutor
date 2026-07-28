@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Packfiles and gc — Git Tutor</title>
+
+  <meta name="git:unit" content="Expert track">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="../05-labs/sandbox.html|Free sandbox">
+  <meta name="git:next" content="notes-and-replace.html|Notes and replace refs">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Expert track</p>
+  <h1>Packfiles and gc</h1>
+  <p class="lede">How a repository with a million versions of a file stays small — and the one routine operation that actually deletes your lost commits.</p>
+
+  <h2>The idea</h2>
+  <p>Every object starts as a <dfn data-term="loose-object">loose object</dfn>: one
+  zlib-compressed file at <code>.git/objects/ab/cdef…</code>. That's simple and,
+  past a few thousand objects, wasteful — one inode each, no sharing between
+  near-identical versions of the same file.</p>
+
+  <p>So git periodically bundles them into a <dfn data-term="packfile">packfile</dfn>:
+  one <code>.pack</code> with the objects, one <code>.idx</code> for finding them by
+  id. Inside a pack, an object may be stored as a <strong>delta</strong> against
+  another similar object — usually a later version against an earlier one — so a
+  thousand revisions of a file cost roughly one copy plus a thousand small diffs.</p>
+
+  <p>Two clarifications worth having, because they're the source of most confusion:</p>
+  <ul>
+    <li><strong>Deltas are a storage detail, not the data model.</strong> Every
+    object is still addressable by its own hash and reconstructible on its own. Git
+    stores snapshots; packs make snapshots cheap.</li>
+    <li><strong>Packing changes nothing you can observe</strong> except speed and
+    size. Ids don't change, history doesn't change.</li>
+  </ul>
+
+  <h3>gc, and what it actually deletes</h3>
+  <pre>git gc              # pack loose objects, expire reflogs, prune unreachable objects
+git gc --aggressive # spend much more CPU looking for better deltas. Rarely worth it
+git count-objects -v # how much loose stuff is lying around</pre>
+
+  <p>The order matters, because it's where lost work finally goes:</p>
+  <ol>
+    <li>Reflog entries older than the expiry (90 days reachable, 30 unreachable) are
+    dropped.</li>
+    <li>Objects nothing can reach — <em>including via the remaining reflog</em> —
+    and older than <code>gc.pruneExpire</code> (two weeks) are deleted.</li>
+  </ol>
+
+  <p>So a commit you abandoned today survives roughly two weeks even after its
+  reflog entry goes, and <code>git gc --prune=now</code> is the command that skips
+  the grace period. That's the one to think twice about — it's also the one people
+  paste from the internet when a repository is large.</p>
+
+  <div class="box sim-note">
+    <span class="label">Not runnable in this sandbox</span>
+    This engine only ever writes loose objects; <code>git gc</code> and
+    <code>git repack</code> aren't implemented, and typing them says so. The
+    consequence is worth naming: in these sandboxes nothing is ever really
+    collected, so every "lost" commit stays findable forever. On your machine
+    that's true for a couple of weeks.
+  </div>
+
+  <h2>Try it</h2>
+  <p>You can still see the loose side of the story:</p>
+  <pre>git count-objects -v
+git fsck --unreachable --no-reflogs
+ls .git/objects/</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>When gc runs without you asking</summary>
+    <div class="layer-body">
+      <p>Most porcelain commands call <code>git gc --auto</code>, which does nothing
+      unless there are more than <code>gc.auto</code> loose objects (6700 by
+      default). So gc happens on its own schedule, triggered by commits and
+      fetches — which is why "my lost commit was there yesterday" is occasionally
+      true.</p>
+      <p>Modern git also has <code>git maintenance start</code>, which registers
+      background tasks (incremental repack, commit-graph, prefetch) instead of
+      surprising you mid-command. On a large repository it's a real improvement.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The commit-graph file, and why log got fast</summary>
+    <div class="layer-body">
+      <p>Answering "is A an ancestor of B" means walking commits, which means
+      decompressing commit objects. The commit-graph file
+      (<code>.git/objects/info/commit-graph</code>) caches parents and generation
+      numbers in a flat format, turning many walks into cheap lookups.</p>
+      <pre>git commit-graph write --reachable</pre>
+      <p>It's maintained automatically by <code>git maintenance</code>, and it's why
+      <code>git log --graph</code> on a big repository is dramatically faster than
+      it was a few years ago. Purely a cache: delete it and nothing breaks.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Why your clone is big, and what to do about it</summary>
+    <div class="layer-body">
+      <p>Almost always: a large binary was committed once, years ago. It's in a
+      pack forever, because history is immutable and the object is reachable.
+      Finding it:</p>
+      <pre>git count-objects -vH
+git verify-pack -v .git/objects/pack/*.idx | sort -k3 -n | tail -20</pre>
+      <p>Removing it means rewriting every commit that contains it — see
+      <a href="../02-rewriting/rewriting-published-history.html">rewriting published
+      history</a> — or, if you only need a working clone rather than a clean one,
+      <a href="big-repositories.html">a partial clone</a>, which doesn't download
+      blobs you never check out.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="notes-and-replace.html">Notes and replace refs</a> — the two features
+  that let you attach or override things without rewriting a single commit.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "<sha>": {
+      "name": "an object id",
+      "pron": "say: the sha",
+      "means": "unchanged by packing — storage layout is invisible to addressing",
+      "short": "id"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "packfiles-and-gc",
+    "labs": [
+      {
+        "id": "packfiles-count-the-objects",
+        "title": "Count what a commit actually costs",
+        "fixture": "two-files",
+        "task": "Note how many objects this repository has, then make one commit that changes one line of one file, and work out how many new objects appeared. Write the number into <code>cost.txt</code>.",
+        "show": [
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "you made exactly one new commit",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "cost.txt has the right number in it",
+            "check": {
+              "custom": {
+                "name": "packfiles-object-count"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git count-objects</code> before and after.",
+          "Think about what has to be new: the blob you changed, every tree on the path from the root to it, and the commit. The unchanged file's blob is reused.",
+          "This fixture has <code>hello.txt</code> at the root and <code>notes/plan.md</code> in a subdirectory — so which trees change depends on which file you edit."
+        ],
+        "solution": [
+          "git count-objects",
+          "echo 'another line' >> hello.txt",
+          "git commit -am 'Add a line'",
+          "git count-objects            # new blob + new root tree + new commit = 3",
+          "echo 3 > cost.txt"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "packfiles-and-gc",
+    "questions": [
+      {
+        "q": "A file has 500 versions across history. Roughly what does a packfile store?",
+        "choices": [
+          "500 complete copies, compressed",
+          "One complete version plus deltas against it — which is why the repository stays small",
+          "Only the newest version; older ones are reconstructed from diffs in the commits"
+        ],
+        "answer": 1,
+        "explain": "Deltas are a storage optimisation inside packs. Every object is still individually addressable by hash — the data model is still snapshots."
+      },
+      {
+        "q": "Which operation actually deletes an unreachable commit?",
+        "choices": [
+          "git branch -D",
+          "git reset --hard",
+          "git gc, after the reflog entry has expired and the prune grace period has passed"
+        ],
+        "answer": 2,
+        "explain": "The first two only move or remove refs. gc is the only routine operation that removes objects, and even then only after two expiries — which is why recovery is usually possible."
+      },
+      {
+        "q": "What does the commit-graph file do?",
+        "choices": [
+          "Stores the history in a readable format",
+          "Caches commit parents and generation numbers so ancestry queries don't have to decompress commit objects",
+          "Records the order commits were made in"
+        ],
+        "answer": 1,
+        "explain": "Purely a cache — delete it and nothing breaks, everything just gets slower. It's the main reason log --graph got fast on large repositories."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("packfiles-object-count", async (repo) => {
+      let text;
+      try {
+        text = (await GT.readFile(repo.dir, "cost.txt")).trim();
+      } catch {
+        return { pass: false, detail: "cost.txt isn't there yet" };
+      }
+      const said = Number(text.split(/\s+/)[0]);
+      if (!Number.isFinite(said)) return { pass: false, detail: "that isn't a number" };
+
+      const head = await GT.resolve(repo.dir, "HEAD");
+      const { commit } = await git.readCommit({ ...GT.ctx(repo.dir), oid: head });
+      if (!commit.parent.length) return { pass: false, detail: "make the commit first" };
+
+      // Every object a commit needs: itself, its trees, and its blobs.
+      async function objectsOf(oid) {
+        const seen = new Set([oid]);
+        const walk = async (treeOid) => {
+          seen.add(treeOid);
+          const { tree } = await git.readTree({ ...GT.ctx(repo.dir), oid: treeOid });
+          for (const entry of tree) {
+            if (entry.type === "tree") await walk(entry.oid);
+            else seen.add(entry.oid);
+          }
+        };
+        await walk(await GTPlumb.treeOfCommit(repo.dir, oid));
+        return seen;
+      }
+
+      const now = await objectsOf(head);
+      const before = await objectsOf(commit.parent[0]);
+      let fresh = 0;
+      for (const oid of now) if (!before.has(oid)) fresh++;
+      return said === fresh
+        ? { pass: true, detail: `${fresh} new objects — blob, trees, commit` }
+        : { pass: false, detail: `the commit actually added ${fresh}` };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

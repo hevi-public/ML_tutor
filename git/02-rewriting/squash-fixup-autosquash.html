@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>squash, fixup, autosquash — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="interactive-rebase.html|Interactive rebase">
+  <meta name="git:next" content="rebase-onto.html|rebase --onto">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>squash, fixup, autosquash</h1>
+  <p class="lede">The habit that makes review comments cheap: commit the fix now, marked for where it belongs, and let one rebase put everything in its place.</p>
+
+  <h2>The idea</h2>
+  <p>You're six commits into a branch and a reviewer points out a bug in the second
+  one. The bad options are: amend the wrong commit, add a commit called "fix
+  review comment" and leave the history messy, or stop everything and rebase
+  interactively right now.</p>
+
+  <p>The good option is a two-part habit.</p>
+
+  <p><strong>Now</strong>, commit the fix with a marker saying where it belongs:</p>
+  <pre>git commit --fixup=&lt;the commit it fixes&gt;</pre>
+  <p>which writes a commit whose subject is literally
+  <code>fixup! &lt;that commit's subject&gt;</code>. You carry on working.</p>
+
+  <p><strong>Later</strong>, when you're ready to tidy up:</p>
+  <pre>git rebase -i --autosquash main</pre>
+  <p>Git reads the <code>fixup!</code> prefixes, moves each of those commits
+  directly beneath the commit it names, and changes its command to
+  <code>fixup</code> — before showing you the todo list. You confirm and it's
+  done.</p>
+
+  <p>Two variants:</p>
+  <table class="ref">
+    <tr><th>--fixup=X</th><td>fold in, keep X's message. The everyday one</td></tr>
+    <tr><th>--squash=X</th><td>fold in, and combine both messages so you can edit them together</td></tr>
+  </table>
+
+  <p>Set <code>git config --global rebase.autoSquash true</code> and
+  <code>--autosquash</code> becomes the default, at which point this is just how
+  you work.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox already contains two marked commits — one <code>fixup!</code> and
+  one <code>squash!</code>. Look at them, then let autosquash place them:</p>
+
+  <pre>git log --oneline
+git rebase -i --autosquash HEAD~5
+# read the todo list carefully before saving: the lines have been reordered for you</pre>
+
+  <p>Compare it with <code>git rebase -i HEAD~5</code> without
+  <code>--autosquash</code> and see how much manual reordering you were spared.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>How git matches a fixup! to its target</summary>
+    <div class="layer-body">
+      <p>By subject text, not by id. <code>fixup! Add the report</code> attaches to
+      the commit whose subject is <code>Add the report</code>. Consequences:</p>
+      <ul>
+        <li>Two commits with the same subject make the match ambiguous — git picks
+        one, and it may not be yours.</li>
+        <li><code>--fixup=&lt;sha&gt;</code> is only a convenience for looking up
+        that subject; what's stored is the text.</li>
+        <li>If you later reword the target, the <code>fixup!</code> stops matching
+        and quietly stays where it is as an ordinary commit. Worth knowing before
+        you wonder why autosquash "didn't work".</li>
+      </ul>
+      <p>Newer git also has <code>--fixup=amend:&lt;commit&gt;</code>, which folds
+      in <em>and</em> replaces the target's message — the third variant, for when
+      the fix changes what the commit should say.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>What squashing does to authorship</summary>
+    <div class="layer-body">
+      <p>The result keeps the <strong>first</strong> commit's author and author
+      date. So squashing a colleague's commit into yours quietly makes it look like
+      theirs, or yours, depending on order — worth a glance when you're tidying a
+      branch with more than one contributor.</p>
+      <p>If you need both attributed, the convention is a
+      <code>Co-authored-by:</code> trailer in the squashed message, which forges
+      are taught to read.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The maintainer's loop, end to end</summary>
+    <div class="layer-body">
+      <pre>git commit --fixup=HEAD~2        # fix something, keep working
+git commit --fixup=HEAD~2        # again, why not
+git rebase -i --autosquash main  # one tidy-up
+git push --force-with-lease      # publish the rewrite safely</pre>
+      <p>That is most of what "keeping a clean history" means in practice, and it
+      needs no cleverness — just the marker at the time you make the fix, when you
+      still know which commit it belongs to.</p>
+      <ul class="symbol-legend" data-symbols="ORIG_HEAD,A..B"></ul>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="rebase-onto.html">rebase --onto</a> is the flag that separates
+  "which commits" from "where they land", and it's the tool for the branch that got
+  started from the wrong place.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the rebase",
+      "pron": "say: orig head",
+      "means": "where your branch was before the rebase started",
+      "short": "undo point"
+    },
+    "A..B": {
+      "name": "main..HEAD — your commits",
+      "pron": "say: dot dot",
+      "means": "the range a rebase turns into a todo list",
+      "short": "your commits"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "squash-fixup-autosquash",
+    "labs": [
+      {
+        "id": "squash-fixup-autosquash-fold-them-in",
+        "title": "Let autosquash place two marked commits",
+        "fixture": "fixup-chain",
+        "task": "Fold the <code>fixup!</code> and <code>squash!</code> commits into the commits they name, leaving three clean commits and no marker subjects — with all the content intact.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "three commits, not five",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 3
+              }
+            }
+          },
+          {
+            "text": "no fixup!/squash! subjects left",
+            "check": {
+              "noMessageMatch": {
+                "pattern": "^(fixup|squash)!"
+              }
+            }
+          },
+          {
+            "text": "the fix to count.py survived the fold",
+            "check": {
+              "blobContains": {
+                "path": "count.py",
+                "text": "sys.argv[1]"
+              }
+            }
+          },
+          {
+            "text": "the report note survived too",
+            "check": {
+              "blobContains": {
+                "path": "report.py",
+                "text": "column order"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git log --oneline</code> first: see which commit each marker names.",
+          "<code>git rebase -i --autosquash HEAD~5</code> — the reordering happens before the editor opens, so read the list rather than editing it.",
+          "Squash opens a message editor with both messages; keep whichever subject reads best."
+        ],
+        "solution": [
+          "git log --oneline",
+          "git rebase -i --autosquash HEAD~5",
+          "# the todo list is already reordered — just save it",
+          "git log --oneline"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "squash-fixup-autosquash",
+    "questions": [
+      {
+        "q": "How does --autosquash know where a `fixup!` commit belongs?",
+        "choices": [
+          "From a commit id stored in the commit's metadata",
+          "By matching the text after `fixup! ` against the target commit's subject",
+          "By the order you created them in"
+        ],
+        "answer": 1,
+        "explain": "It's subject-text matching. That's why rewording the target later breaks the link, and why two commits with the same subject make it ambiguous."
+      },
+      {
+        "q": "Difference between --fixup=X and --squash=X?",
+        "choices": [
+          "fixup discards the new commit's message; squash combines both messages for you to edit",
+          "fixup rewrites the target commit, squash creates a merge",
+          "None; they're aliases"
+        ],
+        "answer": 0,
+        "explain": "Same fold, different treatment of the message. Use fixup when the fix needs no explanation, squash when it changes what the commit is about."
+      },
+      {
+        "q": "You squash commit B (by Sam) into commit A (by you). Who does the result show as author?",
+        "choices": [
+          "You — the first commit's author and date are kept",
+          "Sam",
+          "Both, automatically"
+        ],
+        "answer": 0,
+        "explain": "The earlier commit's authorship wins. If both people should be credited, add a Co-authored-by: trailer to the message yourself."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

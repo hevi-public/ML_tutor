@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stash tricks — Git Tutor</title>
+
+  <meta name="git:unit" content="Workflow & collaboration">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="../03-forensics/fsck-and-dangling.html|fsck and dangling objects">
+  <meta name="git:next" content="worktrees.html|Worktrees">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Workflow & collaboration</p>
+  <h1>Stash tricks</h1>
+  <p class="lede">A stash is a pair of commits with a funny name. Knowing that turns it from a black box into something you can inspect, recover and script.</p>
+
+  <h2>The idea</h2>
+  <p><code>git stash</code> shelves your uncommitted work so your worktree is clean.
+  What it actually does:</p>
+
+  <ol>
+    <li>Makes a commit of the <strong>index</strong>.</li>
+    <li>Makes a commit of the <strong>working tree</strong>, with two parents: HEAD
+    and that index commit.</li>
+    <li>Points <code>refs/stash</code> at the second one.</li>
+    <li>Resets your worktree to HEAD.</li>
+  </ol>
+
+  <p>So a <dfn data-term="stash">stash</dfn> is ordinary commits, and everything you
+  know about commits applies: you can <code>git show</code> it, diff against it,
+  cherry-pick from it, and recover it from the reflog after dropping it. The
+  "stack" is just <code>refs/stash</code>'s reflog —
+  <code>stash@{2}</code> is a reflog address, exactly like
+  <code>HEAD@{2}</code>.</p>
+
+  <h3>The flags worth knowing</h3>
+  <table class="ref">
+    <tr><th>-u</th><td>include untracked files. The default leaves them behind, which is how people lose new files to a subsequent checkout</td></tr>
+    <tr><th>-p</th><td>choose interactively which hunks to stash — the mirror image of <code>git add -p</code></td></tr>
+    <tr><th>-k</th><td>keep the index, so your staged work stays staged and only unstaged changes get shelved</td></tr>
+    <tr><th>-m "…"</th><td>a message. <code>stash@{3}</code> tells you nothing three days later</td></tr>
+    <tr><th>pop vs apply</th><td>pop applies and deletes; apply leaves the stash in place. Prefer apply when you're not sure it'll work</td></tr>
+    <tr><th>branch &lt;name&gt;</th><td>create a branch at the commit the stash was made from, and apply there. The fix for "the stash no longer applies"</td></tr>
+  </table>
+
+  <h2>Try it</h2>
+  <p>The sandbox starts dirty. Stash it, look at what got made, and get it back:</p>
+
+  <pre>git status
+git stash push -u -m "wip: argv handling"
+git status                        # clean
+git stash list
+git log --oneline refs/stash      # it's a commit
+git show refs/stash               # …with your changes in it
+git stash pop
+git status                        # back</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Recovering a dropped stash</summary>
+    <div class="layer-body">
+      <p><code>git stash drop</code> removes the ref entry, not the commit. So:</p>
+      <pre>git fsck --unreachable --no-reflogs | grep commit
+git show &lt;each id&gt;                    # find yours
+git stash apply &lt;that id&gt;             # apply it directly</pre>
+      <p><code>stash apply</code> takes any commit that looks like a stash, which is
+      why this works. It's the most common "I destroyed my work" recovery after the
+      reflog itself, and worth knowing before you need it.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Why -u matters more than it looks</summary>
+    <div class="layer-body">
+      <p>Plain <code>git stash</code> leaves untracked files exactly where they are.
+      That's usually convenient and occasionally a trap: you stash, switch branch,
+      and the new file — which the other branch also creates — collides, or gets
+      quietly committed to the wrong branch.</p>
+      <p>Habit: <code>git stash -u</code> by default, and let
+      <code>.gitignore</code> keep the build directory out of it. Ignored files need
+      <code>-a</code>, which you almost never want.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>When not to stash at all</summary>
+    <div class="layer-body">
+      <p>Stashing is a habit from before
+      <a href="worktrees.html">worktrees</a> were convenient. If the reason you're
+      stashing is "I need to look at another branch for five minutes", a second
+      worktree is strictly better: nothing moves, nothing to remember, no stack to
+      forget about.</p>
+      <p>The other alternative is a WIP commit: <code>git commit -am wip</code>, do
+      the other thing, then <code>git reset --soft HEAD~</code> to unpick it. Less
+      elegant, but it's on a branch, it's in the reflog, and it survives everything.
+      Many people who used to stash heavily now do this instead.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="worktrees.html">Worktrees</a> — the feature that removes most reasons
+  to stash in the first place.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "stash@{1} — a reflog address",
+      "pron": "say: stash at brace one",
+      "means": "the stash stack is refs/stash's reflog, so this is the same notation as HEAD@{1}",
+      "short": "second stash"
+    },
+    "refs/stash": {
+      "name": "refs/stash",
+      "pron": "say: refs stash",
+      "means": "the ref pointing at your most recent stash commit",
+      "short": "the stash ref"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "stash-tricks",
+    "labs": [
+      {
+        "id": "stash-tricks-shelve-and-inspect",
+        "title": "Stash everything, prove it's a commit, bring it back",
+        "fixture": "dirty",
+        "task": "Shelve all of it — including the untracked <code>scratch.txt</code> — leaving the worktree clean. Then restore it, so you end up back where you started with the stash gone.",
+        "show": [
+          "dag",
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "the argv change is back in your worktree",
+            "check": {
+              "fileContains": {
+                "path": "count.py",
+                "text": "sys.argv[1]"
+              }
+            }
+          },
+          {
+            "text": "the untracked scratch file came back too",
+            "check": {
+              "fileContains": {
+                "path": "scratch.txt",
+                "text": "commit me"
+              }
+            }
+          },
+          {
+            "text": "nothing is committed that shouldn't be",
+            "check": {
+              "commitCount": {
+                "ref": "main",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "the stash stack is empty again",
+            "check": {
+              "noRef": {
+                "ref": "refs/stash"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "Plain <code>git stash</code> leaves untracked files behind. You want <code>-u</code>.",
+          "<code>git stash push -u -m \"wip\"</code>, then <code>git status</code> to confirm it's clean, then <code>git log --oneline refs/stash</code> to see the commit it made.",
+          "<code>git stash pop</code> applies it and removes it from the stack."
+        ],
+        "solution": [
+          "git status",
+          "git stash push -u -m \"wip: argv handling\"",
+          "git status                    # clean",
+          "git stash list",
+          "git show refs/stash           # a real commit holding your work",
+          "git stash pop",
+          "git status                    # everything back"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "stash-tricks",
+    "questions": [
+      {
+        "q": "What is a stash, structurally?",
+        "choices": [
+          "A diff stored in .git/stash",
+          "Commits — one for the index, one for the worktree — with refs/stash pointing at them",
+          "A patch file in .git/refs/stash"
+        ],
+        "answer": 1,
+        "explain": "Which is why you can git show it, diff against it, and recover it from fsck after dropping it. The 'stack' is refs/stash's reflog."
+      },
+      {
+        "q": "You stash without -u, then switch branches. What happens to your new untracked file?",
+        "choices": [
+          "It's stashed with everything else",
+          "It stays in your worktree — and can collide with the other branch, or get committed there by accident",
+          "Git refuses to switch branches"
+        ],
+        "answer": 1,
+        "explain": "The default only shelves tracked changes. -u includes untracked files, which is why it's the better habit."
+      },
+      {
+        "q": "You ran `git stash drop` on the wrong stash. Gone?",
+        "choices": [
+          "Yes — drop deletes the commit",
+          "No — drop removes the ref entry; the commit is unreachable and `git fsck` plus `git stash apply <id>` gets it back",
+          "Only recoverable within 30 seconds"
+        ],
+        "answer": 1,
+        "explain": "Same story as every other 'lost' commit in git. stash apply accepts any commit shaped like a stash, so the recovered id works directly."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>
