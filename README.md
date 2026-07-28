@@ -85,12 +85,21 @@ band with style presets), microphone tuner, routine builder. Its own glossary
 
 **Web Dev Reference** — a reference track, not a course, so the page shape is
 different: *at a glance → do it this way now → what it replaced and why →
-gotchas → live demo → legacy panel → official docs*. Four sections (Angular,
-RxJS, Vitest, pnpm) plus cross-cutting views generated from the change ledger:
-a deprecation list, a version timeline, a migration-schematic index, and a
-searchable index of every official doc it links to. Search covers three kinds of
-result at once — pages, change records (so searching a retired API like
-`toPromise` finds its replacement), and the official docs.
+gotchas → live demo → legacy panel → official docs*. 38 pages across four
+sections — Angular (12), RxJS (7), Vitest (6), pnpm (5) — plus cross-cutting
+views generated from the change ledger: a deprecation list, a version timeline,
+a migration-schematic index, and a searchable index of every official doc it
+links to. Search covers three kinds of result at once — pages, change records
+(so searching a retired API like `toPromise` finds its replacement), and the
+official docs — with aliases for how people actually phrase things ("view not
+updating" → change detection, "NG0203" → dependency injection).
+
+Three live demos, each implementing the thing rather than animating a
+recording: a working signal graph (real recompute counters, showing laziness
+and glitch-free propagation), a change-detection visualiser (one tree, one
+event, three strategies), and a marble player simulating the four flattening
+operators over an editable source. Plus a version filter — set which versions
+you're on and every badge site-wide tells you whether it applies to you yet.
 
 All three sites keep state in `localStorage` under separate namespaces
 (`ml-tutor:*` / `bass-tutor:*` / `web-ref:*`) — nothing leaves your browser.
@@ -112,7 +121,14 @@ existence for `#fragment` URLs. Add `-- --offline` to skip the network passes;
 that is the form CI runs, since a documentation site being unreachable should
 never block a deploy.
 
-See `PLAN.md` (ML) and `bass/PLAN.md` (bass) for architecture and the
-page-template contracts (`assets/page-template.html`,
+See `PLAN.md` (ML), `bass/PLAN.md` (bass) and `web/PLAN.md` (reference) for
+architecture and the page-template contracts (`assets/page-template.html`,
 `bass/assets/page-template.html` for topic pages,
-`bass/assets/session-template.html` for hands-on sessions).
+`bass/assets/session-template.html` for hands-on sessions,
+`web/assets/page-template.html` for reference pages).
+
+`web/PLAN.md` also documents the reference track's one structural rule: every
+versioned claim lives once in `web/data/changes.json`, and the deprecation
+list, timeline and migration index are generated from it — so correcting a
+version number is a one-line edit that fixes the page and all three views at
+once.

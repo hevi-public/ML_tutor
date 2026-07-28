@@ -119,6 +119,20 @@ function pass1() {
     }
   }
 
+  // versions.json names a docs id per tool — also a real reference, so it counts
+  // both for validity and for deciding whether an entry is orphaned.
+  const versionsPath = path.join(ROOT, "data/versions.json");
+  if (fs.existsSync(versionsPath)) {
+    const versions = JSON.parse(fs.readFileSync(versionsPath, "utf8"));
+    for (const [tool, meta] of Object.entries(versions.tools || {})) {
+      if (!meta.docs) continue;
+      referenced.add(meta.docs);
+      if (!registry.links[meta.docs]) {
+        fail(`versions.json: tool "${tool}" references docs id "${meta.docs}", which is not in links.json`);
+      }
+    }
+  }
+
   for (const id of Object.keys(registry.links)) {
     if (!referenced.has(id)) {
       warn(`links.json: "${id}" is not referenced by any page or change record`);

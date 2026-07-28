@@ -604,7 +604,10 @@ details.legacy > .layer-body { padding: 0 1rem 0.9rem; font-size: 0.94rem; }
 /* ---------- Print ---------- */
 
 @media print {
-  .filter-bar, .copy-btn, .view-toggle { display: none; }
+  /* .change .view-toggle needs matching specificity to win here — a media
+     query does not add any, so a bare `.view-toggle` loses to the two-class
+     rule above and the buttons print. */
+  .filter-bar, .copy-btn, .change .view-toggle { display: none; }
   .change, .at-glance, .gotcha, table.cheat tr { break-inside: avoid; }
   .change .sides.split { grid-template-columns: 1fr 1fr; }
   details.legacy { border: none; }

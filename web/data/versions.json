@@ -33,7 +33,8 @@
     "rxjs": {
       "name": "RxJS",
       "current": "7.8.2",
-      "currentMajor": "7",
+      "_currentMajorNote": "Points at the 7.8 line rather than 7, so the dashboard dates the release line the current version belongs to (Dec 2022) instead of v7.0.0's date (Apr 2021).",
+      "currentMajor": "7.8",
       "cadence": "Irregular. RxJS 7 has been the stable line since 2021.",
       "policy": "No formal LTS window. RxJS 8 is on hold pending the TC39/WHATWG Observable standard, so 7.8 is the production answer.",
       "docs": "rx.home",
