@@ -365,6 +365,52 @@ table.cheat code {
 }
 .filter-bar input[type="search"] { flex: 1; min-width: 10rem; }
 
+/* ---------- Signal graph demo ---------- */
+
+#signal-graph svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.sg-edge { stroke: var(--border); stroke-width: 2; }
+.sg-edge.dirty { stroke: #b45309; stroke-dasharray: 4 3; }
+
+.sg-node rect { fill: var(--bg-inset); stroke: var(--border); stroke-width: 1.5; }
+.sg-node.signal rect { fill: var(--accent-soft); stroke: var(--accent); }
+.sg-node.effect rect { fill: var(--bg-soft); stroke: var(--text-soft); stroke-dasharray: 5 3; }
+.sg-node.dirty rect { stroke: #b45309; stroke-width: 2.5; }
+.sg-node.ran rect { fill: var(--good-soft); stroke: var(--good); stroke-width: 2.5; }
+
+.sg-name {
+  fill: var(--text); font-size: 13px; font-weight: 600; text-anchor: middle;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.sg-meta { fill: var(--text-soft); font-size: 10px; text-anchor: middle; }
+
+#signal-graph .controls .control input[type="text"] {
+  flex: 2;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.sg-log {
+  margin: 0.9rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.84rem;
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--text-soft);
+}
+.sg-log li { margin: 0.15rem 0; }
+.sg-log li:first-child { color: var(--text); }
+
 /* ---------- Search results ---------- */
 
 .search-box { margin: 1.4rem 0 0.6rem; }

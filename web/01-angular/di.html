@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dependency injection — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="templates.html|Templates">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Dependency injection</h1>
+  <p class="lede">The most mechanical of the modern-Angular migrations, and the
+  one that unlocked the rest: once <code>inject()</code> worked outside
+  constructors, guards and interceptors could stop being classes.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>inject(Thing)</code> as a field initialiser, not a constructor
+      parameter.</li>
+      <li><code>@Service()</code> instead of
+      <code>@Injectable({ providedIn: 'root' })</code>.</li>
+      <li><code>provideAppInitializer()</code> instead of the
+      <code>APP_INITIALIZER</code> token.</li>
+      <li>Guards, resolvers and interceptors are plain functions that call
+      <code>inject()</code>.</li>
+      <li><code>inject()</code> only works in an <em>injection context</em> —
+      that constraint is the one thing here worth understanding properly.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">import { Service, inject, InjectionToken } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Service()
+export class UserStore {
+  private http = inject(HttpClient);
+  private config = inject(APP_CONFIG);
+
+  load(id: string) {
+    return this.http.get&lt;User&gt;(`${this.config.apiUrl}/users/${id}`);
+  }
+}
+
+// A token for anything that is not a class.
+export const APP_CONFIG = new InjectionToken&lt;AppConfig&gt;('APP_CONFIG', {
+  providedIn: 'root',
+  factory: () =&gt; ({ apiUrl: '/api' }),
+});
+
+// Reusable logic that needs DI, without being a service.
+export function usePageTitle(title: string) {
+  const titleService = inject(Title);
+  titleService.setTitle(title);
+}</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.di.inject-function">
+    <p class="change-note">The reason this matters more than it looks: a
+    constructor parameter can only be injected into a class being constructed.
+    <code>inject()</code> works in any injection context, which is what makes a
+    functional guard, a functional interceptor, or a shared
+    <code>useSomething()</code> helper possible at all.</p>
+  </div>
+
+  <div class="change" data-change="ng.di.service-decorator">
+    <p class="change-note"><code>@Injectable()</code> is not deprecated and
+    still works. <code>@Service()</code> is the shorter spelling of what almost
+    every service wanted.</p>
+  </div>
+
+  <div class="change" data-change="ng.di.initializers"></div>
+
+  <h2>The injection context</h2>
+  <p>This is the one rule that produces confusing runtime errors, so it is worth
+  stating precisely. <code>inject()</code> works only while Angular knows which
+  injector you belong to. That is true in exactly these places:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Works</th><th>Does not work</th></tr></thead>
+      <tbody>
+        <tr><td>Field initialisers of a component / directive / service</td>
+            <td>Inside <code>ngOnInit</code> or any lifecycle hook</td></tr>
+        <tr><td>The constructor body</td>
+            <td>Inside a <code>setTimeout</code> or promise callback</td></tr>
+        <tr><td>A <code>factory</code> in <code>InjectionToken</code> or a provider</td>
+            <td>Inside a method called later</td></tr>
+        <tr><td>Functional guards, resolvers and interceptors</td>
+            <td>Inside an RxJS operator callback</td></tr>
+        <tr><td>Inside <code>runInInjectionContext(injector, fn)</code></td>
+            <td>Anywhere else</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: NG0203</span>
+    <em>"inject() must be called from an injection context"</em> almost always
+    means the call moved into a callback or a lifecycle hook. Two fixes: hoist
+    the <code>inject()</code> to a field initialiser (usually right), or capture
+    <code>const injector = inject(Injector)</code> up front and later wrap the
+    work in <code>runInInjectionContext(injector, () =&gt; …)</code> (for the
+    genuinely deferred cases).
+  </div>
+
+  <h2>Providers</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You want…</th><th>Write</th></tr></thead>
+      <tbody>
+        <tr><td>One instance for the whole app</td><td><code>@Service()</code></td></tr>
+        <tr><td>A service the consumer must provide</td><td><code>@Service({ autoProvided: false })</code></td></tr>
+        <tr><td>A service built by a function</td><td><code>@Service({ factory: () =&gt; … })</code></td></tr>
+        <tr><td>One instance per component subtree</td><td><code>providers: [Thing]</code> on the component</td></tr>
+        <tr><td>To swap an implementation</td><td><code>{ provide: Api, useClass: FakeApi }</code></td></tr>
+        <tr><td>To supply a plain value</td><td><code>{ provide: TOKEN, useValue: … }</code></td></tr>
+        <tr><td>To alias one token to another</td><td><code>{ provide: A, useExisting: B }</code></td></tr>
+        <tr><td>Many contributions to one token</td><td><code>{ provide: TOKEN, useValue: x, multi: true }</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Modifiers</h3>
+  <p>Passed as options to <code>inject()</code> rather than as decorators:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Now</th><th>Previously</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>inject(X, { optional: true })</code></td><td><code>@Optional()</code></td><td>Return <code>null</code> rather than throw</td></tr>
+        <tr><td><code>inject(X, { self: true })</code></td><td><code>@Self()</code></td><td>Only this injector</td></tr>
+        <tr><td><code>inject(X, { skipSelf: true })</code></td><td><code>@SkipSelf()</code></td><td>Start at the parent</td></tr>
+        <tr><td><code>inject(X, { host: true })</code></td><td><code>@Host()</code></td><td>Stop at the host component</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Functional guards and interceptors</h2>
+  <p>The clearest payoff of <code>inject()</code>. A guard used to be a class
+  implementing an interface, registered by type; now it is a function.</p>
+
+<pre><code class="language-typescript">// guard
+export const authGuard: CanActivateFn = (route, state) =&gt; {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isLoggedIn() || router.createUrlTree(['/login']);
+};
+
+// interceptor
+export const authInterceptor: HttpInterceptorFn = (req, next) =&gt; {
+  const token = inject(AuthService).token();
+  return next(token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req);
+};
+
+// wiring
+bootstrapApplication(App, {
+  providers: [provideHttpClient(withInterceptors([authInterceptor]))],
+});</code></pre>
+
+  <details class="legacy">
+    <summary>Before v14 — constructor injection and class guards</summary>
+    <div class="layer-body">
+<pre><code class="language-typescript">@Injectable({ providedIn: 'root' })
+export class UserStore {
+  constructor(
+    private http: HttpClient,
+    @Inject(APP_CONFIG) private config: AppConfig,
+    @Optional() @SkipSelf() parent?: UserStore,
+  ) {}
+}
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  constructor(private auth: AuthService, private router: Router) {}
+  canActivate() { return this.auth.isLoggedIn(); }
+}</code></pre>
+      <p>Two costs, both real: subclassing meant repeating the whole parameter
+      list in every <code>super()</code> call, and every piece of DI-using logic
+      had to be a class because that was the only place injection happened.
+      Constructor injection still works and is not deprecated — it is simply
+      more typing for less reach.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/di" data-doc="ng.guide.di"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/di/creating-and-using-services" data-doc="ng.guide.services"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/di/defining-dependency-providers" data-doc="ng.guide.providers"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/di/dependency-injection-context" data-doc="ng.guide.injection-context"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/api/core/inject" data-doc="ng.api.inject"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -77,6 +77,96 @@
       "docs": ["ng.home"]
     },
     {
+      "id": "ng.di.service-decorator",
+      "tool": "angular", "topic": "dependency-injection", "page": "01-angular/di.html",
+      "title": "Declaring a service",
+      "now": "@Service()",
+      "was": "@Injectable({ providedIn: 'root' })",
+      "since": "22", "deprecated": null, "removed": null,
+      "why": "Root-provided was what almost every service wanted, so v22 made it the shape of the decorator rather than an option you configure. @Service() is auto-provided by default; pass { autoProvided: false } for a service that must be listed in a providers array, or { factory } to build it from a function.",
+      "migration": null,
+      "code": {
+        "now": "@Service()\nexport class UserStore {\n  private http = inject(HttpClient);\n}",
+        "was": "@Injectable({ providedIn: 'root' })\nexport class UserStore {\n  private http = inject(HttpClient);\n}"
+      },
+      "docs": ["ng.guide.services", "ng.guide.di"]
+    },
+    {
+      "id": "ng.di.initializers",
+      "tool": "angular", "topic": "dependency-injection", "page": "01-angular/di.html",
+      "title": "Running code at startup",
+      "now": "provideAppInitializer(() => …)",
+      "was": "{ provide: APP_INITIALIZER, useFactory: …, multi: true }",
+      "since": "19", "deprecated": "19", "removed": null,
+      "why": "The token form needed multi: true and a factory, and forgetting either failed silently at runtime rather than at compile time. The provide* functions take the callback directly. The same swap applies to ENVIRONMENT_INITIALIZER and PLATFORM_INITIALIZER.",
+      "migration": null,
+      "code": {
+        "now": "bootstrapApplication(App, {\n  providers: [\n    provideAppInitializer(() => inject(ConfigService).load()),\n  ],\n});",
+        "was": "bootstrapApplication(App, {\n  providers: [\n    {\n      provide: APP_INITIALIZER,\n      useFactory: (config: ConfigService) => () => config.load(),\n      deps: [ConfigService],\n      multi: true,\n    },\n  ],\n});"
+      },
+      "docs": ["ng.guide.providers"]
+    },
+    {
+      "id": "ng.io.output-function",
+      "tool": "angular", "topic": "inputs-outputs", "page": "01-angular/inputs-outputs-queries.html",
+      "title": "Declaring an output",
+      "now": "output<T>()",
+      "was": "@Output() name = new EventEmitter<T>()",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "An output is not a stream you subscribe to, so modelling it as an EventEmitter (an RxJS Subject) always promised more than it delivered. output() exposes only emit(), which is the entire API a component actually needs, and it cannot be accidentally subscribed to or completed.",
+      "migration": "ng generate @angular/core:output-migration",
+      "code": {
+        "now": "saved = output<User>();\n\nsave() {\n  this.saved.emit(this.user());\n}",
+        "was": "@Output() saved = new EventEmitter<User>();\n\nsave() {\n  this.saved.emit(this.user);\n}"
+      },
+      "docs": ["ng.guide.outputs"]
+    },
+    {
+      "id": "ng.queries.signal-queries",
+      "tool": "angular", "topic": "queries", "page": "01-angular/inputs-outputs-queries.html",
+      "title": "Referencing a child element or component",
+      "now": "viewChild() / viewChildren() / contentChild() — signals",
+      "was": "@ViewChild() / @ContentChild() decorators, with a static flag and a lifecycle hook to wait for",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "The decorator form set a plain property at some point during a lifecycle hook, so reading it too early gave you undefined and the fix was to know which hook. A signal query is just a signal: read it whenever, use it in computed(), and the timing question disappears along with the static flag.",
+      "migration": "ng generate @angular/core:signal-queries-migration",
+      "code": {
+        "now": "chart = viewChild.required<ElementRef>('chart');\n\nconstructor() {\n  afterNextRender(() => this.draw(this.chart().nativeElement));\n}",
+        "was": "@ViewChild('chart', { static: true }) chart!: ElementRef;\n\nngAfterViewInit() {\n  this.draw(this.chart.nativeElement);\n}"
+      },
+      "docs": ["ng.guide.queries"]
+    },
+    {
+      "id": "ng.templates.defer",
+      "tool": "angular", "topic": "templates", "page": "01-angular/templates.html",
+      "title": "Loading part of a template lazily",
+      "now": "@defer with a trigger",
+      "was": "A route-level lazy load, or a manual dynamic import plus ViewContainerRef",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "Lazy loading used to be something you could only do at a routing boundary. @defer moves it into the template, so a heavy chart or a rarely-opened dialog is split out of the bundle without restructuring the application around it. The dependencies used only inside the block go with it automatically.",
+      "migration": null,
+      "code": {
+        "now": "@defer (on viewport) {\n  <sales-chart [data]=\"data()\" />\n} @placeholder {\n  <div class=\"skeleton\"></div>\n} @loading (minimum 200ms) {\n  <spinner />\n}",
+        "was": "// component\nasync loadChart() {\n  const { SalesChart } = await import('./sales-chart');\n  this.container.createComponent(SalesChart);\n}"
+      },
+      "docs": ["ng.guide.defer"]
+    },
+    {
+      "id": "ng.templates.let",
+      "tool": "angular", "topic": "templates", "page": "01-angular/templates.html",
+      "title": "Naming a value inside a template",
+      "now": "@let name = expression;",
+      "was": "*ngIf=\"expr as name\", or a wrapper <ng-container> whose only job was to hold the alias",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "Aliasing used to be a side effect of a structural directive, which meant you needed a conditional you did not want in order to name a value you did. Worse, *ngIf's alias silently dropped the block when the value was falsy — 0 and '' vanished. @let just declares a name.",
+      "migration": null,
+      "code": {
+        "now": "@let user = user$ | async;\n@let total = cart().items.reduce((n, i) => n + i.price, 0);\n\n<p>{{ user?.name }} owes {{ total }}</p>",
+        "was": "<ng-container *ngIf=\"user$ | async as user\">\n  <p>{{ user.name }}</p>\n</ng-container>"
+      },
+      "docs": ["ng.guide.control-flow"]
+    },
+    {
       "id": "ng.subscription.take-until-destroyed",
       "tool": "angular", "topic": "rxjs-interop", "page": "02-rxjs/subscriptions.html",
       "title": "Unsubscribing in a component",

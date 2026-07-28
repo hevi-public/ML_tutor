@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Templates — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="inputs-outputs-queries.html|Inputs, outputs & queries">
+  <meta name="web:next" content="di.html|Dependency injection">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Templates</h1>
+  <p class="lede">Control flow is part of the template language now. No imports,
+  proper type narrowing, and a <code>track</code> expression the compiler
+  insists on.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>@if</code> / <code>@else if</code> / <code>@else</code>,
+      <code>@for</code> / <code>@empty</code>, <code>@switch</code> —
+      built in, nothing to import.</li>
+      <li><code>@for</code> <strong>requires</strong> <code>track</code>. This is
+      deliberate: the missing <code>trackBy</code> was Angular's most common
+      performance bug.</li>
+      <li><code>@let</code> names a value without needing a conditional to hang
+      it on.</li>
+      <li><code>@defer</code> lazy-loads a block and everything only it uses.</li>
+      <li>The old structural directives still work and are not deprecated.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-html">@let user = currentUser();
+@let unread = notifications().filter(n =&gt; !n.read).length;
+
+@if (user) {
+  &lt;h2&gt;Welcome back, {{ user.name }}&lt;/h2&gt;
+} @else if (loading()) {
+  &lt;app-spinner /&gt;
+} @else {
+  &lt;a routerLink="/login"&gt;Sign in&lt;/a&gt;
+}
+
+@for (item of items(); track item.id; let i = $index, isLast = $last) {
+  &lt;li [class.last]="isLast"&gt;{{ i + 1 }}. {{ item.label }}&lt;/li&gt;
+} @empty {
+  &lt;li class="muted"&gt;Nothing here yet.&lt;/li&gt;
+}
+
+@switch (status()) {
+  @case ('draft')     { &lt;badge-draft /&gt; }
+  @case ('published') { &lt;badge-live /&gt; }
+  @default            { &lt;badge-unknown /&gt; }
+}
+
+@defer (on viewport) {
+  &lt;sales-chart [data]="data()" /&gt;
+} @placeholder (minimum 300ms) {
+  &lt;div class="skeleton"&gt;&lt;/div&gt;
+} @error {
+  &lt;p&gt;Chart failed to load.&lt;/p&gt;
+}</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.templates.control-flow">
+    <p class="change-note">The schematic rewrites templates wholesale, so expect
+    a very large diff on the first run — and run your formatter in the same
+    commit, because indentation shifts throughout. It is a syntax change with no
+    behaviour change, which makes it one of the safer large diffs you will
+    review.</p>
+  </div>
+
+  <div class="change" data-change="ng.templates.let"></div>
+
+  <div class="change" data-change="ng.templates.defer"></div>
+
+  <h2>@for and track</h2>
+  <p><code>track</code> tells Angular how to recognise the same item across
+  renders. Get it wrong and Angular destroys and recreates DOM nodes it could
+  have kept — losing focus, scroll position, input state and animations along
+  the way.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Situation</th><th>Track by</th></tr></thead>
+      <tbody>
+        <tr><td>Items with a stable id</td><td><code>track item.id</code></td></tr>
+        <tr><td>Primitives (strings, numbers) that are unique</td><td><code>track item</code></td></tr>
+        <tr><td>A list that is only ever replaced wholesale</td><td><code>track $index</code></td></tr>
+        <tr><td>Items with no id, order never changes</td><td><code>track $index</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: <code>track $index</code> on a reorderable list</span>
+    Index-tracking says "the item at position 3 is the same item it was before".
+    Sort or filter the list and every row's contents change under a DOM node
+    that Angular thinks is unchanged — so a focused input keeps focus while its
+    value jumps to a different record. Use a real id whenever items can move.
+  </div>
+
+  <p>The implicit variables available inside <code>@for</code>:
+  <code>$index</code>, <code>$first</code>, <code>$last</code>,
+  <code>$even</code>, <code>$odd</code>, <code>$count</code>. Alias them with
+  <code>let i = $index</code> when nesting loops, since the inner
+  <code>$index</code> otherwise shadows the outer one.</p>
+
+  <h2>@defer triggers</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Trigger</th><th>Fires when</th><th>Good for</th></tr></thead>
+      <tbody>
+        <tr><td><code>on idle</code></td><td>The browser is idle (the default)</td><td>Anything below the fold</td></tr>
+        <tr><td><code>on viewport</code></td><td>The placeholder scrolls into view</td><td>Charts, maps, comment threads</td></tr>
+        <tr><td><code>on interaction</code></td><td>Click or keydown on the placeholder</td><td>Editors, rich inputs</td></tr>
+        <tr><td><code>on hover</code></td><td>Pointer enters the placeholder</td><td>Previews, popovers</td></tr>
+        <tr><td><code>on timer(2s)</code></td><td>After a delay</td><td>Low-priority widgets</td></tr>
+        <tr><td><code>when cond()</code></td><td>The expression becomes true</td><td>Anything you control</td></tr>
+        <tr><td><code>prefetch on …</code></td><td>Fetches early, renders later</td><td>Pair with a later render trigger</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: @defer only splits what is used <em>only</em> inside it</span>
+    If a component in a deferred block is also imported by the surrounding
+    template, it is already in the main bundle and nothing is saved. Check the
+    build output rather than assuming — a <code>@defer</code> that defers
+    nothing is easy to write and invisible without looking.
+  </div>
+
+  <h2>Type narrowing</h2>
+  <p>A genuine advantage over the directives: <code>@if</code> narrows types the
+  way TypeScript does. Inside <code>@if (user())</code>, the compiler knows
+  <code>user()</code> is not null — no <code>!</code>, no <code>?.</code>. The
+  old <code>*ngIf</code> narrowed only through its <code>as</code> alias, which
+  is part of why that idiom was everywhere.</p>
+
+  <details class="legacy">
+    <summary>Before v17 — structural directives, for reading old code</summary>
+    <div class="layer-body">
+<pre><code class="language-html">&lt;h2 *ngIf="user$ | async as user; else signedOut"&gt;
+  Welcome back, {{ user.name }}
+&lt;/h2&gt;
+&lt;ng-template #signedOut&gt;
+  &lt;a routerLink="/login"&gt;Sign in&lt;/a&gt;
+&lt;/ng-template&gt;
+
+&lt;li *ngFor="let item of items; trackBy: trackById; let i = index"&gt;
+  {{ i + 1 }}. {{ item.label }}
+&lt;/li&gt;
+
+&lt;ng-container [ngSwitch]="status"&gt;
+  &lt;badge-draft *ngSwitchCase="'draft'"&gt;&lt;/badge-draft&gt;
+  &lt;badge-unknown *ngSwitchDefault&gt;&lt;/badge-unknown&gt;
+&lt;/ng-container&gt;</code></pre>
+      <p>Three things to notice, because they explain the shape of old
+      templates: <code>else</code> needed a named
+      <code>&lt;ng-template&gt;</code> declared elsewhere;
+      <code>trackBy</code> took a method on the component rather than an
+      expression; and <code>CommonModule</code> had to be imported or none of it
+      worked at all — silently, since an unknown attribute is not an error.</p>
+      <p>All of this still compiles in v22. None of it is deprecated.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/templates/control-flow" data-doc="ng.guide.control-flow"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/templates/defer" data-doc="ng.guide.defer"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/directives" data-doc="ng.guide.directives"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

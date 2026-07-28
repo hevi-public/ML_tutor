@@ -44,6 +44,11 @@
     const wrap = el("div", "diff");
     const pre = document.createElement("pre");
     const code = document.createElement("code");
+    // highlight.js re-tokenises a block and replaces its children, which would
+    // wipe out the .del/.add spans — taking the diff colours and the copy
+    // button's "strip removed lines" behaviour with them. Opt this block out:
+    // here the line semantics matter more than token colours.
+    code.className = "nohighlight";
 
     for (const line of WebRef.diffLines(change.code.was, change.code.now)) {
       if (line.type === "same") {
@@ -161,7 +166,16 @@
       renderCard(host, change, data.links);
     }
 
-    if (window.hljs) window.hljs.highlightAll();
+    // Highlight only the blocks this file just created. highlightAll() would
+    // re-run over the page's static blocks, which highlight.js has already
+    // processed, and warn about it.
+    if (window.hljs) {
+      for (const host of hosts) {
+        host.querySelectorAll("pre code:not(.nohighlight)").forEach((block) => {
+          if (!block.dataset.highlighted) window.hljs.highlightElement(block);
+        });
+      }
+    }
     document.dispatchEvent(new CustomEvent("webref:changes-rendered"));
   });
 })();

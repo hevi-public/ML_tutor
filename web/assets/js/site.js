@@ -240,4 +240,9 @@
     initKeys();
     addFavicon();
   });
+
+  // changes.js renders its now/was code samples after this file has run, and
+  // those are the snippets most worth copying — so wire them up too. The
+  // function skips anything already wrapped, so re-running it is free.
+  document.addEventListener("webref:changes-rendered", addCopyButtons);
 })();

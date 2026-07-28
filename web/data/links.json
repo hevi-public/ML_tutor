@@ -1,5 +1,5 @@
 {
-  "_comment": "The single registry of official documentation links. Pages reference these by id (data-doc=\"ng.guide.signals\") and never hard-code a URL — scripts/check-links.js enforces that. 'verified' marks how the URL was grounded: 'search' = it came back from a live web search this session; 'unverified' = it follows the site's documented URL pattern but has not been confirmed reachable from this container (the network policy blocks these hosts). Run `npm run check:links` locally to resolve every unverified entry.",
+  "_comment": "The single registry of official documentation links. Pages reference these by id (data-doc=\"ng.guide.signals\") and never hard-code a URL — scripts/check-links.js enforces that. 'verified' marks how the URL was grounded: 'typings' = the doc path is asserted by an @see/@link in the published package's own type definitions (the strongest signal available offline); 'search' = it came back from a live web search this session; 'unverified' = it follows the site's documented URL pattern but has not been confirmed reachable from this container (the network policy blocks these hosts). Run `npm run check:links` locally to resolve every unverified entry.",
   "sites": {
     "angular": { "name": "angular.dev", "base": "https://angular.dev" },
     "rxjs": { "name": "rxjs.dev", "base": "https://rxjs.dev" },
@@ -51,6 +51,86 @@
     "ng.guide.testing.vitest": {
       "url": "https://angular.dev/guide/testing/migrating-to-vitest", "title": "Migrating from Karma to Vitest", "tool": "angular", "kind": "migration",
       "tags": ["karma", "jasmine", "vitest", "migrate tests", "test runner"], "verified": "search"
+    },
+    "ng.guide.components": {
+      "url": "https://angular.dev/guide/components", "title": "Components", "tool": "angular", "kind": "guide",
+      "tags": ["component", "selector", "template", "standalone"], "verified": "typings"
+    },
+    "ng.guide.inputs": {
+      "url": "https://angular.dev/guide/components/inputs", "title": "Accepting data with input properties", "tool": "angular", "kind": "guide",
+      "tags": ["input", "@Input", "input()", "required input", "transform", "alias"], "verified": "typings"
+    },
+    "ng.guide.outputs": {
+      "url": "https://angular.dev/guide/components/outputs", "title": "Custom events with outputs", "tool": "angular", "kind": "guide",
+      "tags": ["output", "@Output", "output()", "EventEmitter", "emit"], "verified": "typings"
+    },
+    "ng.guide.queries": {
+      "url": "https://angular.dev/guide/components/queries", "title": "Referencing children with queries", "tool": "angular", "kind": "guide",
+      "tags": ["viewChild", "contentChild", "ViewChild", "query", "ElementRef", "static"], "verified": "typings"
+    },
+    "ng.guide.lifecycle": {
+      "url": "https://angular.dev/guide/components/lifecycle", "title": "Component lifecycle", "tool": "angular", "kind": "guide",
+      "tags": ["ngOnInit", "ngOnDestroy", "ngOnChanges", "afterNextRender", "afterRenderEffect", "hooks"], "verified": "typings"
+    },
+    "ng.guide.host": {
+      "url": "https://angular.dev/guide/components/dom-apis", "title": "Using DOM APIs", "tool": "angular", "kind": "guide",
+      "tags": ["host", "HostBinding", "HostListener", "ElementRef", "nativeElement"], "verified": "typings"
+    },
+    "ng.guide.di": {
+      "url": "https://angular.dev/guide/di", "title": "Dependency injection", "tool": "angular", "kind": "guide",
+      "tags": ["di", "inject", "injector", "provider", "dependency injection"], "verified": "typings"
+    },
+    "ng.guide.services": {
+      "url": "https://angular.dev/guide/di/creating-and-using-services", "title": "Creating and using services", "tool": "angular", "kind": "guide",
+      "tags": ["service", "Injectable", "Service decorator", "providedIn", "singleton"], "verified": "typings"
+    },
+    "ng.guide.providers": {
+      "url": "https://angular.dev/guide/di/defining-dependency-providers", "title": "Defining dependency providers", "tool": "angular", "kind": "guide",
+      "tags": ["provider", "useClass", "useValue", "useFactory", "InjectionToken", "multi"], "verified": "typings"
+    },
+    "ng.guide.injection-context": {
+      "url": "https://angular.dev/guide/di/dependency-injection-context", "title": "Injection context", "tool": "angular", "kind": "guide",
+      "tags": ["injection context", "runInInjectionContext", "NG0203", "inject must be called"], "verified": "typings"
+    },
+    "ng.guide.linked-signal": {
+      "url": "https://angular.dev/guide/signals/linked-signal", "title": "Dependent state with linkedSignal", "tool": "angular", "kind": "guide",
+      "tags": ["linkedSignal", "writable computed", "reset state", "derived but writable"], "verified": "typings"
+    },
+    "ng.guide.resource": {
+      "url": "https://angular.dev/guide/signals/resource", "title": "Async reactivity with resources", "tool": "angular", "kind": "guide",
+      "tags": ["resource", "httpResource", "rxResource", "async signal", "isLoading", "loader"], "verified": "typings"
+    },
+    "ng.guide.zoneless": {
+      "url": "https://angular.dev/guide/zoneless", "title": "Zoneless Angular", "tool": "angular", "kind": "guide",
+      "tags": ["zoneless", "zone.js", "provideZonelessChangeDetection", "change detection"], "verified": "typings"
+    },
+    "ng.guide.hydration": {
+      "url": "https://angular.dev/guide/hydration", "title": "Hydration", "tool": "angular", "kind": "guide",
+      "tags": ["hydration", "ssr", "incremental hydration", "event replay", "provideClientHydration"], "verified": "typings"
+    },
+    "ng.guide.ngmodules": {
+      "url": "https://angular.dev/guide/ngmodules/overview", "title": "NgModules overview", "tool": "angular", "kind": "guide",
+      "tags": ["NgModule", "declarations", "legacy", "old angular"], "verified": "typings"
+    },
+    "ng.guide.directives": {
+      "url": "https://angular.dev/guide/directives", "title": "Directives", "tool": "angular", "kind": "guide",
+      "tags": ["directive", "ngIf", "ngFor", "structural directive", "attribute directive"], "verified": "typings"
+    },
+    "ng.guide.image": {
+      "url": "https://angular.dev/guide/image-optimization", "title": "Image optimization (NgOptimizedImage)", "tool": "angular", "kind": "guide",
+      "tags": ["NgOptimizedImage", "ngSrc", "priority", "LCP", "images"], "verified": "typings"
+    },
+    "ng.api.inject": {
+      "url": "https://angular.dev/api/core/inject", "title": "inject() API", "tool": "angular", "kind": "api",
+      "tags": ["inject", "inject function", "api"], "verified": "typings"
+    },
+    "ng.guide.control-flow": {
+      "url": "https://angular.dev/guide/templates/control-flow", "title": "Control flow (@if / @for / @switch)", "tool": "angular", "kind": "guide",
+      "tags": ["@if", "@for", "@switch", "control flow", "ngIf", "ngFor", "track"], "verified": "search"
+    },
+    "ng.guide.defer": {
+      "url": "https://angular.dev/guide/templates/defer", "title": "Deferred loading with @defer", "tool": "angular", "kind": "guide",
+      "tags": ["@defer", "deferrable views", "lazy load template", "on viewport", "on idle"], "verified": "search"
     },
     "rx.home": {
       "url": "https://rxjs.dev", "title": "RxJS", "tool": "rxjs", "kind": "guide",
