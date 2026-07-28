@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flattening: switchMap, mergeMap, concatMap, exhaustMap — Web Dev Reference</title>
+
+  <meta name="web:section" content="RxJS">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="operators.html|The operator index">
+  <meta name="web:next" content="subscriptions.html|Subscriptions">
+  <meta name="web:versions" content="RxJS 7.8.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+  <script defer src="../assets/js/viz/marbles.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">RxJS</p>
+  <h1>Flattening</h1>
+  <p class="lede">Four operators, one difference: what happens when a new value
+  arrives while the previous one's work is still running.</p>
+
+  <div class="at-glance">
+    <span class="label">The whole decision</span>
+    <ul>
+      <li><strong>switchMap</strong> — cancel the old one. <em>Only the latest matters.</em></li>
+      <li><strong>mergeMap</strong> — run them all at once. <em>They are independent.</em></li>
+      <li><strong>concatMap</strong> — queue them, strictly in order. <em>Order matters.</em></li>
+      <li><strong>exhaustMap</strong> — ignore the new one. <em>Don't start again while busy.</em></li>
+    </ul>
+  </div>
+
+  <h2>Try it</h2>
+  <p>The same source, run through each operator. Click the source line to add
+  values and see how the four diverge — the overlap is where the whole
+  difference lives.</p>
+
+  <div class="demo" id="marbles"></div>
+
+  <h2>Which one</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You are doing…</th><th>Use</th><th>Because</th></tr></thead>
+      <tbody>
+        <tr><td>Type-ahead search</td><td><code>switchMap</code></td><td>Results for an abandoned query are worthless, and might arrive last</td></tr>
+        <tr><td>Loading data for the selected record</td><td><code>switchMap</code></td><td>Same — the previous record's data is no longer wanted</td></tr>
+        <tr><td>Saving a form on submit</td><td><code>exhaustMap</code></td><td>A double-click must not submit twice</td></tr>
+        <tr><td>"Load more" on a paginated list</td><td><code>exhaustMap</code></td><td>Impatient clicking should not request page 2 three times</td></tr>
+        <tr><td>Sending analytics events</td><td><code>mergeMap</code></td><td>Independent, order-irrelevant, throw them all at the network</td></tr>
+        <tr><td>Uploading several selected files</td><td><code>mergeMap</code></td><td>Parallel is the point — cap it with the concurrency argument</td></tr>
+        <tr><td>A queue of edits to the same record</td><td><code>concatMap</code></td><td>Reordered writes corrupt the record</td></tr>
+        <tr><td>Anything writing to a log or a stream</td><td><code>concatMap</code></td><td>Order is the contract</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">When in doubt, switchMap</span>
+    It is the right answer for the majority of UI cases and its failure mode —
+    cancelling work you wanted — is loud and obvious. <code>mergeMap</code>'s
+    failure mode is a race condition that appears only under load, on someone
+    else's slower connection. Reach for <code>mergeMap</code> deliberately, not
+    by default.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Never switchMap a write</span>
+    <code>switchMap</code> cancels the in-flight request. On a POST or PATCH that
+    means the browser aborts the connection — but the server may well have
+    already processed it. You get a cancelled request, no confirmation, and a
+    change that did happen. For writes use <code>concatMap</code> (ordered) or
+    <code>exhaustMap</code> (ignore duplicates).
+  </div>
+
+  <h2>The shape</h2>
+
+<pre><code class="language-typescript">// type-ahead: cancel superseded searches
+this.searchTerm$.pipe(
+  debounceTime(300),
+  distinctUntilChanged(),
+  switchMap(term =&gt; this.api.search(term)),
+  takeUntilDestroyed(),
+).subscribe(results =&gt; this.results.set(results));
+
+// submit: ignore clicks while the save is in flight
+this.submit$.pipe(
+  exhaustMap(() =&gt; this.api.save(this.form().value())),
+  takeUntilDestroyed(),
+).subscribe();
+
+// uploads: parallel, but no more than three at a time
+from(files).pipe(
+  mergeMap(file =&gt; this.api.upload(file), 3),
+).subscribe();
+
+// edits: strictly in order
+this.edits$.pipe(
+  concatMap(edit =&gt; this.api.patch(edit)),
+).subscribe();</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="rx.flatmap-rename"></div>
+
+  <h2>The nesting mistake</h2>
+  <p>Every flattening operator exists to replace one anti-pattern: subscribing
+  inside a subscribe. It is worth seeing plainly, because it is still the most
+  common RxJS bug in real code.</p>
+
+<pre><code class="language-typescript">// wrong — nothing cancels, nothing is ordered, and the inner
+// subscription is never cleaned up
+this.route.paramMap.subscribe(params =&gt; {
+  this.api.load(params.get('id')).subscribe(user =&gt; {
+    this.user.set(user);
+  });
+});
+
+// right
+this.route.paramMap.pipe(
+  switchMap(params =&gt; this.api.load(params.get('id'))),
+  takeUntilDestroyed(),
+).subscribe(user =&gt; this.user.set(user));</code></pre>
+
+  <p>The nested version has three defects at once: navigating quickly leaves
+  requests racing, the inner subscription outlives the component, and the outer
+  <code>takeUntilDestroyed</code> does not reach the inner one. The flattened
+  version fixes all three because the inner stream is part of the chain.</p>
+
+  <h2>The rest of the family</h2>
+  <p>Each flattening operator has siblings that take the same strategy but
+  produce something other than the inner values:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Strategy</th><th>…Map</th><th>…All</th><th>…With</th></tr></thead>
+      <tbody>
+        <tr><td>switch</td><td><code>switchMap</code></td><td><code>switchAll</code></td><td>—</td></tr>
+        <tr><td>merge</td><td><code>mergeMap</code></td><td><code>mergeAll</code></td><td><code>mergeWith</code></td></tr>
+        <tr><td>concat</td><td><code>concatMap</code></td><td><code>concatAll</code></td><td><code>concatWith</code></td></tr>
+        <tr><td>exhaust</td><td><code>exhaustMap</code></td><td><code>exhaustAll</code></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The <code>…All</code> forms flatten a stream that already emits
+  Observables, rather than mapping to one. You will meet them rarely; when you
+  do, the strategy names mean exactly the same thing.</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://rxjs.dev/guide/higher-order-observables" data-doc="rx.guide.higher-order"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/api/operators/switchMap" data-doc="rx.api.switchMap"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/api" data-doc="rx.api"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

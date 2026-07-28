@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creating streams — Web Dev Reference</title>
+
+  <meta name="web:section" content="RxJS">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="overview.html|RxJS in 2026">
+  <meta name="web:next" content="operators.html|The operator index">
+  <meta name="web:versions" content="RxJS 7.8.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">RxJS</p>
+  <h1>Creating streams</h1>
+  <p class="lede">Where an Observable comes from, and the two Subject decisions
+  that trip people up.</p>
+
+  <h2>Creation functions</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Function</th><th>Emits</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>of(1, 2, 3)</code></td><td>Each argument, then completes</td><td>Constants, test fixtures, a synchronous default</td></tr>
+        <tr><td><code>from([1,2,3])</code></td><td>Each item of an array, promise, iterable or another Observable</td><td>Adapting anything iterable or thenable</td></tr>
+        <tr><td><code>fromEvent(el, 'click')</code></td><td>Every event</td><td>DOM events — hot, never completes</td></tr>
+        <tr><td><code>interval(1000)</code></td><td>0, 1, 2… forever</td><td>Polling. Remember it never completes</td></tr>
+        <tr><td><code>timer(1000)</code></td><td>0 after a delay; optionally repeating</td><td>Delays, and polling with an initial wait</td></tr>
+        <tr><td><code>defer(() =&gt; …)</code></td><td>Whatever the factory returns, created per subscriber</td><td>Deferring work that would otherwise run at pipe-construction time</td></tr>
+        <tr><td><code>EMPTY</code></td><td>Nothing, then completes</td><td>A no-op branch inside <code>switchMap</code></td></tr>
+        <tr><td><code>NEVER</code></td><td>Nothing, ever</td><td>Tests, and "do not proceed"</td></tr>
+        <tr><td><code>throwError(() =&gt; err)</code></td><td>An error</td><td>Error paths. Note the factory — passing the error directly is deprecated</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">defer is the fix for "it ran too early"</span>
+    Anything you write inside a <code>pipe()</code> argument runs when the pipe
+    is <em>built</em>, not when it is subscribed. <code>of(Date.now())</code>
+    captures the time once, at construction.
+    <code>defer(() =&gt; of(Date.now()))</code> evaluates per subscription.
+    Same trap as the removed <code>switchMapTo</code>.
+  </div>
+
+  <h2>Subjects</h2>
+  <p>A Subject is both an Observable and an observer: you can
+  <code>next()</code> values into it by hand. All four are hot. The only
+  difference is what a <em>late</em> subscriber sees.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Type</th><th>A subscriber joining late gets</th><th>Typical use</th></tr></thead>
+      <tbody>
+        <tr><td><code>Subject</code></td><td>Nothing — only future values</td><td>Events: "the user clicked save"</td></tr>
+        <tr><td><code>BehaviorSubject</code></td><td>The current value immediately, then future ones</td><td>State — though this is what signals replaced</td></tr>
+        <tr><td><code>ReplaySubject(n)</code></td><td>The last n values, then future ones</td><td>A short history: recent log lines, undo</td></tr>
+        <tr><td><code>AsyncSubject</code></td><td>Only the final value, and only on completion</td><td>Rare. A one-shot result cached for later subscribers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">If you are reaching for BehaviorSubject, reach for a signal</span>
+    "The current value, readable synchronously, that notifies on change" is the
+    exact definition of a signal, and a signal does it without the async pipe,
+    without a subscription, and without a separate read for
+    <code>.value</code>. Keep <code>BehaviorSubject</code> for the case where
+    you genuinely need the value <em>as a stream</em> to pipe time-based
+    operators onto — and even then, consider <code>toObservable()</code> on a
+    signal instead.
+  </div>
+
+  <h2>Making a cold stream hot</h2>
+  <p>Each subscriber to a cold Observable triggers its own run. When that is
+  wrong — two components both wanting the same HTTP response — you share it.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Operator</th><th>Behaviour</th></tr></thead>
+      <tbody>
+        <tr><td><code>share()</code></td><td>One shared run while at least one subscriber is active; restarts when it drops to zero</td></tr>
+        <tr><td><code>shareReplay({ bufferSize: 1, refCount: true })</code></td><td>Shares and replays the last value to newcomers; tears down when everyone leaves</td></tr>
+        <tr><td><code>shareReplay(1)</code></td><td>The same, but <strong>never tears down</strong> — see the gotcha</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">shareReplay(1) leaks by default</span>
+    Without <code>refCount: true</code> the underlying subscription is kept
+    alive forever, even after every subscriber has gone. On an
+    <code>interval</code> or a websocket that is a genuine leak that survives
+    component destruction. Prefer the object form:
+    <code>shareReplay({ bufferSize: 1, refCount: true })</code>.
+  </div>
+
+  <h2>Adapting other things</h2>
+
+<pre><code class="language-typescript">// a promise
+from(fetch('/api/thing'))
+
+// a signal — needs an injection context
+toObservable(this.searchTerm)
+
+// a callback API
+new Observable&lt;Position&gt;(subscriber =&gt; {
+  const id = navigator.geolocation.watchPosition(
+    pos =&gt; subscriber.next(pos),
+    err =&gt; subscriber.error(err),
+  );
+  // the return value is the teardown — this is what makes it cancellable
+  return () =&gt; navigator.geolocation.clearWatch(id);
+});</code></pre>
+
+  <p>That teardown function is the part people forget. It runs on unsubscribe,
+  on complete and on error, and returning it is what makes an Observable
+  genuinely cancellable rather than merely ignorable.</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://rxjs.dev/api" data-doc="rx.api"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/guide/operators" data-doc="rx.guide.operators"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

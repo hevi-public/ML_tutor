@@ -358,6 +358,62 @@
       "docs": ["rx.breaking"]
     },
     {
+      "id": "rx.pipeable-operators",
+      "tool": "rxjs", "topic": "operators", "page": "02-rxjs/overview.html",
+      "title": "Applying operators",
+      "now": "source.pipe(map(…), filter(…))",
+      "was": "source.map(…).filter(…), after importing 'rxjs/add/operator/map'",
+      "since": "6", "deprecated": "5", "removed": "6",
+      "why": "Patching operators onto Observable.prototype meant one import anywhere in the application changed the type for everyone — and made the library impossible to tree-shake, so you shipped all of RxJS whether you used three operators or ninety. Pipeable operators are plain functions: importable, tree-shakeable, and testable on their own.",
+      "migration": null,
+      "code": {
+        "now": "import { map, filter } from 'rxjs/operators';\n\nsource.pipe(\n  filter(x => x > 0),\n  map(x => x * 2),\n);",
+        "was": "import 'rxjs/add/operator/map';\nimport 'rxjs/add/operator/filter';\n\nsource\n  .filter(x => x > 0)\n  .map(x => x * 2);"
+      },
+      "docs": ["rx.guide.operators", "rx.breaking"]
+    },
+    {
+      "id": "rx.flatmap-rename",
+      "tool": "rxjs", "topic": "operators", "page": "02-rxjs/flattening.html",
+      "title": "Flattening with unbounded concurrency",
+      "now": "mergeMap",
+      "was": "flatMap",
+      "since": "6", "deprecated": "6", "removed": "8",
+      "why": "Two names for one operator. `mergeMap` won because it names what it does — it merges the inner streams — and matches the `merge` family. `flatMap` remains as an alias and is scheduled for removal in v8.",
+      "migration": null,
+      "docs": ["rx.deprecations"]
+    },
+    {
+      "id": "rx.to-operators",
+      "tool": "rxjs", "topic": "operators", "page": "02-rxjs/operators.html",
+      "title": "Mapping to a constant",
+      "now": "map(() => value) and switchMap(() => obs)",
+      "was": "mapTo(value) and switchMapTo(obs)",
+      "since": "7", "deprecated": "7", "removed": "9",
+      "why": "The *To variants saved a few characters and doubled the API surface, and people reached for them without noticing that the argument is evaluated eagerly — switchMapTo(this.load()) calls load() once, at pipe-construction time, not per emission. Removing them removes that trap.",
+      "migration": null,
+      "code": {
+        "now": "clicks.pipe(map(() => 'clicked'));\nclicks.pipe(switchMap(() => this.load()));",
+        "was": "clicks.pipe(mapTo('clicked'));\nclicks.pipe(switchMapTo(this.load())); // load() ran once, up front"
+      },
+      "docs": ["rx.deprecations"]
+    },
+    {
+      "id": "rx.to-signal",
+      "tool": "angular", "topic": "rxjs-interop", "page": "02-rxjs/signals-vs-rxjs.html",
+      "title": "Reading a stream in a template",
+      "now": "toSignal(obs$) — read it like any other signal",
+      "was": "The async pipe, or a manual subscribe into a field",
+      "since": "16", "deprecated": null, "removed": null,
+      "why": "The async pipe works, but a value read three times in a template means three subscriptions unless you remember to share, and it cannot be read from component code at all. toSignal subscribes once, unsubscribes with the injection context, and gives you a plain signal usable everywhere — including inside computed().",
+      "migration": null,
+      "code": {
+        "now": "user = toSignal(this.user$, { initialValue: null });\n\n// template: {{ user()?.name }}\n// and in code: this.user()?.name",
+        "was": "user$ = this.service.user$;\n\n// template: {{ (user$ | async)?.name }}\n// in code: not available without subscribing again"
+      },
+      "docs": ["ng.guide.signals"]
+    },
+    {
       "id": "vi.projects",
       "tool": "vitest", "topic": "config", "page": "03-vitest/setup.html",
       "title": "Configuring a multi-package test setup",

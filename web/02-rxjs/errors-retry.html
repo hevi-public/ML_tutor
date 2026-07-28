@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Errors &amp; retry — Web Dev Reference</title>
+
+  <meta name="web:section" content="RxJS">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="subscriptions.html|Subscriptions & cleanup">
+  <meta name="web:next" content="signals-vs-rxjs.html|Signals or RxJS?">
+  <meta name="web:versions" content="RxJS 7.8.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">RxJS</p>
+  <h1>Errors &amp; retry</h1>
+  <p class="lede">One rule explains most error bugs in RxJS: an error kills the
+  stream. Not the value — the stream.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li>An error <strong>terminates</strong> the Observable. No further values,
+      ever, from that subscription.</li>
+      <li><code>catchError</code> must return a <em>replacement</em> Observable —
+      whatever you return becomes the rest of the stream.</li>
+      <li><strong>Where</strong> you place <code>catchError</code> decides
+      whether the outer stream survives.</li>
+      <li><code>retry({ count, delay })</code> replaced
+      <code>retryWhen</code>.</li>
+    </ul>
+  </div>
+
+  <h2>The placement rule</h2>
+  <p>This is the single most useful thing on this page. Consider a search box
+  whose requests sometimes fail:</p>
+
+<pre><code class="language-typescript">// WRONG — one failed request kills the search box for good
+this.term$.pipe(
+  switchMap(t =&gt; this.api.search(t)),
+  catchError(() =&gt; of([])),          // catches, but the outer stream is done
+).subscribe(r =&gt; this.results.set(r));
+
+// RIGHT — the error is contained inside the inner stream
+this.term$.pipe(
+  switchMap(t =&gt; this.api.search(t).pipe(
+    catchError(() =&gt; of([])),        // only this request's error is handled
+  )),
+).subscribe(r =&gt; this.results.set(r));</code></pre>
+
+  <p>In the first version the error propagates out of <code>switchMap</code> into
+  the outer stream, which terminates it — <code>term$</code> is dead, and typing
+  produces nothing forever. In the second, the error never escapes the inner
+  Observable, so the outer stream never sees it.</p>
+
+  <div class="gotcha">
+    <span class="label">The rule, stated once</span>
+    Put <code>catchError</code> <strong>inside</strong> the flattening operator
+    when the outer stream should survive. Put it at the end only when the whole
+    pipeline finishing is genuinely acceptable — a one-shot load, for instance.
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="rx.retry-config">
+    <p class="change-note"><code>retryWhen</code>'s notifier was subtle in a way
+    that produced silent failures: completing it stopped retrying <em>and</em>
+    completed the result stream without an error, so a bug looked like success.
+    The config object cannot express that mistake.</p>
+  </div>
+
+  <h2>Retrying properly</h2>
+
+<pre><code class="language-typescript">// fixed delay, at most three attempts
+source$.pipe(retry({ count: 3, delay: 1000 }))
+
+// exponential backoff, and only for errors worth retrying
+source$.pipe(
+  retry({
+    count: 4,
+    delay: (error, retryCount) =&gt; {
+      // a 4xx will not succeed on retry — rethrow immediately
+      if (error.status &gt;= 400 &amp;&amp; error.status &lt; 500) throw error;
+      return timer(Math.min(1000 * 2 ** retryCount, 15000));
+    },
+  }),
+)</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Do not retry non-idempotent writes</span>
+    Retrying a POST that timed out can create the record twice — the request may
+    have succeeded with only the response lost. Retry reads freely; retry writes
+    only when the endpoint is idempotent or you are sending an idempotency key.
+  </div>
+
+  <h2>Where errors actually go</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Situation</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr><td>Error, and the subscriber has an <code>error</code> callback</td><td>That callback runs; the stream terminates</td></tr>
+        <tr><td>Error, and no <code>error</code> callback</td><td>It is rethrown as an unhandled error — reaching Angular's <code>ErrorHandler</code>, not a <code>try/catch</code> around the subscribe</td></tr>
+        <tr><td>Throw inside a <code>map</code> or <code>filter</code></td><td>Becomes an error notification on the stream</td></tr>
+        <tr><td>Throw inside a <code>subscribe</code> next callback</td><td>Not catchable by <code>catchError</code> — it is downstream of the pipeline</td></tr>
+        <tr><td>Error inside a <code>tap</code> next handler</td><td>Becomes a stream error, same as <code>map</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">try/catch does not work here</span>
+    Wrapping <code>subscribe()</code> in <code>try/catch</code> catches nothing:
+    by the time values flow, the <code>try</code> block has long since exited.
+    The error callback, or <code>catchError</code>, are the only handlers.
+  </div>
+
+  <h2>The toolkit</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Operator</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>catchError(fn)</code></td><td>Replaces the stream from the error onward with whatever you return</td></tr>
+        <tr><td><code>retry({count, delay})</code></td><td>Resubscribes to the source on error</td></tr>
+        <tr><td><code>timeout(ms)</code></td><td>Errors if no value arrives in time</td></tr>
+        <tr><td><code>finalize(fn)</code></td><td>Runs on complete, error <em>and</em> unsubscribe — the right place to stop a spinner</td></tr>
+        <tr><td><code>throwError(() =&gt; e)</code></td><td>An Observable that errors immediately. Note the factory</td></tr>
+        <tr><td><code>EMPTY</code></td><td>Completes without emitting — a common <code>catchError</code> return when there is nothing to show</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>catchError return values</h2>
+
+<pre><code class="language-typescript">// a fallback value
+catchError(() =&gt; of([]))
+
+// nothing at all — the stream completes quietly
+catchError(() =&gt; EMPTY)
+
+// handle, then rethrow for someone upstream
+catchError(err =&gt; {
+  this.log.error(err);
+  return throwError(() =&gt; err);
+})
+
+// a different source entirely
+catchError(() =&gt; this.api.searchFromCache(term))</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Returning EMPTY hides failures</span>
+    It is the quickest way to make an error go away, and it makes the UI show
+    "no results" for what was actually a server outage. Prefer surfacing an
+    error state to the user; reserve <code>EMPTY</code> for cases where nothing
+    genuinely is the correct outcome.
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://rxjs.dev/api" data-doc="rx.api"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/api/deprecations" data-doc="rx.deprecations"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/deprecations/breaking-changes" data-doc="rx.breaking"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

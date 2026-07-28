@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subscriptions &amp; cleanup — Web Dev Reference</title>
+
+  <meta name="web:section" content="RxJS">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="flattening.html|Flattening">
+  <meta name="web:next" content="errors-retry.html|Errors & retry">
+  <meta name="web:versions" content="RxJS 7.8.2 · Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">RxJS</p>
+  <h1>Subscriptions &amp; cleanup</h1>
+  <p class="lede">The leak that made <code>destroy$</code> ubiquitous, and the
+  three modern ways not to have it.</p>
+
+  <div class="at-glance">
+    <span class="label">In order of preference</span>
+    <ul>
+      <li><strong>Don't subscribe.</strong> <code>toSignal()</code> or the
+      <code>async</code> pipe, and Angular manages the lifetime.</li>
+      <li><strong><code>takeUntilDestroyed()</code></strong> when you genuinely
+      need a subscription — no Subject, no lifecycle hook.</li>
+      <li><strong>An operator that completes</strong> — <code>take(1)</code>,
+      <code>first()</code>, <code>forkJoin</code> — needs no cleanup at all.</li>
+      <li>Collecting into a <code>Subscription</code> and unsubscribing in
+      <code>ngOnDestroy</code> still works; it is just more code.</li>
+    </ul>
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.subscription.take-until-destroyed">
+    <p class="change-note">Two details that matter in practice.
+    <strong>Position:</strong> <code>takeUntilDestroyed()</code> should be the
+    last operator before <code>subscribe</code>, so everything upstream is torn
+    down. <strong>Context:</strong> called with no argument it needs an
+    injection context — a field initialiser or constructor. Outside one, pass a
+    <code>DestroyRef</code> explicitly:
+    <code>takeUntilDestroyed(this.destroyRef)</code>.</p>
+  </div>
+
+  <div class="change" data-change="rx.to-signal"></div>
+
+  <h2>Which streams actually leak</h2>
+  <p>Not all of them, and knowing which saves a lot of defensive code. A
+  subscription is cleaned up automatically when the source <strong>completes</strong>.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Source</th><th>Completes?</th><th>Needs cleanup?</th></tr></thead>
+      <tbody>
+        <tr><td><code>http.get()</code></td><td>Yes, after one value</td><td>No — though you may still want to cancel it</td></tr>
+        <tr><td><code>interval()</code> / <code>timer()</code> repeating</td><td>Never</td><td><strong>Yes</strong></td></tr>
+        <tr><td><code>fromEvent()</code></td><td>Never</td><td><strong>Yes</strong></td></tr>
+        <tr><td>A <code>Subject</code> you own</td><td>Only if you complete it</td><td><strong>Yes</strong></td></tr>
+        <tr><td><code>route.paramMap</code></td><td>Never</td><td><strong>Yes</strong></td></tr>
+        <tr><td><code>form.valueChanges</code></td><td>Never</td><td><strong>Yes</strong></td></tr>
+        <tr><td>Anything with <code>take(1)</code> / <code>first()</code></td><td>Yes</td><td>No</td></tr>
+        <tr><td><code>toSignal()</code> / <code>async</code> pipe</td><td>—</td><td>No — Angular handles it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">An HTTP subscription is not a leak, but it is a bug</span>
+    It completes, so nothing leaks. What can still go wrong is the callback
+    running after the component is gone — setting a field on a destroyed
+    component, or navigating based on a response the user no longer cares
+    about. <code>takeUntilDestroyed()</code> cancels the request outright, which
+    is usually what you want.
+  </div>
+
+  <h2>toSignal in practice</h2>
+
+<pre><code class="language-typescript">import { toSignal, toObservable } from '@angular/core/rxjs-interop';
+
+export class SearchPage {
+  term = signal('');
+
+  // signal → observable → time-based operators → back to a signal
+  results = toSignal(
+    toObservable(this.term).pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(t =&gt; t ? this.api.search(t) : of([])),
+    ),
+    { initialValue: [] },
+  );
+}</code></pre>
+
+  <p>That round trip is the idiomatic 2026 shape: hold state in signals, drop
+  into RxJS for the part that is genuinely about time, come back to a signal for
+  the template.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Option</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>{ initialValue: x }</code></td><td>The type is <code>Signal&lt;T&gt;</code> — no <code>undefined</code></td></tr>
+        <tr><td>no options</td><td>The type is <code>Signal&lt;T | undefined&gt;</code> until the first emission</td></tr>
+        <tr><td><code>{ requireSync: true }</code></td><td>Throws if the source does not emit synchronously. For a <code>BehaviorSubject</code></td></tr>
+        <tr><td><code>{ rejectErrors: true }</code></td><td>Errors are rethrown rather than surfacing on read</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The old pattern, for reference</h2>
+
+  <details class="legacy">
+    <summary>Before v16 — destroy$, and the two ways it went wrong</summary>
+    <div class="layer-body">
+<pre><code class="language-typescript">export class Widget implements OnInit, OnDestroy {
+  private destroy$ = new Subject&lt;void&gt;();
+
+  ngOnInit() {
+    this.service.data$.pipe(takeUntil(this.destroy$)).subscribe(/* … */);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}</code></pre>
+      <p>Two failure modes, both common enough to be worth naming:</p>
+      <p><strong>Forgetting <code>complete()</code>.</strong> Calling only
+      <code>next()</code> stops the subscription but leaves the Subject itself
+      alive.</p>
+      <p><strong>Putting <code>takeUntil</code> in the wrong place.</strong> It
+      must be last. Anything after it — a <code>switchMap</code>, a
+      <code>shareReplay</code> — keeps its own subscription upstream, and that
+      one is never torn down. This is subtle enough that lint rules exist purely
+      to enforce operator order.</p>
+      <p><code>takeUntilDestroyed()</code> removes both mistakes by removing the
+      Subject.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals" data-doc="ng.guide.signals"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/api" data-doc="rx.api"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

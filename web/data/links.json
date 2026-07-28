@@ -144,6 +144,26 @@
       "url": "https://rxjs.dev", "title": "RxJS", "tool": "rxjs", "kind": "guide",
       "tags": ["rxjs", "observable", "home"], "verified": "search"
     },
+    "rx.api": {
+      "url": "https://rxjs.dev/api", "title": "RxJS API list", "tool": "rxjs", "kind": "api",
+      "tags": ["api", "operator list", "all operators", "index"], "verified": "search"
+    },
+    "rx.deprecations": {
+      "url": "https://rxjs.dev/api/deprecations", "title": "RxJS deprecations", "tool": "rxjs", "kind": "migration",
+      "tags": ["deprecated", "removed", "toPromise", "retryWhen", "mapTo", "switchMapTo", "flatMap"], "verified": "search"
+    },
+    "rx.guide.operators": {
+      "url": "https://rxjs.dev/guide/operators", "title": "Operators guide", "tool": "rxjs", "kind": "guide",
+      "tags": ["operators", "pipe", "pipeable", "creation operators"], "verified": "search"
+    },
+    "rx.guide.higher-order": {
+      "url": "https://rxjs.dev/guide/higher-order-observables", "title": "Higher-order Observables", "tool": "rxjs", "kind": "guide",
+      "tags": ["higher order", "flattening", "observable of observable", "switchMap", "mergeMap"], "verified": "search"
+    },
+    "rx.api.switchMap": {
+      "url": "https://rxjs.dev/api/operators/switchMap", "title": "switchMap", "tool": "rxjs", "kind": "api",
+      "tags": ["switchMap", "cancel previous", "flattening"], "verified": "search"
+    },
     "rx.breaking": {
       "url": "https://rxjs.dev/deprecations/breaking-changes", "title": "RxJS breaking changes", "tool": "rxjs", "kind": "migration",
       "tags": ["breaking changes", "deprecations", "toPromise", "retryWhen", "what was removed"], "verified": "search"

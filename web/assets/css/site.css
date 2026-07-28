@@ -411,6 +411,31 @@ table.cheat code {
 .sg-log li { margin: 0.15rem 0; }
 .sg-log li:first-child { color: var(--text); }
 
+/* ---------- Marble player ---------- */
+
+#marbles svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  margin-top: 0.8rem;
+}
+#marbles .mb-ops { margin-bottom: 0; }
+
+.mb-line { stroke: var(--border); stroke-width: 2; }
+.mb-line.inner { stroke-dasharray: 3 3; }
+.mb-line.output { stroke: var(--text-soft); stroke-width: 2.5; }
+.mb-arrow { fill: var(--border); }
+.mb-wait { stroke: var(--text-soft); stroke-width: 6; opacity: 0.25; }
+.mb-cancel { stroke: var(--bad); stroke-width: 2.5; fill: none; }
+
+.mb-axis-label { fill: var(--text-soft); font-size: 9px; }
+.mb-marble-text { fill: #fff; font-size: 10px; font-weight: 700; text-anchor: middle; }
+.mb-marble.cancelled { opacity: 0.25; }
+.mb-note { fill: var(--text-soft); font-size: 10px; font-style: italic; }
+.mb-note.ignored { fill: var(--bad); }
+
 /* ---------- Change-detection visualiser ---------- */
 
 #cd-viz svg {
