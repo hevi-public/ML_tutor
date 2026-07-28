@@ -35,6 +35,13 @@ jobs:
         run: |
           npm run build:index
           npm run build:bass
+          npm run build:web
+
+      # Referential integrity only (--offline): every data-doc id resolves and
+      # every documentation href matches the registry. The network passes are
+      # deliberately excluded — a docs site being down must not block a deploy.
+      - name: Check documentation link registry
+        run: npm run check:links -- --offline
 
       # Stage the site. node_modules is gitignored but the pages reference it
       # by relative path, so copy exactly the vendored files the pages use.

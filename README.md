@@ -1,9 +1,9 @@
-# ML Tutor & Bass Tutor
+# ML Tutor, Bass Tutor & Web Dev Reference
 
-Two interactive, novice-to-expert courses on one static site — plain HTML/CSS/JS,
-no build step, everything runs in your browser. Plain language first: every
-symbol is named, every concept opens with an everyday analogy before the jargon
-arrives.
+Two interactive, novice-to-expert courses and one working developer's reference
+on a single static site — plain HTML/CSS/JS, no build step, everything runs in
+your browser. Plain language first: every symbol is named, every concept opens
+with an everyday analogy before the jargon arrives.
 
 - **[ML Tutor](index.html)** (site root) — machine learning: math foundations →
   classical models → neural networks → LLMs & diffusion, with models that train
@@ -15,6 +15,12 @@ arrives.
   topic concept-first, in full layered depth). Both share a playable fretboard,
   notation that plays itself, practice exercises with a log, ear training, a
   groove machine, and a microphone tuner.
+- **[Web Dev Reference](web/index.html)** (`web/`) — Angular, RxJS, Vitest and
+  pnpm, in a reference shape rather than a course one: what the current best
+  practice is, what it replaced, why it changed, and the official docs one click
+  away. Every versioned claim is a record in one ledger
+  (`web/data/changes.json`), so the pages, the deprecation list and the timeline
+  cannot drift apart.
 
 ## Run it locally
 
@@ -22,6 +28,7 @@ arrives.
 npm install
 npm run dev        # serves on http://localhost:8010 (ML tutor)
 npm run dev:bass   # same server, opens the bass tutor
+npm run dev:web    # same server, opens the web dev reference
 ```
 
 Opening `index.html` directly from disk mostly works too, but pages that
@@ -76,16 +83,34 @@ fretboard). Labs: fretboard trainer, ear trainer, groove machine (play-along
 band with style presets), microphone tuner, routine builder. Its own glossary
 (90 terms), music-symbol reference, concept map, search, and flashcards.
 
-Both sites keep progress in `localStorage` under separate namespaces
-(`ml-tutor:*` / `bass-tutor:*`) — nothing leaves your browser.
+**Web Dev Reference** — a reference track, not a course, so the page shape is
+different: *at a glance → do it this way now → what it replaced and why →
+gotchas → live demo → legacy panel → official docs*. Four sections (Angular,
+RxJS, Vitest, pnpm) plus cross-cutting views generated from the change ledger:
+a deprecation list, a version timeline, a migration-schematic index, and a
+searchable index of every official doc it links to. Search covers three kinds of
+result at once — pages, change records (so searching a retired API like
+`toPromise` finds its replacement), and the official docs.
+
+All three sites keep state in `localStorage` under separate namespaces
+(`ml-tutor:*` / `bass-tutor:*` / `web-ref:*`) — nothing leaves your browser.
 
 ## Maintenance scripts
 
 ```bash
 npm run build:index   # rebuild data/search-index.json (ML) after editing pages
 npm run build:bass    # rebuild bass/data/search-index.json + exercise-index.json
+npm run build:web     # rebuild web/data/search-index.json (pages + changes + docs)
+npm run check:links   # validate web/data/links.json — see below
 npm run fetch:mnist   # regenerate data/datasets/mnist-mini.json (already committed)
 ```
+
+`check:links` runs three passes over the Web Dev Reference's documentation
+links: referential integrity (offline — every `data-doc` id resolves, and every
+documentation `href` matches what the registry says), liveness, and anchor
+existence for `#fragment` URLs. Add `-- --offline` to skip the network passes;
+that is the form CI runs, since a documentation site being unreachable should
+never block a deploy.
 
 See `PLAN.md` (ML) and `bass/PLAN.md` (bass) for architecture and the
 page-template contracts (`assets/page-template.html`,

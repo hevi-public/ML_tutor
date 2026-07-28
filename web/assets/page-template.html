@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!-- Web Dev Reference page template. Copy into a section folder (e.g. 01-angular/)
+     and fill in. This is a REFERENCE page, not a tutor page — the flow is:
+       At a glance → Do it this way now → What it replaced → Gotchas
+       → Live demo (optional) → Legacy panel → Official docs
+     Rules:
+       · Every versioned claim is a record in web/data/changes.json, embedded here
+         with <div class="change" data-change="<id>">. Never restate a version
+         number in prose — the badge comes from the ledger.
+       · Every official doc link carries data-doc="<id>" from web/data/links.json,
+         and its href must match. `npm run check:links` enforces both.
+       · The web:versions meta stamps the page with what it was checked against. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAGE TITLE — Web Dev Reference</title>
+
+  <!-- Page contract, read by site.js -->
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="PREV.html|PREV TITLE">
+  <meta name="web:next" content="NEXT.html|NEXT TITLE">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+  <!-- <script defer src="../assets/js/viz/YOUR-DEMO.js"></script> -->
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>PAGE TITLE</h1>
+  <p class="lede">One sentence: what this page answers.</p>
+
+  <!-- For the reader who already knows the topic and wants only the delta. -->
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Short claim.</strong> The qualifier that makes it true.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-typescript">// the current, recommended form</code></pre>
+
+  <h2>What it replaced</h2>
+  <!-- changes.js renders the head (title, tool tag, version badges), the
+       now/was sides, the "why", the migration command and the doc chips from
+       the ledger record. Prose written inside .change-note is kept. -->
+  <div class="change" data-change="LEDGER-RECORD-ID">
+    <p class="change-note">Optional extra context that belongs to this page
+    rather than to the ledger record.</p>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha</span>
+    The thing that bites people, stated plainly.
+  </div>
+
+  <h2>Try it</h2>
+  <div class="demo" id="YOUR-demo">
+    <!-- canvas / controls — see 02-rxjs/operators.html for the marble player -->
+  </div>
+
+  <details class="legacy">
+    <summary>Before v14 — for reading old code</summary>
+    <div class="layer-body">
+      <p>The NgModule-era way, so you can recognise it in an existing codebase.
+      Not a recommendation.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals" data-doc="ng.guide.signals">
+      <span class="kind">guide</span> Signals in depth</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

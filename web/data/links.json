@@ -1,0 +1,112 @@
+{
+  "_comment": "The single registry of official documentation links. Pages reference these by id (data-doc=\"ng.guide.signals\") and never hard-code a URL — scripts/check-links.js enforces that. 'verified' marks how the URL was grounded: 'search' = it came back from a live web search this session; 'unverified' = it follows the site's documented URL pattern but has not been confirmed reachable from this container (the network policy blocks these hosts). Run `npm run check:links` locally to resolve every unverified entry.",
+  "sites": {
+    "angular": { "name": "angular.dev", "base": "https://angular.dev" },
+    "rxjs": { "name": "rxjs.dev", "base": "https://rxjs.dev" },
+    "vitest": { "name": "vitest.dev", "base": "https://vitest.dev" },
+    "pnpm": { "name": "pnpm.io", "base": "https://pnpm.io" },
+    "typescript": { "name": "typescriptlang.org", "base": "https://www.typescriptlang.org" }
+  },
+  "links": {
+    "ng.home": {
+      "url": "https://angular.dev", "title": "Angular", "tool": "angular", "kind": "guide",
+      "tags": ["angular", "home", "docs"], "verified": "search"
+    },
+    "ng.releases": {
+      "url": "https://angular.dev/reference/releases", "title": "Versioning and releases", "tool": "angular", "kind": "reference",
+      "tags": ["release cadence", "lts", "support window", "when does my version expire"], "verified": "search"
+    },
+    "ng.versions": {
+      "url": "https://angular.dev/reference/versions", "title": "Version compatibility", "tool": "angular", "kind": "reference",
+      "tags": ["compatibility", "typescript version", "node version", "rxjs version", "which typescript"], "verified": "search"
+    },
+    "ng.roadmap": {
+      "url": "https://angular.dev/roadmap", "title": "Angular roadmap", "tool": "angular", "kind": "reference",
+      "tags": ["roadmap", "whats next", "future"], "verified": "search"
+    },
+    "ng.update": {
+      "url": "https://angular.dev/update-guide", "title": "Angular update guide", "tool": "angular", "kind": "migration",
+      "tags": ["ng update", "upgrade", "migrate", "how do i upgrade"], "verified": "unverified"
+    },
+    "ng.events.v22": {
+      "url": "https://angular.dev/events/v22", "title": "Angular v22 release", "tool": "angular", "kind": "release",
+      "tags": ["v22", "22", "whats new", "signal forms stable"], "verified": "search"
+    },
+    "ng.events.v21": {
+      "url": "https://angular.dev/events/v21", "title": "Angular v21 release", "tool": "angular", "kind": "release",
+      "tags": ["v21", "21", "vitest default", "karma deprecated"], "verified": "search"
+    },
+    "ng.essentials.signals": {
+      "url": "https://angular.dev/essentials/signals", "title": "Reactivity with signals (essentials)", "tool": "angular", "kind": "guide",
+      "tags": ["signals", "reactivity", "computed", "effect"], "verified": "search"
+    },
+    "ng.guide.signals": {
+      "url": "https://angular.dev/guide/signals", "title": "Signals in depth", "tool": "angular", "kind": "guide",
+      "tags": ["signal", "computed", "effect", "linkedSignal", "untracked"], "verified": "search"
+    },
+    "ng.guide.forms.signals": {
+      "url": "https://angular.dev/guide/forms/signals/overview", "title": "Signal Forms overview", "tool": "angular", "kind": "guide",
+      "tags": ["signal forms", "forms", "form state", "validation"], "verified": "search"
+    },
+    "ng.guide.testing.vitest": {
+      "url": "https://angular.dev/guide/testing/migrating-to-vitest", "title": "Migrating from Karma to Vitest", "tool": "angular", "kind": "migration",
+      "tags": ["karma", "jasmine", "vitest", "migrate tests", "test runner"], "verified": "search"
+    },
+    "rx.home": {
+      "url": "https://rxjs.dev", "title": "RxJS", "tool": "rxjs", "kind": "guide",
+      "tags": ["rxjs", "observable", "home"], "verified": "search"
+    },
+    "rx.breaking": {
+      "url": "https://rxjs.dev/deprecations/breaking-changes", "title": "RxJS breaking changes", "tool": "rxjs", "kind": "migration",
+      "tags": ["breaking changes", "deprecations", "toPromise", "retryWhen", "what was removed"], "verified": "search"
+    },
+    "rx.roadmap8": {
+      "url": "https://github.com/ReactiveX/rxjs/issues/6367", "title": "RxJS 7 → 8 roadmap (issue #6367)", "tool": "rxjs", "kind": "reference",
+      "tags": ["rxjs 8", "v8", "when is rxjs 8", "tc39 observable"], "verified": "search"
+    },
+    "vi.home": {
+      "url": "https://vitest.dev", "title": "Vitest", "tool": "vitest", "kind": "guide",
+      "tags": ["vitest", "home", "test runner"], "verified": "search"
+    },
+    "vi.migration": {
+      "url": "https://vitest.dev/guide/migration.html", "title": "Vitest migration guide", "tool": "vitest", "kind": "migration",
+      "tags": ["migration", "v3 to v4", "breaking changes", "upgrade vitest"], "verified": "search"
+    },
+    "vi.projects": {
+      "url": "https://vitest.dev/guide/projects", "title": "Test projects (replaces workspace)", "tool": "vitest", "kind": "guide",
+      "tags": ["projects", "workspace", "monorepo", "vitest.workspace deprecated"], "verified": "search"
+    },
+    "vi.blog.v4": {
+      "url": "https://vitest.dev/blog/vitest-4", "title": "Vitest 4.0 is out", "tool": "vitest", "kind": "release",
+      "tags": ["vitest 4", "v4", "browser mode stable", "whats new"], "verified": "search"
+    },
+    "vi.blog.v32": {
+      "url": "https://vitest.dev/blog/vitest-3-2.html", "title": "Vitest 3.2 release notes", "tool": "vitest", "kind": "release",
+      "tags": ["vitest 3.2", "workspace deprecated", "annotation api"], "verified": "search"
+    },
+    "pn.home": {
+      "url": "https://pnpm.io", "title": "pnpm", "tool": "pnpm", "kind": "guide",
+      "tags": ["pnpm", "home", "package manager"], "verified": "search"
+    },
+    "pn.migration": {
+      "url": "https://pnpm.io/migration", "title": "Migrating from v10 to v11", "tool": "pnpm", "kind": "migration",
+      "tags": ["pnpm 11", "upgrade pnpm", "config moved", "breaking changes"], "verified": "search"
+    },
+    "pn.blog.v11": {
+      "url": "https://pnpm.io/blog/releases/11.0", "title": "pnpm 11.0 release notes", "tool": "pnpm", "kind": "release",
+      "tags": ["pnpm 11", "esm", "sqlite store", "allowBuilds", "supply chain"], "verified": "search"
+    },
+    "pn.discussion.v10": {
+      "url": "https://github.com/orgs/pnpm/discussions/8945", "title": "pnpm 10 announcement discussion", "tool": "pnpm", "kind": "release",
+      "tags": ["pnpm 10", "lifecycle scripts blocked", "onlyBuiltDependencies"], "verified": "search"
+    },
+    "pn.discussion.v11": {
+      "url": "https://github.com/orgs/pnpm/discussions/11377", "title": "pnpm 11 announcement discussion", "tool": "pnpm", "kind": "release",
+      "tags": ["pnpm 11", "breaking", "discussion"], "verified": "search"
+    },
+    "ts.home": {
+      "url": "https://www.typescriptlang.org", "title": "TypeScript", "tool": "typescript", "kind": "guide",
+      "tags": ["typescript", "home"], "verified": "unverified"
+    }
+  }
+}

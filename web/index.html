@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Web Dev Reference — Angular, RxJS, Vitest, pnpm</title>
+
+  <meta name="web:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/versions.js"></script>
+</head>
+<body>
+<main class="wide">
+  <div class="hero">
+    <h1>The Angular stack, current as of today</h1>
+    <p class="lede">What the right way to do it is <em>now</em>, what it was
+    before, why it changed, and the official docs one click away. A working
+    reference, not a course — so you can stop reconstructing the answer from five
+    blog posts of unknown vintage.</p>
+  </div>
+
+  <h2>What's current</h2>
+  <div data-version-dash>
+    <div class="box">Loading version data…</div>
+  </div>
+  <p style="font-size:0.88rem;color:var(--text-soft)">
+    Release dates verified against the npm registry. Last checked
+    <strong data-checked-on>—</strong>. See the full release history and support
+    windows on <a href="versions.html">versions</a>.</p>
+
+  <div class="box plain-english">
+    <span class="label">How this reference works</span>
+    Every versioned claim on this site is one record in a single ledger
+    (<code>web/data/changes.json</code>), rendered on the page as a
+    <strong>now / was</strong> card with the version it landed in and why it
+    changed. The deprecation ledger, the timeline and the migration list are all
+    generated from those same records, so they cannot drift apart. Press
+    <code>/</code> anywhere to search — results cover the pages, the change
+    records (so searching an old API like <code>destroy$</code> finds what
+    replaced it), and the official docs themselves.
+  </div>
+
+  <h2>The reference</h2>
+  <ul class="unit-grid">
+    <li class="unit-card soon">
+      <span class="num">ANGULAR</span> <span class="badge">soon</span><br>
+      <strong>Angular 22</strong>
+      <p>Signals · templates &amp; control flow · DI · change detection and
+      zoneless · async data &amp; the resource API · signal forms · routing ·
+      SSR &amp; hydration · a11y. 12 pages.</p>
+    </li>
+    <li class="unit-card soon">
+      <span class="num">RXJS</span> <span class="badge">soon</span><br>
+      <strong>RxJS 7.8</strong>
+      <p>The operator index · flattening (switch/merge/concat/exhaust) ·
+      subscription management · errors &amp; retry · and the question that
+      actually matters in 2026: signals or RxJS? 7 pages.</p>
+    </li>
+    <li class="unit-card soon">
+      <span class="num">VITEST</span> <span class="badge">soon</span><br>
+      <strong>Vitest 4</strong>
+      <p>The <code>@angular/build:unit-test</code> builder · migrating off
+      Karma/Jasmine · the matcher and mocking reference · TestBed in 2026 ·
+      browser mode · fake timers and marbles. 6 pages.</p>
+    </li>
+    <li class="unit-card soon">
+      <span class="num">PNPM</span> <span class="badge">soon</span><br>
+      <strong>pnpm 11</strong>
+      <p>The store and the strict <code>node_modules</code> · the command
+      reference · workspaces, filters and catalogs · config and the gotchas ·
+      pnpm with Angular. 5 pages.</p>
+    </li>
+  </ul>
+
+  <h2>Cross-cutting</h2>
+  <ul class="unit-grid">
+    <li class="unit-card">
+      <span class="num">LIVE</span><br>
+      <a href="versions.html">Versions &amp; support windows</a>
+      <p>Every release since Angular 14, with the dates each version leaves
+      active support and LTS. Find out whether you are already past EOL.</p>
+    </li>
+    <li class="unit-card soon">
+      <span class="num">SOON</span> <span class="badge">soon</span><br>
+      <strong>Deprecation ledger</strong>
+      <p>Everything deprecated or removed, the version it happened in, what
+      replaced it, and the command that migrates it for you.</p>
+    </li>
+    <li class="unit-card soon">
+      <span class="num">SOON</span> <span class="badge">soon</span><br>
+      <strong>Timeline</strong>
+      <p>Version-by-version change history across all four tools, filterable by
+      tool and topic.</p>
+    </li>
+    <li class="unit-card soon">
+      <span class="num">SOON</span> <span class="badge">soon</span><br>
+      <strong>Docs index</strong>
+      <p>Every official documentation link this site references, browsable by
+      tool and kind — and checked by <code>npm run check:links</code>.</p>
+    </li>
+  </ul>
+
+  <div class="box">
+    <span class="label">Also on this site</span>
+    🤖 <a href="../index.html"><strong>ML Tutor</strong></a> — machine learning
+    from scratch, with models that train in your browser. ·
+    🎸 <a href="../bass/index.html"><strong>Bass Tutor</strong></a> — bass guitar
+    and music theory, hands-on from the first minute.
+  </div>
+</main>
+</body>
+</html>
