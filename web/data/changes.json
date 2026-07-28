@@ -200,12 +200,106 @@
       "id": "ng.forms.signal-forms",
       "tool": "angular", "topic": "forms", "page": "01-angular/forms.html",
       "title": "Building a form",
-      "now": "Signal Forms — form state as signals (stable in v22)",
-      "was": "Reactive forms (FormGroup/FormControl) or template-driven ngModel",
+      "now": "form(model) — the model signal is the form",
+      "was": "new FormGroup({ … }) — a parallel model you kept in sync by hand",
       "since": "22", "deprecated": null, "removed": null,
-      "why": "Reactive forms predate signals, so form state lived in a parallel Observable world that never composed with the rest of a signal-based component. Signal Forms close that gap, and interop is deliberate: large reactive forms can migrate piece by piece rather than all at once.",
+      "why": "A reactive form was a second copy of your data with its own type, its own change stream and its own ideas about validity, and half of form code existed to keep the two in step. form() takes your existing model signal as the source of truth and does not copy it — writing through the field writes the model. Validation is declared against typed paths, so a renamed property is a compile error rather than a string that silently stops matching.",
       "migration": null,
+      "code": {
+        "now": "import { form, required, email, minLength } from '@angular/forms/signals';\n\nprofile = signal({ name: '', email: '' });\n\nprofileForm = form(this.profile, (path) => {\n  required(path.name);\n  minLength(path.name, 2);\n  required(path.email);\n  email(path.email);\n});\n\n// profileForm.name().value() / .valid() / .touched() / .errors()",
+        "was": "profileForm = new FormGroup({\n  name: new FormControl('', [Validators.required, Validators.minLength(2)]),\n  email: new FormControl('', [Validators.required, Validators.email]),\n});\n\n// this.profileForm.get('name')?.valid   <- 'name' is just a string\n// and the real model lives somewhere else entirely"
+      },
       "docs": ["ng.guide.forms.signals", "ng.events.v22"]
+    },
+    {
+      "id": "ng.cd.zoneless",
+      "tool": "angular", "topic": "change-detection", "page": "01-angular/change-detection.html",
+      "title": "Knowing when to re-render",
+      "now": "Zoneless — signals tell Angular what changed",
+      "was": "zone.js patching every async browser API to guess that something might have changed",
+      "since": "20", "deprecated": null, "removed": null,
+      "why": "zone.js monkey-patched setTimeout, addEventListener, fetch and the rest so Angular could re-check the entire component tree whenever any of them fired. It worked without you thinking about it, at the cost of ~13KB, a patched global environment that confused debuggers and third-party libraries, and change detection runs triggered by events that changed nothing. Signals carry the information directly, so the guessing is unnecessary. Experimental in v18 as provideExperimentalZonelessChangeDetection, stable without the prefix in v20.2, and the default for new applications from v21.",
+      "migration": null,
+      "code": {
+        "now": "bootstrapApplication(App, {\n  providers: [provideZonelessChangeDetection()],\n});\n\n// angular.json / package.json: zone.js is no longer a dependency\n// and no longer in \"polyfills\"",
+        "was": "bootstrapApplication(App, {\n  providers: [provideZoneChangeDetection({ eventCoalescing: true })],\n});\n\n// polyfills: [\"zone.js\"]"
+      },
+      "docs": ["ng.guide.zoneless"]
+    },
+    {
+      "id": "ng.data.resource",
+      "tool": "angular", "topic": "async-data", "page": "01-angular/async-data.html",
+      "title": "Loading data for the current state",
+      "now": "httpResource() / resource() — value, isLoading and error as signals",
+      "was": "A subscription in ngOnInit writing to three separate fields, or an Observable plus the async pipe",
+      "since": "22", "deprecated": null, "removed": null,
+      "why": "Every codebase reinvented the same trio of loading/error/value fields, and every one of them got cancellation slightly wrong — a slow response for user 1 arriving after you had already switched to user 2. A resource re-runs when its reactive request changes and abandons the previous result, so the out-of-order case cannot happen. In preview from v19; stable in v22.",
+      "migration": null,
+      "code": {
+        "now": "userId = input.required<string>();\n\nuser = httpResource<User>(() => `/api/users/${this.userId()}`);\n\n// template:\n// @if (user.isLoading()) { <spinner /> }\n// @else if (user.error()) { <p>Failed.</p> }\n// @else { <p>{{ user.value()?.name }}</p> }",
+        "was": "user?: User;\nloading = false;\nerror?: unknown;\n\nngOnChanges() {\n  this.loading = true;\n  this.http.get<User>(`/api/users/${this.userId}`).subscribe({\n    next: (u) => { this.user = u; this.loading = false; },\n    error: (e) => { this.error = e; this.loading = false; },\n  });\n  // nothing cancels the previous request\n}"
+      },
+      "docs": ["ng.guide.resource"]
+    },
+    {
+      "id": "ng.http.functional-interceptors",
+      "tool": "angular", "topic": "http", "page": "01-angular/async-data.html",
+      "title": "Intercepting HTTP requests",
+      "now": "A function, registered with withInterceptors([…])",
+      "was": "A class implementing HttpInterceptor, registered against the HTTP_INTERCEPTORS multi token",
+      "since": "15", "deprecated": null, "removed": null,
+      "why": "The class form needed a DI registration with multi: true that was easy to get wrong and failed silently when you did. A functional interceptor is a function that calls inject() for what it needs — and because ordering is the array's order, the sequence is visible at the call site instead of depending on provider registration order.",
+      "migration": null,
+      "code": {
+        "now": "export const authInterceptor: HttpInterceptorFn = (req, next) => {\n  const token = inject(AuthService).token();\n  return next(token ? req.clone({\n    setHeaders: { Authorization: `Bearer ${token}` },\n  }) : req);\n};\n\nprovideHttpClient(withInterceptors([authInterceptor]))",
+        "was": "@Injectable()\nexport class AuthInterceptor implements HttpInterceptor {\n  constructor(private auth: AuthService) {}\n  intercept(req: HttpRequest<unknown>, next: HttpHandler) {\n    const token = this.auth.token;\n    return next.handle(token ? req.clone({\n      setHeaders: { Authorization: `Bearer ${token}` },\n    }) : req);\n  }\n}\n\n{ provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }"
+      },
+      "docs": ["ng.guide.di"]
+    },
+    {
+      "id": "ng.routing.functional-guards",
+      "tool": "angular", "topic": "routing", "page": "01-angular/routing.html",
+      "title": "Guarding a route",
+      "now": "A function typed CanActivateFn",
+      "was": "A class implementing the CanActivate interface",
+      "since": "15", "deprecated": "15", "removed": "16",
+      "why": "A guard is one decision, so a whole class with a constructor to get its dependencies was ceremony. The class-based interfaces were deprecated in v15 and removed in v16 — this is one of the few Angular changes with a hard deadline attached, so code still using them will not compile on a supported version.",
+      "migration": null,
+      "code": {
+        "now": "export const authGuard: CanActivateFn = (route, state) => {\n  const auth = inject(AuthService);\n  const router = inject(Router);\n  return auth.isLoggedIn() || router.createUrlTree(['/login']);\n};\n\n{ path: 'admin', canActivate: [authGuard], loadComponent: () => import('./admin').then(m => m.Admin) }",
+        "was": "@Injectable({ providedIn: 'root' })\nexport class AuthGuard implements CanActivate {\n  constructor(private auth: AuthService, private router: Router) {}\n  canActivate() {\n    return this.auth.isLoggedIn() || this.router.createUrlTree(['/login']);\n  }\n}\n\n{ path: 'admin', canActivate: [AuthGuard], component: AdminComponent }"
+      },
+      "docs": ["ng.guide.di"]
+    },
+    {
+      "id": "ng.routing.input-binding",
+      "tool": "angular", "topic": "routing", "page": "01-angular/routing.html",
+      "title": "Reading a route parameter",
+      "now": "A component input, bound automatically by the router",
+      "was": "Subscribing to ActivatedRoute.paramMap",
+      "since": "16", "deprecated": null, "removed": null,
+      "why": "A route parameter is data arriving from outside the component, which is exactly what an input is. With withComponentInputBinding() the router binds params, query params, data and resolved values straight to matching inputs — so the component stops depending on the router at all, which also makes it trivial to test.",
+      "migration": null,
+      "code": {
+        "now": "provideRouter(routes, withComponentInputBinding())\n\n// component — no router dependency at all\nid = input.required<string>();\nuser = httpResource<User>(() => `/api/users/${this.id()}`);",
+        "was": "constructor(private route: ActivatedRoute) {}\n\nngOnInit() {\n  this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {\n    this.id = params.get('id')!;\n    this.load();\n  });\n}"
+      },
+      "docs": ["ng.guide.di"]
+    },
+    {
+      "id": "ng.hydration.incremental",
+      "tool": "angular", "topic": "ssr", "page": "01-angular/ssr-hydration.html",
+      "title": "Turning on incremental hydration",
+      "now": "Nothing — provideClientHydration() enables it",
+      "was": "provideClientHydration(withIncrementalHydration())",
+      "since": "22", "deprecated": "22", "removed": null,
+      "why": "Incremental hydration graduated from opt-in feature to default behaviour in v22, so the feature flag that switched it on became noise. withIncrementalHydration() is deprecated and can simply be deleted.",
+      "migration": "ng generate @angular/core:incremental-hydration",
+      "code": {
+        "now": "provideClientHydration(withEventReplay())",
+        "was": "provideClientHydration(withEventReplay(), withIncrementalHydration())"
+      },
+      "docs": ["ng.guide.hydration"]
     },
     {
       "id": "ng.http.fetch-default",

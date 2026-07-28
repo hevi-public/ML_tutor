@@ -411,6 +411,60 @@ table.cheat code {
 .sg-log li { margin: 0.15rem 0; }
 .sg-log li:first-child { color: var(--text); }
 
+/* ---------- Change-detection visualiser ---------- */
+
+#cd-viz svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.cd-edge { stroke: var(--border); stroke-width: 1.5; }
+.cd-edge.active { stroke: var(--accent); stroke-width: 2.5; }
+
+.cd-node rect {
+  fill: var(--bg-inset); stroke: var(--border); stroke-width: 1.5;
+  opacity: 0.5;
+}
+.cd-node.checked rect { fill: var(--accent-soft); stroke: var(--accent); opacity: 1; }
+.cd-node.rendered rect { fill: var(--good-soft); stroke: var(--good); stroke-width: 2.5; opacity: 1; }
+.cd-node.reads rect { stroke-dasharray: 4 2; }
+.cd-label {
+  fill: var(--text); font-size: 11px; font-weight: 600; text-anchor: middle;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.cd-node:not(.checked) .cd-label { fill: var(--text-soft); }
+
+#cd-viz .controls .control select {
+  flex: 2;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+#cd-viz .readout.danger {
+  border-left: 4px solid var(--bad);
+  background: var(--bad-soft);
+  border-radius: calc(var(--radius) - 4px);
+  padding: 0.6rem 0.8rem;
+  color: var(--text);
+}
+
+.cd-key {
+  display: inline-block; width: 0.75rem; height: 0.75rem;
+  border-radius: 3px; vertical-align: -1px; margin-right: 0.15rem;
+  border: 1.5px solid var(--border); background: var(--bg-inset);
+}
+.cd-key.checked { background: var(--accent-soft); border-color: var(--accent); }
+.cd-key.rendered { background: var(--good-soft); border-color: var(--good); }
+.cd-key.reads { border-style: dashed; }
+
 /* ---------- Search results ---------- */
 
 .search-box { margin: 1.4rem 0 0.6rem; }

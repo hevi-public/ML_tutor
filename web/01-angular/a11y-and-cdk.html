@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accessibility &amp; the CDK — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="ssr-hydration.html|SSR & hydration">
+  <meta name="web:next" content="../02-rxjs/overview.html|RxJS in 2026">
+  <meta name="web:versions" content="Angular 22.0.8 · @angular/aria 22.0.6 · @angular/cdk 22.0.6">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Accessibility &amp; the CDK</h1>
+  <p class="lede"><code>@angular/aria</code> went stable in v22: accessible
+  interaction patterns with no styling attached, so you can build your own
+  design system without re-implementing keyboard navigation from scratch.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong><code>@angular/aria</code></strong> — headless, unstyled
+      primitives that implement the WAI-ARIA interaction patterns. Stable in
+      v22.</li>
+      <li><strong><code>@angular/cdk</code></strong> — the lower-level toolkit:
+      overlays, portals, drag and drop, virtual scrolling, focus management,
+      test harnesses.</li>
+      <li><strong><code>@angular/material</code></strong> — a full design system
+      built on both. Use it if you want its look; use the other two if you
+      don't.</li>
+      <li>Every aria primitive ships a <strong>test harness</strong> alongside it
+      (<code>@angular/aria/tabs/testing</code> and so on).</li>
+    </ul>
+  </div>
+
+  <h2>What @angular/aria gives you</h2>
+  <p>Eight families of primitive, each a set of directives that supply roles,
+  ARIA attributes, keyboard handling and focus management — and no CSS
+  whatsoever:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Import</th><th>Pattern</th><th>What it handles for you</th></tr></thead>
+      <tbody>
+        <tr><td><code>@angular/aria/listbox</code></td><td>Listbox</td><td>Arrow keys, typeahead, single/multi selection, <code>aria-activedescendant</code></td></tr>
+        <tr><td><code>@angular/aria/combobox</code></td><td>Combobox</td><td>Popup wiring, filtering, the expanded/collapsed contract</td></tr>
+        <tr><td><code>@angular/aria/menu</code></td><td>Menu</td><td>Submenus, roving focus, escape and click-away</td></tr>
+        <tr><td><code>@angular/aria/tabs</code></td><td>Tabs</td><td>Tab/panel association, arrow-key navigation, lazy panel content</td></tr>
+        <tr><td><code>@angular/aria/accordion</code></td><td>Accordion</td><td>Trigger/panel association, expansion state</td></tr>
+        <tr><td><code>@angular/aria/tree</code></td><td>Tree</td><td>Expand/collapse, level and set-size attributes, navigation</td></tr>
+        <tr><td><code>@angular/aria/grid</code></td><td>Grid</td><td>Two-dimensional cell navigation</td></tr>
+        <tr><td><code>@angular/aria/toolbar</code></td><td>Toolbar</td><td>Roving tabindex across controls</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<pre><code class="language-html">&lt;!-- your markup, your classes; the behaviour comes from the directives --&gt;
+&lt;div ngTabs class="tabs"&gt;
+  &lt;div ngTabList class="tab-row"&gt;
+    &lt;button ngTab value="profile" class="tab"&gt;Profile&lt;/button&gt;
+    &lt;button ngTab value="billing" class="tab"&gt;Billing&lt;/button&gt;
+  &lt;/div&gt;
+
+  &lt;div ngTabPanel value="profile"&gt;…&lt;/div&gt;
+  &lt;div ngTabPanel value="billing"&gt;…&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <p>Arrow-key navigation, <code>role</code> attributes, the
+  <code>aria-controls</code>/<code>aria-labelledby</code> pairing and focus
+  management all come from the directives. You supply the markup and the CSS.</p>
+
+  <div class="gotcha">
+    <span class="label">Why this matters more than it looks</span>
+    Custom tabs, comboboxes and menus are where accessibility usually breaks —
+    not because people do not care, but because the ARIA authoring practices are
+    long, subtle, and hard to verify by eye. Before v22 the choice was adopt
+    Angular Material's visual design or reimplement all of it. Headless
+    primitives remove that trade.
+  </div>
+
+  <h2>What the CDK gives you</h2>
+  <p>The CDK is the layer below: mechanisms rather than patterns.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Import</th><th>For</th></tr></thead>
+      <tbody>
+        <tr><td><code>@angular/cdk/overlay</code></td><td>Floating panels positioned against an element — dialogs, tooltips, dropdowns</td></tr>
+        <tr><td><code>@angular/cdk/portal</code></td><td>Rendering a template or component somewhere else in the DOM</td></tr>
+        <tr><td><code>@angular/cdk/a11y</code></td><td>Focus traps, focus monitoring, live announcers, high-contrast detection</td></tr>
+        <tr><td><code>@angular/cdk/drag-drop</code></td><td>Dragging, sorting, transferring between lists</td></tr>
+        <tr><td><code>@angular/cdk/scrolling</code></td><td>Virtual scrolling for long lists</td></tr>
+        <tr><td><code>@angular/cdk/layout</code></td><td><code>BreakpointObserver</code> — media queries as an injectable</td></tr>
+        <tr><td><code>@angular/cdk/clipboard</code></td><td>Copy to clipboard</td></tr>
+        <tr><td><code>@angular/cdk/testing</code></td><td>Component harnesses — see <a href="../03-vitest/angular-testing.html">testing</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Accessibility without a library</h2>
+  <p>Most of it is not a library problem. The recurring issues in Angular
+  applications specifically:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Issue</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td>A route change announces nothing to a screen reader</td>
+            <td>Move focus to the new page's heading on navigation, and use <code>LiveAnnouncer</code> for the title</td></tr>
+        <tr><td><code>&lt;div (click)&gt;</code></td>
+            <td>Use a <code>&lt;button&gt;</code>. It brings keyboard, focus and role for free</td></tr>
+        <tr><td>Content revealed by <code>@if</code> with no announcement</td>
+            <td><code>aria-live</code> on the container, or move focus into it</td></tr>
+        <tr><td>Loading states invisible to assistive tech</td>
+            <td><code>aria-busy</code>, and announce completion</td></tr>
+        <tr><td>Focus lost when an element is removed</td>
+            <td>Move focus deliberately before removing it</td></tr>
+        <tr><td>Animations that ignore user preference</td>
+            <td>Respect <code>prefers-reduced-motion</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Images</h2>
+  <p><code>NgOptimizedImage</code> is worth knowing about here because the
+  largest contentful paint is usually an image. Swap <code>src</code> for
+  <code>ngSrc</code> and it enforces width and height (preventing layout shift),
+  sets sensible loading and fetch priorities, generates
+  <code>srcset</code>, and warns in development when a
+  above-the-fold image is missing <code>priority</code>.</p>
+
+<pre><code class="language-html">&lt;img ngSrc="/hero.jpg" width="1200" height="600" priority alt="…"&gt;</code></pre>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/aria" data-doc="ng.aria"></a></li>
+    <li><a class="doc-chip" href="https://material.angular.dev/cdk/categories" data-doc="ng.cdk"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/image-optimization" data-doc="ng.guide.image"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/events/v22" data-doc="ng.events.v22"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

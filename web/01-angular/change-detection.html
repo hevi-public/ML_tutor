@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Change detection &amp; zoneless — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="di.html|Dependency injection">
+  <meta name="web:next" content="async-data.html|Async data">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+  <script defer src="../assets/js/viz/change-detection.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Change detection &amp; zoneless</h1>
+  <p class="lede">The most-misunderstood part of Angular, and the one where the
+  last three versions changed the answer.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Zoneless is the default</strong> for new applications from
+      v21. <code>provideZonelessChangeDetection()</code> has been stable
+      (without the <code>Experimental</code> prefix) since v20.2.</li>
+      <li><strong>OnPush is the default strategy</strong> from v22 — you no
+      longer write <code>changeDetection:</code> at all.</li>
+      <li>Under zoneless, <strong>mutating a plain field updates nothing</strong>.
+      That is the single thing that breaks during migration.</li>
+      <li><code>markForCheck()</code> and <code>detectChanges()</code> still
+      exist, and needing them is a signal that some state should be a signal.</li>
+    </ul>
+  </div>
+
+  <h2>Try it</h2>
+  <p>Same tree, same event, three strategies. Watch how many components Angular
+  visits — and pick "Zoneless" with a <code>setTimeout</code> to see the failure
+  mode that catches everyone.</p>
+
+  <div class="demo" id="cd-viz"></div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.cd.zoneless">
+    <p class="change-note">Note the two-step timeline: the API stabilised in
+    v20.2, but v21 made it the default for <em>new</em> applications. An
+    existing application upgraded to v21 or v22 keeps zone.js until you remove
+    it — nothing is taken away from you on upgrade.</p>
+  </div>
+
+  <div class="change" data-change="ng.cd.onpush-default"></div>
+
+  <h2>How each strategy decides</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>What schedules a pass</th><th>What gets checked</th></tr></thead>
+      <tbody>
+        <tr><td><strong>zone.js + Default</strong></td>
+            <td>Any patched async API: events, timers, XHR, promises</td>
+            <td>Every component, every time</td></tr>
+        <tr><td><strong>zone.js + OnPush</strong></td>
+            <td>Same</td>
+            <td>Components marked dirty — an event in the component, a changed input reference, an <code>async</code> pipe emission, a signal read in the template — plus their ancestors</td></tr>
+        <tr><td><strong>Zoneless</strong></td>
+            <td>A signal write, an <code>async</code> pipe emission, <code>markForCheck()</code>, or a template event handler</td>
+            <td>Only the views that read the changed signal</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Migrating to zoneless</h2>
+  <p>The work is not the provider — it is finding the places that relied on
+  zone.js noticing something. In rough order of how often they bite:</p>
+
+  <div class="gotcha">
+    <span class="label">1. State mutated outside signals</span>
+    A field set in a <code>setTimeout</code>, a websocket callback, a
+    third-party library's callback, or a promise <code>.then()</code>. Under
+    zone.js all four triggered a pass. Under zoneless none of them do. Make the
+    state a <code>signal</code> and the problem disappears at the source.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">2. Array and object mutation</span>
+    <code>this.items().push(x)</code> does not change the array's identity, so
+    the signal's equality check says nothing happened. This is the same bug as
+    on the <a href="signals.html">signals page</a> and it accounts for a
+    surprising share of "zoneless broke my app" reports. Replace the reference:
+    <code>items.update(list =&gt; [...list, x])</code>.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">3. Tests that relied on the zone</span>
+    <code>fakeAsync</code> and <code>tick()</code> are zone-based. In a zoneless
+    test you await <code>fixture.whenStable()</code> instead. See
+    <a href="../03-vitest/angular-testing.html">TestBed in 2026</a>.
+  </div>
+
+  <p>A pragmatic order: turn on OnPush everywhere first (v22 does this for you),
+  fix whatever breaks, then move state to signals, and only then remove zone.js.
+  Each step is independently shippable.</p>
+
+<pre><code class="language-typescript">// 1. the provider
+bootstrapApplication(App, {
+  providers: [provideZonelessChangeDetection()],
+});
+
+// 2. remove zone.js from the polyfills in angular.json,
+//    and from package.json dependencies
+
+// 3. any state that used to rely on the zone becomes a signal
+export class Ticker {
+  elapsed = signal(0);          // was: elapsed = 0;
+
+  constructor() {
+    setInterval(() =&gt; this.elapsed.update(n =&gt; n + 1), 1000);
+  }
+}</code></pre>
+
+  <h2>markForCheck and detectChanges</h2>
+  <p>Both still exist and both still work. The distinction, since it is
+  routinely confused:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Call</th><th>Does</th><th>Use when</th></tr></thead>
+      <tbody>
+        <tr><td><code>markForCheck()</code></td>
+            <td>Marks this component and its ancestors dirty for the <em>next</em> pass</td>
+            <td>Something outside Angular's knowledge changed state. Rare once state is signals.</td></tr>
+        <tr><td><code>detectChanges()</code></td>
+            <td>Runs a pass over this component <em>now</em>, synchronously</td>
+            <td>Almost never in application code. Mostly in tests.</td></tr>
+        <tr><td><code>ApplicationRef.tick()</code></td>
+            <td>Runs a pass over the whole application now</td>
+            <td>Effectively never.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details class="legacy">
+    <summary>Before v18 — the zone.js model, and why it existed</summary>
+    <div class="layer-body">
+      <p>zone.js patched <code>setTimeout</code>, <code>setInterval</code>,
+      <code>addEventListener</code>, <code>Promise</code>, <code>XMLHttpRequest</code>
+      and more, so that Angular got a callback whenever any of them completed.
+      Its guess was: something asynchronous finished, therefore state may have
+      changed, therefore re-check everything.</p>
+      <p>The guess was almost always wrong in detail and right in aggregate,
+      which is what made it usable — you never had to tell Angular anything. The
+      costs were the bundle size, a globally patched environment that confused
+      debuggers, profilers and third-party libraries, and a full tree check
+      after events that changed nothing at all.</p>
+      <p><code>ChangeDetectionStrategy.OnPush</code> was the escape hatch, and
+      the reason so much older code is littered with
+      <code>markForCheck()</code>: with OnPush and non-signal state, you had to
+      tell Angular manually whenever anything changed.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/zoneless" data-doc="ng.guide.zoneless"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals" data-doc="ng.guide.signals"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/events/v21" data-doc="ng.events.v21"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

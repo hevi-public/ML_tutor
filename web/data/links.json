@@ -120,6 +120,14 @@
       "url": "https://angular.dev/guide/image-optimization", "title": "Image optimization (NgOptimizedImage)", "tool": "angular", "kind": "guide",
       "tags": ["NgOptimizedImage", "ngSrc", "priority", "LCP", "images"], "verified": "typings"
     },
+    "ng.aria": {
+      "url": "https://angular.dev/guide/aria", "title": "Angular Aria (headless accessible primitives)", "tool": "angular", "kind": "guide",
+      "tags": ["aria", "accessibility", "a11y", "headless", "listbox", "combobox", "tabs", "menu"], "verified": "unverified"
+    },
+    "ng.cdk": {
+      "url": "https://material.angular.dev/cdk/categories", "title": "Angular CDK", "tool": "angular", "kind": "guide",
+      "tags": ["cdk", "overlay", "portal", "drag drop", "virtual scroll", "a11y", "harness"], "verified": "unverified"
+    },
     "ng.api.inject": {
       "url": "https://angular.dev/api/core/inject", "title": "inject() API", "tool": "angular", "kind": "api",
       "tags": ["inject", "inject function", "api"], "verified": "typings"
