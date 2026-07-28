@@ -1,24 +1,30 @@
-/* ML Tutor — shared page behavior: theme toggle, header/breadcrumb injection,
-   prev/next footer nav, keyboard shortcuts, KaTeX rendering.
+/* Git Tutor — shared page behavior: theme toggle, header/breadcrumb injection,
+   prev/next footer nav, keyboard shortcuts. Adapted from the bass tutor's
+   site.js (same contract, "git:" meta prefix, no KaTeX — git pages don't need
+   maths). This course ships in one version, so there is no version switch; the
+   header links sideways to the two sibling courses instead.
 
    Page contract (see assets/page-template.html):
-     <meta name="ml:unit"    content="Classical ML">
-     <meta name="ml:root"    content="../">          relative path to site root
-     <meta name="ml:prev"    content="../02-core/metrics.html|Evaluation metrics">
-     <meta name="ml:next"    content="logistic-regression.html|Logistic regression">
+     <meta name="git:unit"  content="History rewriting">
+     <meta name="git:root"  content="../">          relative path to git/ root
+     <meta name="git:prev"  content="amend.html|Amending the last commit">
+     <meta name="git:next"  content="reset-vs-revert.html|reset vs revert">
+     <meta name="git:home"  content="index.html">   optional Home override
 */
 (function () {
   "use strict";
 
   const meta = (name) => {
-    const el = document.querySelector(`meta[name="ml:${name}"]`);
+    const el = document.querySelector(`meta[name="git:${name}"]`);
     return el ? el.content : "";
   };
   const ROOT = meta("root") || "./";
 
+  const HOME = meta("home") || "index.html";
+
   /* ---------- Theme ---------- */
 
-  const THEME_KEY = "ml-tutor:theme";
+  const THEME_KEY = "git-tutor:theme";
   function applyTheme(theme) {
     if (theme === "light" || theme === "dark") {
       document.documentElement.dataset.theme = theme;
@@ -56,8 +62,8 @@
 
     const brand = document.createElement("a");
     brand.className = "brand";
-    brand.href = ROOT + "index.html";
-    brand.innerHTML = "ML<span>Tutor</span>";
+    brand.href = ROOT + HOME;
+    brand.innerHTML = "Git<span>Tutor</span>";
     header.appendChild(brand);
 
     const crumb = document.createElement("nav");
@@ -66,13 +72,13 @@
     const unit = meta("unit");
     const title = document.querySelector("h1")?.textContent || document.title;
     crumb.innerHTML = unit
-      ? `<a href="${ROOT}index.html">Home</a> › ${unit} › ${title}`
-      : `<a href="${ROOT}index.html">Home</a> › ${title}`;
+      ? `<a href="${ROOT}${HOME}">Home</a> › ${unit} › ${title}`
+      : `<a href="${ROOT}${HOME}">Home</a> › ${title}`;
     header.appendChild(crumb);
 
     for (const [href, label] of [
       ["glossary.html", "Glossary"],
-      ["notation.html", "Symbols"],
+      ["notation.html", "Syntax"],
       ["map.html", "Map"],
       ["search.html", "Search"],
     ]) {
@@ -85,8 +91,8 @@
 
     // The sibling courses on this site
     for (const [href, label, title] of [
-      ["bass/index.html", "Bass ↗", "The bass guitar course on this site"],
-      ["git/index.html", "Git ↗", "The advanced git course on this site"],
+      ["../index.html", "ML ↗", "The machine-learning course on this site"],
+      ["../bass/index.html", "Bass ↗", "The bass guitar course on this site"],
     ]) {
       const sister = document.createElement("a");
       sister.className = "header-link sister";
@@ -160,25 +166,6 @@
     });
   }
 
-  /* ---------- Math (KaTeX) ---------- */
-
-  // Renders every <span class="math"> (inline) and <div class="math">
-  // (display) whose text content is LaTeX source.
-  function renderMath() {
-    if (typeof katex === "undefined") return;
-    document.querySelectorAll(".math").forEach((el) => {
-      const src = el.textContent;
-      try {
-        katex.render(src, el, {
-          displayMode: el.tagName === "DIV",
-          throwOnError: false,
-        });
-      } catch (err) {
-        console.warn("KaTeX failed on:", src, err);
-      }
-    });
-  }
-
   /* ---------- Printing: unfold the collapsible layers ---------- */
 
   let openedForPrint = [];
@@ -199,8 +186,8 @@
     link.rel = "icon";
     link.href = "data:image/svg+xml," + encodeURIComponent(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
-      '<circle cx="50" cy="50" r="46" fill="#2563eb"/>' +
-      '<text x="50" y="68" font-size="52" font-family="sans-serif" font-weight="700" fill="white" text-anchor="middle">ŷ</text></svg>');
+      '<circle cx="50" cy="50" r="46" fill="#6d28d9"/>' +
+      '<text x="50" y="72" font-size="58" font-family="sans-serif" font-weight="700" fill="white" text-anchor="middle">⑂</text></svg>');
     document.head.appendChild(link);
   }
 
@@ -208,7 +195,6 @@
     buildHeader();
     buildPageNav();
     initKeys();
-    renderMath();
     addFavicon();
   });
 })();

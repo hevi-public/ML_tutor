@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blobs, trees and commits — Git Tutor</title>
+
+  <meta name="git:unit" content="Internals & plumbing">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="objects-and-hashes.html|Objects and hashes">
+  <meta name="git:next" content="refs-and-heads.html|Refs, HEAD and symbolic refs">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Internals & plumbing</p>
+  <h1>Blobs, trees and commits</h1>
+  <p class="lede">One walk, from a commit id down to a file's bytes, with cat-file the whole way. After this the object graph is something you can navigate rather than something you've read about.</p>
+
+  <h2>The idea</h2>
+  <p>Three object types stack into everything git knows:</p>
+
+  <table class="ref">
+    <tr><th>blob</th><td>bytes. No name, no permissions, no history.</td></tr>
+    <tr><th>tree</th><td>a list of entries: <code>mode name id</code>. The id is a blob (a file) or another tree (a subdirectory).</td></tr>
+    <tr><th>commit</th><td>one tree id, zero or more parent ids, an author, a committer, a message.</td></tr>
+  </table>
+
+  <p>So a commit doesn't contain your files; it names one tree, which names blobs
+  and further trees. "The state of the project at commit X" is a walk, and it is
+  a walk you can do by hand:</p>
+
+  <pre>git cat-file -p HEAD              # the commit: find its "tree" line
+git cat-file -p &lt;tree id&gt;         # the root directory listing
+git cat-file -p &lt;blob id&gt;         # a file's contents</pre>
+
+  <h2>Try it</h2>
+  <p>Do that walk in the sandbox. The fixture has a file inside a subdirectory,
+  so you'll pass through two trees on the way down. The object explorer below the
+  prompt does the same thing with clicks if you'd rather see it laid out.</p>
+
+  <p>Then try the shortcut git gives you for the same journey:</p>
+  <pre>git ls-tree -r HEAD               # every blob in the commit, recursively
+git rev-parse HEAD^{tree}         # the tree id, without reading the commit
+git cat-file -p HEAD:notes/plan.md  # straight to one file's contents</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Reading a tree entry</summary>
+    <div class="layer-body">
+      <p>A tree prints like this:</p>
+      <pre>100644 blob 8d0e41234f24b6da002d962a26c2495ea16a425f	hello.txt
+040000 tree 4d5fcadc293a348e88f777dc0920f11e7d71441c	notes</pre>
+      <p>The number is the <dfn data-term="mode">mode</dfn>, and git stores only
+      a handful:</p>
+      <ul class="symbol-legend" data-symbols="100644,100755,120000,040000,160000"></ul>
+      <p>Note what's missing: no owner, no group, no read/write bits, no
+      timestamps. Git records the executable bit and nothing else, which is why
+      "the permissions changed after clone" is never a git bug.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Inside a commit object</summary>
+    <div class="layer-body">
+      <p><code>git cat-file -p HEAD</code> prints the object nearly verbatim:</p>
+      <pre>tree b63a1aea7985e1741ecf1d833a25ed164eef0503
+parent 26a52436a5b6d5a24e2b1c8cebc0eb0d4b6e2f9a
+author Ada Rivera &lt;ada@example.com&gt; 1709543400 +0000
+committer Ada Rivera &lt;ada@example.com&gt; 1709543400 +0000
+
+Add the greeter</pre>
+      <p>Two people, not one. The <strong>author</strong> wrote the change; the
+      <strong>committer</strong> created this object. They differ whenever a
+      commit is replayed — after a rebase or a cherry-pick, the author line is
+      preserved and the committer line becomes you and now. That's how
+      <code>git log</code> can show a six-month-old date on a commit you made
+      this morning, and it's the mechanism behind "why did my whole branch's
+      commit dates stay the same but the ids change?"</p>
+      <p>The two timestamps are why rebasing is not reproducible by default: same
+      changes, different committer time, different ids.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Empty directories, and why git won't track them</summary>
+    <div class="layer-body">
+      <p>Trees contain entries for blobs and trees. There is no representation for
+      "a directory with nothing in it" — a tree with no entries would be a
+      different object nobody references. This isn't a policy decision git could
+      reverse; it falls out of the format. Hence the <code>.gitkeep</code>
+      convention: put a file in it, and the directory exists because its contents
+      do.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>You can now read any object in a repository. <a href="refs-and-heads.html">Refs,
+  HEAD and symbolic refs</a> covers the other half — how git finds a commit to
+  start walking from in the first place.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "100644": {
+      "name": "100644 — an ordinary file",
+      "pron": "say: one hundred six forty-four",
+      "means": "a regular, non-executable file",
+      "short": "file"
+    },
+    "100755": {
+      "name": "100755 — an executable file",
+      "pron": "say: one hundred seven fifty-five",
+      "means": "a regular file with the executable bit set — the only permission git records",
+      "short": "executable"
+    },
+    "120000": {
+      "name": "120000 — a symlink",
+      "pron": "say: one twenty thousand",
+      "means": "the blob's contents are the path it points at",
+      "short": "symlink"
+    },
+    "040000": {
+      "name": "040000 — a subdirectory",
+      "pron": "say: forty thousand",
+      "means": "the entry names another tree object",
+      "short": "directory"
+    },
+    "160000": {
+      "name": "160000 — a submodule",
+      "pron": "say: one sixty thousand",
+      "means": "a gitlink: names a commit in another repository",
+      "short": "submodule"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "blobs-trees-commits",
+    "labs": [
+      {
+        "id": "blobs-trees-commits-walk-down",
+        "title": "Walk from the commit to the file",
+        "fixture": "two-files",
+        "task": "Using only <code>cat-file</code> and <code>rev-parse</code>, get from <code>HEAD</code> to the contents of <code>notes/plan.md</code> — then prove you found the right blob by committing its id into a file called <code>found.txt</code>.",
+        "show": [
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": "found.txt is committed",
+            "check": {
+              "blobContains": {
+                "path": "found.txt",
+                "pattern": "[0-9a-f]{7}"
+              }
+            }
+          },
+          {
+            "text": "it holds the id of the plan.md blob",
+            "check": {
+              "custom": {
+                "name": "blobs-trees-commits-found-it"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git cat-file -p HEAD</code> shows the tree id. Then <code>cat-file -p</code> that.",
+          "The root tree has a <code>notes</code> entry of type tree — go through it.",
+          "<code>git rev-parse HEAD:notes/plan.md</code> gets the same answer in one step, which is a fine way to check your walk."
+        ],
+        "solution": [
+          "git cat-file -p HEAD                 # note the tree id",
+          "git cat-file -p <tree id>            # find the 'notes' tree",
+          "git cat-file -p <notes tree id>      # find plan.md's blob id",
+          "git rev-parse HEAD:notes/plan.md     # the shortcut, to confirm",
+          "echo <that blob id> > found.txt",
+          "git add found.txt && git commit -m \"Record the blob id\""
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "blobs-trees-commits",
+    "questions": [
+      {
+        "q": "A commit contains how many tree ids?",
+        "choices": [
+          "One per changed file",
+          "Exactly one — the root of the whole project at that moment",
+          "One per directory in the project"
+        ],
+        "answer": 1,
+        "explain": "Exactly one root tree, which names subtrees for subdirectories. The complete state hangs off that single id."
+      },
+      {
+        "q": "After a rebase, `git log` shows the same author dates as before but every commit id changed. Why?",
+        "choices": [
+          "Git regenerates ids on every rebase for uniqueness",
+          "The author is preserved while the committer and its timestamp are new — and committer data is part of the hashed content",
+          "The dates shown are cached from before the rebase"
+        ],
+        "answer": 1,
+        "explain": "A commit records author and committer separately. Replaying preserves the author, sets a new committer, and since both are inside the hashed object, the id changes."
+      },
+      {
+        "q": "Why can't you commit an empty directory?",
+        "choices": [
+          "Git refuses as a matter of policy, configurable with core.emptyDirs",
+          "The tree format has no way to say \"directory with no entries\" — a directory exists only because its contents do",
+          "You can, but only with git add -f"
+        ],
+        "answer": 1,
+        "explain": "Trees list blobs and subtrees. There's nothing to record for an empty one, hence the .gitkeep convention."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    // The id of a fixture blob is stable, but writing it into the page would
+    // date the moment the fixture changes — so ask the repository instead.
+    GTChecks.register("blobs-trees-commits-found-it", async (repo) => {
+      const want = await GTPlumb.revParse(repo.dir, "HEAD:notes/plan.md");
+      const files = await GTPlumb.filesOfCommit(repo.dir, await GT.resolve(repo.dir, "HEAD"));
+      const meta = files.get("found.txt");
+      if (!meta) return { pass: false, detail: "found.txt isn't committed yet" };
+      const text = (await GTPlumb.readBlobText(repo.dir, meta.oid)).trim();
+      return text && want.startsWith(text)
+        ? { pass: true, detail: want.slice(0, 7) + " — that's the one" }
+        : { pass: false, detail: "that isn't plan.md's blob id" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rewriting published history — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="reflog-recovery.html|Recovering with the reflog">
+  <meta name="git:next" content="../03-forensics/bisect.html|bisect">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>Rewriting published history</h1>
+  <p class="lede">Sometimes you have to. Here's how to do it with the least damage, and how to recognise the times you shouldn't.</p>
+
+  <h2>The idea</h2>
+  <p>The rule everyone repeats is "never rewrite published history". As stated it's
+  too strong — the real content is:</p>
+
+  <div class="box plain-english">
+    <span class="label">The actual rule</span>
+    Rewriting a branch replaces its commits with new ones. Anyone who has the old
+    commits keeps them, and their git will try to combine both copies. So the cost
+    of a rewrite is paid by everyone who already pulled — which is fine if that's
+    nobody, or if you tell them.
+  </div>
+
+  <p>Which gives you a decision procedure rather than a taboo:</p>
+
+  <table class="ref">
+    <tr><th>Your own unpushed work</th><td>Rewrite freely. Nobody is affected.</td></tr>
+    <tr><th>Your own pushed feature branch, no one else on it</th><td>Rewrite and <code>push --force-with-lease</code>. Normal practice.</td></tr>
+    <tr><th>A shared feature branch</th><td>Rewrite only after saying so. Everyone else needs <code>git reset --hard origin/&lt;branch&gt;</code> afterwards.</td></tr>
+    <tr><th>main, or any long-lived branch</th><td>Don't. Use <a href="reset-vs-revert.html"><code>revert</code></a>.</td></tr>
+  </table>
+
+  <p>The exception that overrides all of it: a secret got committed. Then the
+  history <em>must</em> be rewritten, everywhere, and the credential must be
+  rotated anyway — because anyone who cloned already has it, and no rewrite can
+  reach their disk. Rotate first; rewrite second.</p>
+
+  <h2>Try it</h2>
+  <p>The sandbox has a remote whose <code>main</code> has moved on, and a local
+  branch you've rewritten. Watch git refuse, and then do it properly:</p>
+
+  <pre>git log --oneline --all
+git fetch
+git status                      # ahead and behind: you've diverged
+git push                        # rejected, and read the hint carefully
+git push --force                # works, and would trample whatever origin had
+</pre>
+
+  <p>Then reset the sandbox and try the same thing with
+  <code>--force-with-lease</code> instead, which is
+  <a href="../04-workflow/force-with-lease.html">the subject of its own page</a>
+  because the difference matters so much.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The message to send when you do rewrite a shared branch</summary>
+    <div class="layer-body">
+      <p>Rewrites go wrong socially, not technically. What people need is the exact
+      command to run:</p>
+      <pre>I've rebased feature/parser and force-pushed.
+If you have it checked out:
+    git fetch origin
+    git reset --hard origin/feature/parser
+If you have local commits on it, tell me first and I'll help move them.</pre>
+      <p>Without that last line, someone will run
+      <code>git pull</code>, get a merge of both copies, push it, and now the
+      branch contains every commit twice.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>filter-repo, and why not filter-branch</summary>
+    <div class="layer-body">
+      <p>For rewriting <em>all</em> of history — removing a file from every commit,
+      changing every author's email — the tool is
+      <a href="https://github.com/newren/git-filter-repo">git-filter-repo</a>.
+      <code>git filter-branch</code> still exists, is famously slow, and git's own
+      documentation now recommends against it.</p>
+      <pre># remove a file from every commit that ever contained it
+git filter-repo --invert-paths --path secrets.env</pre>
+      <p>It rewrites every commit, so every id in the repository changes. In
+      practice that means: everyone re-clones, open pull requests break, and any
+      id anyone wrote down in an issue is now dangling. Plan it like a migration,
+      not a command.</p>
+      <div class="box sim-note">
+        <span class="label">Not runnable here</span>
+        This sandbox won't run <code>filter-repo</code> or
+        <code>filter-branch</code>. They're the two operations destructive enough
+        that practising them on a toy repository teaches the wrong reflexes — the
+        real skill is the planning around them, not the invocation.
+      </div>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>What survives a rewrite anyway</summary>
+    <div class="layer-body">
+      <p>Worth knowing before you promise anyone that a secret is gone:</p>
+      <ul>
+        <li><strong>Other clones.</strong> Nothing you do to your repository
+        touches theirs.</li>
+        <li><strong>Forge caches.</strong> GitHub and friends keep unreachable
+        commits addressable by id for a long time, sometimes indefinitely. A
+        commit id in an old pull request comment may still resolve.</li>
+        <li><strong>Your own reflog and objects</strong>, until it expires and gc
+        runs.</li>
+      </ul>
+      <p>Which is the whole argument for rotating the credential: a rewrite makes
+      the secret hard to find, not gone.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>That's Unit 2. <a href="../03-forensics/bisect.html">Unit 3</a> turns the same
+  history you've been rewriting into evidence: bisect, blame that survives a
+  refactor, and finding the commit where a string appeared.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "@{u}": {
+      "name": "@{u} — your upstream",
+      "pron": "say: at brace you",
+      "means": "the remote-tracking branch yours compares against",
+      "short": "upstream"
+    },
+    "A...B": {
+      "name": "A...B — how you diverged",
+      "pron": "say: A dot dot dot B",
+      "means": "commits on either side but not both — the shape of a divergence",
+      "short": "divergence"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "rewriting-published-history",
+    "labs": [
+      {
+        "id": "rewriting-published-history-diverged",
+        "title": "Read a divergence before you fix it",
+        "fixture": "with-remote",
+        "task": "Work out exactly how your branch and <code>origin/main</code> have diverged, then integrate the remote's commit <em>without</em> force-pushing — leaving both sides' work in place.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "origin/main's commit is in your history",
+            "check": {
+              "blobContains": {
+                "path": "README.md",
+                "text": "Counts the words"
+              }
+            }
+          },
+          {
+            "text": "your own commit is still there",
+            "check": {
+              "blobContains": {
+                "path": "report.py",
+                "text": "def report"
+              }
+            }
+          },
+          {
+            "text": "nothing uncommitted",
+            "check": {
+              "worktreeClean": {}
+            }
+          },
+          {
+            "text": "you integrated the remote rather than discarding it",
+            "check": {
+              "isAncestor": {
+                "ancestor": "origin/main",
+                "of": "main"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git fetch</code> first, so <code>origin/main</code> is up to date. Then <code>git status</code> tells you how far ahead and behind you are.",
+          "<code>git log --oneline --left-right main...origin/main</code> shows which commits are on which side.",
+          "You can either <code>git rebase origin/main</code> (replay yours on top) or <code>git merge origin/main</code>. Both keep both sides' work; only a force-push would lose theirs."
+        ],
+        "solution": [
+          "git fetch",
+          "git status",
+          "git log --oneline --left-right main...origin/main",
+          "git rebase origin/main        # or: git merge origin/main",
+          "git log --oneline --graph"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "rewriting-published-history",
+    "questions": [
+      {
+        "q": "A secret was committed to main three weeks ago and pushed. What's the first thing to do?",
+        "choices": [
+          "Rewrite history with filter-repo",
+          "Rotate the credential — anyone who cloned already has it, and no rewrite can reach their disk",
+          "Delete the repository and start again"
+        ],
+        "answer": 1,
+        "explain": "The rewrite is worth doing afterwards, but it only makes the secret hard to find. Treat it as leaked the moment it was pushed."
+      },
+      {
+        "q": "You rewrote a shared feature branch and force-pushed. What does a colleague with it checked out need to do?",
+        "choices": [
+          "git pull",
+          "git fetch, then git reset --hard origin/<branch> — and talk to you first if they have local commits on it",
+          "Nothing; git handles it"
+        ],
+        "answer": 1,
+        "explain": "git pull would merge the old and new copies together, producing every commit twice. Reset makes their branch match yours; local commits need moving deliberately."
+      },
+      {
+        "q": "Why is rewriting main worse than rewriting a feature branch?",
+        "choices": [
+          "Git protects main specially",
+          "Everyone has main, so everyone pays the cost — and the additive alternative, revert, is available and cheap",
+          "Main's commits are older and harder to rebuild"
+        ],
+        "answer": 1,
+        "explain": "It's about how many people hold the old commits. On main that's everyone, and revert gives you the same outcome without the coordination."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

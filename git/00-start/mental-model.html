@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The one mental model — Git Tutor</title>
+
+  <meta name="git:unit" content="Start here">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="how-this-works.html|How this tutor works">
+  <meta name="git:next" content="../01-internals/objects-and-hashes.html|Objects and hashes">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start here</p>
+  <h1>The one mental model</h1>
+  <p class="lede">Four sentences of theory that make every command in the four units after this one predictable instead of memorised.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing beyond having used git. If you can already say what a branch is made of, skim to <a href="#try">Try it</a> and move on.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Here it is, all of it:</p>
+
+  <div class="box plain-english">
+    <span class="label">The whole model</span>
+    <p>A <strong><dfn data-term="commit">commit</dfn></strong> is a complete
+    snapshot of your project, plus a pointer to the commit that came before it.
+    A <strong><dfn data-term="branch">branch</dfn></strong> is a sticky note with
+    one commit's name on it. <strong><dfn data-term="head">HEAD</dfn></strong> is
+    a sticky note saying which branch you're standing on. Almost every git
+    command is a way of moving one of those notes.</p>
+  </div>
+
+  <p>Two consequences do most of the work in this course.</p>
+
+  <p><strong>Commits are snapshots, not diffs.</strong> Git shows you diffs
+  because diffs are what humans want to read, but it stores whole trees. When you
+  hear that a rebase "replays your changes", what actually happens is that git
+  computes a diff between two snapshots, applies it somewhere else, and stores the
+  resulting snapshot. The diff is a means, not the data.</p>
+
+  <p><strong>History points backwards.</strong> A commit names its parent; a
+  parent knows nothing about its children. So "the commits on this branch" is
+  never a list git looks up — it's the answer to a walk, starting at the sticky
+  note and following parents until it runs out. Everything follows from that:</p>
+
+  <ul>
+    <li>Deleting a branch deletes a sticky note. The commits are untouched — they
+    have simply become <dfn data-term="unreachable">unreachable</dfn>, which is
+    why they can be recovered.</li>
+    <li>You cannot edit a commit. Its name <em>is</em> a hash of its contents,
+    parent included, so changing anything makes a different commit. Every
+    "rewrite" command builds new commits and moves a sticky note to them.</li>
+    <li>Changing one commit changes every commit after it, because each one's
+    hash includes its parent's hash. Rewriting the tip is cheap; rewriting the
+    root rewrites everything.</li>
+  </ul>
+
+  <h2 id="try">Try it</h2>
+  <p>The sandbox below has two branches. Watch what <code>git branch -D</code>
+  does and doesn't destroy — the goals check that the commits outlived the branch
+  that named them.</p>
+
+  <p>Useful here: <code>git log --oneline --all</code>,
+  <code>git reflog</code>, <code>git branch -D experiment</code>,
+  <code>git fsck --unreachable</code>.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Why "snapshot" and not "change"</summary>
+    <div class="layer-body">
+      <p>Every commit stores a <dfn data-term="tree">tree</dfn>: the entire file
+      list, with an id for each file's contents. If a commit changes one file in a
+      thousand, the new tree reuses the other 999 ids, so a snapshot costs about
+      what a diff would. You get the storage efficiency of diffs and the
+      addressing simplicity of snapshots at once.</p>
+      <p>This is why <code>git checkout &lt;old-commit&gt;</code> is instant and
+      exact: there is nothing to reconstruct or unwind. The old state is sitting
+      right there.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>What "HEAD is detached" actually means</summary>
+    <div class="layer-body">
+      <p>Normally <code>.git/HEAD</code> contains a <em>ref name</em>:</p>
+      <pre>ref: refs/heads/main</pre>
+      <p>So HEAD points at a branch, which points at a commit. Committing moves
+      the branch, and HEAD comes along because it names the branch, not the
+      commit.</p>
+      <p>After <code>git checkout &lt;commit&gt;</code>, HEAD contains an object
+      id directly. Commits still work, but no branch moves to include them — so
+      the moment you check out something else, they're unreachable. That is the
+      entire content of the scary
+      <dfn data-term="detached-head">detached HEAD</dfn> warning: <em>nothing is
+      following you</em>. Rebase and bisect both spend their whole time in this
+      state on purpose.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>The three trees, in one table</summary>
+    <div class="layer-body">
+      <p>Most confusing git states are a disagreement between three things that
+      normally look identical:</p>
+      <table class="ref">
+        <tr><th>HEAD</th><td>the snapshot of your last commit</td></tr>
+        <tr><th><dfn data-term="index">the index</dfn></th><td>the snapshot your next commit will be</td></tr>
+        <tr><th><dfn data-term="worktree">the working tree</dfn></th><td>the files as they are on disk</td></tr>
+      </table>
+      <p><code>git status</code> is nothing but a report on the two gaps: index
+      versus HEAD ("changes to be committed") and working tree versus index
+      ("changes not staged"). <code>reset --soft</code>, <code>--mixed</code> and
+      <code>--hard</code> are the three answers to "how many of them should I
+      move?" — <a href="../02-rewriting/reset-vs-revert.html">Unit 2 covers it</a>.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>That's the theory. Two ways on: <a href="../01-internals/objects-and-hashes.html">Unit 1</a>
+  goes underneath it — the actual files git writes, and building a commit by hand
+  from plumbing commands. <a href="../02-rewriting/amend.html">Unit 2</a> goes
+  straight to the commands that move the sticky notes around. Units are
+  independent; if you want the rewriting tools tonight, start there.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD": {
+      "name": "HEAD — where you are",
+      "pron": "say: head",
+      "means": "the commit you have checked out, normally via the branch you're on",
+      "short": "you are here"
+    },
+    "HEAD~3": {
+      "name": "HEAD~3 — three back",
+      "pron": "say: head tilde three",
+      "means": "three commits back, following first parents",
+      "short": "3 back"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "mental-model",
+    "labs": [
+      {
+        "id": "mental-model-branch-is-a-note",
+        "title": "Delete a branch without losing the work",
+        "fixture": "dangling",
+        "task": "This repo already had a branch deleted — <code>experiment</code> is gone. Prove the commits survived it, and put a branch back on them.",
+        "show": [
+          "dag"
+        ],
+        "showUnreachable": true,
+        "goals": [
+          {
+            "text": "a branch named rescued exists",
+            "check": {
+              "refExists": {
+                "ref": "rescued"
+              }
+            }
+          },
+          {
+            "text": "it has the two experiment commits on it",
+            "check": {
+              "commitCount": {
+                "ref": "rescued",
+                "since": "main",
+                "eq": 2
+              }
+            }
+          },
+          {
+            "text": "the streaming parser file is committed there",
+            "check": {
+              "blobContains": {
+                "ref": "rescued",
+                "path": "stream.py",
+                "text": "def stream"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "The graph shows dimmed commits — those are the ones no branch points at any more. Click one.",
+          "<code>git reflog</code> still names them — deleting a branch didn't erase its history from HEAD's log. (<code>git fsck --unreachable</code> stays quiet precisely because the reflog can still reach them; add <code>--no-reflogs</code> to see what it says then.)",
+          "<code>git branch rescued &lt;commit&gt;</code> puts a sticky note back on a commit."
+        ],
+        "solution": [
+          "git reflog                              # find 'commit: Handle short reads'",
+          "git fsck --unreachable --no-reflogs     # the same commits, ignoring the reflog",
+          "git branch rescued <that commit id>",
+          "git log --oneline rescued"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "mental-model",
+    "questions": [
+      {
+        "q": "You run `git branch -D feature`, which had 4 commits nothing else pointed at. What just happened to those commits?",
+        "choices": [
+          "They were deleted from the repository",
+          "Nothing happened to them — only the name was deleted, so they're now unreachable but still stored",
+          "They were merged into main first, automatically"
+        ],
+        "answer": 1,
+        "explain": "A branch is a name holding one commit id. Deleting it removes the name. The commits stay in the object database until gc eventually prunes them, which is why the reflog can get them back."
+      },
+      {
+        "q": "Why does changing an old commit's message change the id of every commit after it?",
+        "choices": [
+          "Git renumbers commits so history stays sequential",
+          "Because each commit's hash includes its parent's hash, so a new parent id means a new child id, all the way up",
+          "It doesn't — only the edited commit changes"
+        ],
+        "answer": 1,
+        "explain": "A commit object contains its parent's id, and the id is a hash of that content. Change the parent and the child necessarily hashes differently. This is why rewriting near the root is expensive and rewriting shared history is antisocial."
+      },
+      {
+        "q": "Git stores whole snapshots rather than diffs. Why doesn't that make repositories enormous?",
+        "choices": [
+          "Each snapshot reuses the object ids of every unchanged file, so an unchanged file costs nothing extra",
+          "Git compresses each snapshot to almost nothing",
+          "Git deletes old snapshots after a while"
+        ],
+        "answer": 0,
+        "explain": "A tree is a list of names and content ids. Files that didn't change keep the same id, so they're stored once no matter how many commits contain them. Packfiles then delta-compress what's left."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

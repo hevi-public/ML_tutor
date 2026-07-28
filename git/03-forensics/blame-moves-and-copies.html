@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>blame, moves and copies — Git Tutor</title>
+
+  <meta name="git:unit" content="Debugging & forensics">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="bisect.html|bisect">
+  <meta name="git:next" content="pickaxe.html|The pickaxe">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Debugging & forensics</p>
+  <h1>blame, moves and copies</h1>
+  <p class="lede">Plain git blame answers a slightly different question from the one you asked, and after any refactor the difference is the whole story.</p>
+
+  <h2>The idea</h2>
+  <p><code>git blame &lt;file&gt;</code> tells you, for each line, the last commit
+  that changed that line <em>in that file</em>. That last clause is the problem.
+  Rename the file, move a function between files, or reindent the block, and every
+  line's answer becomes the commit that did the moving — which is almost never who
+  you're looking for.</p>
+
+  <p>Three flags fix it, and they are the whole point of this page:</p>
+
+  <table class="ref">
+    <tr><th>-M</th><td>detect lines <strong>moved</strong> within the file, and follow them past the move</td></tr>
+    <tr><th>-C</th><td>detect lines <strong>copied</strong> from other files modified in the same commit. Repeat it (<code>-C -C</code>) to search files that weren't modified too</td></tr>
+    <tr><th>-w</th><td>ignore whitespace, so a reindent stops hiding the author</td></tr>
+  </table>
+
+  <p>Habit worth forming: never run plain <code>git blame</code>. Run
+  <code>git blame -w -M -C</code>, always. It's slower and it's right.</p>
+
+  <p>Two more that narrow the question:</p>
+  <table class="ref">
+    <tr><th>-L 40,60</th><td>only those lines. Much faster on a large file</td></tr>
+    <tr><th>&lt;rev&gt; -- &lt;file&gt;</th><td>blame as of an older commit — what did this look like before the rewrite?</td></tr>
+  </table>
+
+  <h2>Try it</h2>
+  <p>The sandbox has a file that was renamed, then split in two. Blame the
+  reporting code and watch the answer change with the flags:</p>
+
+  <pre>git log --oneline
+git blame report.py            # everything points at the split commit
+git blame -C report.py         # …now the lines' real origin shows through
+git blame -M -C report.py
+git log --oneline -- report.py  # only the commits git thinks touched this path</pre>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Why rename detection is a guess</summary>
+    <div class="layer-body">
+      <p>Git stores no renames. A commit that renames a file stores a tree without
+      the old path and with the new one — the "rename" is inferred later by
+      comparing content similarity, and the threshold is configurable
+      (<code>-M50%</code> by default in diff).</p>
+      <p>Consequence: a rename plus heavy editing in the same commit may not be
+      detected at all, and splitting the change into two commits (rename, then
+      edit) makes history much more legible. That's a real argument for the
+      "one logical change per commit" rule beyond aesthetics.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>--follow, and why it's log's version of the same problem</summary>
+    <div class="layer-body">
+      <p><code>git log -- &lt;file&gt;</code> stops at the commit where the path
+      appeared, because before that the path didn't exist.
+      <code>git log --follow -- &lt;file&gt;</code> continues through renames.</p>
+      <p>It's deliberately limited to a single path — the machinery only tracks one
+      rename chain at a time — so <code>--follow</code> with a directory or two
+      files doesn't do what you'd hope. For anything more complicated, the
+      <a href="pickaxe.html">pickaxe</a> is the better tool.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>When blame is the wrong question</summary>
+    <div class="layer-body">
+      <p>Blame answers "who touched this line last", which is a proxy for "why is
+      this line like this" — and a poor one when the interesting commit is two
+      moves back. Better instincts for that:</p>
+      <ul>
+        <li><code>git log -S'&lt;the exact text&gt;'</code> — every commit where
+        that string's occurrence count changed. Finds the introduction directly.</li>
+        <li><code>git log -L 40,60:file.py</code> — the history of just those
+        lines, following them as they move.</li>
+        <li>Blame the commit's <em>parent</em>: <code>git blame &lt;commit&gt;~ --
+        file</code> to see what was there before.</li>
+      </ul>
+      <p><em>This sandbox implements <code>-M</code>, <code>-C</code> and
+      <code>-L</code>; <code>-w</code> and <code>-L</code> on a range with a path
+      spec are simplified.</em></p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="pickaxe.html">The pickaxe</a> searches history by content rather than
+  by path — the tool for "when did this string appear, and who took it out?"</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "<rev>:<path>": {
+      "name": "<rev>:<path> — a file at a revision",
+      "pron": "say: rev colon path",
+      "means": "read an old version without checking anything out",
+      "short": "old version"
+    },
+    "--": {
+      "name": "-- — paths follow",
+      "pron": "say: dash dash",
+      "means": "separates revisions from file paths",
+      "short": "paths follow"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "blame-moves-and-copies",
+    "labs": [
+      {
+        "id": "blame-find-the-real-author",
+        "title": "Find where the reporting code really came from",
+        "fixture": "moved-code",
+        "task": "The <code>show_counts</code> function lives in <code>report.py</code>, but it wasn't written there. Find the commit that actually introduced those lines, and record its subject in a file called <code>origin.txt</code>.",
+        "show": [
+          "dag"
+        ],
+        "goals": [
+          {
+            "text": "origin.txt is committed",
+            "check": {
+              "blobContains": {
+                "path": "origin.txt",
+                "pattern": "."
+              }
+            }
+          },
+          {
+            "text": "it names the commit that first wrote those lines",
+            "check": {
+              "custom": {
+                "name": "blame-origin-subject"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>git blame report.py</code> first, then <code>git blame -C report.py</code>. The second one looks in other files that changed in the same commit.",
+          "<code>git log --oneline</code> shows the rename and the split. The lines predate both.",
+          "The reporting code arrived with the very first commit, when it was part of <code>count.py</code>. Write that commit's subject into origin.txt and commit."
+        ],
+        "solution": [
+          "git blame report.py",
+          "git blame -M -C report.py       # the earlier origin shows through",
+          "git log --oneline",
+          "echo 'Add the word counter' > origin.txt",
+          "git add origin.txt && git commit -m 'Record where the reporting code came from'"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "blame-moves-and-copies",
+    "questions": [
+      {
+        "q": "Why does plain `git blame` credit a refactor commit for lines someone else wrote?",
+        "choices": [
+          "Blame is based on commit dates",
+          "It reports the last commit to change each line in that path, and a move counts as changing them",
+          "Because the original author's commit was rewritten"
+        ],
+        "answer": 1,
+        "explain": "The default question is per-path and per-line. -M follows moves inside the file and -C follows content copied in from elsewhere, which is what you actually wanted."
+      },
+      {
+        "q": "How does git know a file was renamed?",
+        "choices": [
+          "It records renames in the commit",
+          "It doesn't — renames are inferred afterwards by comparing content similarity",
+          "By tracking inode numbers"
+        ],
+        "answer": 1,
+        "explain": "Trees just have paths and content ids. That's why a rename plus heavy edits in one commit can go undetected, and why splitting them into two commits leaves a more readable history."
+      },
+      {
+        "q": "You want the history of lines 40–60 of a file, following them as they move. What's the tool?",
+        "choices": [
+          "git blame -L 40,60",
+          "git log -L 40,60:file.py",
+          "git log --follow -- file.py"
+        ],
+        "answer": 1,
+        "explain": "log -L gives you the sequence of changes to that range over time. blame -L is a snapshot of who last touched them; --follow tracks the whole file through renames."
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    // Runs after the deferred engine scripts, and before lab.js starts
+    // its labs — so a custom check is registered in time to be used.
+    document.addEventListener("DOMContentLoaded", () => {
+    GTChecks.register("blame-origin-subject", async (repo) => {
+      const head = await GT.resolve(repo.dir, "HEAD");
+      const files = await GTPlumb.filesOfCommit(repo.dir, head);
+      const meta = files.get("origin.txt");
+      if (!meta) return { pass: false, detail: "origin.txt isn't committed yet" };
+      const text = (await GTPlumb.readBlobText(repo.dir, meta.oid)).trim();
+      // The reporting lines arrived in the fixture's first commit, inside count.py.
+      const entries = await GTPlumb.revList(repo.dir, { include: [head], reverse: true });
+      const first = entries[0];
+      const want = first.commit.message.split("\n")[0];
+      return text.toLowerCase().includes(want.toLowerCase())
+        ? { pass: true, detail: `“${want}”` }
+        : { pass: false, detail: "that isn't the commit those lines came from" };
+    });
+    });
+  </script>
+</main>
+</body>
+</html>

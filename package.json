@@ -1,7 +1,7 @@
 {
   "name": "ml-tutor",
   "version": "0.1.0",
-  "description": "Interactive novice-to-expert machine learning tutor — static HTML/JS, plain language first",
+  "description": "Interactive novice-to-expert machine learning tutor \u2014 static HTML/JS, plain language first",
   "private": true,
   "scripts": {
     "dev": "http-server -p 8010 -c-1 -o /index.html .",
@@ -9,13 +9,18 @@
     "dev:web": "http-server -p 8010 -c-1 -o /web/index.html .",
     "build:index": "node scripts/build-search-index.js",
     "build:bass": "node scripts/build-bass-index.js",
+    "dev:git": "http-server -p 8010 -c-1 -o /git/index.html .",
+    "build:git": "node scripts/build-git-index.js",
     "build:web": "node scripts/build-web-index.js",
+    "verify:git": "node scripts/verify-fixtures.js",
     "check:links": "node scripts/check-links.js",
     "fetch:mnist": "node scripts/fetch-mnist.js"
   },
   "license": "MIT",
   "dependencies": {
     "@highlightjs/cdn-assets": "^11.11.1",
+    "@isomorphic-git/lightning-fs": "^4.7.0",
+    "isomorphic-git": "1.34.0",
     "katex": "^0.17.0",
     "vexflow": "^4.2.5"
   },

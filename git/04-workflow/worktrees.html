@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worktrees — Git Tutor</title>
+
+  <meta name="git:unit" content="Workflow & collaboration">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="stash-tricks.html|Stash tricks">
+  <meta name="git:next" content="refspecs-and-remotes.html|Refspecs and remotes">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Workflow & collaboration</p>
+  <h1>Worktrees</h1>
+  <p class="lede">One object database, several checkouts. The feature that makes stashing and re-cloning mostly unnecessary.</p>
+
+  <h2>The idea</h2>
+  <p>A repository has one <code>.git</code> directory and, traditionally, one
+  checkout. <code>git worktree add</code> gives you another checkout, in another
+  directory, sharing the same objects and the same refs:</p>
+
+  <pre>git worktree add ../review feature/parser   # check out that branch over there
+git worktree list
+git worktree remove ../review</pre>
+
+  <p>What you get, and why it beats the alternatives:</p>
+  <table class="ref">
+    <tr><th>versus stashing</th><td>nothing moves in your main checkout. No stack to remember</td></tr>
+    <tr><th>versus a second clone</th><td>objects and refs are shared, so no re-download, and a commit made in one is instantly visible in the other</td></tr>
+    <tr><th>versus switching branches</th><td>your build artifacts, editor state and running processes stay put</td></tr>
+  </table>
+
+  <p>The everyday uses: reviewing a colleague's branch while yours stays
+  half-finished; running a long test suite on one branch while you work on another;
+  and <a href="../03-forensics/bisect.html">bisecting</a> without disturbing your
+  worktree.</p>
+
+  <p>One rule: <strong>two worktrees can't have the same branch checked out.</strong>
+  Git refuses, because two checkouts moving one ref would be incoherent. Use a
+  detached checkout (<code>git worktree add --detach</code>) if you just want to
+  look.</p>
+
+  <h2>The layout</h2>
+  <p>A linked worktree is not a copy. The new directory gets a
+  <code>.git</code> <em>file</em> — not a directory — containing a path:</p>
+
+  <pre>$ cat ../review/.git
+gitdir: /path/to/repo/.git/worktrees/review</pre>
+
+  <p>And in the main repository:</p>
+
+  <pre>.git/worktrees/review/
+├── HEAD          # this worktree's own HEAD
+├── index         # its own index
+├── gitdir        # a path back to the .git file
+└── commondir     # ../.. — where the shared objects and refs live</pre>
+
+  <p>So each worktree has its own HEAD, index and reflog for HEAD, and they share
+  the object database, the refs, and the config. That division explains every
+  worktree behaviour worth knowing: a commit in one is immediately available in the
+  other (shared objects), each can be on a different branch (own HEAD), and
+  <code>git worktree list</code> can tell you which branch is busy where.</p>
+
+  <div class="box sim-note">
+    <span class="label">Not runnable in this sandbox</span>
+    <p>The sandbox has one filesystem and no way to hand you a second directory to
+    <code>cd</code> into, so <code>git worktree</code> isn't implemented here —
+    typing it says so rather than pretending. The lab below does the next most
+    useful thing: it builds the <code>.git/worktrees/</code> layout by hand, so
+    that when you run the real command you'll recognise every file it makes.</p>
+  </div>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>Pruning, and the stale-worktree message</summary>
+    <div class="layer-body">
+      <p>Delete a worktree's directory with <code>rm -rf</code> and the metadata
+      stays behind, so git keeps thinking the branch is checked out somewhere.
+      <code>git worktree prune</code> clears out entries whose directory is gone;
+      <code>git worktree list</code> marks them <code>prunable</code>.</p>
+      <p>Which is why the correct removal is <code>git worktree remove
+      &lt;path&gt;</code> — it takes the metadata with it. If you've already deleted
+      the directory and git is refusing to check out the branch, prune is the
+      answer.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Worktrees and bare repositories, the maintainer's setup</summary>
+    <div class="layer-body">
+      <p>A pattern worth knowing: clone bare, then add a worktree per branch you're
+      working on.</p>
+      <pre>git clone --bare git@example.com:project.git project/.bare
+cd project
+git worktree add main
+git worktree add feature/parser</pre>
+      <p>Now <code>main/</code> and <code>feature/parser/</code> are sibling
+      directories, both real checkouts, one object store. For anyone who juggles
+      several long-lived branches, it removes branch switching from the workflow
+      entirely.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>What's shared and what isn't</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>Shared</th><td>objects, refs, config, hooks, packed-refs, the stash</td></tr>
+        <tr><th>Per-worktree</th><td>HEAD and its reflog, the index, <code>ORIG_HEAD</code>, bisect state, rebase state, sparse-checkout settings</td></tr>
+      </table>
+      <p>So you can have a rebase in progress in one worktree and a bisect in
+      another, and they won't interfere. But a config change affects both, and a
+      <code>refs/stash</code> is one shared stack.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p><a href="refspecs-and-remotes.html">Refspecs and remotes</a> — how the refs
+  you've been reading get mapped between repositories, and what
+  <code>origin/main</code> actually is.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "refs/remotes/origin/main": {
+      "name": "refs/remotes/origin/main",
+      "pron": "say: refs remotes origin main",
+      "means": "shared between worktrees, like every other ref",
+      "short": "origin/main"
+    },
+    "HEAD": {
+      "name": "HEAD — per worktree",
+      "pron": "say: head",
+      "means": "each linked worktree has its own HEAD, which is why they can be on different branches",
+      "short": "per worktree"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "worktrees",
+    "labs": [
+      {
+        "id": "worktrees-build-the-layout",
+        "title": "Build the .git/worktrees layout by hand",
+        "fixture": "diverged",
+        "task": "Create the metadata a linked worktree for <code>feature</code> would have: a directory <code>.git/worktrees/review/</code> containing a <code>HEAD</code> that points at <code>refs/heads/feature</code>, and a <code>commondir</code> file containing <code>../..</code>.",
+        "show": [
+          "objects"
+        ],
+        "goals": [
+          {
+            "text": ".git/worktrees/review/HEAD names the feature branch",
+            "check": {
+              "fileContains": {
+                "path": ".git/worktrees/review/HEAD",
+                "text": "refs/heads/feature"
+              }
+            }
+          },
+          {
+            "text": "commondir points back at the shared repository",
+            "check": {
+              "fileContains": {
+                "path": ".git/worktrees/review/commondir",
+                "text": "../.."
+              }
+            }
+          },
+          {
+            "text": "you didn't disturb the real HEAD",
+            "check": {
+              "headIs": {
+                "branch": "main"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "<code>mkdir</code> takes a path with slashes in it, and <code>echo … &gt; path</code> writes a file.",
+          "A HEAD file that points at a branch contains exactly <code>ref: refs/heads/&lt;name&gt;</code>.",
+          "<code>echo \"ref: refs/heads/feature\" &gt; .git/worktrees/review/HEAD</code>"
+        ],
+        "solution": [
+          "mkdir .git/worktrees/review",
+          "echo \"ref: refs/heads/feature\" > .git/worktrees/review/HEAD",
+          "echo \"../..\" > .git/worktrees/review/commondir",
+          "cat .git/worktrees/review/HEAD",
+          "cat .git/HEAD                 # your own HEAD, untouched"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "worktrees",
+    "questions": [
+      {
+        "q": "What's in the `.git` entry of a linked worktree's directory?",
+        "choices": [
+          "A full copy of the repository",
+          "A file — not a directory — containing `gitdir: <path to .git/worktrees/<name>>`",
+          "A symlink to the main .git directory"
+        ],
+        "answer": 1,
+        "explain": "One line of text pointing at that worktree's metadata, which in turn points back at the shared repository via commondir."
+      },
+      {
+        "q": "Can two worktrees have the same branch checked out?",
+        "choices": [
+          "Yes",
+          "No — git refuses, because two checkouts moving one ref would be incoherent",
+          "Only if both are read-only"
+        ],
+        "answer": 1,
+        "explain": "Use `git worktree add --detach` if you only want to look at it. Refs are shared; HEAD is not."
+      },
+      {
+        "q": "Which is per-worktree rather than shared?",
+        "choices": [
+          "The object database",
+          "The index and HEAD",
+          "The config file"
+        ],
+        "answer": 1,
+        "explain": "Each worktree has its own HEAD, index, and in-progress rebase or bisect state. Objects, refs, config, hooks and the stash are shared."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

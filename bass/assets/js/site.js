@@ -108,13 +108,18 @@
     }
     header.appendChild(version);
 
-    // The sibling course living at the repo root
-    const sister = document.createElement("a");
-    sister.className = "header-link sister";
-    sister.href = ROOT + "../index.html";
-    sister.title = "The machine-learning course on this site";
-    sister.textContent = "ML ↗";
-    header.appendChild(sister);
+    // The sibling courses living alongside this one
+    for (const [href, label, title] of [
+      ["../index.html", "ML ↗", "The machine-learning course on this site"],
+      ["../git/index.html", "Git ↗", "The advanced git course on this site"],
+    ]) {
+      const sister = document.createElement("a");
+      sister.className = "header-link sister";
+      sister.href = ROOT + href;
+      sister.title = title;
+      sister.textContent = label;
+      header.appendChild(sister);
+    }
 
     themeButton = document.createElement("button");
     themeButton.type = "button";

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Git Tutor — the advanced half of git</title>
+
+  <meta name="git:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/progress.js"></script>
+</head>
+<body>
+<main class="wide">
+  <section class="hero">
+    <h1>Git Tutor</h1>
+    <p class="lede">The half of git you never got taught: rewriting history on
+    purpose, the object database underneath, digging through the past, and the
+    collaboration commands that stop you destroying other people's work.</p>
+    <p>Every exercise runs against a <strong>real git repository in your
+    browser</strong> — real objects, real hashes, real refs — so you can practise
+    <code>rebase --onto</code> and <code>reset --hard</code> on a repository that
+    doesn't matter. Break it as often as you like; there's a button that puts it
+    back.</p>
+    <div id="resume-box"></div>
+  </section>
+
+  <section id="units"></section>
+
+  <div class="box">
+    <span class="label">Also on this site</span>
+    <p>📈 <a href="../index.html"><strong>ML Tutor</strong></a> — machine
+    learning from arithmetic to transformers, in plain language.</p>
+    <p>🎸 <a href="../bass/index.html"><strong>Bass Tutor</strong></a> — bass
+    guitar and the theory behind it, bass in hand from minute one.</p>
+  </div>
+
+  <script>
+    // The curriculum, in order. BUILT gates pages that haven't landed yet, so a
+    // half-finished unit can ship without dead links (same trick as bass/index.html).
+    const UNITS = [
+      { n: 0, name: "Start here",
+        blurb: "How the sandbox works, and the one mental model the rest depends on." },
+      { n: 1, name: "Internals & plumbing",
+        blurb: "The object database, refs, the index, and building a commit by hand out of plumbing commands." },
+      { n: 2, name: "History rewriting",
+        blurb: "amend, reset, cherry-pick, interactive rebase, autosquash — and getting it all back with the reflog." },
+      { n: 3, name: "Debugging & forensics",
+        blurb: "bisect, blame that survives a refactor, the pickaxe, reflog archaeology, and what fsck finds." },
+      { n: 4, name: "Workflow & collaboration",
+        blurb: "Stash tricks, worktrees, refspecs, --force-with-lease, merge strategies, rerere, hooks, submodules." },
+      { n: 5, name: "Drills",
+        blurb: "Timed recovery scenarios, and a free sandbox with every fixture to play in." },
+      { n: 6, name: "Expert track",
+        blurb: "Packfiles and gc, notes and replace refs, very large repositories, and when not to rewrite at all." },
+    ];
+
+    const PAGES = [
+      [0, "00-start/how-this-works.html", "How this tutor works"],
+      [0, "00-start/mental-model.html", "The one mental model"],
+
+      [1, "01-internals/objects-and-hashes.html", "Objects and hashes"],
+      [1, "01-internals/blobs-trees-commits.html", "Blobs, trees and commits"],
+      [1, "01-internals/refs-and-heads.html", "Refs, HEAD and symbolic refs"],
+      [1, "01-internals/the-index.html", "The index, properly"],
+      [1, "01-internals/revision-syntax.html", "Revision syntax"],
+      [1, "01-internals/commit-by-hand.html", "A commit, by hand"],
+
+      [2, "02-rewriting/amend.html", "Amending the last commit"],
+      [2, "02-rewriting/reset-vs-revert.html", "reset versus revert"],
+      [2, "02-rewriting/cherry-pick.html", "Cherry-pick"],
+      [2, "02-rewriting/interactive-rebase.html", "Interactive rebase"],
+      [2, "02-rewriting/squash-fixup-autosquash.html", "squash, fixup, autosquash"],
+      [2, "02-rewriting/rebase-onto.html", "rebase --onto"],
+      [2, "02-rewriting/rebase-vs-merge.html", "Rebase versus merge"],
+      [2, "02-rewriting/reflog-recovery.html", "Recovering with the reflog"],
+      [2, "02-rewriting/rewriting-published-history.html", "Rewriting published history"],
+
+      [3, "03-forensics/bisect.html", "bisect"],
+      [3, "03-forensics/blame-moves-and-copies.html", "blame, moves and copies"],
+      [3, "03-forensics/pickaxe.html", "The pickaxe"],
+      [3, "03-forensics/reflog-archaeology.html", "Reflog archaeology"],
+      [3, "03-forensics/fsck-and-dangling.html", "fsck and dangling objects"],
+
+      [4, "04-workflow/stash-tricks.html", "Stash tricks"],
+      [4, "04-workflow/worktrees.html", "Worktrees"],
+      [4, "04-workflow/refspecs-and-remotes.html", "Refspecs and remotes"],
+      [4, "04-workflow/force-with-lease.html", "--force-with-lease"],
+      [4, "04-workflow/merge-strategies-and-rerere.html", "Merge strategies and rerere"],
+      [4, "04-workflow/hooks.html", "Hooks"],
+      [4, "04-workflow/submodules-and-subtrees.html", "Submodules and subtrees"],
+
+      [5, "05-labs/recovery-drill.html", "Recovery drill"],
+      [5, "05-labs/sandbox.html", "Free sandbox"],
+
+      [6, "06-expert/packfiles-and-gc.html", "Packfiles and gc"],
+      [6, "06-expert/notes-and-replace.html", "Notes and replace refs"],
+      [6, "06-expert/big-repositories.html", "Big repositories"],
+      [6, "06-expert/when-not-to-rewrite.html", "When not to rewrite"],
+    ];
+
+    const BUILT = PAGES.length;
+
+    const slugOf = (href) => href.split("/").pop().replace(/\.html$/, "");
+
+    function render() {
+      const done = window.GitProgress ? window.GitProgress.all() : {};
+      const labs = window.GitProgress ? window.GitProgress.labs() : {};
+      const host = document.getElementById("units");
+
+      UNITS.forEach((unit) => {
+        const pages = PAGES.filter(([u]) => u === unit.n);
+        if (!pages.length) return;
+
+        const section = document.createElement("section");
+        section.className = "unit-block";
+        const h2 = document.createElement("h2");
+        h2.textContent = `Unit ${unit.n} · ${unit.name}`;
+        section.appendChild(h2);
+        const blurb = document.createElement("p");
+        blurb.className = "lede";
+        blurb.textContent = unit.blurb;
+        section.appendChild(blurb);
+
+        const list = document.createElement("ol");
+        list.className = "page-list";
+        for (const [, href, title] of pages) {
+          const index = PAGES.findIndex((p) => p[1] === href);
+          const li = document.createElement("li");
+          if (index >= BUILT) {
+            li.className = "soon";
+            li.innerHTML = `${title} <span class="badge">coming soon</span>`;
+          } else {
+            const slug = slugOf(href);
+            const complete = Boolean(done[slug]?.completedAt);
+            const a = document.createElement("a");
+            a.href = href;
+            a.textContent = title;
+            li.appendChild(a);
+            if (complete) {
+              const tick = document.createElement("span");
+              tick.className = "tick";
+              tick.title = "quiz finished";
+              tick.textContent = " ✓";
+              li.appendChild(tick);
+            }
+          }
+          list.appendChild(li);
+        }
+        section.appendChild(list);
+        host.appendChild(section);
+      });
+
+      // Continue where you left off: the first built page whose quiz isn't done.
+      const next = PAGES.slice(0, BUILT).find(([, href]) => !done[slugOf(href)]?.completedAt);
+      const box = document.getElementById("resume-box");
+      const labCount = Object.keys(labs).length;
+      if (next && Object.keys(done).length) {
+        box.className = "box";
+        box.innerHTML =
+          `<span class="label">Where you left off</span>` +
+          `<p>${Object.keys(done).length} page(s) finished` +
+          (labCount ? `, ${labCount} lab(s) solved` : "") +
+          `. <a href="${next[1]}"><strong>Continue → ${next[2]}</strong></a></p>`;
+      } else if (next) {
+        box.className = "box";
+        box.innerHTML =
+          `<span class="label">Start anywhere</span>` +
+          `<p>The units are independent — if you already know how git stores things, ` +
+          `skip straight to <a href="02-rewriting/amend.html">Unit 2</a>. Otherwise ` +
+          `<a href="${next[1]}"><strong>start here → ${next[2]}</strong></a>.</p>`;
+      } else {
+        box.className = "box";
+        box.innerHTML = `<span class="label">Finished</span><p>You've been through ` +
+          `every page. The <a href="05-labs/recovery-drill.html">recovery drill</a> ` +
+          `is the one worth repeating.</p>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", render);
+  </script>
+
+  <style>
+    .unit-block { margin: 2rem 0; }
+    .unit-block h2 { margin-bottom: 0.2rem; }
+    .unit-block .lede { font-size: 0.95rem; margin-top: 0; }
+    .page-list { margin: 0.6rem 0 0; padding-left: 1.6rem; }
+    .page-list li { margin: 0.25rem 0; }
+    .page-list li.soon { color: var(--text-soft); }
+    .page-list .badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.05rem 0.45rem;
+    }
+    .page-list .tick { color: var(--good); }
+  </style>
+</main>
+</body>
+</html>

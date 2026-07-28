@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>When not to rewrite — Git Tutor</title>
+
+  <meta name="git:unit" content="Expert track">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="big-repositories.html|Big repositories">
+  <meta name="git:next" content="../index.html|Back to the start">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Expert track</p>
+  <h1>When not to rewrite</h1>
+  <p class="lede">The judgement half of this course. Every tool in Unit 2 has a blast radius, and choosing well is mostly about who else is holding the commits.</p>
+
+  <h2>The idea</h2>
+  <p>You can now rewrite history several ways. The remaining skill is knowing when
+  the cheaper, additive option is the right one — because a rewrite's cost isn't
+  paid by you, it's paid by whoever already has the commits.</p>
+
+  <p>One question decides most cases:</p>
+
+  <div class="box plain-english">
+    <span class="label">The question</span>
+    Does anyone else have these commits? If no: rewrite freely, it's free. If yes:
+    the rewrite costs every one of them a recovery procedure, so it needs to be
+    worth that, and it needs to be announced.
+  </div>
+
+  <table class="ref">
+    <tr><th>Local, unpushed</th><td>Rewrite. amend, rebase -i, reorder, drop. No cost to anyone.</td></tr>
+    <tr><th>Pushed, your branch alone</th><td>Rewrite, then <code>push --force-with-lease</code>. Standard practice on a pull request branch.</td></tr>
+    <tr><th>Pushed, others are on it</th><td>Only after telling them, with the exact commands they'll need. Consider whether a follow-up commit would do instead.</td></tr>
+    <tr><th>main, or any long-lived branch</th><td>Don't. <a href="../02-rewriting/reset-vs-revert.html"><code>revert</code></a> gets the same outcome additively.</td></tr>
+    <tr><th>A leaked secret</th><td>Rotate the credential first. Then rewrite if you like — but the secret is already out, and the rewrite is hygiene, not containment.</td></tr>
+  </table>
+
+  <h2>The habits worth keeping</h2>
+
+  <p>Six things that between them prevent most of the situations this course teaches
+  you to escape from:</p>
+
+  <ul>
+    <li><strong>Commit small and often; tidy before you push.</strong> The
+    <code>--fixup</code> + <code>--autosquash</code> loop makes this nearly free, and
+    it moves all your rewriting to before anyone else is affected.</li>
+    <li><strong>Never type <code>--force</code>.</strong> Alias it:
+    <code>git config --global alias.pushf "push --force-with-lease"</code>.</li>
+    <li><strong>Set the safe defaults once.</strong>
+    <code>pull.ff=only</code>, <code>fetch.prune=true</code>,
+    <code>rerere.enabled=true</code>, <code>rebase.autoSquash=true</code>. Four
+    lines that remove four recurring annoyances.</li>
+    <li><strong>Read the error.</strong> Git's rejections are unusually
+    informative — "non-fast-forward", "stale info", "would be overwritten by
+    checkout" each name the exact problem.</li>
+    <li><strong>Check before you rewrite.</strong>
+    <code>git log --oneline &lt;upstream&gt;..&lt;branch&gt;</code> shows exactly what
+    a rebase will touch.</li>
+    <li><strong>Copy the directory before anything frightening.</strong> The reflog
+    covers nearly everything, and it is not a backup.</li>
+  </ul>
+
+  <h2>What you can now do</h2>
+  <p>Working backwards through the course:</p>
+  <ul>
+    <li>Read any object in a repository, and build a commit out of plumbing —
+    so nothing git does is opaque any more.</li>
+    <li>Rewrite history deliberately: amend, reset, cherry-pick, rebase,
+    <code>--onto</code>, autosquash — and undo any of it from the reflog.</li>
+    <li>Investigate: bisect a regression, blame through a refactor, find where a
+    string entered the history, and recover work nothing points at.</li>
+    <li>Collaborate without damage: refspecs, leases, merge strategies, hooks, and
+    the two ways to depend on another repository.</li>
+  </ul>
+
+  <h2>Where to go next</h2>
+  <table class="ref">
+    <tr><th><a href="https://git-scm.com/book">Pro Git</a></th><td>free, complete, and the chapters on internals are the natural sequel to Unit 1</td></tr>
+    <tr><th><code>git help &lt;command&gt;</code></th><td>git's man pages are unusually good, and the DISCUSSION sections are where the real explanations live</td></tr>
+    <tr><th><a href="https://git-scm.com/docs/gitglossary">gitglossary</a></th><td>the official version of this site's glossary, and more precise</td></tr>
+    <tr><th><a href="https://github.com/newren/git-filter-repo">git-filter-repo</a></th><td>when you do need to rewrite everything</td></tr>
+    <tr><th><a href="../05-labs/recovery-drill.html">The recovery drills</a></th><td>worth repeating occasionally — the point is the first move, and that's a reflex</td></tr>
+  </table>
+
+  <p>And the sandbox isn't going anywhere. Next time you're about to do something to
+  a real repository that you're not sure about, come and do it here first.</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <script type="application/json" class="symbols">
+  {
+    "@{u}": {
+      "name": "@{u} — the upstream",
+      "pron": "say: at brace you",
+      "means": "git log @{u}.. is the habit: what have I got that isn't pushed?",
+      "short": "upstream"
+    },
+    "A..B": {
+      "name": "<upstream>..<branch>",
+      "pron": "say: dot dot",
+      "means": "run this before any rebase and you'll know exactly what will move",
+      "short": "what moves"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "when-not-to-rewrite",
+    "questions": [
+      {
+        "q": "The single question that decides whether a rewrite is acceptable?",
+        "choices": [
+          "Is the history clean enough?",
+          "Does anyone else already have these commits?",
+          "Has CI passed?"
+        ],
+        "answer": 1,
+        "explain": "A rewrite costs nothing if the commits are only yours, and costs everyone else a recovery procedure if they aren't. Everything else is detail."
+      },
+      {
+        "q": "A secret was pushed to main. First action?",
+        "choices": [
+          "Rewrite history immediately",
+          "Rotate the credential — it's already out, and no rewrite reaches other people's clones or the forge's caches",
+          "Delete the branch"
+        ],
+        "answer": 1,
+        "explain": "The rewrite is worth doing afterwards as hygiene. Treating it as containment is the mistake, because it isn't."
+      },
+      {
+        "q": "Which config change prevents the most surprises for the least effort?",
+        "choices": [
+          "pull.ff=only, so a pull that would create a merge commit errors instead",
+          "core.editor",
+          "color.ui=always"
+        ],
+        "answer": 0,
+        "explain": "It turns an invisible surprise merge into a decision you make on purpose. fetch.prune, rerere.enabled and rebase.autoSquash are the next three."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

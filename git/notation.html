@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Git syntax reference — Git Tutor</title>
+
+  <meta name="git:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+</head>
+<body>
+<main>
+  <h1>Git's syntax, spelled out</h1>
+  <p class="lede">Every bit of git notation this course uses: what it's called, how
+  to say it out loud, and exactly which commits or files it selects. Search by
+  name, by meaning, or
+  by nickname — "squiggle", "two dots", "at braces" and "the caret thing" all
+  work.</p>
+
+  <div class="glossary-controls">
+    <input type="search" id="notation-filter"
+           placeholder="Try “two dots”, “squiggle”, “upstream”, “gitlink”…"
+           aria-label="Filter syntax entries">
+    <p class="count" id="notation-count"></p>
+  </div>
+
+  <div id="notation-app"><p><em>Loading… (needs the dev server:
+  <code>npm run dev:git</code>)</em></p></div>
+
+  <script>
+  (function () {
+    "use strict";
+    document.addEventListener("DOMContentLoaded", async () => {
+      const app = document.getElementById("notation-app");
+      let data;
+      try {
+        const res = await fetch("data/notation.json");
+        data = await res.json();
+      } catch {
+        return; // the loading note stays
+      }
+
+      app.innerHTML = "";
+      const rows = [];
+      for (const group of Object.values(data)) {
+        const h = document.createElement("h2");
+        h.textContent = group.title;
+        app.appendChild(h);
+        const table = document.createElement("table");
+        table.className = "ref";
+        table.innerHTML =
+          "<thead><tr><th>Syntax</th><th>Say it</th><th>What it selects</th></tr></thead>";
+        const tbody = document.createElement("tbody");
+        for (const e of group.entries) {
+          const tr = document.createElement("tr");
+          const taught = e.taughtIn
+            ? ` <a href="${e.taughtIn.href}">→ ${e.taughtIn.title}</a>` : "";
+          tr.innerHTML =
+            `<td class="glyph">${e.sym}</td>` +
+            `<td><strong>${e.name}</strong><br><span style="color:var(--text-soft)">say: “${e.say}”</span></td>` +
+            `<td>${e.means}${taught}</td>`;
+          tbody.appendChild(tr);
+          rows.push({
+            tr, h,
+            hay: `${e.sym} ${e.name} ${e.say} ${e.means} ${(e.aliases || []).join(" ")}`.toLowerCase(),
+          });
+        }
+        table.appendChild(tbody);
+        app.appendChild(table);
+      }
+
+      const input = document.getElementById("notation-filter");
+      const count = document.getElementById("notation-count");
+      function apply() {
+        const q = input.value.trim().toLowerCase();
+        let shown = 0;
+        for (const r of rows) {
+          const hit = !q || r.hay.includes(q);
+          r.tr.hidden = !hit;
+          if (hit) shown++;
+        }
+        // hide group headers whose tables are empty
+        app.querySelectorAll("h2").forEach((h) => {
+          const table = h.nextElementSibling;
+          h.hidden = table.hidden =
+            ![...table.querySelectorAll("tbody tr")].some((tr) => !tr.hidden);
+        });
+        count.textContent = q ? `${shown} of ${rows.length} entries` : `${rows.length} entries`;
+      }
+      input.addEventListener("input", apply);
+      apply();
+    });
+  })();
+  </script>
+</main>
+</body>
+</html>

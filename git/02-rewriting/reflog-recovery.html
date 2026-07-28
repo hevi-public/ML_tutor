@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recovering with the reflog — Git Tutor</title>
+
+  <meta name="git:unit" content="History rewriting">
+  <meta name="git:root" content="../">
+  <meta name="git:prev" content="rebase-vs-merge.html|Rebase versus merge">
+  <meta name="git:next" content="rewriting-published-history.html|Rewriting published history">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+
+  <!-- The sandbox: two vendored files, then the engine. -->
+  <script defer src="../../node_modules/@isomorphic-git/lightning-fs/dist/lightning-fs.min.js"></script>
+  <script defer src="../../node_modules/isomorphic-git/index.umd.min.js"></script>
+  <script defer src="../assets/js/git/repo.js"></script>
+  <script defer src="../assets/js/git/merge3.js"></script>
+  <script defer src="../assets/js/git/plumbing.js"></script>
+  <script defer src="../assets/js/git/porcelain.js"></script>
+  <script defer src="../assets/js/git/fixtures.js"></script>
+  <script defer src="../assets/js/git/cli.js"></script>
+  <script defer src="../assets/js/viz/terminal.js"></script>
+  <script defer src="../assets/js/viz/dag.js"></script>
+  <script defer src="../assets/js/viz/objects.js"></script>
+  <script defer src="../assets/js/labs/checks.js"></script>
+  <script defer src="../assets/js/lab.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · History rewriting</p>
+  <h1>Recovering with the reflog</h1>
+  <p class="lede">The reason none of this unit is dangerous. Every ref movement is written down, so almost every git accident is two commands from being undone.</p>
+
+  <h2>The idea</h2>
+  <p>Every time a ref moves, git appends a line to a log. HEAD's log is
+  <code>.git/logs/HEAD</code>; each branch has its own under
+  <code>.git/logs/refs/heads/</code>. A line looks like this:</p>
+
+  <pre>d1cf19b 587bc61 Ada Rivera &lt;ada@example.com&gt; 1709543400 +0000	commit: fix typo</pre>
+
+  <p>Old id, new id, who, when, why. That's the whole
+  <dfn data-term="reflog">reflog</dfn> — and because it records the id a ref moved
+  <em>away from</em>, it is a list of every commit you have abandoned.</p>
+
+  <p>So the recovery procedure for nearly everything is the same three steps:</p>
+  <ol>
+    <li><code>git reflog</code> — read down the list until you recognise where you
+    were.</li>
+    <li>Note the id, or its <code>HEAD@{n}</code> address.</li>
+    <li><code>git reset --hard &lt;that&gt;</code> to go back, or
+    <code>git branch rescue &lt;that&gt;</code> to give it a name without moving.</li>
+  </ol>
+
+  <p>The second option is the better instinct: putting a <em>new</em> branch on the
+  lost commit can't make anything worse, and lets you look before you leap.</p>
+
+  <h2>Try it</h2>
+  <p>Destroy something, then get it back:</p>
+
+  <pre>git log --oneline
+git reset --hard HEAD~3          # three commits gone from the branch
+git log --oneline                # confirmed gone
+git reflog                       # …and there they are
+git reset --hard HEAD@{1}        # back
+git branch rescue HEAD@{2}       # or name it instead of moving</pre>
+
+  <p>Then try the harder version: delete a branch entirely and recover it. The
+  branch's own reflog goes with it, so you need HEAD's log — or
+  <code>git fsck</code>.</p>
+
+  <div class="lab-root"></div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>HEAD@{n} versus HEAD~n — the distinction that matters at 6pm</summary>
+    <div class="layer-body">
+      <table class="ref">
+        <tr><th>HEAD~3</th><td>three commits back through <strong>parents</strong>. A question about the graph</td></tr>
+        <tr><th>HEAD@{3}</th><td>where HEAD pointed three <strong>movements</strong> ago. A question about your history of commands</td></tr>
+      </table>
+      <p>After a bad <code>reset --hard</code>, <code>HEAD~1</code> walks further
+      into the past you didn't want, and <code>HEAD@{1}</code> is your rescue. Two
+      characters apart, opposite directions.</p>
+      <p>The reflog also takes times: <code>HEAD@{yesterday}</code>,
+      <code>main@{2.hours.ago}</code>. Useful when you know roughly when things
+      were fine.</p>
+      <ul class="symbol-legend" data-symbols="HEAD@{1},main@{2},@{-1},ORIG_HEAD"></ul>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>What the reflog won't save you from</summary>
+    <div class="layer-body">
+      <p>It's important to know the edges, because they're where real loss
+      happens:</p>
+      <ul>
+        <li><strong>Uncommitted work.</strong> The reflog records commits. A
+        <code>reset --hard</code> over changes you never committed leaves nothing
+        to find. (Staged changes are a partial exception —
+        <code>git fsck --unreachable</code> can turn up the blob, because
+        <code>git add</code> wrote it.)</li>
+        <li><strong>Another clone's reflog.</strong> It's strictly local and never
+        pushed or fetched. Your colleague's reflog can't help you and yours can't
+        help them.</li>
+        <li><strong>Expiry.</strong> Reachable entries expire after 90 days,
+        unreachable ones after 30, and <code>git gc</code> can then prune the
+        objects. Recovery is a race you almost always win, but not indefinitely.</li>
+        <li><strong>A deleted branch's own log.</strong> Deleting a branch deletes
+        <code>.git/logs/refs/heads/&lt;name&gt;</code> with it. HEAD's log still has
+        the commits if you were ever on that branch.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>When the reflog isn't enough: fsck</summary>
+    <div class="layer-body">
+      <p>If the commit was made in a state where HEAD never pointed at it — a
+      detached HEAD you left, or a stash you dropped —
+      <a href="../03-forensics/fsck-and-dangling.html"><code>git fsck</code></a>
+      finds it by looking for objects nothing points at:</p>
+      <pre>git fsck --unreachable --no-reflogs</pre>
+      <p><code>--no-reflogs</code> matters: without it, the reflog counts as a
+      pointer, so anything findable that way is reported as reachable and you see
+      nothing. With it, you get the genuinely stranded objects — usually a short
+      list you can <code>git show</code> one by one.</p>
+    </div>
+  </details>
+
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+  <h2>Where this goes next</h2>
+  <p>One page left in this unit, and it's the social one:
+  <a href="rewriting-published-history.html">rewriting published history</a> —
+  when to do it, how to do it without hurting anyone, and when to simply not.</p>
+
+  <script type="application/json" class="symbols">
+  {
+    "HEAD@{1}": {
+      "name": "HEAD@{1} — one move ago",
+      "pron": "say: head at brace one",
+      "means": "where HEAD pointed before your last command",
+      "short": "one move ago"
+    },
+    "main@{2}": {
+      "name": "main@{2} — a branch's own log",
+      "pron": "say: main at brace two",
+      "means": "where main pointed two of its own movements ago",
+      "short": "branch log"
+    },
+    "@{-1}": {
+      "name": "@{-1} — the previous branch",
+      "pron": "say: at brace minus one",
+      "means": "the branch you were on before this one",
+      "short": "last branch"
+    },
+    "ORIG_HEAD": {
+      "name": "ORIG_HEAD — before the last big move",
+      "pron": "say: orig head",
+      "means": "the one-shot undo for a reset, rebase, merge or pull",
+      "short": "undo point"
+    }
+  }
+  </script>
+
+  <script type="application/json" class="lab">
+  {
+    "pageId": "reflog-recovery",
+    "labs": [
+      {
+        "id": "reflog-recovery-rescue-a-branch",
+        "title": "Destroy a branch, then bring it back",
+        "fixture": "wip-3",
+        "start": "feature/report",
+        "task": "Delete <code>feature/report</code> outright, then recreate its exact tip as a branch called <code>rescued</code> — using the reflog rather than remembering the id.",
+        "show": [
+          "dag"
+        ],
+        "showUnreachable": true,
+        "goals": [
+          {
+            "text": "feature/report is gone",
+            "check": {
+              "noRef": {
+                "ref": "feature/report"
+              }
+            }
+          },
+          {
+            "text": "rescued exists",
+            "check": {
+              "refExists": {
+                "ref": "rescued"
+              }
+            }
+          },
+          {
+            "text": "it has all three WIP commits",
+            "check": {
+              "commitCount": {
+                "ref": "rescued",
+                "since": "main",
+                "eq": 3
+              }
+            }
+          },
+          {
+            "text": "the report file is there, complete",
+            "check": {
+              "blobContains": {
+                "ref": "rescued",
+                "path": "report.py",
+                "text": "Print counts"
+              }
+            }
+          }
+        ],
+        "hints": [
+          "You have to leave the branch before you can delete it: <code>git checkout main</code>.",
+          "<code>git branch -D feature/report</code>. Note the id it prints — but also note that <code>git reflog</code> still has it, since HEAD was on that branch.",
+          "<code>git branch rescued &lt;id&gt;</code>, or use the reflog address directly."
+        ],
+        "solution": [
+          "git checkout main",
+          "git branch -D feature/report",
+          "git reflog                          # the WIP commits are still named here",
+          "git branch rescued <the tip id>",
+          "git log --oneline rescued"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script type="application/json" class="quiz">
+  {
+    "id": "reflog-recovery",
+    "questions": [
+      {
+        "q": "You ran `git reset --hard HEAD~5` by mistake. What gets the commits back?",
+        "choices": [
+          "git reset --hard HEAD~5 again",
+          "git reset --hard HEAD@{1}",
+          "git revert HEAD~5"
+        ],
+        "answer": 1,
+        "explain": "HEAD@{1} is where HEAD was one movement ago — before your reset. HEAD~5 is five more commits back through parents, which is the wrong direction entirely."
+      },
+      {
+        "q": "Which of these can the reflog NOT recover?",
+        "choices": [
+          "A branch you deleted",
+          "Uncommitted changes wiped by reset --hard",
+          "Commits abandoned by a rebase"
+        ],
+        "answer": 1,
+        "explain": "The reflog records where refs pointed, so it only knows about committed work. Staged changes are a partial exception, since git add writes a blob that fsck can find."
+      },
+      {
+        "q": "Why does `git fsck --unreachable` often print nothing useful, while `--no-reflogs` shows the lost commit?",
+        "choices": [
+          "--no-reflogs searches harder",
+          "By default the reflog counts as a pointer, so anything it names is 'reachable' — excluding it reveals what's genuinely stranded",
+          "The reflog hides objects from fsck"
+        ],
+        "answer": 1,
+        "explain": "Same command, different definition of reachable. It's also the reason your 'lost' commits survive gc for weeks: reflog entries keep them alive."
+      }
+    ]
+  }
+  </script>
+</main>
+</body>
+</html>

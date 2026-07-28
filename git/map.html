@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concept map — Git Tutor</title>
+
+  <meta name="git:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/progress.js"></script>
+</head>
+<body>
+<main class="wide">
+  <h1>The concept map</h1>
+  <p class="lede">Every page on the site and how the ideas feed each other.
+  Solid lines are the path through a unit; dashed lines are ideas paying off
+  later — the internals showing up again in the rewriting and forensics units.
+  Green = pages you've completed (finish a page's quiz to claim it).</p>
+
+  <div style="overflow-x: auto">
+    <svg id="concept-map" viewBox="0 0 1180 690" width="100%" role="img"
+         aria-label="Concept map of all 35 pages, by unit" style="min-width: 1100px"></svg>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+    // x: progression left to right; y: lane within a unit
+    const NODES = [
+      { id: "how-this-works", label: "How this works", unit: "Start", x: 70, y: 60, href: "00-start/how-this-works.html" },
+      { id: "mental-model", label: "The mental model", unit: "Start", x: 70, y: 620, href: "00-start/mental-model.html" },
+
+      { id: "objects-and-hashes", label: "Objects & hashes", unit: "Internals", x: 225, y: 60, href: "01-internals/objects-and-hashes.html" },
+      { id: "blobs-trees-commits", label: "Blobs, trees, commits", unit: "Internals", x: 225, y: 172, href: "01-internals/blobs-trees-commits.html" },
+      { id: "refs-and-heads", label: "Refs & HEAD", unit: "Internals", x: 225, y: 284, href: "01-internals/refs-and-heads.html" },
+      { id: "the-index", label: "The index", unit: "Internals", x: 225, y: 396, href: "01-internals/the-index.html" },
+      { id: "revision-syntax", label: "Revision syntax", unit: "Internals", x: 225, y: 508, href: "01-internals/revision-syntax.html" },
+      { id: "commit-by-hand", label: "A commit by hand", unit: "Internals", x: 225, y: 620, href: "01-internals/commit-by-hand.html" },
+
+      { id: "amend", label: "amend", unit: "Rewriting", x: 380, y: 60, href: "02-rewriting/amend.html" },
+      { id: "reset-vs-revert", label: "reset vs revert", unit: "Rewriting", x: 380, y: 130, href: "02-rewriting/reset-vs-revert.html" },
+      { id: "cherry-pick", label: "cherry-pick", unit: "Rewriting", x: 380, y: 200, href: "02-rewriting/cherry-pick.html" },
+      { id: "interactive-rebase", label: "rebase -i", unit: "Rewriting", x: 380, y: 270, href: "02-rewriting/interactive-rebase.html" },
+      { id: "squash-fixup-autosquash", label: "autosquash", unit: "Rewriting", x: 380, y: 340, href: "02-rewriting/squash-fixup-autosquash.html" },
+      { id: "rebase-onto", label: "rebase --onto", unit: "Rewriting", x: 380, y: 410, href: "02-rewriting/rebase-onto.html" },
+      { id: "rebase-vs-merge", label: "rebase vs merge", unit: "Rewriting", x: 380, y: 480, href: "02-rewriting/rebase-vs-merge.html" },
+      { id: "reflog-recovery", label: "reflog recovery", unit: "Rewriting", x: 380, y: 550, href: "02-rewriting/reflog-recovery.html" },
+      { id: "rewriting-published-history", label: "Published history", unit: "Rewriting", x: 380, y: 620, href: "02-rewriting/rewriting-published-history.html" },
+
+      { id: "bisect", label: "bisect", unit: "Forensics", x: 535, y: 60, href: "03-forensics/bisect.html" },
+      { id: "blame-moves-and-copies", label: "blame -M -C", unit: "Forensics", x: 535, y: 200, href: "03-forensics/blame-moves-and-copies.html" },
+      { id: "pickaxe", label: "pickaxe", unit: "Forensics", x: 535, y: 340, href: "03-forensics/pickaxe.html" },
+      { id: "reflog-archaeology", label: "reflog archaeology", unit: "Forensics", x: 535, y: 480, href: "03-forensics/reflog-archaeology.html" },
+      { id: "fsck-and-dangling", label: "fsck", unit: "Forensics", x: 535, y: 620, href: "03-forensics/fsck-and-dangling.html" },
+
+      { id: "stash-tricks", label: "stash", unit: "Workflow", x: 690, y: 61, href: "04-workflow/stash-tricks.html" },
+      { id: "worktrees", label: "worktrees", unit: "Workflow", x: 690, y: 154, href: "04-workflow/worktrees.html" },
+      { id: "refspecs-and-remotes", label: "refspecs", unit: "Workflow", x: 690, y: 247, href: "04-workflow/refspecs-and-remotes.html" },
+      { id: "force-with-lease", label: "force-with-lease", unit: "Workflow", x: 690, y: 340, href: "04-workflow/force-with-lease.html" },
+      { id: "merge-strategies-and-rerere", label: "merge strategies", unit: "Workflow", x: 690, y: 433, href: "04-workflow/merge-strategies-and-rerere.html" },
+      { id: "hooks", label: "hooks", unit: "Workflow", x: 690, y: 526, href: "04-workflow/hooks.html" },
+      { id: "submodules-and-subtrees", label: "submodules", unit: "Workflow", x: 690, y: 619, href: "04-workflow/submodules-and-subtrees.html" },
+
+      { id: "recovery-drill", label: "Recovery drill", unit: "Drills", x: 845, y: 60, href: "05-labs/recovery-drill.html" },
+      { id: "sandbox", label: "Free sandbox", unit: "Drills", x: 845, y: 620, href: "05-labs/sandbox.html" },
+
+      { id: "packfiles-and-gc", label: "packfiles & gc", unit: "Expert", x: 1000, y: 61, href: "06-expert/packfiles-and-gc.html" },
+      { id: "notes-and-replace", label: "notes & replace", unit: "Expert", x: 1000, y: 247, href: "06-expert/notes-and-replace.html" },
+      { id: "big-repositories", label: "big repositories", unit: "Expert", x: 1000, y: 433, href: "06-expert/big-repositories.html" },
+      { id: "when-not-to-rewrite", label: "when not to rewrite", unit: "Expert", x: 1000, y: 619, href: "06-expert/when-not-to-rewrite.html" },
+    ];
+
+    const EDGES = [
+      ["how-this-works", "mental-model"],
+      ["mental-model", "objects-and-hashes"],
+      ["objects-and-hashes", "blobs-trees-commits"],
+      ["blobs-trees-commits", "refs-and-heads"],
+      ["refs-and-heads", "the-index"],
+      ["the-index", "revision-syntax"],
+      ["revision-syntax", "commit-by-hand"],
+      ["commit-by-hand", "amend"],
+      ["amend", "reset-vs-revert"],
+      ["reset-vs-revert", "cherry-pick"],
+      ["cherry-pick", "interactive-rebase"],
+      ["interactive-rebase", "squash-fixup-autosquash"],
+      ["squash-fixup-autosquash", "rebase-onto"],
+      ["rebase-onto", "rebase-vs-merge"],
+      ["rebase-vs-merge", "reflog-recovery"],
+      ["reflog-recovery", "rewriting-published-history"],
+      ["rewriting-published-history", "bisect"],
+      ["bisect", "blame-moves-and-copies"],
+      ["blame-moves-and-copies", "pickaxe"],
+      ["pickaxe", "reflog-archaeology"],
+      ["reflog-archaeology", "fsck-and-dangling"],
+      ["fsck-and-dangling", "stash-tricks"],
+      ["stash-tricks", "worktrees"],
+      ["worktrees", "refspecs-and-remotes"],
+      ["refspecs-and-remotes", "force-with-lease"],
+      ["force-with-lease", "merge-strategies-and-rerere"],
+      ["merge-strategies-and-rerere", "hooks"],
+      ["hooks", "submodules-and-subtrees"],
+      ["submodules-and-subtrees", "recovery-drill"],
+      ["recovery-drill", "sandbox"],
+      ["sandbox", "packfiles-and-gc"],
+      ["packfiles-and-gc", "notes-and-replace"],
+      ["notes-and-replace", "big-repositories"],
+      ["big-repositories", "when-not-to-rewrite"],
+      // dashed: ideas from earlier units paying off later
+      ["objects-and-hashes", "packfiles-and-gc", true],
+      ["blobs-trees-commits", "submodules-and-subtrees", true],
+      ["refs-and-heads", "reflog-recovery", true],
+      ["the-index", "stash-tricks", true],
+      ["revision-syntax", "pickaxe", true],
+      ["commit-by-hand", "notes-and-replace", true],
+      ["cherry-pick", "interactive-rebase", true],
+      ["reflog-recovery", "fsck-and-dangling", true],
+      ["reflog-recovery", "recovery-drill", true],
+      ["rewriting-published-history", "force-with-lease", true],
+      ["refspecs-and-remotes", "force-with-lease", true],
+      ["rebase-vs-merge", "merge-strategies-and-rerere", true],
+      ["bisect", "worktrees", true],
+      ["squash-fixup-autosquash", "recovery-drill", true],
+      ["rewriting-published-history", "when-not-to-rewrite", true],
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const svg = document.getElementById("concept-map");
+      const NS = "http://www.w3.org/2000/svg";
+      const byId = Object.fromEntries(NODES.map((n) => [n.id, n]));
+      const done = window.GitProgress ? GitProgress.all() : {};
+
+      for (const [from, to, dashed] of EDGES) {
+        const a = byId[from], b = byId[to];
+        const line = document.createElementNS(NS, "line");
+        line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+        line.setAttribute("stroke", "var(--border)");
+        line.setAttribute("stroke-width", dashed ? 1.2 : 2);
+        if (dashed) line.setAttribute("stroke-dasharray", "5 4");
+        svg.appendChild(line);
+      }
+
+      for (const n of NODES) {
+        const g = document.createElementNS(NS, "g");
+        g.style.cursor = "pointer";
+        g.addEventListener("click", () => { location.href = n.href; });
+
+        const isDone = Boolean(done[n.id]?.completedAt);
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", n.x); c.setAttribute("cy", n.y);
+        c.setAttribute("r", 11);
+        c.setAttribute("fill", isDone ? "var(--good)" : "var(--bg-soft)");
+        c.setAttribute("stroke", isDone ? "var(--good)" : "var(--accent)");
+        c.setAttribute("stroke-width", 2);
+        g.appendChild(c);
+
+        const t = document.createElementNS(NS, "text");
+        t.setAttribute("x", n.x); t.setAttribute("y", n.y + 28);
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("fill", "var(--text)");
+        t.setAttribute("font-size", "12");
+        t.textContent = n.label;
+        g.appendChild(t);
+
+        const title = document.createElementNS(NS, "title");
+        title.textContent = `${n.unit}: ${n.label}${isDone ? " ✓" : ""}`;
+        g.appendChild(title);
+        svg.appendChild(g);
+      }
+
+      const doneCount = NODES.filter((n) => done[n.id]?.completedAt).length;
+      const label = document.createElementNS(NS, "text");
+      label.setAttribute("x", 12); label.setAttribute("y", 24);
+      label.setAttribute("fill", "var(--text-soft)");
+      label.setAttribute("font-size", "13");
+      label.textContent = `${doneCount} of ${NODES.length} pages completed`;
+      svg.appendChild(label);
+    });
+  })();
+  </script>
+</main>
+</body>
+</html>

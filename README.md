@@ -1,9 +1,9 @@
-# ML Tutor, Bass Tutor & Web Dev Reference
+# ML Tutor, Bass Tutor, Git Tutor & Web Dev Reference
 
-Two interactive, novice-to-expert courses and one working developer's reference
-on a single static site — plain HTML/CSS/JS, no build step, everything runs in
-your browser. Plain language first: every symbol is named, every concept opens
-with an everyday analogy before the jargon arrives.
+Three interactive courses and one working developer's reference on a single
+static site — plain HTML/CSS/JS, no build step, everything runs in your
+browser. Plain language first: every symbol is named, every concept opens with
+an everyday analogy before the jargon arrives.
 
 - **[ML Tutor](index.html)** (site root) — machine learning: math foundations →
   classical models → neural networks → LLMs & diffusion, with models that train
@@ -15,6 +15,12 @@ with an everyday analogy before the jargon arrives.
   topic concept-first, in full layered depth). Both share a playable fretboard,
   notation that plays itself, practice exercises with a log, ear training, a
   groove machine, and a microphone tuner.
+- **[Git Tutor](git/index.html)** (`git/`) — the advanced half of git, for people
+  who already use it: history rewriting, the object database, forensics, and the
+  collaboration commands. Every exercise runs against a **real git repository in
+  your browser** — a full git implementation (isomorphic-git) on a browser
+  filesystem — so `rebase --onto` and `reset --hard` can be practised on a
+  repository that doesn't matter.
 - **[Web Dev Reference](web/index.html)** (`web/`) — Angular, RxJS, Vitest and
   pnpm, in a reference shape rather than a course one: what the current best
   practice is, what it replaced, why it changed, and the official docs one click
@@ -28,20 +34,26 @@ with an everyday analogy before the jargon arrives.
 npm install
 npm run dev        # serves on http://localhost:8010 (ML tutor)
 npm run dev:bass   # same server, opens the bass tutor
+npm run dev:git    # same server, opens the git tutor
 npm run dev:web    # same server, opens the web dev reference
 ```
 
 Opening `index.html` directly from disk mostly works too, but pages that
 `fetch()` data (glossary, search, flashcards, the MNIST lab, the routine
-builder) need the server, and the bass tuner's microphone needs a secure
-context (localhost or https).
+builder) need the server, the bass tuner's microphone needs a secure context
+(localhost or https), and the git tutor's sandboxes need IndexedDB, which
+browsers deny to `file://` pages — those labs say so and tell you to serve the
+site.
 
 ## Deployment (GitHub Pages)
 
-`.github/workflows/pages.yml` deploys both tutors to GitHub Pages on every push
-to `main`: it installs the vendored libraries (KaTeX, highlight.js, VexFlow),
-rebuilds both search indexes, and publishes the site — ML tutor at the site
-root, bass tutor under `/bass/`.
+`.github/workflows/pages.yml` deploys all four tracks to GitHub Pages on every
+push to `main`: it installs the vendored libraries (KaTeX, highlight.js,
+VexFlow, isomorphic-git, lightning-fs), rebuilds the search indexes, verifies
+the git sandbox against the runner's real `git` binary, checks the Web Dev
+Reference's link registry, and publishes the site — ML tutor at the site root,
+bass tutor under `/bass/`, git tutor under `/git/`, web dev reference under
+`/web/`.
 
 One-time setup: after the first push to `main`, the workflow enables Pages
 automatically. If that first run complains about Pages not being configured,
@@ -83,6 +95,20 @@ fretboard). Labs: fretboard trainer, ear trainer, groove machine (play-along
 band with style presets), microphone tuner, routine builder. Its own glossary
 (90 terms), music-symbol reference, concept map, search, and flashcards.
 
+**Git Tutor** — Units 0–6 (start here → internals & plumbing → history
+rewriting → debugging & forensics → workflow & collaboration → drills → expert
+track): 35 pages and 38 graded labs. Each lab seeds a real repository in the
+browser and checks your work by inspecting it — commit counts, trees, ancestry,
+reflog contents — never by matching what you typed. `git rebase -i` opens the
+actual `.git/rebase-merge/git-rebase-todo`; `git reflog` parses a real
+`.git/logs/HEAD`; a `pre-commit` hook really can refuse your commit. The engine
+is isomorphic-git plus this tutor's own implementations of the commands it
+lacks (reset, revert, rebase, cherry-pick, bisect, reflog, fsck, blame -M/-C,
+the pickaxe, and fetch/push against a second local repository). Where the
+sandbox can't do something — gc, the network, `filter-repo`, `git submodule` —
+the page says so instead of pretending. Its own glossary (60 terms), a git
+syntax reference, concept map, search and flashcards.
+
 **Web Dev Reference** — a reference track, not a course, so the page shape is
 different: *at a glance → do it this way now → what it replaced and why →
 gotchas → live demo → legacy panel → official docs*. 38 pages across four
@@ -101,18 +127,29 @@ event, three strategies), and a marble player simulating the four flattening
 operators over an editable source. Plus a version filter — set which versions
 you're on and every badge site-wide tells you whether it applies to you yet.
 
-All three sites keep state in `localStorage` under separate namespaces
-(`ml-tutor:*` / `bass-tutor:*` / `web-ref:*`) — nothing leaves your browser.
+All four sites keep state in `localStorage` under separate namespaces
+(`ml-tutor:*` / `bass-tutor:*` / `git-tutor:*` / `web-ref:*`) — nothing leaves
+your browser.
 
 ## Maintenance scripts
 
 ```bash
 npm run build:index   # rebuild data/search-index.json (ML) after editing pages
 npm run build:bass    # rebuild bass/data/search-index.json + exercise-index.json
+npm run build:git     # rebuild git/data/search-index.json + lab-index.json
 npm run build:web     # rebuild web/data/search-index.json (pages + changes + docs)
+npm run verify:git    # build every git fixture and check it against the real git CLI
 npm run check:links   # validate web/data/links.json — see below
 npm run fetch:mnist   # regenerate data/datasets/mnist-mini.json (already committed)
 ```
+
+`build:git` validates as well as indexes: it fails on a duplicate lab or page
+id, a lab naming a fixture or a goal check that doesn't exist, a quiz answer out
+of range, an unescaped `<placeholder>` in prose, or a page script that doesn't
+parse. `verify:git` is the one that matters most — it builds all 14 sandbox
+histories with the browser engine and hands them to the real `git` binary,
+checking `fsck --strict`, every ref, and that the same history built by the git
+CLI at the same timestamps produces identical commit, tree and blob ids.
 
 `check:links` runs three passes over the Web Dev Reference's documentation
 links: referential integrity (offline — every `data-doc` id resolves, and every
@@ -121,9 +158,10 @@ existence for `#fragment` URLs. Add `-- --offline` to skip the network passes;
 that is the form CI runs, since a documentation site being unreachable should
 never block a deploy.
 
-See `PLAN.md` (ML), `bass/PLAN.md` (bass) and `web/PLAN.md` (reference) for
-architecture and the page-template contracts (`assets/page-template.html`,
-`bass/assets/page-template.html` for topic pages,
+See `PLAN.md` (ML), `bass/PLAN.md` (bass), `git/PLAN.md` (git) and
+`web/PLAN.md` (reference) for architecture and the page-template contracts
+(`assets/page-template.html`, `bass/assets/page-template.html` and
+`git/assets/page-template.html` for topic pages,
 `bass/assets/session-template.html` for hands-on sessions,
 `web/assets/page-template.html` for reference pages).
 
