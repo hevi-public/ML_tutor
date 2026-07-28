@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Migrating from Karma &amp; Jasmine — Web Dev Reference</title>
+
+  <meta name="web:section" content="Vitest">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="setup.html|Vitest setup">
+  <meta name="web:next" content="api.html|The API reference">
+  <meta name="web:versions" content="Vitest 4.1.10 · Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Vitest</p>
+  <h1>Migrating from Karma &amp; Jasmine</h1>
+  <p class="lede">Two separate jobs that get conflated: switching the runner
+  (one line) and converting the assertions (a schematic, plus the cases it
+  cannot do).</p>
+
+  <div class="at-glance">
+    <span class="label">The order to do it in</span>
+    <ul>
+      <li><strong>1.</strong> Move to <code>@angular/build:unit-test</code> with
+      <code>runner: "karma"</code>. Nothing else changes; everything still
+      passes.</li>
+      <li><strong>2.</strong> Run <code>ng generate
+      @schematics/angular:refactor-jasmine-vitest</code> to convert assertions
+      and spies.</li>
+      <li><strong>3.</strong> Switch <code>runner</code> to <code>"vitest"</code>
+      (or drop the option — it is the default).</li>
+      <li><strong>4.</strong> Fix what is left by hand: <code>done</code>
+      callbacks, clock control, and anything zone-dependent.</li>
+    </ul>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">The schematic is marked experimental</span>
+    <code>refactor-jasmine-vitest</code> is labelled EXPERIMENTAL in the
+    package. Run it on a clean tree, use <code>--report</code> to see what it
+    intends to touch, and read the diff — it does the mechanical bulk well and
+    leaves the interesting cases alone.
+  </div>
+
+  <h2>The mapping</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Jasmine</th><th>Vitest</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><code>describe</code> / <code>it</code></td><td>Same</td><td><code>test</code> is an alias for <code>it</code></td></tr>
+        <tr><td><code>beforeEach</code> / <code>afterEach</code></td><td>Same</td><td></td></tr>
+        <tr><td><code>fdescribe</code> / <code>fit</code></td><td><code>describe.only</code> / <code>it.only</code></td><td></td></tr>
+        <tr><td><code>xdescribe</code> / <code>xit</code></td><td><code>describe.skip</code> / <code>it.skip</code></td><td></td></tr>
+        <tr><td><code>jasmine.createSpy()</code></td><td><code>vi.fn()</code></td><td></td></tr>
+        <tr><td><code>jasmine.createSpyObj('x', ['a','b'])</code></td><td><code>{ a: vi.fn(), b: vi.fn() }</code></td><td>No direct equivalent — write the object</td></tr>
+        <tr><td><code>spyOn(obj, 'm')</code></td><td><code>vi.spyOn(obj, 'm')</code></td><td>Vitest's does <strong>not</strong> stub by default — see below</td></tr>
+        <tr><td><code>.and.returnValue(v)</code></td><td><code>.mockReturnValue(v)</code></td><td></td></tr>
+        <tr><td><code>.and.callFake(fn)</code></td><td><code>.mockImplementation(fn)</code></td><td></td></tr>
+        <tr><td><code>.and.callThrough()</code></td><td>(default behaviour)</td><td></td></tr>
+        <tr><td><code>.and.throwError(e)</code></td><td><code>.mockImplementation(() =&gt; { throw e })</code></td><td></td></tr>
+        <tr><td><code>expect(s).toHaveBeenCalled()</code></td><td>Same</td><td></td></tr>
+        <tr><td><code>expect(s).toHaveBeenCalledTimes(n)</code></td><td>Same</td><td></td></tr>
+        <tr><td><code>expect(x).toEqual(y)</code></td><td>Same</td><td>Deep equality in both</td></tr>
+        <tr><td><code>expect(x).toBe(y)</code></td><td>Same</td><td>Identity in both</td></tr>
+        <tr><td><code>jasmine.any(String)</code></td><td><code>expect.any(String)</code></td><td></td></tr>
+        <tr><td><code>jasmine.objectContaining({…})</code></td><td><code>expect.objectContaining({…})</code></td><td></td></tr>
+        <tr><td><code>jasmine.clock().install()</code></td><td><code>vi.useFakeTimers()</code></td><td></td></tr>
+        <tr><td><code>jasmine.clock().tick(ms)</code></td><td><code>vi.advanceTimersByTime(ms)</code></td><td></td></tr>
+        <tr><td><code>jasmine.clock().uninstall()</code></td><td><code>vi.useRealTimers()</code></td><td></td></tr>
+        <tr><td><code>it('…', (done) =&gt; {…})</code></td><td><code>it('…', async () =&gt; {…})</code></td><td>Vitest 4 has no <code>done</code> — see below</td></tr>
+        <tr><td><code>pending()</code></td><td><code>ctx.skip()</code></td><td></td></tr>
+        <tr><td><code>jasmine.DEFAULT_TIMEOUT_INTERVAL</code></td><td><code>testTimeout</code> option, or per test</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The three that need a person</h2>
+
+  <div class="gotcha">
+    <span class="label">1. spyOn no longer stubs by default</span>
+    In Jasmine, <code>spyOn(obj, 'method')</code> <em>replaces</em> the method —
+    it records calls and returns <code>undefined</code>. In Vitest,
+    <code>vi.spyOn(obj, 'method')</code> records calls and <strong>still calls
+    the real implementation</strong>. A test that relied on the original not
+    running will now run it, which can mean real HTTP, real navigation, or a
+    thrown error from a method that was never meant to execute. Add
+    <code>.mockImplementation(() =&gt; {})</code> where the stubbing was the
+    point.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">2. done callbacks are gone</span>
+    Vitest 4 removed the <code>done</code> parameter. Return a promise instead —
+    which is usually clearer anyway, since a forgotten <code>done()</code> was a
+    timeout rather than a failure.
+    <pre><code class="language-typescript">// was
+it('loads', (done) =&gt; {
+  service.load().subscribe(v =&gt; { expect(v).toBe(1); done(); });
+});
+
+// now
+it('loads', async () =&gt; {
+  const v = await firstValueFrom(service.load());
+  expect(v).toBe(1);
+});</code></pre>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">3. fakeAsync and tick are zone-based</span>
+    They come from <code>@angular/core/testing</code> and depend on zone.js. In
+    a zoneless application they do not work. Replace with
+    <code>await fixture.whenStable()</code>, or Vitest's own fake timers for
+    genuine timer control. See <a href="async-and-marbles.html">async
+    testing</a>.
+  </div>
+
+  <h2>Globals</h2>
+  <p>Jasmine's <code>describe</code>, <code>it</code> and <code>expect</code> are
+  globals. Vitest can provide globals too, but the Angular builder's default
+  expects explicit imports:</p>
+
+<pre><code class="language-typescript">import { describe, it, expect, beforeEach, vi } from 'vitest';</code></pre>
+
+  <p>Explicit imports are worth keeping: they give you go-to-definition, they
+  make it obvious which framework a spec uses during a partial migration, and
+  they avoid the ambient type conflicts that arise when Jasmine and Vitest type
+  definitions are both installed.</p>
+
+  <div class="gotcha">
+    <span class="label">Remove the Jasmine types when you are done</span>
+    Leaving <code>"types": ["jasmine"]</code> in
+    <code>tsconfig.spec.json</code> alongside Vitest produces conflicting global
+    declarations for <code>expect</code>, and the resulting type errors point
+    nowhere useful. Drop the Jasmine entry once the last spec is converted.
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/testing/migrating-to-vitest" data-doc="ng.guide.testing.vitest"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev/guide/migration.html" data-doc="vi.migration"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev/blog/vitest-4" data-doc="vi.blog.v4"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

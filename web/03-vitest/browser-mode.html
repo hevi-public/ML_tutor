@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browser mode — Web Dev Reference</title>
+
+  <meta name="web:section" content="Vitest">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="async-and-marbles.html|Async testing & marbles">
+  <meta name="web:next" content="../04-pnpm/overview.html|pnpm overview">
+  <meta name="web:versions" content="Vitest 4.1.10 · Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Vitest</p>
+  <h1>Browser mode</h1>
+  <p class="lede">Run the same tests in a real browser instead of jsdom. Out of
+  experimental in Vitest 4, and the answer whenever a test fails because jsdom
+  does not implement something.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li>Stable in Vitest 4 — the experimental tag is gone.</li>
+      <li>Providers moved into <strong>separate packages</strong>:
+      <code>@vitest/browser-playwright</code>,
+      <code>@vitest/browser-webdriverio</code>,
+      <code>@vitest/browser-preview</code>.</li>
+      <li>In an Angular project, set <code>browsers</code> on the builder — you
+      do not usually configure Vitest directly.</li>
+      <li>It is not end-to-end testing. It is component testing with a real
+      layout engine.</li>
+    </ul>
+  </div>
+
+  <h2>When it earns its cost</h2>
+  <p>Browser mode starts slower and is more machinery. Use it for the specific
+  cases where jsdom gives a wrong answer rather than no answer — those are the
+  ones that waste an afternoon:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td><code>getBoundingClientRect()</code> returns all zeros</td><td>jsdom has no layout engine at all</td></tr>
+        <tr><td><code>offsetWidth</code> / <code>offsetHeight</code> are 0</td><td>Same</td></tr>
+        <tr><td>A component that measures itself renders wrongly</td><td>Same</td></tr>
+        <tr><td><code>IntersectionObserver</code> never fires</td><td>Requires real scrolling and layout</td></tr>
+        <tr><td>Canvas or WebGL code throws</td><td>Not implemented</td></tr>
+        <tr><td>CSS-dependent behaviour is not exercised</td><td>jsdom parses CSS but does not apply it visually</td></tr>
+        <tr><td>Scroll position assertions fail</td><td>No real viewport</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Everything else — services, pipes, signal logic, most component tests —
+  belongs in jsdom, where it runs faster.</p>
+
+  <h2>Setting it up</h2>
+
+<pre><code class="language-bash">npm install -D @vitest/browser-playwright playwright</code></pre>
+
+<pre><code class="language-json">// angular.json
+"test": {
+  "builder": "@angular/build:unit-test",
+  "options": {
+    "buildTarget": "::development",
+    "browsers": ["chromium"],
+    "headless": true
+  }
+}</code></pre>
+
+  <p>Angular also ships an internal schematic used by <code>ng add</code> to
+  wire a browser provider into a project, so adding the provider package is
+  usually enough.</p>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: the provider package is separate now</span>
+    In Vitest 3 you named the provider as a string and it came bundled. In
+    Vitest 4 the provider lives in its own package that you must install —
+    naming it without installing gives a resolution error that reads like a
+    config mistake rather than a missing dependency.
+  </div>
+
+  <h2>Splitting the suite</h2>
+  <p>Most projects want both: fast jsdom tests for the bulk and browser tests
+  for the handful that need real layout. Keep them separate so the fast set
+  stays fast — a naming convention plus <code>include</code> filters, or Vitest
+  <code>projects</code> if you are running Vitest directly.</p>
+
+<pre><code class="language-json">// two targets in angular.json
+"test": {
+  "builder": "@angular/build:unit-test",
+  "options": { "buildTarget": "::development", "exclude": ["**/*.browser.spec.ts"] }
+},
+"test-browser": {
+  "builder": "@angular/build:unit-test",
+  "options": {
+    "buildTarget": "::development",
+    "include": ["**/*.browser.spec.ts"],
+    "browsers": ["chromium"]
+  }
+}</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="vi.browser-providers"></div>
+
+  <h2>Not a replacement for e2e</h2>
+  <p>Browser mode mounts components in a real browser. It does not navigate your
+  application, run against a real backend, or exercise a user journey across
+  pages. If you need that, Playwright or Cypress are still the tools — and the
+  fact that browser mode uses Playwright underneath does not make it the same
+  thing.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>jsdom</th><th>Browser mode</th><th>Playwright e2e</th></tr></thead>
+      <tbody>
+        <tr><td>Scope</td><td>One component or service</td><td>One component</td><td>The whole application</td></tr>
+        <tr><td>Real layout</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Real backend</td><td>No</td><td>Usually mocked</td><td>Typically yes</td></tr>
+        <tr><td>Speed</td><td>Milliseconds</td><td>Fast per test, slow to start</td><td>Slow</td></tr>
+        <tr><td>Use for</td><td>The bulk of your tests</td><td>Layout-dependent components</td><td>Critical user journeys</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://vitest.dev/blog/vitest-4" data-doc="vi.blog.v4"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev/guide/migration.html" data-doc="vi.migration"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev" data-doc="vi.home"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

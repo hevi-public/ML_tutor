@@ -319,8 +319,8 @@
       "now": "Vitest via the @angular/build:unit-test builder",
       "was": "Karma + Jasmine via @angular-devkit/build-angular:karma",
       "since": "21", "deprecated": null, "removed": null,
-      "why": "Karma drives a real browser per run and predates the Vite-based build pipeline Angular now uses; Vitest reuses that pipeline, so tests start in a fraction of the time. v21 shipped the unified builder and made Vitest the default for new projects. Karma still runs, but is deprecated and takes no new features.",
-      "migration": "ng generate @schematics/angular:migrate-karma-to-vitest",
+      "why": "Karma drives a real browser per run and predates the Vite-based build pipeline Angular now uses; Vitest reuses that pipeline, so tests start in a fraction of the time. v21 shipped the unified builder and made Vitest the default for new projects. Karma still runs — the same builder accepts runner: 'karma' — but is deprecated and takes no new features. Note that the schematic converts your Jasmine *assertions*; switching the runner itself is a one-line change to angular.json.",
+      "migration": "ng generate @schematics/angular:refactor-jasmine-vitest",
       "code": {
         "now": "// angular.json\n\"test\": {\n  \"builder\": \"@angular/build:unit-test\"\n}",
         "was": "// angular.json\n\"test\": {\n  \"builder\": \"@angular-devkit/build-angular:karma\",\n  \"options\": { \"karmaConfig\": \"karma.conf.js\" }\n}"

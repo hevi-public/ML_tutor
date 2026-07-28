@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TestBed in 2026 — Web Dev Reference</title>
+
+  <meta name="web:section" content="Vitest">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="api.html|The API reference">
+  <meta name="web:next" content="async-and-marbles.html|Async testing & marbles">
+  <meta name="web:versions" content="Angular 22.0.8 · Vitest 4.1.10">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Vitest</p>
+  <h1>TestBed in 2026</h1>
+  <p class="lede">Standalone components made the setup shorter, signals made
+  assertions simpler, and zoneless made <code>fakeAsync</code> stop working.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>imports:</code> for standalone components, not
+      <code>declarations:</code>.</li>
+      <li><code>fixture.componentRef.setInput()</code> to set signal inputs.</li>
+      <li><code>await fixture.whenStable()</code> instead of
+      <code>fakeAsync</code>/<code>tick</code> under zoneless.</li>
+      <li><code>provideHttpClientTesting()</code> for HTTP —
+      <code>HttpClientTestingModule</code> is the old form.</li>
+      <li>A service with no template dependencies does not need the TestBed at
+      all.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">import { TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { describe, it, expect, beforeEach } from 'vitest';
+
+describe('UserCard', () =&gt; {
+  beforeEach(() =&gt; {
+    TestBed.configureTestingModule({
+      imports: [UserCard],                       // standalone: import it
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: UserService, useValue: { load: vi.fn() } },
+      ],
+    });
+  });
+
+  it('shows the name', async () =&gt; {
+    const fixture = TestBed.createComponent(UserCard);
+
+    // signal inputs are set through componentRef
+    fixture.componentRef.setInput('user', { name: 'Ada', isAdmin: true });
+
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Ada');
+  });
+});</code></pre>
+
+  <h2>Testing without the TestBed</h2>
+  <p>Worth stating plainly, because it is faster and most codebases
+  under-use it: a service or a component whose logic is signals and plain
+  methods can be tested by constructing it. The TestBed exists to give you
+  templates and DI — if a test needs neither, skip it.</p>
+
+<pre><code class="language-typescript">it('totals the cart', () =&gt; {
+  const cart = new Cart();
+  cart.add({ price: 3 });
+  cart.add({ price: 4 });
+  expect(cart.total()).toBe(7);
+});
+
+// with dependencies, use runInInjectionContext or just pass fakes in
+it('loads a user', async () =&gt; {
+  const http = { get: vi.fn().mockReturnValue(of({ name: 'Ada' })) };
+  const store = TestBed.runInInjectionContext(() =&gt; new UserStore());
+  // …
+});</code></pre>
+
+  <h2>Signals in tests</h2>
+  <p>Signals make assertions synchronous — a <code>computed</code> is correct the
+  moment you read it, with no change detection required. Change detection is
+  only needed for the <em>DOM</em>.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Asserting on</th><th>Do</th></tr></thead>
+      <tbody>
+        <tr><td>A signal or computed's value</td><td>Read it: <code>expect(cmp.total()).toBe(7)</code>. No fixture needed</td></tr>
+        <tr><td>Rendered DOM</td><td><code>await fixture.whenStable()</code> first</td></tr>
+        <tr><td>An input's effect</td><td><code>fixture.componentRef.setInput(…)</code>, then <code>whenStable()</code></td></tr>
+        <tr><td>An <code>effect()</code> having run</td><td><code>await fixture.whenStable()</code> — effects are scheduled, not immediate</td></tr>
+        <tr><td>An output</td><td>Subscribe to it: <code>cmp.saved.subscribe(spy)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: setting an input directly does not work</span>
+    <code>fixture.componentInstance.user = x</code> fails for a signal input —
+    it is read-only, and assigning replaces the signal rather than setting its
+    value. Use <code>fixture.componentRef.setInput('user', x)</code>, which is
+    also what the template binding does.
+  </div>
+
+  <h2>HTTP</h2>
+
+<pre><code class="language-typescript">TestBed.configureTestingModule({
+  providers: [
+    provideZonelessChangeDetection(),
+    provideHttpClient(),
+    provideHttpClientTesting(),
+  ],
+});
+
+it('requests the user', async () =&gt; {
+  const http = TestBed.inject(HttpTestingController);
+  const store = TestBed.inject(UserStore);
+
+  const promise = firstValueFrom(store.load('1'));
+  http.expectOne('/api/users/1').flush({ name: 'Ada' });
+
+  expect(await promise).toEqual({ name: 'Ada' });
+  http.verify();       // fails if any request went unhandled
+});</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Order matters</span>
+    <code>provideHttpClient()</code> must come before
+    <code>provideHttpClientTesting()</code> — the testing provider replaces the
+    real backend, so it has to be applied on top. The reverse order silently
+    makes real requests.
+  </div>
+
+  <h2>Component harnesses</h2>
+  <p>A harness gives a component a stable API for tests, so an internal markup
+  change does not break every spec that touched it. Angular Material and
+  <code>@angular/aria</code> ship them; you can write your own on
+  <code>@angular/cdk/testing</code>.</p>
+
+<pre><code class="language-typescript">const loader = TestbedHarnessEnvironment.loader(fixture);
+const tabs = await loader.getHarness(TabGroupHarness);
+await tabs.selectTab('Billing');
+expect(await tabs.getSelectedLabel()).toBe('Billing');</code></pre>
+
+  <p>The argument for them is narrow but real: any test that does
+  <code>querySelector('.tab-button:nth-child(2)')</code> is asserting on markup
+  it does not own, and will break the next time someone adds a wrapper element.</p>
+
+  <h2>What changed</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Now</th><th>Previously</th></tr></thead>
+      <tbody>
+        <tr><td><code>imports: [MyComponent]</code></td><td><code>declarations: [MyComponent]</code></td></tr>
+        <tr><td><code>provideHttpClientTesting()</code></td><td><code>HttpClientTestingModule</code></td></tr>
+        <tr><td><code>provideRouter([])</code></td><td><code>RouterTestingModule</code></td></tr>
+        <tr><td><code>provideNoopAnimations()</code></td><td><code>NoopAnimationsModule</code></td></tr>
+        <tr><td><code>componentRef.setInput('x', v)</code></td><td><code>componentInstance.x = v</code></td></tr>
+        <tr><td><code>await fixture.whenStable()</code></td><td><code>fixture.detectChanges()</code>, or <code>fakeAsync</code> + <code>tick()</code></td></tr>
+        <tr><td>Constructing the class directly</td><td>TestBed for everything</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details class="legacy">
+    <summary>Before v15 — NgModule-era TestBed</summary>
+    <div class="layer-body">
+<pre><code class="language-typescript">TestBed.configureTestingModule({
+  declarations: [UserCardComponent],
+  imports: [HttpClientTestingModule, RouterTestingModule],
+  providers: [{ provide: UserService, useValue: spy }],
+  schemas: [NO_ERRORS_SCHEMA],   // to silence unknown child components
+}).compileComponents();
+
+fixture.componentInstance.user = { name: 'Ada' };
+fixture.detectChanges();</code></pre>
+      <p><code>NO_ERRORS_SCHEMA</code> deserves a warning: it silences every
+      unknown element and attribute, including your typos. It was widely used to
+      avoid declaring child components, and it hid real bugs. With standalone
+      components you import what the template uses, and the compiler tells you
+      when something is missing.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/testing/migrating-to-vitest" data-doc="ng.guide.testing.vitest"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/zoneless" data-doc="ng.guide.zoneless"></a></li>
+    <li><a class="doc-chip" href="https://material.angular.dev/cdk/categories" data-doc="ng.cdk"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>
