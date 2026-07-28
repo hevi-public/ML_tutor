@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Search — Web Dev Reference</title>
+
+  <meta name="web:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/search.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Reference</p>
+  <h1>Search</h1>
+  <p class="lede">One box over three things: the pages here, the record of what
+  changed in each version, and the official docs themselves.</p>
+
+  <div class="search-box">
+    <input type="search" id="search-input" placeholder="signals, toPromise, *ngIf, allowBuilds…"
+           aria-label="Search the reference" autofocus>
+    <p class="count" id="search-count"></p>
+  </div>
+
+  <h2 class="sr-only">Results</h2>
+  <div id="search-results" role="region" aria-live="polite" aria-label="Search results"></div>
+
+  <div class="box plain-english">
+    <span class="label">Search the old name</span>
+    The index deliberately covers retired APIs. Searching
+    <code>toPromise</code>, <code>destroy$</code>, <code>retryWhen</code>,
+    <code>*ngIf</code> or <code>onlyBuiltDependencies</code> will find the record
+    that names what replaced it and which version did it — which is usually what
+    you actually wanted when you searched.
+  </div>
+</main>
+</body>
+</html>

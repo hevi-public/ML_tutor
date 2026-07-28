@@ -1,0 +1,97 @@
+{
+  "_comment": "Search-only entries: how people actually phrase a thing, mapped onto the page that answers it. These never render as pages — scripts/build-web-index.js folds them into the index so a natural phrasing finds the right target. Targets must be pages that exist; entries pointing into 01-angular/ … 04-pnpm/ are added along with those sections.",
+
+  "aliases": [
+    {
+      "title": "What replaced this API?",
+      "u": "deprecations.html",
+      "unit": "Reference",
+      "phrases": ["deprecated", "removed", "obsolete", "no longer works",
+        "what replaced", "instead of", "superseded", "breaking change",
+        "is this still supported", "should i still use"]
+    },
+    {
+      "title": "Am I on a supported version?",
+      "u": "versions.html",
+      "unit": "Reference",
+      "phrases": ["end of life", "eol", "lts", "support window", "still supported",
+        "when does my version expire", "should i upgrade", "how old is my angular",
+        "release cadence", "release schedule", "compatibility matrix",
+        "which typescript version", "which node version"]
+    },
+    {
+      "title": "Which command migrates this for me?",
+      "u": "migrations.html",
+      "unit": "Reference",
+      "phrases": ["schematic", "codemod", "ng update", "automatic migration",
+        "rewrite my code", "upgrade my code", "migrate automatically",
+        "how do i upgrade angular", "skip a major version"]
+    },
+    {
+      "title": "Where are the official docs?",
+      "u": "docs-index.html",
+      "unit": "Reference",
+      "phrases": ["official docs", "documentation", "api reference", "angular.dev",
+        "rxjs.dev", "vitest.dev", "pnpm.io", "where is the doc"]
+    },
+    {
+      "title": "Unsubscribing without leaking",
+      "u": "glossary.html#take-until-destroyed",
+      "unit": "Glossary",
+      "phrases": ["unsubscribe", "memory leak", "destroy$", "ngOnDestroy",
+        "takeUntil", "cleanup subscription", "do i need to unsubscribe"]
+    },
+    {
+      "title": "Cold vs. hot observables",
+      "u": "glossary.html#cold-hot",
+      "unit": "Glossary",
+      "phrases": ["cold", "hot", "why does my http call fire twice",
+        "multiple requests", "shared stream", "share replay", "one subscription"]
+    },
+    {
+      "title": "switchMap, mergeMap, concatMap or exhaustMap?",
+      "u": "glossary.html#flattening",
+      "unit": "Glossary",
+      "phrases": ["switchMap", "mergeMap", "concatMap", "exhaustMap", "flatMap",
+        "nested observable", "observable of observable", "which map operator",
+        "cancel previous request", "double submit"]
+    },
+    {
+      "title": "Angular without zone.js",
+      "u": "glossary.html#zoneless",
+      "unit": "Glossary",
+      "phrases": ["zoneless", "zone.js", "remove zone", "provideZonelessChangeDetection",
+        "why is my view not updating", "markForCheck", "detectChanges"]
+    },
+    {
+      "title": "Why doesn't my package's install script run?",
+      "u": "glossary.html#content-addressable-store",
+      "unit": "Glossary",
+      "phrases": ["postinstall", "install script", "lifecycle script",
+        "onlyBuiltDependencies", "allowBuilds", "esbuild not working",
+        "ignored build scripts", "pnpm approve builds"]
+    },
+    {
+      "title": "Module not found, but it is installed",
+      "u": "glossary.html#phantom-dependency",
+      "unit": "Glossary",
+      "phrases": ["cannot find module", "phantom dependency", "hoisting",
+        "works with npm but not pnpm", "node_modules missing package",
+        "shamefully-hoist", "symlink"]
+    },
+    {
+      "title": "Keeping every @angular/* on the same version",
+      "u": "glossary.html#catalog",
+      "unit": "Glossary",
+      "phrases": ["catalog", "single version policy", "version drift", "monorepo versions",
+        "pin dependency version", "same version everywhere"]
+    },
+    {
+      "title": "Testing a component's behaviour, not its markup",
+      "u": "glossary.html#harness",
+      "unit": "Glossary",
+      "phrases": ["component harness", "test harness", "brittle tests",
+        "querySelector in tests", "cdk harness"]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Migrations — Web Dev Reference</title>
+
+  <meta name="web:root" content="./">
+  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 · pnpm 11.17.0">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/data.js"></script>
+  <script defer src="assets/js/hubs.js"></script>
+  <script defer src="assets/js/docs.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Reference</p>
+  <h1>Migrations</h1>
+  <p class="lede">Most of Angular's breaking changes ship with a schematic that
+  rewrites your code. This is the index of which command does what — and which
+  changes have no command and need a person.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>ng update</code> runs the migrations for the version you are
+      stepping to, automatically. The commands below are for running one on its
+      own — because you skipped it, or want to adopt a pattern before you are
+      forced to.</li>
+      <li>Schematics <strong>edit files in place</strong>. Run them on a clean
+      working tree so the diff is reviewable, and read that diff: they are good,
+      not infallible, and they cannot see intent.</li>
+      <li>A schematic that rewrites templates will reformat them. Expect a large
+      diff and consider running your formatter in the same commit.</li>
+    </ul>
+  </div>
+
+  <div data-migrations>
+    <p class="empty-note">Loading the migration index…</p>
+  </div>
+
+  <h2>The general shape</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Situation</th><th>Command</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Step to the next Angular major, running its migrations</td>
+          <td><code>ng update @angular/core @angular/cli</code></td>
+        </tr>
+        <tr>
+          <td>Run migrations only, without changing versions</td>
+          <td><code>ng update @angular/core --migrate-only --from=21 --to=22</code></td>
+        </tr>
+        <tr>
+          <td>Adopt a pattern early, on your own schedule</td>
+          <td><code>ng generate @angular/core:&lt;migration-name&gt;</code></td>
+        </tr>
+        <tr>
+          <td>See what a schematic would do without writing files</td>
+          <td><code>ng generate @angular/core:&lt;name&gt; --dry-run</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha</span>
+    <code>ng update</code> will not skip majors. Going from 19 to 22 is three
+    steps, in order, and each one runs its own migrations. Editing
+    <code>package.json</code> by hand to jump the queue skips every one of them
+    and converts a morning into a fortnight.
+  </div>
+
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/update-guide" data-doc="ng.update"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/testing/migrating-to-vitest" data-doc="ng.guide.testing.vitest"></a></li>
+    <li><a class="doc-chip" href="https://pnpm.io/migration" data-doc="pn.migration"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev/guide/migration.html" data-doc="vi.migration"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/deprecations/breaking-changes" data-doc="rx.breaking"></a></li>
+  </ul>
+</main>
+</body>
+</html>

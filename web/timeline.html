@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Timeline — Web Dev Reference</title>
+
+  <meta name="web:root" content="./">
+  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 · pnpm 11.17.0">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/data.js"></script>
+  <script defer src="assets/js/hubs.js"></script>
+</head>
+<body>
+<main class="hub">
+  <p class="unit-tag">Reference</p>
+  <h1>Timeline</h1>
+  <p class="lede">What landed in each version, newest first. Useful in two
+  directions: working out what you gain by upgrading, and working out why the
+  code in front of you was written that way.</p>
+
+  <div class="box prereq">
+    <span class="label">Reading old code</span>
+    If you have inherited a codebase, the fastest way to date it is to look at
+    which of these it uses. A component with <code>*ngIf</code> and a
+    <code>destroy$</code> subject is pre-v17 in style regardless of what its
+    <code>package.json</code> claims.
+  </div>
+
+  <div data-timeline>
+    <p class="empty-note">Loading the timeline…</p>
+  </div>
+
+  <p style="margin-top:2.5rem">Release dates come from
+  <a href="versions.html">versions</a>, which reads them from the npm registry.
+  Changes without a recorded version are omitted here and appear in
+  <a href="deprecations.html">what changed</a>.</p>
+</main>
+</body>
+</html>

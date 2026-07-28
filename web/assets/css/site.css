@@ -13,6 +13,10 @@
 /* Reference pages are table- and code-heavy: give them more room than prose. */
 main.ref { max-width: 58rem; }
 
+/* The generated views (ledger, timeline, docs index) are wide tables rather
+   than prose, so they get the full width available. */
+main.hub { max-width: 76rem; }
+
 /* ---------- Tool tags ---------- */
 
 .tool-tag {
@@ -244,7 +248,12 @@ table.cheat code {
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   font-size: 0.9em;
-  white-space: nowrap;
+  /* Wrap at spaces first and only break inside a token that cannot fit on its
+     own line — so `ng generate @angular/core:inject` breaks after "generate"
+     rather than mid-identifier. `anywhere` would do the latter. Without any
+     wrapping at all, one long schematic name forces the whole table wider than
+     the page and pushes a column out of sight. */
+  overflow-wrap: break-word;
 }
 /* Wide tables scroll rather than pushing the page sideways. */
 .table-scroll { overflow-x: auto; margin: 1.2rem 0; }
@@ -355,6 +364,87 @@ table.cheat code {
   font-size: 0.9rem;
 }
 .filter-bar input[type="search"] { flex: 1; min-width: 10rem; }
+
+/* ---------- Search results ---------- */
+
+.search-box { margin: 1.4rem 0 0.6rem; }
+.search-box input[type="search"] {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  font: inherit;
+  font-size: 1.05rem;
+}
+.search-box input[type="search"]:focus-visible { border-color: var(--accent); }
+.search-box .count { font-size: 0.85rem; color: var(--text-soft); margin: 0.4rem 0 0; }
+
+.results-group { margin: 1.8rem 0; }
+.results-group > h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+}
+.results-group > h3 .n {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.result {
+  padding: 0.6rem 0 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+.result:last-child { border-bottom: none; }
+.result h4 { margin: 0 0 0.2rem; font-size: 1.02rem; }
+.result h4 a { text-decoration: none; }
+.result h4 a:hover { text-decoration: underline; }
+.result .meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+  margin: 0.2rem 0; font-size: 0.8rem; color: var(--text-soft);
+}
+.result .snip { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--text-soft); }
+/* Off-site results are visibly off-site. */
+.result.doc h4 a::after { content: " ↗"; font-size: 0.85em; opacity: 0.7; }
+
+/* ---------- Ledger / timeline tables ---------- */
+
+.ledger-row-tool { white-space: nowrap; }
+.timeline-version {
+  margin: 2.2rem 0 0.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--border);
+  display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;
+}
+.timeline-version h3 { margin: 0; font-size: 1.25rem; }
+.timeline-version .date { font-size: 0.85rem; color: var(--text-soft); }
+.timeline-entry {
+  border-left: 3px solid var(--border);
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  margin: 0.9rem 0;
+}
+.timeline-entry.angular { border-left-color: #b91c1c; }
+.timeline-entry.rxjs    { border-left-color: #a21caf; }
+.timeline-entry.vitest  { border-left-color: #15803d; }
+.timeline-entry.pnpm    { border-left-color: #b45309; }
+.timeline-entry h4 { margin: 0 0 0.2rem; font-size: 1rem; }
+.timeline-entry .swap { font-size: 0.92rem; }
+.timeline-entry .swap .arrow { color: var(--text-soft); margin: 0 0.4rem; }
+.timeline-entry .swap .was { color: var(--text-soft); text-decoration: line-through; }
+.timeline-entry p { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--text-soft); }
+
+.empty-note {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
 
 /* ---------- Legacy panel ---------- */
 

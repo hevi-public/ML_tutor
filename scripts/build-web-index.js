@@ -35,7 +35,13 @@ const entries = [];
 
 /* ---------- pages ---------- */
 
-const pages = fs.readdirSync(ROOT).filter((f) => f.endsWith(".html"))
+// search.html is the search UI, not content. Indexing it means every page that
+// lists example queries ("toPromise", "*ngIf") outranks the records those
+// queries are meant to find.
+const NOT_CONTENT = new Set(["search.html"]);
+
+const pages = fs.readdirSync(ROOT)
+  .filter((f) => f.endsWith(".html") && !NOT_CONTENT.has(f))
   .concat(...DIRS.map((d) => fs.readdirSync(path.join(ROOT, d))
     .filter((f) => f.endsWith(".html")).map((f) => d + "/" + f)));
 

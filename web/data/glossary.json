@@ -1,0 +1,196 @@
+{
+  "_comment": "Terms this reference uses. Same shape as the other tracks' glossaries: plain-English line first, then the precise definition. Indexed into search by scripts/build-web-index.js.",
+
+  "signal": {
+    "term": "Signal",
+    "plain": "A value that knows who is reading it.",
+    "definition": "A container holding a value, read by calling it (count()). When the value changes, everything that read it is notified — so the framework knows exactly which views depend on which state, without diffing anything. This is the mechanism zoneless change detection is built on.",
+    "see": ["computed", "effect", "zoneless"]
+  },
+  "computed": {
+    "term": "Computed",
+    "plain": "A signal derived from other signals, recalculated only when they change.",
+    "definition": "A read-only signal defined by a function of other signals. It caches its value and recomputes lazily on first read after any dependency changes. Dependencies are tracked automatically by what the function actually reads on each run, so a branch not taken creates no dependency.",
+    "see": ["signal", "glitch-free"]
+  },
+  "effect": {
+    "term": "Effect",
+    "plain": "A side effect that re-runs when the signals it reads change.",
+    "definition": "A function registered to run after any signal it read has changed. Effects are for synchronising with things outside the reactive graph — logging, the DOM, a third-party library. Deriving state inside an effect is almost always a computed() in disguise.",
+    "see": ["signal", "computed"]
+  },
+  "glitch-free": {
+    "term": "Glitch-free",
+    "plain": "You never observe a half-updated state.",
+    "definition": "A property of a reactive system: when several values derive from a common source, an observer never sees them briefly disagree. If a and b both derive from x, nothing runs between a updating and b updating. Angular's signal graph guarantees this; a naive listener-based system does not.",
+    "see": ["signal", "computed"]
+  },
+  "zoneless": {
+    "term": "Zoneless",
+    "plain": "Angular without zone.js patching the browser to guess when to re-render.",
+    "definition": "A change detection mode where Angular is told what changed by signals rather than inferring it. Historically zone.js monkey-patched setTimeout, addEventListener and friends so Angular could re-check the whole component tree after any of them fired. Zoneless removes that: less startup cost, smaller bundles, no patched globals, and change detection that runs only where something actually changed.",
+    "see": ["change-detection", "onpush", "signal"]
+  },
+  "change-detection": {
+    "term": "Change detection",
+    "plain": "Angular working out which bindings in the template need re-rendering.",
+    "definition": "The pass where Angular compares each template binding's current value against the last one it rendered and updates the DOM where they differ. What varies between strategies is not the comparison but which components get visited at all.",
+    "see": ["onpush", "zoneless"]
+  },
+  "onpush": {
+    "term": "OnPush",
+    "plain": "Only re-check this component when its inputs or signals actually change.",
+    "definition": "A change detection strategy that skips a component unless one of its inputs changed by reference, an event fired inside it, a signal it reads changed, or it was explicitly marked. Since Angular 22 this is the default for components that do not set changeDetection.",
+    "see": ["change-detection", "zoneless"]
+  },
+  "destroyref": {
+    "term": "DestroyRef",
+    "plain": "An injectable handle for \"when this thing is torn down\".",
+    "definition": "A token providing an onDestroy callback in any injection context — component, directive, service or function. It is what lets takeUntilDestroyed() work without a lifecycle hook.",
+    "see": ["injection-context", "take-until-destroyed"]
+  },
+  "take-until-destroyed": {
+    "term": "takeUntilDestroyed",
+    "plain": "Unsubscribe automatically when the surrounding thing is destroyed.",
+    "definition": "An RxJS operator from @angular/core/rxjs-interop that completes a stream when the current injection context is destroyed. Replaces the manual destroy$ Subject plus ngOnDestroy pattern. Called outside an injection context it needs an explicit DestroyRef.",
+    "see": ["destroyref", "injection-context"]
+  },
+  "injection-context": {
+    "term": "Injection context",
+    "plain": "The moments when Angular knows which injector you belong to, so inject() works.",
+    "definition": "The window during which inject() can resolve a dependency: field initialisers and constructors of injectables, factory functions, and callbacks run inside runInInjectionContext(). Calling inject() outside one — in a lifecycle hook, or inside a promise callback — throws.",
+    "see": ["destroyref"]
+  },
+  "standalone": {
+    "term": "Standalone component",
+    "plain": "A component that declares its own template dependencies instead of relying on a module.",
+    "definition": "A component, directive or pipe carrying its own imports array. Introduced in preview in v14, stable in v15, the default since v19 — at which point the standalone: true flag became redundant. The NgModule it replaced existed only to tell the compiler what a template could see.",
+    "see": ["ngmodule"]
+  },
+  "ngmodule": {
+    "term": "NgModule",
+    "plain": "The old container that told the compiler which components a template could use.",
+    "definition": "A decorator collecting declarations, imports, exports and providers. Every component had to be declared in exactly one. Standalone components made this indirection unnecessary; NgModules still work and still appear in older codebases, but nothing new needs them.",
+    "see": ["standalone"]
+  },
+  "deferrable-view": {
+    "term": "Deferrable view (@defer)",
+    "plain": "A chunk of template that is not downloaded until it is needed.",
+    "definition": "A template block whose contents — and their dependencies — are split into a separate bundle and loaded on a trigger: on viewport, on interaction, on idle, on timer, or when a condition becomes true. The most direct lever Angular gives you over initial bundle size.",
+    "see": ["hydration"]
+  },
+  "hydration": {
+    "term": "Hydration",
+    "plain": "Making server-rendered HTML interactive without throwing it away and re-rendering.",
+    "definition": "The client-side pass that attaches event listeners and reactive state to markup the server already produced. Without it, Angular would discard the server's DOM and rebuild it, causing a visible flicker and wasting the server work.",
+    "see": ["incremental-hydration", "ssr"]
+  },
+  "incremental-hydration": {
+    "term": "Incremental hydration",
+    "plain": "Hydrate parts of the page only when they are needed, not all at once.",
+    "definition": "An extension of hydration that uses @defer triggers to decide when each block becomes interactive, so the JavaScript for a footer or a modal is neither downloaded nor executed until something asks for it. Event replay records interactions that happen before a block hydrates and applies them afterwards.",
+    "see": ["hydration", "deferrable-view"]
+  },
+  "ssr": {
+    "term": "SSR",
+    "plain": "Rendering the first version of the page on the server.",
+    "definition": "Server-side rendering: producing HTML on the server so the browser can paint before any application JavaScript runs. Improves perceived load time and is what search engines and link previews see.",
+    "see": ["hydration"]
+  },
+  "resource": {
+    "term": "Resource",
+    "plain": "An async load whose loading state, error and value are all signals.",
+    "definition": "resource() and its HTTP-specific sibling httpResource() model an asynchronous fetch as a reactive unit: value(), isLoading() and error() are signals you read in a template, and the request re-runs when its reactive inputs change. Stable in Angular 22.",
+    "see": ["signal"]
+  },
+  "observable": {
+    "term": "Observable",
+    "plain": "A stream of values over time that you subscribe to.",
+    "definition": "The core RxJS type: a producer that pushes zero or more values to a subscriber, then either completes or errors. Unlike a Promise it can emit many times, is lazy (nothing happens until subscription), and is cancellable.",
+    "see": ["cold-hot", "subject"]
+  },
+  "cold-hot": {
+    "term": "Cold vs. hot",
+    "plain": "Does each subscriber get its own run, or do they share one?",
+    "definition": "A cold Observable starts its work per subscriber — two subscribers to an HTTP call make two requests. A hot Observable produces independently of subscription and shares one run — subscribers see whatever is emitted while they are listening. Most surprises in RxJS trace back to this distinction.",
+    "see": ["observable", "subject"]
+  },
+  "subject": {
+    "term": "Subject",
+    "plain": "An Observable you can push values into by hand.",
+    "definition": "Both an Observable and an observer. Variants differ in what a late subscriber sees: Subject nothing, BehaviorSubject the current value, ReplaySubject the last n values, AsyncSubject only the final value on completion.",
+    "see": ["observable", "cold-hot"]
+  },
+  "marble": {
+    "term": "Marble diagram",
+    "plain": "A picture of a stream as beads on a timeline.",
+    "definition": "A notation for what an Observable emits and when: characters along a line, where each frame is a unit of virtual time, | is completion and # is an error. Also an executable test format — RxJS's TestScheduler runs marble strings directly.",
+    "see": ["observable", "test-scheduler"]
+  },
+  "test-scheduler": {
+    "term": "TestScheduler",
+    "plain": "Run time-based stream tests instantly, using virtual time.",
+    "definition": "An RxJS scheduler that replaces real time with virtual frames, so a test of a five-second debounce finishes immediately and deterministically. Paired with marble syntax to assert what a stream emitted and exactly when.",
+    "see": ["marble"]
+  },
+  "flattening": {
+    "term": "Flattening operator",
+    "plain": "What to do when a stream emits another stream.",
+    "definition": "The family — switchMap, mergeMap, concatMap, exhaustMap — that subscribes to an inner Observable produced per outer value. They differ only in what happens when a new outer value arrives while an inner is still running: switch cancels it, merge runs both, concat queues, exhaust ignores the new one.",
+    "see": ["observable"]
+  },
+  "testbed": {
+    "term": "TestBed",
+    "plain": "Angular's test harness for building a component with real dependency injection.",
+    "definition": "The API that configures a testing module, instantiates components and resolves their injectables, giving you a ComponentFixture to drive and inspect. The alternative — constructing the class directly — is faster but tests nothing about templates or DI.",
+    "see": ["harness"]
+  },
+  "harness": {
+    "term": "Component harness",
+    "plain": "A stable API for driving a component in a test, instead of poking at its DOM.",
+    "definition": "A class exposing a component's behaviour as methods (click(), getText()) so tests do not depend on its internal markup. Introduced by the Angular CDK; the payoff is that a component's internal refactor does not break every test that touched it.",
+    "see": ["testbed"]
+  },
+  "schematic": {
+    "term": "Schematic",
+    "plain": "A code generator or codemod shipped with the framework.",
+    "definition": "A packaged transformation run by the Angular CLI, either scaffolding new files or rewriting existing source. Migration schematics are the mechanism that makes Angular's breaking changes tractable — ng update runs the ones for the version you are stepping to.",
+    "see": []
+  },
+  "phantom-dependency": {
+    "term": "Phantom dependency",
+    "plain": "Importing a package you never declared, which happens to be there anyway.",
+    "definition": "Code that imports a package listed nowhere in its package.json but resolvable because a flat node_modules hoisted a transitive dependency to the top. It works until the dependency tree shifts. pnpm's non-flat layout makes it fail immediately instead, which is the point.",
+    "see": ["content-addressable-store"]
+  },
+  "content-addressable-store": {
+    "term": "Content-addressable store",
+    "plain": "One copy of each package version on disk, shared by every project.",
+    "definition": "pnpm's global store, keyed by content hash. A project's node_modules is built from hard links into it, so ten projects using the same version cost the space of one. As of pnpm 11 the store index is a single SQLite database rather than a file per package.",
+    "see": ["phantom-dependency"]
+  },
+  "peer-dependency": {
+    "term": "Peer dependency",
+    "plain": "\"I need this, but the app should supply it, and we must agree on the version.\"",
+    "definition": "A dependency a package expects its consumer to provide, so both end up using the same instance — essential for anything with shared global state, which is why every Angular library peer-depends on @angular/core. pnpm is stricter about unmet peers than npm, which surfaces real version conflicts that were previously silent.",
+    "see": ["catalog"]
+  },
+  "catalog": {
+    "term": "Catalog",
+    "plain": "Name a dependency version once for the whole monorepo.",
+    "definition": "A pnpm workspace feature: define versions in a catalog and have packages reference catalog: instead of a literal range. One edit updates every package, and drift between packages becomes impossible — which is what you want for a set like @angular/* that must move in lockstep.",
+    "see": ["peer-dependency", "workspace-protocol"]
+  },
+  "workspace-protocol": {
+    "term": "workspace: protocol",
+    "plain": "\"This dependency is the copy in this repo, not one from the registry.\"",
+    "definition": "A pnpm version specifier (workspace:*, workspace:^) that resolves to a local package in the same workspace and fails loudly if there isn't one. On publish it is rewritten to a real version range.",
+    "see": ["catalog"]
+  },
+  "lockfile": {
+    "term": "Lockfile",
+    "plain": "The exact tree that was installed, written down so it can be reproduced.",
+    "definition": "A generated file pinning every resolved version and integrity hash. Committing it is what makes an install reproducible; installing with --frozen-lockfile in CI is what proves nobody changed a dependency without changing the lockfile.",
+    "see": ["content-addressable-store"]
+  }
+}
