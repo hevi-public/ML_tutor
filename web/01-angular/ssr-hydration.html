@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SSR &amp; hydration — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="routing.html|Routing">
+  <meta name="web:next" content="a11y-and-cdk.html|Accessibility & the CDK">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>SSR &amp; hydration</h1>
+  <p class="lede">Render on the server, then take over on the client without
+  throwing the server's work away — and, since v22, without downloading the
+  JavaScript for parts of the page nobody has looked at.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>provideClientHydration()</code> is the whole setup. Incremental
+      hydration is <strong>on by default from v22</strong>.</li>
+      <li><code>withEventReplay()</code> records clicks that happen before
+      hydration and replays them afterwards.</li>
+      <li>Incremental hydration reuses <code>@defer</code> triggers — the same
+      syntax now decides <em>when this becomes interactive</em>, not just when
+      it loads.</li>
+      <li>The usual breakage is code that touches <code>window</code> or
+      <code>document</code> during construction.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">bootstrapApplication(App, {
+  providers: [
+    provideClientHydration(withEventReplay()),
+    provideRouter(routes),
+  ],
+});</code></pre>
+
+<pre><code class="language-html">&lt;!-- Server-rendered immediately, but its JavaScript is not downloaded
+     until the user scrolls to it. --&gt;
+@defer (hydrate on viewport) {
+  &lt;comment-thread [postId]="postId()" /&gt;
+}
+
+&lt;!-- Rendered and hydrated only on interaction. --&gt;
+@defer (hydrate on interaction) {
+  &lt;rich-text-editor /&gt;
+}
+
+&lt;!-- Never hydrated: static server output, zero client cost. --&gt;
+@defer (hydrate never) {
+  &lt;marketing-footer /&gt;
+}</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.hydration.incremental">
+    <p class="change-note">If you adopted incremental hydration early, this is a
+    deletion rather than a migration: remove <code>withIncrementalHydration()</code>
+    and the behaviour stays the same. The schematic does it for you.</p>
+  </div>
+
+  <h2>Hydration, in one paragraph</h2>
+  <p>The server renders your components to HTML and sends it. The browser paints
+  it — fast, and without any application JavaScript. Then Angular boots and needs
+  to take ownership of that DOM. <em>Without</em> hydration it discards
+  everything the server produced and re-renders from scratch, which causes a
+  visible flicker and wastes the server's work. <em>With</em> hydration it walks
+  the existing DOM, matches it against what it would have rendered, and attaches
+  event listeners and reactive state in place.</p>
+
+  <p><strong>Incremental</strong> hydration extends that: rather than hydrating
+  the whole page at once, blocks marked <code>@defer (hydrate …)</code> wait for
+  their trigger. A page can be fully rendered and readable while most of its
+  JavaScript has never been fetched.</p>
+
+  <h2>Event replay</h2>
+  <p>Between paint and hydration the page looks ready but is not listening. A
+  user who clicks in that window gets nothing. <code>withEventReplay()</code>
+  records those events and dispatches them once the relevant component is
+  hydrated, which matters far more on a slow connection than on your laptop.</p>
+
+  <h2>What breaks</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Problem</th><th>Why</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><code>window is not defined</code></td><td>Node has no DOM</td>
+            <td>Move it to <code>afterNextRender()</code>, which never runs on the server</td></tr>
+        <tr><td>Hydration mismatch (NG0500 family)</td><td>The client rendered different DOM than the server</td>
+            <td>Usually random values, dates or <code>Math.random()</code> in a template — make them deterministic or pass them from the server</td></tr>
+        <tr><td>Direct DOM manipulation</td><td>Hydration expects the DOM it rendered</td>
+            <td>Do it in <code>afterNextRender</code>, or mark the subtree <code>ngSkipHydration</code></td></tr>
+        <tr><td>Data fetched twice</td><td>Server fetches, then the client fetches again</td>
+            <td>Angular's <code>HttpClient</code> transfers responses automatically; check the interceptor chain if it is not happening</td></tr>
+        <tr><td>Invalid HTML nesting</td><td>The browser silently repairs it, so the DOM no longer matches</td>
+            <td>Fix the markup — a <code>&lt;div&gt;</code> inside a <code>&lt;p&gt;</code> is the classic</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">ngSkipHydration is a last resort</span>
+    It tells Angular to destroy and re-render that subtree, which is the
+    pre-hydration behaviour for that part of the page. Useful as an escape hatch
+    for a third-party widget that insists on owning its DOM; not a fix for a
+    mismatch you could resolve properly.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: <code>hydrate never</code> still renders</span>
+    The block is server-rendered and appears in the HTML — it simply never
+    becomes interactive and its JavaScript is never fetched. Excellent for a
+    static footer; wrong for anything with a click handler, which will silently
+    do nothing.
+  </div>
+
+  <h2>Deciding what to defer</h2>
+  <p>Roughly: anything the user has not scrolled to, anything behind an
+  interaction, and anything genuinely static. Be careful with content near the
+  top of the page — deferring something the user sees immediately trades a
+  smaller bundle for a visible pop-in, which is usually a bad trade.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Content</th><th>Trigger</th></tr></thead>
+      <tbody>
+        <tr><td>Comments, related items, anything below the fold</td><td><code>hydrate on viewport</code></td></tr>
+        <tr><td>Editors, date pickers, complex inputs</td><td><code>hydrate on interaction</code></td></tr>
+        <tr><td>Menus and popovers</td><td><code>hydrate on hover</code></td></tr>
+        <tr><td>Static footers, legal text, marketing copy</td><td><code>hydrate never</code></td></tr>
+        <tr><td>Above-the-fold interactive content</td><td>Do not defer it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/hydration" data-doc="ng.guide.hydration"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/templates/defer" data-doc="ng.guide.defer"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/components/lifecycle" data-doc="ng.guide.lifecycle"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

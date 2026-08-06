@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The command reference — Web Dev Reference</title>
+
+  <meta name="web:section" content="pnpm">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="overview.html|How pnpm works">
+  <meta name="web:next" content="workspaces.html|Workspaces, filters & catalogs">
+  <meta name="web:versions" content="pnpm 11.17.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">pnpm</p>
+  <h1>The command reference</h1>
+  <p class="lede">The npm translation first, then the commands npm has no
+  answer for — which is most of the reason to be here.</p>
+
+  <h2>Coming from npm</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>npm</th><th>pnpm</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm install</code></td><td><code>pnpm install</code> / <code>pnpm i</code></td><td></td></tr>
+        <tr><td><code>npm ci</code></td><td><code>pnpm ci</code></td><td>New first-class command in v11; <code>--frozen-lockfile</code> still works</td></tr>
+        <tr><td><code>npm install pkg</code></td><td><code>pnpm add pkg</code></td><td><code>install</code> does not take a package name</td></tr>
+        <tr><td><code>npm install -D pkg</code></td><td><code>pnpm add -D pkg</code></td><td></td></tr>
+        <tr><td><code>npm install -g pkg</code></td><td><code>pnpm add -g pkg</code></td><td>v11 isolates each global install</td></tr>
+        <tr><td><code>npm uninstall pkg</code></td><td><code>pnpm remove pkg</code> / <code>rm</code></td><td></td></tr>
+        <tr><td><code>npm update</code></td><td><code>pnpm update</code> / <code>up</code></td><td><code>-i</code> for an interactive picker</td></tr>
+        <tr><td><code>npm run build</code></td><td><code>pnpm build</code></td><td><code>run</code> is optional for non-conflicting names</td></tr>
+        <tr><td><code>npx cowsay</code></td><td><code>pnpm dlx cowsay</code></td><td>Runs without installing</td></tr>
+        <tr><td><code>npx tsc</code> (local binary)</td><td><code>pnpm exec tsc</code></td><td><code>exec</code> uses the local install; <code>dlx</code> fetches</td></tr>
+        <tr><td><code>npm ls pkg</code></td><td><code>pnpm why pkg</code></td><td>Far more readable</td></tr>
+        <tr><td><code>npm outdated</code></td><td><code>pnpm outdated</code></td><td></td></tr>
+        <tr><td><code>npm audit</code></td><td><code>pnpm audit</code></td><td>v11 uses GHSA ids rather than CVEs</td></tr>
+        <tr><td><code>npm publish</code></td><td><code>pnpm publish</code></td><td>Native implementation from v11</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="change" data-change="pn.ci-command"></div>
+
+  <h2>What npm has no answer for</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Command</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>pnpm why pkg</code></td><td>Shows every path that pulls a package in. The fastest way to answer "why do I have three copies of this?"</td></tr>
+        <tr><td><code>pnpm patch pkg</code></td><td>Opens an editable copy; <code>pnpm patch-commit</code> saves a patch reapplied on every install. Fixing a dependency bug without forking</td></tr>
+        <tr><td><code>pnpm licenses list</code></td><td>Every dependency's licence — for compliance reviews</td></tr>
+        <tr><td><code>pnpm deploy &lt;dir&gt;</code></td><td>Copies a workspace package plus its dependencies into a standalone directory. Docker images without the whole monorepo</td></tr>
+        <tr><td><code>pnpm sbom</code></td><td>Generates a software bill of materials (v11)</td></tr>
+        <tr><td><code>pnpm peers check</code></td><td>Reports unmet or conflicting peer dependencies (v11)</td></tr>
+        <tr><td><code>pnpm clean</code></td><td>Removes generated artefacts (v11)</td></tr>
+        <tr><td><code>pnpm store prune</code></td><td>Deletes store entries nothing references any more</td></tr>
+        <tr><td><code>pnpm store path</code></td><td>Where the store actually is</td></tr>
+        <tr><td><code>pnpm env use --global 22</code></td><td>Installs and switches Node versions — no separate version manager</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">pnpm why is underused</span>
+    Duplicate versions, a mysterious transitive dependency, a security advisory
+    against something you have never heard of — <code>pnpm why</code> answers
+    all three in one line, and prints an actual tree rather than npm's flat
+    listing.
+  </div>
+
+  <h2>Running scripts</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Command</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>pnpm build</code></td><td>Runs the <code>build</code> script</td></tr>
+        <tr><td><code>pnpm -r build</code></td><td>Runs it in every workspace package, in dependency order</td></tr>
+        <tr><td><code>pnpm -r --parallel dev</code></td><td>All at once, ignoring order</td></tr>
+        <tr><td><code>pnpm --filter web build</code></td><td>Only in the <code>web</code> package</td></tr>
+        <tr><td><code>pnpm exec tsc --noEmit</code></td><td>Runs a local binary</td></tr>
+        <tr><td><code>pnpm dlx @angular/cli new app</code></td><td>Runs a package without installing it</td></tr>
+        <tr><td><code>pnpm run --sequential a b</code></td><td>Several scripts in order</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: a script named like a pnpm command</span>
+    <code>pnpm build</code> works because there is no built-in <code>build</code>.
+    A script called <code>add</code>, <code>install</code>, <code>update</code>,
+    <code>link</code> or <code>ci</code> is shadowed by the real command — use
+    <code>pnpm run install</code> explicitly.
+  </div>
+
+  <h2>Pinning the version</h2>
+  <p>Different pnpm versions can resolve differently, so a team should agree on
+  one. The <code>packageManager</code> field does that, and Corepack (or pnpm's
+  own runtime handling) enforces it:</p>
+
+<pre><code class="language-json">// package.json
+{
+  "packageManager": "pnpm@11.17.0"
+}</code></pre>
+
+  <p>Note that v11 removed <code>managePackageManagerVersions</code>,
+  <code>packageManagerStrict</code> and
+  <code>packageManagerStrictVersion</code>; the <code>pmOnFail</code> setting
+  covers what all three did.</p>
+
+  <h2>Useful flags</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Flag</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>--frozen-lockfile</code></td><td>Fail rather than update the lockfile. Implied by <code>pnpm ci</code></td></tr>
+        <tr><td><code>--prod</code></td><td>Skip devDependencies</td></tr>
+        <tr><td><code>--filter &lt;sel&gt;</code></td><td>Restrict to matching packages — see <a href="workspaces.html">workspaces</a></td></tr>
+        <tr><td><code>-r</code></td><td>Recursive: every workspace package</td></tr>
+        <tr><td><code>-w</code></td><td>Target the workspace root</td></tr>
+        <tr><td><code>--offline</code></td><td>Store only; fail if anything is missing</td></tr>
+        <tr><td><code>--fix-lockfile</code></td><td>Repair a broken lockfile</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://pnpm.io" data-doc="pn.home"></a></li>
+    <li><a class="doc-chip" href="https://pnpm.io/blog/releases/11.0" data-doc="pn.blog.v11"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

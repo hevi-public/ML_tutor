@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Official docs index — Web Dev Reference</title>
+
+  <meta name="web:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/data.js"></script>
+  <script defer src="assets/js/hubs.js"></script>
+</head>
+<body>
+<main class="hub">
+  <p class="unit-tag">Reference</p>
+  <h1>Official docs index</h1>
+  <p class="lede">Every official page this reference links to, in one filterable
+  list — so "where is the actual documentation for this?" is a search box away
+  rather than a search engine away.</p>
+
+  <div class="box plain-english">
+    <span class="label">Why these are worth trusting</span>
+    Every URL on this site lives in one file, <code>web/data/links.json</code>,
+    and is referenced by id. <code>npm run check:links</code> walks the whole
+    registry: it confirms each id is actually used, that no page has drifted from
+    the registry, that every URL still resolves, and — for links that point at a
+    specific section — that the anchor still exists. A moved doc is a one-line
+    fix in one file, not a hunt through thirty pages.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Dashed borders</span>
+    A chip with a dashed outline is marked <em>unverified</em>: the URL follows
+    the site's documented pattern but has not been confirmed reachable from the
+    environment this was authored in. Running <code>npm run check:links</code>
+    locally settles them.
+  </div>
+
+  <div data-docs-index>
+    <p class="empty-note">Loading the docs index…</p>
+  </div>
+
+  <p style="margin-top:2.5rem">Prefer to search everything at once? The
+  <a href="search.html">search page</a> covers these links alongside the pages
+  here and the change records — press <code>/</code> from anywhere.</p>
+</main>
+</body>
+</html>

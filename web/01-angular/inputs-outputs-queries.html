@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inputs, outputs &amp; queries — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="signals.html|Signals">
+  <meta name="web:next" content="templates.html|Templates">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Inputs, outputs &amp; queries</h1>
+  <p class="lede">A component's public surface. All three moved from decorators
+  to signal-returning functions, and all three got simpler in the process.</p>
+
+  <div class="at-glance">
+    <span class="label">The swap</span>
+    <ul>
+      <li><code>@Input()</code> → <code>input()</code> / <code>input.required()</code></li>
+      <li><code>@Output() … EventEmitter</code> → <code>output()</code></li>
+      <li><code>@ViewChild()</code> → <code>viewChild()</code> / <code>viewChild.required()</code></li>
+      <li><code>@ContentChild()</code> → <code>contentChild()</code>, and the plural forms
+      <code>viewChildren()</code> / <code>contentChildren()</code></li>
+      <li>Two-way binding: <code>@Input() x</code> + <code>@Output() xChange</code> → <code>model()</code></li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">import { Component, input, output, model, viewChild, computed, ElementRef } from '@angular/core';
+
+@Component({ /* … */ })
+export class RangeSlider {
+  // required: a missing binding is a compile error, not an undefined at runtime
+  label = input.required&lt;string&gt;();
+
+  // optional, with a default
+  min = input(0);
+  max = input(100);
+
+  // transform: accept what the template can easily give you
+  disabled = input(false, { transform: booleanAttribute });
+
+  // alias: the public binding name differs from the field name
+  step = input(1, { alias: 'stepSize' });
+
+  // two-way: template writes [(value)]="x"
+  value = model(50);
+
+  // an event out
+  committed = output&lt;number&gt;();
+
+  // a DOM reference, as a signal
+  track = viewChild.required&lt;ElementRef&lt;HTMLElement&gt;&gt;('track');
+
+  // derive freely — no ngOnChanges, no setter
+  percent = computed(() =&gt;
+    (this.value() - this.min()) / (this.max() - this.min()) * 100);
+
+  commit() { this.committed.emit(this.value()); }
+}</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.io.signal-inputs">
+    <p class="change-note">The migration is mechanical enough to automate, but
+    it cannot convert an <code>@Input() set foo(v)</code> setter that does work
+    — a setter with a side effect becomes an <code>effect()</code>, and one that
+    derives a value becomes a <code>computed()</code>. The schematic leaves
+    those for you.</p>
+  </div>
+
+  <div class="change" data-change="ng.io.output-function"></div>
+
+  <div class="change" data-change="ng.queries.signal-queries">
+    <p class="change-note">The <code>static: true</code> flag disappears
+    entirely, which is worth dwelling on: it existed only to tell Angular
+    whether the queried element could be resolved before change detection ran.
+    With a signal query the question never comes up, because you read the signal
+    at the moment you need it rather than at a moment Angular chose.</p>
+  </div>
+
+  <h2>Inputs in detail</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You want…</th><th>Write</th></tr></thead>
+      <tbody>
+        <tr><td>An optional input with a default</td><td><code>size = input(10)</code></td></tr>
+        <tr><td>A required input</td><td><code>id = input.required&lt;string&gt;()</code></td></tr>
+        <tr><td>A different public name</td><td><code>step = input(1, { alias: 'stepSize' })</code></td></tr>
+        <tr><td><code>&lt;my-cmp disabled&gt;</code> to mean <code>true</code></td><td><code>input(false, { transform: booleanAttribute })</code></td></tr>
+        <tr><td>A string attribute parsed as a number</td><td><code>input(0, { transform: numberAttribute })</code></td></tr>
+        <tr><td>Two-way binding</td><td><code>value = model(0)</code> → <code>[(value)]="x"</code></td></tr>
+        <tr><td>To react when it changes</td><td><code>effect(() =&gt; …this.id()…)</code></td></tr>
+        <tr><td>To derive from it</td><td><code>computed(() =&gt; …this.id()…)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: inputs are read-only</span>
+    <code>input()</code> returns an <code>InputSignal</code>, which has no
+    <code>set()</code> — a child cannot write to its own input, by design. If you
+    need "starts from the input but the user can change it", that is
+    <code>model()</code> for a two-way binding, or <code>linkedSignal()</code>
+    for local state that resets when the input changes.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: required inputs are not available in the constructor</span>
+    <code>input.required()</code> guarantees the binding <em>exists</em>, not
+    that it has been set by the time your constructor runs. Reading one too
+    early throws. Read it in a <code>computed()</code>, an
+    <code>effect()</code>, or the template — all of which run after bindings are
+    applied.
+  </div>
+
+  <h2>Queries in detail</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Now</th><th>Previously</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>viewChild('ref')</code></td><td><code>@ViewChild('ref')</code></td><td>Returns <code>Signal&lt;T | undefined&gt;</code></td></tr>
+        <tr><td><code>viewChild.required('ref')</code></td><td><code>@ViewChild('ref', { static: true })</code></td><td>Throws instead of returning undefined</td></tr>
+        <tr><td><code>viewChildren(ItemCmp)</code></td><td><code>@ViewChildren(ItemCmp)</code></td><td>Returns <code>Signal&lt;readonly T[]&gt;</code>, not a <code>QueryList</code></td></tr>
+        <tr><td><code>contentChild(TabCmp)</code></td><td><code>@ContentChild(TabCmp)</code></td><td>Projected content rather than own template</td></tr>
+        <tr><td><code>viewChild('ref', { read: ElementRef })</code></td><td>same <code>read</code> option</td><td>Unchanged</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The plural forms return a plain readonly array rather than a
+  <code>QueryList</code>, so <code>.changes</code>, <code>.first</code>,
+  <code>.toArray()</code> and <code>forEach</code> are gone. Use array methods,
+  and use a <code>computed()</code> where you would have subscribed to
+  <code>.changes</code>.</p>
+
+  <h2>View vs. content</h2>
+  <p>Worth restating because it trips people up in both the old and new APIs:
+  <strong>view</strong> queries search the component's own template;
+  <strong>content</strong> queries search what a parent projected in through
+  <code>&lt;ng-content&gt;</code>. A tab group finds its tabs with
+  <code>contentChildren()</code>, because the tabs were written by whoever used
+  the tab group.</p>
+
+  <details class="legacy">
+    <summary>Before v17 — decorators, and the timing problems that came with them</summary>
+    <div class="layer-body">
+<pre><code class="language-typescript">export class RangeSlider implements OnChanges, AfterViewInit {
+  @Input({ required: true }) label!: string;
+  @Input() min = 0;
+  @Input() max = 100;
+
+  @Input()
+  set value(v: number) {          // a setter, because you needed to react
+    this._value = v;
+    this.percent = (v - this.min) / (this.max - this.min) * 100;
+  }
+
+  @Output() valueChange = new EventEmitter&lt;number&gt;();
+  @ViewChild('track', { static: false }) track!: ElementRef;
+
+  ngOnChanges(changes: SimpleChanges) { /* recompute on min/max change too */ }
+  ngAfterViewInit() { /* only here is `track` guaranteed to exist */ }
+}</code></pre>
+      <p>Three separate mechanisms — a setter, <code>ngOnChanges</code> and
+      <code>ngAfterViewInit</code> — existed to answer the question "has this
+      value arrived yet?". Signals answer it by construction.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/components/inputs" data-doc="ng.guide.inputs"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/components/outputs" data-doc="ng.guide.outputs"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/components/queries" data-doc="ng.guide.queries"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

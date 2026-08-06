@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "http-server -p 8010 -c-1 -o /index.html .",
     "dev:bass": "http-server -p 8010 -c-1 -o /bass/index.html .",
+    "dev:web": "http-server -p 8010 -c-1 -o /web/index.html .",
     "build:index": "node scripts/build-search-index.js",
     "build:bass": "node scripts/build-bass-index.js",
     "dev:git": "http-server -p 8010 -c-1 -o /git/index.html .",
     "build:git": "node scripts/build-git-index.js",
+    "build:web": "node scripts/build-web-index.js",
     "verify:git": "node scripts/verify-fixtures.js",
+    "check:links": "node scripts/check-links.js",
     "fetch:mnist": "node scripts/fetch-mnist.js"
   },
   "license": "MIT",

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What changed — Web Dev Reference</title>
+
+  <meta name="web:root" content="./">
+  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 · pnpm 11.17.0">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/data.js"></script>
+  <script defer src="assets/js/hubs.js"></script>
+  <script defer src="assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="hub">
+  <p class="unit-tag">Reference</p>
+  <h1>What changed</h1>
+  <p class="lede">Every recorded change across the four tools: what to use now,
+  what it replaced, when it happened, and whether a command will do the rewrite
+  for you.</p>
+
+  <div class="at-glance">
+    <span class="label">How to read this</span>
+    <ul>
+      <li><strong>Since</strong> is the version the new form became available —
+      not necessarily the version it became the default.</li>
+      <li><strong>Deprecated</strong> means it still works and still ships, but
+      is receiving no further work and has a stated replacement.</li>
+      <li><strong>Removed</strong> means upgrading past that version breaks your
+      build. These are the rows to plan around.</li>
+      <li>An empty migration column means the change is not a mechanical
+      substitution — a person has to make a judgement call per call site.</li>
+    </ul>
+  </div>
+
+  <p>Set the versions you are actually on and every badge below will tell you
+  whether it applies to you yet:</p>
+  <div data-version-filter></div>
+
+  <div data-ledger>
+    <p class="empty-note">Loading the change ledger…</p>
+  </div>
+
+  <div class="box">
+    <span class="label">Where this comes from</span>
+    This table is generated from <code>web/data/changes.json</code> — the same
+    records the topic pages embed. There is no second copy to fall out of date:
+    if a row here is wrong, the page is wrong too, and one edit fixes both.
+  </div>
+</main>
+</body>
+</html>

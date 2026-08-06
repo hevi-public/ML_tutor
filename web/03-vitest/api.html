@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The API reference — Web Dev Reference</title>
+
+  <meta name="web:section" content="Vitest">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="migration.html|Migrating from Karma & Jasmine">
+  <meta name="web:next" content="angular-testing.html|TestBed in 2026">
+  <meta name="web:versions" content="Vitest 4.1.10">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Vitest</p>
+  <h1>The API reference</h1>
+  <p class="lede">Matchers, mocks and test modifiers, in one place.</p>
+
+  <h2>Structure</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Call</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>describe(name, fn)</code></td><td>Groups tests</td></tr>
+        <tr><td><code>it(name, fn)</code> / <code>test(name, fn)</code></td><td>One test. Aliases</td></tr>
+        <tr><td><code>.only</code> / <code>.skip</code> / <code>.todo</code></td><td>Run only this / skip / mark unwritten</td></tr>
+        <tr><td><code>.each([…])</code></td><td>Table-driven tests</td></tr>
+        <tr><td><code>.concurrent</code></td><td>Run tests in a block in parallel</td></tr>
+        <tr><td><code>.fails</code></td><td>Asserts the test fails — for pinning a known bug</td></tr>
+        <tr><td><code>beforeEach</code> / <code>afterEach</code></td><td>Per test</td></tr>
+        <tr><td><code>beforeAll</code> / <code>afterAll</code></td><td>Per file</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<pre><code class="language-typescript">it.each([
+  [1, 1, 2],
+  [2, 3, 5],
+])('adds %i + %i = %i', (a, b, expected) =&gt; {
+  expect(add(a, b)).toBe(expected);
+});</code></pre>
+
+  <h2>Matchers</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Matcher</th><th>Passes when</th></tr></thead>
+      <tbody>
+        <tr><td><code>toBe(v)</code></td><td>Identical (<code>Object.is</code>). Use for primitives and references</td></tr>
+        <tr><td><code>toEqual(v)</code></td><td>Deeply equal, ignoring <code>undefined</code> properties</td></tr>
+        <tr><td><code>toStrictEqual(v)</code></td><td>Deeply equal, including <code>undefined</code> keys and class identity</td></tr>
+        <tr><td><code>toContain(v)</code></td><td>Array includes, or string contains</td></tr>
+        <tr><td><code>toContainEqual(v)</code></td><td>Array contains a deeply-equal item</td></tr>
+        <tr><td><code>toHaveLength(n)</code></td><td></td></tr>
+        <tr><td><code>toBeTruthy()</code> / <code>toBeFalsy()</code></td><td></td></tr>
+        <tr><td><code>toBeNull()</code> / <code>toBeUndefined()</code> / <code>toBeDefined()</code></td><td></td></tr>
+        <tr><td><code>toBeCloseTo(n, digits)</code></td><td>Floating-point comparison</td></tr>
+        <tr><td><code>toMatch(/re/)</code></td><td>String matches</td></tr>
+        <tr><td><code>toMatchObject({…})</code></td><td>Subset of properties match</td></tr>
+        <tr><td><code>toThrow(err?)</code></td><td>The function throws. Pass a function, not a call</td></tr>
+        <tr><td><code>toMatchSnapshot()</code></td><td>Matches the stored snapshot</td></tr>
+        <tr><td><code>toMatchInlineSnapshot()</code></td><td>Snapshot written into the test file</td></tr>
+        <tr><td><code>.resolves</code> / <code>.rejects</code></td><td>Unwrap a promise before asserting</td></tr>
+        <tr><td><code>.not</code></td><td>Negates any matcher</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Spy matchers</h3>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Matcher</th><th>Passes when</th></tr></thead>
+      <tbody>
+        <tr><td><code>toHaveBeenCalled()</code></td><td>Called at least once</td></tr>
+        <tr><td><code>toHaveBeenCalledTimes(n)</code></td><td></td></tr>
+        <tr><td><code>toHaveBeenCalledWith(…args)</code></td><td>Called at least once with these arguments</td></tr>
+        <tr><td><code>toHaveBeenLastCalledWith(…args)</code></td><td>The most recent call matched</td></tr>
+        <tr><td><code>toHaveBeenNthCalledWith(n, …args)</code></td><td></td></tr>
+        <tr><td><code>toHaveReturnedWith(v)</code></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Asymmetric matchers</h3>
+  <p>For the parts of a value you do not want to pin down:</p>
+
+<pre><code class="language-typescript">expect(saved).toEqual({
+  id: expect.any(String),
+  name: 'Ada',
+  createdAt: expect.any(Date),
+  tags: expect.arrayContaining(['admin']),
+  meta: expect.objectContaining({ version: 2 }),
+});</code></pre>
+
+  <div class="gotcha">
+    <span class="label">toBe vs toEqual, once</span>
+    <code>toBe</code> compares identity, so
+    <code>expect({a:1}).toBe({a:1})</code> fails — two different objects.
+    <code>toEqual</code> compares structure and passes. Use <code>toBe</code>
+    for primitives and when you genuinely mean "the same object".
+  </div>
+
+  <h2>Mocking</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Call</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>vi.fn(impl?)</code></td><td>A mock function</td></tr>
+        <tr><td><code>vi.spyOn(obj, 'm')</code></td><td>Wraps a method, <strong>still calling through</strong></td></tr>
+        <tr><td><code>vi.mock('./path')</code></td><td>Replaces a whole module. Hoisted above imports</td></tr>
+        <tr><td><code>vi.hoisted(fn)</code></td><td>Run code before the hoisted <code>vi.mock</code> calls</td></tr>
+        <tr><td><code>vi.unmock('./path')</code></td><td>Undo a module mock</td></tr>
+        <tr><td><code>vi.stubGlobal('fetch', fn)</code></td><td>Replace a global</td></tr>
+        <tr><td><code>vi.stubEnv('KEY', 'v')</code></td><td>Replace an env var</td></tr>
+        <tr><td><code>vi.clearAllMocks()</code></td><td>Clear recorded calls, keep implementations</td></tr>
+        <tr><td><code>vi.resetAllMocks()</code></td><td>Clear calls <em>and</em> implementations</td></tr>
+        <tr><td><code>vi.restoreAllMocks()</code></td><td>Restore originals wrapped by <code>spyOn</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Mock function methods</h3>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Call</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>.mockReturnValue(v)</code></td><td>Always returns v</td></tr>
+        <tr><td><code>.mockReturnValueOnce(v)</code></td><td>Next call only. Chainable for a sequence</td></tr>
+        <tr><td><code>.mockResolvedValue(v)</code></td><td>Returns a resolved promise</td></tr>
+        <tr><td><code>.mockRejectedValue(e)</code></td><td>Returns a rejected promise</td></tr>
+        <tr><td><code>.mockImplementation(fn)</code></td><td>Replaces the body</td></tr>
+        <tr><td><code>.mock.calls</code></td><td>Array of argument arrays</td></tr>
+        <tr><td><code>.mock.results</code></td><td>What each call returned or threw</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">vi.mock is hoisted</span>
+    Calls to <code>vi.mock</code> are moved above every <code>import</code> in
+    the file, so they cannot reference variables declared in the file body —
+    that fails with a confusing "cannot access before initialization". Put the
+    setup inside <code>vi.hoisted()</code>, or build the mock inside the
+    factory.
+  </div>
+
+  <h2>Timers</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Call</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>vi.useFakeTimers()</code></td><td>Replace timers and <code>Date</code></td></tr>
+        <tr><td><code>vi.advanceTimersByTime(ms)</code></td><td>Move virtual time forward</td></tr>
+        <tr><td><code>vi.advanceTimersByTimeAsync(ms)</code></td><td>Same, awaiting promises in between</td></tr>
+        <tr><td><code>vi.runAllTimers()</code></td><td>Run everything queued</td></tr>
+        <tr><td><code>vi.runOnlyPendingTimers()</code></td><td>Run what is queued now, not what those queue</td></tr>
+        <tr><td><code>vi.setSystemTime(date)</code></td><td>Pin the clock</td></tr>
+        <tr><td><code>vi.useRealTimers()</code></td><td>Restore. Do this in <code>afterEach</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://vitest.dev" data-doc="vi.home"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev/guide/migration.html" data-doc="vi.migration"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

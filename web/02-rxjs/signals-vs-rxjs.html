@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signals or RxJS? — Web Dev Reference</title>
+
+  <meta name="web:section" content="RxJS">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="errors-retry.html|Errors & retry">
+  <meta name="web:next" content="../03-vitest/setup.html|Vitest setup">
+  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">RxJS</p>
+  <h1>Signals or RxJS?</h1>
+  <p class="lede">The question this whole section exists to answer. The short
+  version: signals for <em>what is</em>, RxJS for <em>what happens over
+  time</em>.</p>
+
+  <div class="at-glance">
+    <span class="label">The one-line test</span>
+    <ul>
+      <li>Can you answer "what is the value <em>right now</em>?" — <strong>signal</strong>.</li>
+      <li>Does the question only make sense as a sequence of events over time —
+      <strong>Observable</strong>.</li>
+      <li>Do you need to <em>wait</em>, <em>cancel</em>, <em>retry</em>,
+      <em>debounce</em> or <em>sequence</em> — <strong>Observable</strong>.</li>
+      <li>Both, at different points in the same pipeline — that is normal, and
+      the interop exists for it.</li>
+    </ul>
+  </div>
+
+  <h2>The table</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You are modelling…</th><th>Use</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Component state</td><td>signal</td><td>Synchronously readable, no subscription, no pipe</td></tr>
+        <tr><td>Derived state</td><td>computed</td><td>Cached and lazy; <code>combineLatest</code> for this was always overkill</td></tr>
+        <tr><td>Form values</td><td>signal (Signal Forms)</td><td>See <a href="../01-angular/forms.html">forms</a></td></tr>
+        <tr><td>Data for the current route/selection</td><td><code>httpResource</code></td><td>Loading and error state included, cancellation handled</td></tr>
+        <tr><td>Type-ahead search</td><td>RxJS, then <code>toSignal</code></td><td>Needs <code>debounceTime</code> and cancellation</td></tr>
+        <tr><td>Websocket / SSE feed</td><td>RxJS</td><td>Genuinely a stream; <code>toSignal</code> for the latest value</td></tr>
+        <tr><td>Polling</td><td>RxJS</td><td><code>timer</code> + <code>switchMap</code></td></tr>
+        <tr><td>Retry with backoff</td><td>RxJS</td><td><code>retry({ delay })</code></td></tr>
+        <tr><td>Several requests in parallel, waiting for all</td><td>RxJS</td><td><code>forkJoin</code></td></tr>
+        <tr><td>A sequence of writes that must stay ordered</td><td>RxJS</td><td><code>concatMap</code></td></tr>
+        <tr><td>"Fire this once when X happens"</td><td>signal + <code>effect</code></td><td>No stream needed</td></tr>
+        <tr><td>Global app state</td><td>signals in a service</td><td>A store is a service holding signals</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The interop</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Function</th><th>Direction</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>toSignal(obs$, opts)</code></td><td>Observable → Signal</td><td>Subscribes once; unsubscribes with the injection context</td></tr>
+        <tr><td><code>toObservable(sig)</code></td><td>Signal → Observable</td><td>Emits on change; needs an injection context</td></tr>
+        <tr><td><code>rxResource({ params, stream })</code></td><td>Observable → Resource</td><td>When your loader already returns an Observable</td></tr>
+        <tr><td><code>outputFromObservable(obs$)</code></td><td>Observable → component output</td><td>For a stream you want to expose as an output</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The canonical shape</h2>
+  <p>Most real pipelines look like this — signals at both ends, RxJS in the
+  middle for the part that is genuinely temporal:</p>
+
+<pre><code class="language-typescript">export class SearchPage {
+  // 1. state is a signal
+  term = signal('');
+  page = signal(1);
+
+  // 2. drop into RxJS only for the time-based part
+  private results$ = toObservable(this.term).pipe(
+    debounceTime(300),
+    distinctUntilChanged(),
+    switchMap(term =&gt; term
+      ? this.api.search(term).pipe(catchError(() =&gt; of([])))
+      : of([])),
+  );
+
+  // 3. come back to a signal for everything else
+  results = toSignal(this.results$, { initialValue: [] });
+
+  // 4. derived state is a plain computed — no combineLatest
+  hasResults = computed(() =&gt; this.results().length &gt; 0);
+  summary = computed(() =&gt;
+    `${this.results().length} results for "${this.term()}"`);
+}</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Do not convert back and forth repeatedly</span>
+    One <code>toObservable</code> → operators → one <code>toSignal</code> is a
+    clean pipeline. Alternating several times in one chain usually means the
+    RxJS part is doing something a <code>computed</code> would do better —
+    conversion is not free, and each hop adds a subscription and a scheduling
+    boundary.
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="rx.to-signal"></div>
+
+  <h2>What NOT to migrate</h2>
+  <p>"Replace RxJS with signals" is a bad project. Specific things that are
+  correct as they are:</p>
+
+  <ul>
+    <li><strong>HTTP calls.</strong> <code>HttpClient</code> returns
+    Observables and that is fine. Wrap in <code>httpResource</code> when you
+    want loading state; use <code>firstValueFrom</code> for one-shot commands.</li>
+    <li><strong>Anything with a time operator in it.</strong> Signals have no
+    <code>debounceTime</code> and are not going to.</li>
+    <li><strong>Working
+    <code>combineLatest</code> over genuine event sources.</strong> If the inputs
+    are streams rather than state, it is already right.</li>
+    <li><strong>Existing <code>async</code> pipes.</strong> They work.
+    <code>toSignal</code> is nicer, not urgent.</li>
+  </ul>
+
+  <p>The migration worth doing is narrower: <code>BehaviorSubject</code> fields
+  that only ever hold "the current value", and <code>combineLatest</code> chains
+  that are really just derived state. Those become <code>signal</code> and
+  <code>computed</code>, and the code gets meaningfully shorter.</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals" data-doc="ng.guide.signals"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals/resource" data-doc="ng.guide.resource"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/guide/operators" data-doc="rx.guide.operators"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

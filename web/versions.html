@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Versions &amp; support windows — Web Dev Reference</title>
+
+  <meta name="web:root" content="./">
+  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 · pnpm 11.17.0">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/versions.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Reference</p>
+  <h1>Versions &amp; support windows</h1>
+  <p class="lede">Which version is current, when yours stops being supported, and
+  what landed in each release. Dates come from the npm registry, so they are the
+  real publish dates rather than the blog-post dates.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Angular ships twice a year</strong>, roughly May and November.
+      Each major gets 6 months of active support, then 12 months of LTS — so a
+      version is done 18 months after release.</li>
+      <li><strong>RxJS 7.8 is the answer.</strong> RxJS 8 has been in alpha since
+      2025 and is deliberately on hold until Observable is standardised on the web
+      platform. Do not plan around a date.</li>
+      <li><strong>Vitest majors land roughly yearly.</strong> Angular pins a
+      compatible range through <code>@angular/build</code>, so in an Angular repo
+      you usually upgrade Vitest by upgrading Angular.</li>
+      <li><strong>pnpm 11 moved its configuration.</strong> If you upgrade from
+      10, settings in <code>package.json</code> and <code>.npmrc</code> stop being
+      read — see the pnpm section.</li>
+    </ul>
+  </div>
+
+  <h2>Are you still supported?</h2>
+  <p>Angular's support window is the one that bites, because it is the only one of
+  the four with a published clock. Find your major in the Angular table below: a
+  version marked <span class="status eol">out of support</span> receives no
+  further patches, including security patches.</p>
+
+  <div class="box prereq">
+    <span class="label">The short version</span>
+    Angular <strong>19 left support in May 2026</strong>. If you are on 19 or
+    below, upgrading is a security matter, not a features matter. Angular
+    <strong>20 and 21 are in LTS</strong> (fixes only). Angular <strong>22 is the
+    active line</strong>.
+  </div>
+
+  <div data-version-table>
+    <div class="box">Loading release data…</div>
+  </div>
+
+  <h2>Upgrading</h2>
+  <p>Angular upgrades are one major at a time — <code>ng update</code> will refuse
+  to skip. Each step runs the schematics that rewrite your code for that version's
+  changes, which is why skipping majors by editing
+  <code>package.json</code> by hand costs far more than it saves.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead>
+        <tr><th>What you want</th><th>Command</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>See what an upgrade would do, without doing it</td>
+          <td><code>ng update</code></td>
+        </tr>
+        <tr>
+          <td>Step to the next major</td>
+          <td><code>ng update @angular/core @angular/cli</code></td>
+        </tr>
+        <tr>
+          <td>Step to a specific major</td>
+          <td><code>ng update @angular/core@21 @angular/cli@21</code></td>
+        </tr>
+        <tr>
+          <td>Re-run a single migration you skipped</td>
+          <td><code>ng update @angular/core --migrate-only --from=21 --to=22</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The interactive, version-to-version checklist is on the official update
+  guide, and the per-version migration schematics get their own page in this
+  reference.</p>
+
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/update-guide" data-doc="ng.update">
+      <span class="kind">migration</span> Angular update guide</a></li>
+    <li><a class="doc-chip" href="https://angular.dev/reference/releases" data-doc="ng.releases">
+      <span class="kind">reference</span> Versioning and releases</a></li>
+    <li><a class="doc-chip" href="https://angular.dev/reference/versions" data-doc="ng.versions">
+      <span class="kind">reference</span> Version compatibility</a></li>
+  </ul>
+</main>
+</body>
+</html>

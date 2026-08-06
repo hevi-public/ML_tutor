@@ -1,0 +1,100 @@
+{
+  "_comment": "Release dates verified against the npm registry (registry.npmjs.org time field). Support windows follow each project's published policy; Angular = 6 months active + 12 months LTS from the major's release date. Regenerate the 'current' fields when bumping: npm view <pkg> version",
+  "checkedOn": "2026-07-28",
+  "tools": {
+    "angular": {
+      "name": "Angular",
+      "current": "22.0.8",
+      "currentMajor": "22",
+      "cadence": "Two majors a year, roughly May and November.",
+      "policy": "6 months active support, then 12 months long-term support. An Angular major is out of support 18 months after release.",
+      "docs": "ng.home",
+      "releases": [
+        { "v": "22", "date": "2026-06-03", "activeUntil": "2026-12-03", "eol": "2027-12-03",
+          "headline": "Signal Forms, the Resource API and @angular/aria go stable. OnPush becomes the default change detection strategy. HttpClient uses fetch by default. New @Service() decorator." },
+        { "v": "21", "date": "2025-11-19", "activeUntil": "2026-05-19", "eol": "2027-05-19",
+          "headline": "Vitest becomes the default test runner via the stable @angular/build:unit-test builder; Karma is deprecated." },
+        { "v": "20", "date": "2025-05-28", "activeUntil": "2025-11-28", "eol": "2026-11-28",
+          "headline": "Signals stabilise (effect, linkedSignal, toSignal). Zoneless change detection reaches developer preview maturity. Vitest support lands experimentally." },
+        { "v": "19", "date": "2024-11-19", "activeUntil": "2025-05-19", "eol": "2026-05-19",
+          "headline": "standalone: true becomes the default — no more standalone flag on new components. linkedSignal and resource() arrive in preview." },
+        { "v": "18", "date": "2024-05-22", "activeUntil": "2024-11-22", "eol": "2025-11-22",
+          "headline": "Zoneless change detection in experimental preview. Built-in control flow and deferrable views go stable. Material 3 support." },
+        { "v": "17", "date": "2023-11-08", "activeUntil": "2024-05-08", "eol": "2025-05-08",
+          "headline": "The rebrand and angular.dev. Built-in control flow (@if/@for/@switch) and @defer arrive. esbuild/Vite application builder becomes the default." },
+        { "v": "16", "date": "2023-05-03", "activeUntil": "2023-11-03", "eol": "2024-11-03",
+          "headline": "Signals land in developer preview. takeUntilDestroyed and DestroyRef. Required inputs. Standalone ng new schematic." },
+        { "v": "15", "date": "2022-11-16", "activeUntil": "2023-05-16", "eol": "2024-05-16",
+          "headline": "Standalone APIs go stable. Functional router guards, directive composition API. Legacy compiler compatibility removed." },
+        { "v": "14", "date": "2022-06-02", "activeUntil": "2022-12-02", "eol": "2023-12-02",
+          "headline": "Standalone components in developer preview — the beginning of the end for NgModules. Typed reactive forms. inject() becomes broadly usable." }
+      ]
+    },
+    "rxjs": {
+      "name": "RxJS",
+      "current": "7.8.2",
+      "_currentMajorNote": "Points at the 7.8 line rather than 7, so the dashboard dates the release line the current version belongs to (Dec 2022) instead of v7.0.0's date (Apr 2021).",
+      "currentMajor": "7.8",
+      "cadence": "Irregular. RxJS 7 has been the stable line since 2021.",
+      "policy": "No formal LTS window. RxJS 8 is on hold pending the TC39/WHATWG Observable standard, so 7.8 is the production answer.",
+      "docs": "rx.home",
+      "releases": [
+        { "v": "8", "date": null, "prerelease": "8.0.0-alpha.14 (2025-01-12)",
+          "headline": "On hold by design: the maintainers are waiting for Observable to be standardised on the web platform so RxJS 8 can align with it rather than diverge. Do not plan around a date." },
+        { "v": "7.8", "date": "2022-12-15",
+          "headline": "The current stable line. 7.8.2 is the latest patch." },
+        { "v": "7", "date": "2021-04-29",
+          "headline": "firstValueFrom/lastValueFrom replace the deprecated toPromise(). retry() takes a config object. Much smaller bundles and better TypeScript inference." },
+        { "v": "6", "date": "2018-04-24",
+          "headline": "The pipeable-operator break: .pipe(map(x => x)) replaced patched prototype methods (obs.map(...)). Everything since is a refinement of this model." },
+        { "v": "5", "date": "2016-12-13",
+          "headline": "The patched-prototype era you will still meet in old codebases: import 'rxjs/add/operator/map' and obs.map(...)." }
+      ]
+    },
+    "vitest": {
+      "name": "Vitest",
+      "current": "4.1.10",
+      "currentMajor": "4",
+      "cadence": "Roughly a major a year.",
+      "policy": "No formal LTS. The Angular CLI pins a compatible range through @angular/build.",
+      "docs": "vi.home",
+      "releases": [
+        { "v": "4", "date": "2025-10-22",
+          "headline": "Browser Mode leaves experimental; providers move to separate @vitest/browser-* packages. poolMatchGlobs/environmentMatchGlobs and deps.inline/deps.external removed in favour of projects and server.deps.*." },
+        { "v": "3", "date": "2025-01-16",
+          "headline": "The workspace config is deprecated in 3.2 in favour of the projects option in the root config. Annotation API added." },
+        { "v": "2", "date": "2024-07-08",
+          "headline": "Reporter and snapshot overhaul." },
+        { "v": "1", "date": "2023-12-04",
+          "headline": "First stable major, Vite 5 alignment." }
+      ]
+    },
+    "pnpm": {
+      "name": "pnpm",
+      "current": "11.17.0",
+      "currentMajor": "11",
+      "cadence": "Roughly a major a year, in the first half of the year.",
+      "policy": "No formal LTS. Pin it with the packageManager field in package.json.",
+      "docs": "pn.home",
+      "releases": [
+        { "v": "11", "date": "2026-04-28",
+          "headline": "The big config break: settings no longer read from the pnpm field in package.json or from non-auth .npmrc — they move to pnpm-workspace.yaml and ~/.config/pnpm/config.yaml. npm_config_* becomes pnpm_config_*. pnpm is pure ESM, the store is a single SQLite database, supply-chain defaults are on (minimumReleaseAge, blockExoticSubdeps), and Node 22+ is required. allowBuilds replaces the onlyBuiltDependencies family." },
+        { "v": "10", "date": "2025-01-07",
+          "headline": "Dependency lifecycle scripts no longer run on install — a direct response to the Rspack supply-chain attack. Opt packages in with pnpm.onlyBuiltDependencies. Peer-dependency hashes in the lockfile move from MD5 to SHA256." },
+        { "v": "9", "date": "2024-04-16",
+          "headline": "Lockfile format v9." },
+        { "v": "8", "date": "2023-03-27",
+          "headline": "Lockfile format v6." }
+      ]
+    },
+    "typescript": {
+      "name": "TypeScript",
+      "current": "7.0.2",
+      "currentMajor": "7",
+      "cadence": "Roughly quarterly minors.",
+      "policy": "Angular pins a supported TypeScript range per major — check the compatibility table before upgrading either one.",
+      "docs": "ts.home",
+      "releases": []
+    }
+  }
+}

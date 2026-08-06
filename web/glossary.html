@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Glossary — Web Dev Reference</title>
+
+  <meta name="web:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Reference</p>
+  <h1>Glossary</h1>
+  <p class="lede">The vocabulary this reference assumes, plain-English line
+  first. Mostly the words that get used as if everyone already agrees what they
+  mean — "zoneless", "hot", "phantom dependency", "glitch-free".</p>
+
+  <div class="filter-bar">
+    <input type="search" id="glossary-filter" placeholder="Filter terms…"
+           aria-label="Filter glossary terms">
+    <span id="glossary-count" style="font-size:0.85rem;color:var(--text-soft)"></span>
+  </div>
+
+  <div id="glossary-list">
+    <p class="empty-note">Loading the glossary…</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const list = document.getElementById("glossary-list");
+    const filter = document.getElementById("glossary-filter");
+    const count = document.getElementById("glossary-count");
+
+    let data;
+    try {
+      data = await (await fetch("data/glossary.json")).json();
+    } catch {
+      list.innerHTML = "<p class='empty-note'>The glossary needs the local server — " +
+        "run <code>npm run dev:web</code>.</p>";
+      return;
+    }
+
+    const entries = Object.entries(data)
+      .filter(([slug]) => !slug.startsWith("_"))
+      .sort((a, b) => a[1].term.localeCompare(b[1].term));
+
+    function render() {
+      const q = filter.value.trim().toLowerCase();
+      const shown = entries.filter(([slug, e]) =>
+        !q || `${slug} ${e.term} ${e.plain} ${e.definition}`.toLowerCase().includes(q));
+
+      count.textContent = q
+        ? `${shown.length} of ${entries.length}`
+        : `${entries.length} terms`;
+
+      list.innerHTML = shown.map(([slug, e]) => `
+        <article class="box" id="${escapeHtml(slug)}">
+          <h3 style="margin:0 0 .3rem">${escapeHtml(e.term)}</h3>
+          <p style="margin:0 0 .5rem"><strong>${escapeHtml(e.plain)}</strong></p>
+          <p style="margin:0;font-size:.94rem">${escapeHtml(e.definition)}</p>
+          ${(e.see || []).length ? `<p style="margin:.6rem 0 0;font-size:.86rem;color:var(--text-soft)">
+            See also: ${e.see.map((s) => `<a href="#${escapeHtml(s)}">${escapeHtml(data[s]?.term || s)}</a>`).join(" · ")}</p>` : ""}
+        </article>`).join("") ||
+        `<p class="empty-note">No term matches that.</p>`;
+    }
+
+    filter.addEventListener("input", render);
+    render();
+
+    // Deep link (?from search, or a "see also" link on load)
+    if (location.hash) {
+      document.getElementById(location.hash.slice(1))?.scrollIntoView();
+    }
+  });
+})();
+</script>
+</body>
+</html>

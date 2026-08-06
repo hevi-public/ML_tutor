@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RxJS in 2026 — Web Dev Reference</title>
+
+  <meta name="web:section" content="RxJS">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="../01-angular/a11y-and-cdk.html|Accessibility & the CDK">
+  <meta name="web:next" content="creation.html|Creating streams">
+  <meta name="web:versions" content="RxJS 7.8.2 · Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">RxJS</p>
+  <h1>RxJS in 2026</h1>
+  <p class="lede">Signals took over the job RxJS was doing badly. What is left
+  is the job it does better than anything else — and there is a lot of it.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>7.8.2 is current and will be for a while.</strong> RxJS 8 has
+      been in alpha since 2025 and is deliberately on hold until Observable is
+      standardised on the web platform. Do not plan around a date.</li>
+      <li><strong>Signals won synchronous state.</strong> If a value is just "the
+      current thing", it is a signal now.</li>
+      <li><strong>RxJS keeps time.</strong> Debouncing, cancellation, retries,
+      sequencing, websockets, combining several async sources — none of which
+      signals attempt.</li>
+      <li>The two interoperate: <code>toSignal()</code> and
+      <code>toObservable()</code>.</li>
+    </ul>
+  </div>
+
+  <h2>Is RxJS still worth learning?</h2>
+  <p>Yes, but a smaller amount of it than in 2020. The realistic working set for
+  an Angular application in 2026 is about fifteen operators — and the ones that
+  matter are precisely the ones signals cannot replace, because they are about
+  <em>time</em> rather than <em>value</em>.</p>
+
+  <p>What has genuinely gone away is RxJS as a state-management strategy. The
+  <code>BehaviorSubject</code>-per-piece-of-state pattern, the
+  <code>combineLatest</code> of five subjects to compute a boolean, the
+  <code>shareReplay(1)</code> sprinkled to stop duplicate work — all of that was
+  RxJS being pressed into a role it was not designed for, and signals do it with
+  no ceremony at all.</p>
+
+  <h2>The mental model</h2>
+  <p>An Observable is a function that, when subscribed to, starts producing
+  values and eventually completes or errors. Four properties follow from that,
+  and most confusion traces back to one of them:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Property</th><th>Consequence</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Lazy</strong></td><td>Nothing happens until you subscribe. An HTTP Observable you never subscribe to makes no request.</td></tr>
+        <tr><td><strong>Multi-value</strong></td><td>Unlike a Promise it can emit many times — that is the whole point.</td></tr>
+        <tr><td><strong>Cancellable</strong></td><td>Unsubscribing genuinely aborts the work. A Promise cannot do this.</td></tr>
+        <tr><td><strong>Cold by default</strong></td><td>Each subscriber gets its own run. Two subscribers means two HTTP requests.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Cold vs. hot is the source of most surprises</span>
+    A <strong>cold</strong> Observable starts its work per subscriber.
+    <code>http.get()</code> is cold, which is why subscribing twice fires two
+    requests, and why the same Observable in a template three times fires
+    three. A <strong>hot</strong> Observable produces independently and shares
+    one run — a <code>Subject</code>, a websocket, a DOM event stream.
+    <code>share()</code> and <code>shareReplay()</code> turn cold into hot.
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="rx.pipeable-operators">
+    <p class="change-note">If you meet a codebase doing
+    <code>obs.map(…).filter(…)</code> with imports from
+    <code>rxjs/add/operator/…</code>, it predates 2018 and has not been touched
+    since. That style does not work in RxJS 7 at all.</p>
+  </div>
+
+  <div class="change" data-change="rx.promise-interop"></div>
+
+  <h2>Where RxJS 8 is</h2>
+  <p>Parked, on purpose. The maintainers are waiting for the TC39/WHATWG
+  Observable proposal so that RxJS 8 can align with a platform primitive rather
+  than diverge from one. The most recent alpha is from January 2025. This is a
+  deliberate decision rather than a stalled project, and the practical
+  consequence is simply that <strong>7.8 is stable ground</strong> — code written
+  against it is not about to be invalidated.</p>
+
+  <p>What that does mean: operators already marked for removal in v8 or v9
+  (<code>toPromise</code>, <code>retryWhen</code>, <code>flatMap</code>,
+  <code>mapTo</code>, <code>switchMapTo</code>, the <code>publish*</code>
+  family) are worth migrating away from now, since the replacements all exist in
+  7.8 and are better anyway.</p>
+
+  <h2>The pages here</h2>
+  <ul>
+    <li><a href="creation.html">Creating streams</a> — where an Observable comes from.</li>
+    <li><a href="operators.html">The operator index</a> — the working set, grouped by what you want.</li>
+    <li><a href="flattening.html">Flattening</a> — switchMap vs mergeMap vs concatMap vs exhaustMap, with a marble player.</li>
+    <li><a href="subscriptions.html">Subscriptions</a> — unsubscribing, and how not to leak.</li>
+    <li><a href="errors-retry.html">Errors &amp; retry</a> — catchError, retry, and where errors actually go.</li>
+    <li><a href="signals-vs-rxjs.html">Signals or RxJS?</a> — the decision, and the interop.</li>
+  </ul>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://rxjs.dev" data-doc="rx.home"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/guide/operators" data-doc="rx.guide.operators"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/api/deprecations" data-doc="rx.deprecations"></a></li>
+    <li><a class="doc-chip" href="https://github.com/ReactiveX/rxjs/issues/6367" data-doc="rx.roadmap8"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

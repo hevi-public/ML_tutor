@@ -1,0 +1,503 @@
+{
+  "_comment": "The change ledger — the single source of truth for every versioned fact on this site. Topic pages embed a record with <div class=\"change\" data-change=\"<id>\">; deprecations.html, timeline.html and migrations.html are generated from these same records, so the ledger can never drift from the prose. Fields: since/deprecated/removed are major versions of `tool` (null = not applicable). `migration` is the exact command that automates the change, if one exists. `docs` are ids into links.json.",
+  "changes": [
+    {
+      "id": "ng.di.inject-function",
+      "tool": "angular", "topic": "dependency-injection", "page": "01-angular/di.html",
+      "title": "Getting a dependency",
+      "now": "inject(HttpClient) as a field initialiser",
+      "was": "constructor(private http: HttpClient)",
+      "since": "14", "deprecated": null, "removed": null,
+      "why": "Works in functions and field initialisers, not just constructors — which is what makes functional guards, functional interceptors and reusable composables possible at all. It also drops the constructor boilerplate and plays better with inheritance.",
+      "migration": "ng generate @angular/core:inject",
+      "code": {
+        "now": "export class UserPanel {\n  private http = inject(HttpClient);\n}",
+        "was": "export class UserPanel {\n  constructor(private http: HttpClient) {}\n}"
+      },
+      "docs": ["ng.home"]
+    },
+    {
+      "id": "ng.components.standalone-default",
+      "tool": "angular", "topic": "components", "page": "01-angular/components.html",
+      "title": "Declaring a component",
+      "now": "Standalone by default — no `standalone: true`, no NgModule",
+      "was": "standalone: true written explicitly (v15–18), or declared in an NgModule (pre-v15)",
+      "since": "19", "deprecated": null, "removed": null,
+      "why": "NgModules existed to tell the compiler what a template could see. Standalone components carry their own `imports` array, so the indirection was pure overhead. v14 previewed it, v15 stabilised it, v19 made it the default and made the flag redundant.",
+      "migration": "ng generate @angular/core:standalone",
+      "code": {
+        "now": "@Component({\n  selector: 'user-panel',\n  imports: [DatePipe],\n  template: `{{ joined | date }}`,\n})\nexport class UserPanel {}",
+        "was": "@Component({\n  selector: 'user-panel',\n  standalone: true,\n  imports: [DatePipe],\n  template: `{{ joined | date }}`,\n})\nexport class UserPanel {}"
+      },
+      "docs": ["ng.home"]
+    },
+    {
+      "id": "ng.templates.control-flow",
+      "tool": "angular", "topic": "templates", "page": "01-angular/templates.html",
+      "title": "Conditionals and loops in a template",
+      "now": "@if / @for / @switch — built into the template language",
+      "was": "*ngIf / *ngFor / *ngSwitch structural directives, imported from CommonModule",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "Built-in syntax needs no imports, type-narrows properly inside the block, and lets the compiler generate far less code. @for also *requires* a track expression, which turns the most common Angular performance bug into a compile error.",
+      "migration": "ng generate @angular/core:control-flow",
+      "code": {
+        "now": "@if (user(); as u) {\n  <p>{{ u.name }}</p>\n} @else {\n  <p>Signed out</p>\n}\n\n@for (item of items(); track item.id) {\n  <li>{{ item.label }}</li>\n}",
+        "was": "<p *ngIf=\"user$ | async as u; else signedOut\">{{ u.name }}</p>\n<ng-template #signedOut><p>Signed out</p></ng-template>\n\n<li *ngFor=\"let item of items; trackBy: trackById\">{{ item.label }}</li>"
+      },
+      "docs": ["ng.home"]
+    },
+    {
+      "id": "ng.signals.core",
+      "tool": "angular", "topic": "signals", "page": "01-angular/signals.html",
+      "title": "Holding reactive state",
+      "now": "signal() / computed() / effect()",
+      "was": "A plain field plus manual change detection, or a BehaviorSubject you had to subscribe to",
+      "since": "16", "deprecated": null, "removed": null,
+      "why": "Signals track their own readers, so Angular knows exactly which views depend on which state — that is the mechanism zoneless change detection is built on. They arrived in preview in v16 and stabilised in v20.",
+      "migration": null,
+      "code": {
+        "now": "count = signal(0);\ndouble = computed(() => this.count() * 2);\n\nincrement() { this.count.update(n => n + 1); }",
+        "was": "count$ = new BehaviorSubject(0);\ndouble$ = this.count$.pipe(map(n => n * 2));\n\nincrement() { this.count$.next(this.count$.value + 1); }"
+      },
+      "docs": ["ng.guide.signals", "ng.essentials.signals"]
+    },
+    {
+      "id": "ng.io.signal-inputs",
+      "tool": "angular", "topic": "inputs-outputs", "page": "01-angular/inputs-outputs-queries.html",
+      "title": "Declaring an input",
+      "now": "input() / input.required() — a signal you read with ()",
+      "was": "@Input() decorator on a plain field",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "A signal input is readable in computed() and effect() without a setter or ngOnChanges, and input.required() makes a missing input a compile-time error rather than an undefined at runtime.",
+      "migration": "ng generate @angular/core:signal-input-migration",
+      "code": {
+        "now": "userId = input.required<string>();\nlabel = input('Untitled');\n\nheading = computed(() => `${this.label()} (${this.userId()})`);",
+        "was": "@Input({ required: true }) userId!: string;\n@Input() label = 'Untitled';\n\nngOnChanges() { this.heading = `${this.label} (${this.userId})`; }"
+      },
+      "docs": ["ng.home"]
+    },
+    {
+      "id": "ng.di.service-decorator",
+      "tool": "angular", "topic": "dependency-injection", "page": "01-angular/di.html",
+      "title": "Declaring a service",
+      "now": "@Service()",
+      "was": "@Injectable({ providedIn: 'root' })",
+      "since": "22", "deprecated": null, "removed": null,
+      "why": "Root-provided was what almost every service wanted, so v22 made it the shape of the decorator rather than an option you configure. @Service() is auto-provided by default; pass { autoProvided: false } for a service that must be listed in a providers array, or { factory } to build it from a function.",
+      "migration": null,
+      "code": {
+        "now": "@Service()\nexport class UserStore {\n  private http = inject(HttpClient);\n}",
+        "was": "@Injectable({ providedIn: 'root' })\nexport class UserStore {\n  private http = inject(HttpClient);\n}"
+      },
+      "docs": ["ng.guide.services", "ng.guide.di"]
+    },
+    {
+      "id": "ng.di.initializers",
+      "tool": "angular", "topic": "dependency-injection", "page": "01-angular/di.html",
+      "title": "Running code at startup",
+      "now": "provideAppInitializer(() => …)",
+      "was": "{ provide: APP_INITIALIZER, useFactory: …, multi: true }",
+      "since": "19", "deprecated": "19", "removed": null,
+      "why": "The token form needed multi: true and a factory, and forgetting either failed silently at runtime rather than at compile time. The provide* functions take the callback directly. The same swap applies to ENVIRONMENT_INITIALIZER and PLATFORM_INITIALIZER.",
+      "migration": null,
+      "code": {
+        "now": "bootstrapApplication(App, {\n  providers: [\n    provideAppInitializer(() => inject(ConfigService).load()),\n  ],\n});",
+        "was": "bootstrapApplication(App, {\n  providers: [\n    {\n      provide: APP_INITIALIZER,\n      useFactory: (config: ConfigService) => () => config.load(),\n      deps: [ConfigService],\n      multi: true,\n    },\n  ],\n});"
+      },
+      "docs": ["ng.guide.providers"]
+    },
+    {
+      "id": "ng.io.output-function",
+      "tool": "angular", "topic": "inputs-outputs", "page": "01-angular/inputs-outputs-queries.html",
+      "title": "Declaring an output",
+      "now": "output<T>()",
+      "was": "@Output() name = new EventEmitter<T>()",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "An output is not a stream you subscribe to, so modelling it as an EventEmitter (an RxJS Subject) always promised more than it delivered. output() exposes only emit(), which is the entire API a component actually needs, and it cannot be accidentally subscribed to or completed.",
+      "migration": "ng generate @angular/core:output-migration",
+      "code": {
+        "now": "saved = output<User>();\n\nsave() {\n  this.saved.emit(this.user());\n}",
+        "was": "@Output() saved = new EventEmitter<User>();\n\nsave() {\n  this.saved.emit(this.user);\n}"
+      },
+      "docs": ["ng.guide.outputs"]
+    },
+    {
+      "id": "ng.queries.signal-queries",
+      "tool": "angular", "topic": "queries", "page": "01-angular/inputs-outputs-queries.html",
+      "title": "Referencing a child element or component",
+      "now": "viewChild() / viewChildren() / contentChild() — signals",
+      "was": "@ViewChild() / @ContentChild() decorators, with a static flag and a lifecycle hook to wait for",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "The decorator form set a plain property at some point during a lifecycle hook, so reading it too early gave you undefined and the fix was to know which hook. A signal query is just a signal: read it whenever, use it in computed(), and the timing question disappears along with the static flag.",
+      "migration": "ng generate @angular/core:signal-queries-migration",
+      "code": {
+        "now": "chart = viewChild.required<ElementRef>('chart');\n\nconstructor() {\n  afterNextRender(() => this.draw(this.chart().nativeElement));\n}",
+        "was": "@ViewChild('chart', { static: true }) chart!: ElementRef;\n\nngAfterViewInit() {\n  this.draw(this.chart.nativeElement);\n}"
+      },
+      "docs": ["ng.guide.queries"]
+    },
+    {
+      "id": "ng.templates.defer",
+      "tool": "angular", "topic": "templates", "page": "01-angular/templates.html",
+      "title": "Loading part of a template lazily",
+      "now": "@defer with a trigger",
+      "was": "A route-level lazy load, or a manual dynamic import plus ViewContainerRef",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "Lazy loading used to be something you could only do at a routing boundary. @defer moves it into the template, so a heavy chart or a rarely-opened dialog is split out of the bundle without restructuring the application around it. The dependencies used only inside the block go with it automatically.",
+      "migration": null,
+      "code": {
+        "now": "@defer (on viewport) {\n  <sales-chart [data]=\"data()\" />\n} @placeholder {\n  <div class=\"skeleton\"></div>\n} @loading (minimum 200ms) {\n  <spinner />\n}",
+        "was": "// component\nasync loadChart() {\n  const { SalesChart } = await import('./sales-chart');\n  this.container.createComponent(SalesChart);\n}"
+      },
+      "docs": ["ng.guide.defer"]
+    },
+    {
+      "id": "ng.templates.let",
+      "tool": "angular", "topic": "templates", "page": "01-angular/templates.html",
+      "title": "Naming a value inside a template",
+      "now": "@let name = expression;",
+      "was": "*ngIf=\"expr as name\", or a wrapper <ng-container> whose only job was to hold the alias",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "Aliasing used to be a side effect of a structural directive, which meant you needed a conditional you did not want in order to name a value you did. Worse, *ngIf's alias silently dropped the block when the value was falsy — 0 and '' vanished. @let just declares a name.",
+      "migration": null,
+      "code": {
+        "now": "@let user = user$ | async;\n@let total = cart().items.reduce((n, i) => n + i.price, 0);\n\n<p>{{ user?.name }} owes {{ total }}</p>",
+        "was": "<ng-container *ngIf=\"user$ | async as user\">\n  <p>{{ user.name }}</p>\n</ng-container>"
+      },
+      "docs": ["ng.guide.control-flow"]
+    },
+    {
+      "id": "ng.subscription.take-until-destroyed",
+      "tool": "angular", "topic": "rxjs-interop", "page": "02-rxjs/subscriptions.html",
+      "title": "Unsubscribing in a component",
+      "now": "takeUntilDestroyed()",
+      "was": "takeUntil(this.destroy$) with a manual Subject and ngOnDestroy",
+      "since": "16", "deprecated": null, "removed": null,
+      "why": "No boilerplate Subject, no lifecycle hook to forget. It ties to DestroyRef, so it also works in services and functions — anywhere with an injection context — not just components.",
+      "migration": null,
+      "code": {
+        "now": "export class Ticker {\n  constructor() {\n    interval(1000).pipe(takeUntilDestroyed())\n      .subscribe(n => console.log(n));\n  }\n}",
+        "was": "export class Ticker implements OnDestroy {\n  private destroy$ = new Subject<void>();\n\n  ngOnInit() {\n    interval(1000).pipe(takeUntil(this.destroy$))\n      .subscribe(n => console.log(n));\n  }\n\n  ngOnDestroy() {\n    this.destroy$.next();\n    this.destroy$.complete();\n  }\n}"
+      },
+      "docs": ["ng.home"]
+    },
+    {
+      "id": "ng.cd.onpush-default",
+      "tool": "angular", "topic": "change-detection", "page": "01-angular/change-detection.html",
+      "title": "Default change detection strategy",
+      "now": "OnPush — applied automatically when changeDetection is not set",
+      "was": "Default (check-everything) unless you opted into ChangeDetectionStrategy.OnPush by hand",
+      "since": "22", "deprecated": null, "removed": null,
+      "why": "The old default re-checked every binding in the tree on every event. OnPush was always the right answer for signal-based components, so v22 stopped making you ask for it.",
+      "migration": "ng generate @angular/core:change-detection-eager",
+      "code": {
+        "now": "@Component({\n  selector: 'user-panel',\n  template: `{{ name() }}`,\n})\nexport class UserPanel {}",
+        "was": "@Component({\n  selector: 'user-panel',\n  changeDetection: ChangeDetectionStrategy.OnPush,\n  template: `{{ name() }}`,\n})\nexport class UserPanel {}"
+      },
+      "docs": ["ng.events.v22"]
+    },
+    {
+      "id": "ng.forms.signal-forms",
+      "tool": "angular", "topic": "forms", "page": "01-angular/forms.html",
+      "title": "Building a form",
+      "now": "form(model) — the model signal is the form",
+      "was": "new FormGroup({ … }) — a parallel model you kept in sync by hand",
+      "since": "22", "deprecated": null, "removed": null,
+      "why": "A reactive form was a second copy of your data with its own type, its own change stream and its own ideas about validity, and half of form code existed to keep the two in step. form() takes your existing model signal as the source of truth and does not copy it — writing through the field writes the model. Validation is declared against typed paths, so a renamed property is a compile error rather than a string that silently stops matching.",
+      "migration": null,
+      "code": {
+        "now": "import { form, required, email, minLength } from '@angular/forms/signals';\n\nprofile = signal({ name: '', email: '' });\n\nprofileForm = form(this.profile, (path) => {\n  required(path.name);\n  minLength(path.name, 2);\n  required(path.email);\n  email(path.email);\n});\n\n// profileForm.name().value() / .valid() / .touched() / .errors()",
+        "was": "profileForm = new FormGroup({\n  name: new FormControl('', [Validators.required, Validators.minLength(2)]),\n  email: new FormControl('', [Validators.required, Validators.email]),\n});\n\n// this.profileForm.get('name')?.valid   <- 'name' is just a string\n// and the real model lives somewhere else entirely"
+      },
+      "docs": ["ng.guide.forms.signals", "ng.events.v22"]
+    },
+    {
+      "id": "ng.cd.zoneless",
+      "tool": "angular", "topic": "change-detection", "page": "01-angular/change-detection.html",
+      "title": "Knowing when to re-render",
+      "now": "Zoneless — signals tell Angular what changed",
+      "was": "zone.js patching every async browser API to guess that something might have changed",
+      "since": "20", "deprecated": null, "removed": null,
+      "why": "zone.js monkey-patched setTimeout, addEventListener, fetch and the rest so Angular could re-check the entire component tree whenever any of them fired. It worked without you thinking about it, at the cost of ~13KB, a patched global environment that confused debuggers and third-party libraries, and change detection runs triggered by events that changed nothing. Signals carry the information directly, so the guessing is unnecessary. Experimental in v18 as provideExperimentalZonelessChangeDetection, stable without the prefix in v20.2, and the default for new applications from v21.",
+      "migration": null,
+      "code": {
+        "now": "bootstrapApplication(App, {\n  providers: [provideZonelessChangeDetection()],\n});\n\n// angular.json / package.json: zone.js is no longer a dependency\n// and no longer in \"polyfills\"",
+        "was": "bootstrapApplication(App, {\n  providers: [provideZoneChangeDetection({ eventCoalescing: true })],\n});\n\n// polyfills: [\"zone.js\"]"
+      },
+      "docs": ["ng.guide.zoneless"]
+    },
+    {
+      "id": "ng.data.resource",
+      "tool": "angular", "topic": "async-data", "page": "01-angular/async-data.html",
+      "title": "Loading data for the current state",
+      "now": "httpResource() / resource() — value, isLoading and error as signals",
+      "was": "A subscription in ngOnInit writing to three separate fields, or an Observable plus the async pipe",
+      "since": "22", "deprecated": null, "removed": null,
+      "why": "Every codebase reinvented the same trio of loading/error/value fields, and every one of them got cancellation slightly wrong — a slow response for user 1 arriving after you had already switched to user 2. A resource re-runs when its reactive request changes and abandons the previous result, so the out-of-order case cannot happen. In preview from v19; stable in v22.",
+      "migration": null,
+      "code": {
+        "now": "userId = input.required<string>();\n\nuser = httpResource<User>(() => `/api/users/${this.userId()}`);\n\n// template:\n// @if (user.isLoading()) { <spinner /> }\n// @else if (user.error()) { <p>Failed.</p> }\n// @else { <p>{{ user.value()?.name }}</p> }",
+        "was": "user?: User;\nloading = false;\nerror?: unknown;\n\nngOnChanges() {\n  this.loading = true;\n  this.http.get<User>(`/api/users/${this.userId}`).subscribe({\n    next: (u) => { this.user = u; this.loading = false; },\n    error: (e) => { this.error = e; this.loading = false; },\n  });\n  // nothing cancels the previous request\n}"
+      },
+      "docs": ["ng.guide.resource"]
+    },
+    {
+      "id": "ng.http.functional-interceptors",
+      "tool": "angular", "topic": "http", "page": "01-angular/async-data.html",
+      "title": "Intercepting HTTP requests",
+      "now": "A function, registered with withInterceptors([…])",
+      "was": "A class implementing HttpInterceptor, registered against the HTTP_INTERCEPTORS multi token",
+      "since": "15", "deprecated": null, "removed": null,
+      "why": "The class form needed a DI registration with multi: true that was easy to get wrong and failed silently when you did. A functional interceptor is a function that calls inject() for what it needs — and because ordering is the array's order, the sequence is visible at the call site instead of depending on provider registration order.",
+      "migration": null,
+      "code": {
+        "now": "export const authInterceptor: HttpInterceptorFn = (req, next) => {\n  const token = inject(AuthService).token();\n  return next(token ? req.clone({\n    setHeaders: { Authorization: `Bearer ${token}` },\n  }) : req);\n};\n\nprovideHttpClient(withInterceptors([authInterceptor]))",
+        "was": "@Injectable()\nexport class AuthInterceptor implements HttpInterceptor {\n  constructor(private auth: AuthService) {}\n  intercept(req: HttpRequest<unknown>, next: HttpHandler) {\n    const token = this.auth.token;\n    return next.handle(token ? req.clone({\n      setHeaders: { Authorization: `Bearer ${token}` },\n    }) : req);\n  }\n}\n\n{ provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }"
+      },
+      "docs": ["ng.guide.di"]
+    },
+    {
+      "id": "ng.routing.functional-guards",
+      "tool": "angular", "topic": "routing", "page": "01-angular/routing.html",
+      "title": "Guarding a route",
+      "now": "A function typed CanActivateFn",
+      "was": "A class implementing the CanActivate interface",
+      "since": "15", "deprecated": "15", "removed": "16",
+      "why": "A guard is one decision, so a whole class with a constructor to get its dependencies was ceremony. The class-based interfaces were deprecated in v15 and removed in v16 — this is one of the few Angular changes with a hard deadline attached, so code still using them will not compile on a supported version.",
+      "migration": null,
+      "code": {
+        "now": "export const authGuard: CanActivateFn = (route, state) => {\n  const auth = inject(AuthService);\n  const router = inject(Router);\n  return auth.isLoggedIn() || router.createUrlTree(['/login']);\n};\n\n{ path: 'admin', canActivate: [authGuard], loadComponent: () => import('./admin').then(m => m.Admin) }",
+        "was": "@Injectable({ providedIn: 'root' })\nexport class AuthGuard implements CanActivate {\n  constructor(private auth: AuthService, private router: Router) {}\n  canActivate() {\n    return this.auth.isLoggedIn() || this.router.createUrlTree(['/login']);\n  }\n}\n\n{ path: 'admin', canActivate: [AuthGuard], component: AdminComponent }"
+      },
+      "docs": ["ng.guide.di"]
+    },
+    {
+      "id": "ng.routing.input-binding",
+      "tool": "angular", "topic": "routing", "page": "01-angular/routing.html",
+      "title": "Reading a route parameter",
+      "now": "A component input, bound automatically by the router",
+      "was": "Subscribing to ActivatedRoute.paramMap",
+      "since": "16", "deprecated": null, "removed": null,
+      "why": "A route parameter is data arriving from outside the component, which is exactly what an input is. With withComponentInputBinding() the router binds params, query params, data and resolved values straight to matching inputs — so the component stops depending on the router at all, which also makes it trivial to test.",
+      "migration": null,
+      "code": {
+        "now": "provideRouter(routes, withComponentInputBinding())\n\n// component — no router dependency at all\nid = input.required<string>();\nuser = httpResource<User>(() => `/api/users/${this.id()}`);",
+        "was": "constructor(private route: ActivatedRoute) {}\n\nngOnInit() {\n  this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {\n    this.id = params.get('id')!;\n    this.load();\n  });\n}"
+      },
+      "docs": ["ng.guide.di"]
+    },
+    {
+      "id": "ng.hydration.incremental",
+      "tool": "angular", "topic": "ssr", "page": "01-angular/ssr-hydration.html",
+      "title": "Turning on incremental hydration",
+      "now": "Nothing — provideClientHydration() enables it",
+      "was": "provideClientHydration(withIncrementalHydration())",
+      "since": "22", "deprecated": "22", "removed": null,
+      "why": "Incremental hydration graduated from opt-in feature to default behaviour in v22, so the feature flag that switched it on became noise. withIncrementalHydration() is deprecated and can simply be deleted.",
+      "migration": "ng generate @angular/core:incremental-hydration",
+      "code": {
+        "now": "provideClientHydration(withEventReplay())",
+        "was": "provideClientHydration(withEventReplay(), withIncrementalHydration())"
+      },
+      "docs": ["ng.guide.hydration"]
+    },
+    {
+      "id": "ng.http.fetch-default",
+      "tool": "angular", "topic": "http", "page": "01-angular/async-data.html",
+      "title": "HttpClient's transport",
+      "now": "fetch by default",
+      "was": "XMLHttpRequest by default; fetch opt-in via withFetch()",
+      "since": "22", "deprecated": null, "removed": null,
+      "why": "fetch is the platform standard, works in more runtimes, and is what SSR needs. v22 flipped the default; a migration exists for anyone who still depends on XHR-specific behaviour.",
+      "migration": "ng generate @angular/core:http-xhr-backend",
+      "docs": ["ng.events.v22"]
+    },
+    {
+      "id": "ng.testing.vitest-default",
+      "tool": "angular", "topic": "testing", "page": "03-vitest/setup.html",
+      "title": "The unit test runner",
+      "now": "Vitest via the @angular/build:unit-test builder",
+      "was": "Karma + Jasmine via @angular-devkit/build-angular:karma",
+      "since": "21", "deprecated": null, "removed": null,
+      "why": "Karma drives a real browser per run and predates the Vite-based build pipeline Angular now uses; Vitest reuses that pipeline, so tests start in a fraction of the time. v21 shipped the unified builder and made Vitest the default for new projects. Karma still runs — the same builder accepts runner: 'karma' — but is deprecated and takes no new features. Note that the schematic converts your Jasmine *assertions*; switching the runner itself is a one-line change to angular.json.",
+      "migration": "ng generate @schematics/angular:refactor-jasmine-vitest",
+      "code": {
+        "now": "// angular.json\n\"test\": {\n  \"builder\": \"@angular/build:unit-test\"\n}",
+        "was": "// angular.json\n\"test\": {\n  \"builder\": \"@angular-devkit/build-angular:karma\",\n  \"options\": { \"karmaConfig\": \"karma.conf.js\" }\n}"
+      },
+      "docs": ["ng.guide.testing.vitest", "ng.events.v21"]
+    },
+    {
+      "id": "rx.promise-interop",
+      "tool": "rxjs", "topic": "interop", "page": "02-rxjs/subscriptions.html",
+      "title": "Turning an Observable into a Promise",
+      "now": "firstValueFrom(obs) / lastValueFrom(obs)",
+      "was": "obs.toPromise()",
+      "since": "7", "deprecated": "7", "removed": "8",
+      "why": "toPromise() was ambiguous about which value you wanted and resolved to undefined — silently — when the source completed empty. The replacements make the choice explicit and reject with EmptyError instead of handing you undefined.",
+      "migration": null,
+      "code": {
+        "now": "const user = await firstValueFrom(this.http.get<User>('/me'));",
+        "was": "const user = await this.http.get<User>('/me').toPromise();"
+      },
+      "docs": ["rx.breaking"]
+    },
+    {
+      "id": "rx.retry-config",
+      "tool": "rxjs", "topic": "errors", "page": "02-rxjs/errors-retry.html",
+      "title": "Retrying with a delay",
+      "now": "retry({ count, delay })",
+      "was": "retryWhen(errors => errors.pipe(delay(1000)))",
+      "since": "7", "deprecated": "7", "removed": "8",
+      "why": "retryWhen exposed a notifier Observable that almost everybody used incorrectly — completing it silently stopped retrying, and errors in the notifier were easy to swallow. The config object covers the real use cases directly.",
+      "migration": null,
+      "code": {
+        "now": "source.pipe(\n  retry({ count: 3, delay: 1000 })\n)",
+        "was": "source.pipe(\n  retryWhen(errors => errors.pipe(\n    delay(1000),\n    take(3),\n  ))\n)"
+      },
+      "docs": ["rx.breaking"]
+    },
+    {
+      "id": "rx.pipeable-operators",
+      "tool": "rxjs", "topic": "operators", "page": "02-rxjs/overview.html",
+      "title": "Applying operators",
+      "now": "source.pipe(map(…), filter(…))",
+      "was": "source.map(…).filter(…), after importing 'rxjs/add/operator/map'",
+      "since": "6", "deprecated": "5", "removed": "6",
+      "why": "Patching operators onto Observable.prototype meant one import anywhere in the application changed the type for everyone — and made the library impossible to tree-shake, so you shipped all of RxJS whether you used three operators or ninety. Pipeable operators are plain functions: importable, tree-shakeable, and testable on their own.",
+      "migration": null,
+      "code": {
+        "now": "import { map, filter } from 'rxjs/operators';\n\nsource.pipe(\n  filter(x => x > 0),\n  map(x => x * 2),\n);",
+        "was": "import 'rxjs/add/operator/map';\nimport 'rxjs/add/operator/filter';\n\nsource\n  .filter(x => x > 0)\n  .map(x => x * 2);"
+      },
+      "docs": ["rx.guide.operators", "rx.breaking"]
+    },
+    {
+      "id": "rx.flatmap-rename",
+      "tool": "rxjs", "topic": "operators", "page": "02-rxjs/flattening.html",
+      "title": "Flattening with unbounded concurrency",
+      "now": "mergeMap",
+      "was": "flatMap",
+      "since": "6", "deprecated": "6", "removed": "8",
+      "why": "Two names for one operator. `mergeMap` won because it names what it does — it merges the inner streams — and matches the `merge` family. `flatMap` remains as an alias and is scheduled for removal in v8.",
+      "migration": null,
+      "docs": ["rx.deprecations"]
+    },
+    {
+      "id": "rx.to-operators",
+      "tool": "rxjs", "topic": "operators", "page": "02-rxjs/operators.html",
+      "title": "Mapping to a constant",
+      "now": "map(() => value) and switchMap(() => obs)",
+      "was": "mapTo(value) and switchMapTo(obs)",
+      "since": "7", "deprecated": "7", "removed": "9",
+      "why": "The *To variants saved a few characters and doubled the API surface, and people reached for them without noticing that the argument is evaluated eagerly — switchMapTo(this.load()) calls load() once, at pipe-construction time, not per emission. Removing them removes that trap.",
+      "migration": null,
+      "code": {
+        "now": "clicks.pipe(map(() => 'clicked'));\nclicks.pipe(switchMap(() => this.load()));",
+        "was": "clicks.pipe(mapTo('clicked'));\nclicks.pipe(switchMapTo(this.load())); // load() ran once, up front"
+      },
+      "docs": ["rx.deprecations"]
+    },
+    {
+      "id": "rx.to-signal",
+      "tool": "angular", "topic": "rxjs-interop", "page": "02-rxjs/signals-vs-rxjs.html",
+      "title": "Reading a stream in a template",
+      "now": "toSignal(obs$) — read it like any other signal",
+      "was": "The async pipe, or a manual subscribe into a field",
+      "since": "16", "deprecated": null, "removed": null,
+      "why": "The async pipe works, but a value read three times in a template means three subscriptions unless you remember to share, and it cannot be read from component code at all. toSignal subscribes once, unsubscribes with the injection context, and gives you a plain signal usable everywhere — including inside computed().",
+      "migration": null,
+      "code": {
+        "now": "user = toSignal(this.user$, { initialValue: null });\n\n// template: {{ user()?.name }}\n// and in code: this.user()?.name",
+        "was": "user$ = this.service.user$;\n\n// template: {{ (user$ | async)?.name }}\n// in code: not available without subscribing again"
+      },
+      "docs": ["ng.guide.signals"]
+    },
+    {
+      "id": "vi.projects",
+      "tool": "vitest", "topic": "config", "page": "03-vitest/setup.html",
+      "title": "Configuring a multi-package test setup",
+      "now": "The projects option inside the root config",
+      "was": "A separate vitest.workspace.ts file",
+      "since": "3", "deprecated": "3", "removed": "4",
+      "why": "Two files described one thing. Folding projects into the root config removed a whole category of \"which file wins?\" confusion. Deprecated in 3.2, gone in 4.",
+      "migration": null,
+      "code": {
+        "now": "// vitest.config.ts\nexport default defineConfig({\n  test: {\n    projects: ['packages/*'],\n  },\n})",
+        "was": "// vitest.workspace.ts\nexport default ['packages/*']"
+      },
+      "docs": ["vi.projects", "vi.blog.v32", "vi.migration"]
+    },
+    {
+      "id": "vi.browser-providers",
+      "tool": "vitest", "topic": "browser", "page": "03-vitest/browser-mode.html",
+      "title": "Running tests in a real browser",
+      "now": "Browser Mode (stable) with a provider package: @vitest/browser-playwright",
+      "was": "Experimental Browser Mode with the provider named as a string",
+      "since": "4", "deprecated": null, "removed": null,
+      "why": "Browser Mode left experimental in v4, and providers moved into their own packages so you install only the driver you actually use rather than pulling every option into the dependency tree.",
+      "migration": null,
+      "docs": ["vi.blog.v4", "vi.migration"]
+    },
+    {
+      "id": "pn.lifecycle-scripts",
+      "tool": "pnpm", "topic": "security", "page": "04-pnpm/config-and-gotchas.html",
+      "title": "Dependency install scripts",
+      "now": "Blocked by default; opt packages in explicitly",
+      "was": "Every dependency's preinstall/install/postinstall ran automatically",
+      "since": "10", "deprecated": null, "removed": null,
+      "why": "A postinstall script is arbitrary code execution at install time, and the Rspack supply-chain attack used exactly that to ship a cryptominer. pnpm 10 turned it off by default. In v10 you allow-listed with pnpm.onlyBuiltDependencies; v11 removed that whole family — onlyBuiltDependencies, onlyBuiltDependenciesFile, neverBuiltDependencies, ignoredBuiltDependencies and ignoreDepScripts are all gone — and replaced them with a single allowBuilds list. v11 also defaults strictDepBuilds to true, so a package needing a build that you have not allowed is an error rather than a warning.",
+      "migration": null,
+      "code": {
+        "now": "# pnpm 11 — pnpm-workspace.yaml\nallowBuilds:\n  - esbuild\n  - fsevents",
+        "was": "// pnpm 10 — package.json\n{\n  \"pnpm\": {\n    \"onlyBuiltDependencies\": [\"esbuild\", \"fsevents\"]\n  }\n}"
+      },
+      "docs": ["pn.blog.v11", "pn.discussion.v10"]
+    },
+    {
+      "id": "pn.config-location",
+      "tool": "pnpm", "topic": "config", "page": "04-pnpm/config-and-gotchas.html",
+      "title": "Where pnpm settings live",
+      "now": "pnpm-workspace.yaml (per project) and ~/.config/pnpm/config.yaml (global)",
+      "was": "The pnpm field in package.json, and .npmrc",
+      "since": "11", "deprecated": null, "removed": null,
+      "why": "pnpm's settings had been squatting in two files owned by other tools. v11 split them cleanly: .npmrc keeps registry and auth settings, everything pnpm-specific moves to YAML. Environment variables moved too — npm_config_* is no longer read, use pnpm_config_*.",
+      "migration": null,
+      "code": {
+        "now": "# pnpm-workspace.yaml\npackages:\n  - 'packages/*'\nallowBuilds:\n  - esbuild",
+        "was": "// package.json\n{\n  \"pnpm\": {\n    \"onlyBuiltDependencies\": [\"esbuild\"]\n  }\n}\n\n# .npmrc\nauto-install-peers=true"
+      },
+      "docs": ["pn.blog.v11", "pn.migration"]
+    },
+    {
+      "id": "pn.ci-command",
+      "tool": "pnpm", "topic": "commands", "page": "04-pnpm/commands.html",
+      "title": "A reproducible install in CI",
+      "now": "pnpm ci",
+      "was": "pnpm install --frozen-lockfile",
+      "since": "11", "deprecated": null, "removed": null,
+      "why": "The flag form worked but had to be remembered, and forgetting it in CI means the lockfile can be silently rewritten by the build — which is exactly the thing a lockfile exists to prevent. v11 added a first-class command, matching what npm and yarn already had. The flag still works.",
+      "migration": null,
+      "code": {
+        "now": "pnpm ci",
+        "was": "pnpm install --frozen-lockfile"
+      },
+      "docs": ["pn.blog.v11"]
+    },
+    {
+      "id": "pn.supply-chain-defaults",
+      "tool": "pnpm", "topic": "security", "page": "04-pnpm/config-and-gotchas.html",
+      "title": "Protection against a compromised release",
+      "now": "On by default — a 24-hour quarantine on new versions",
+      "was": "Nothing; a version published a minute ago was installable a minute ago",
+      "since": "11", "deprecated": null, "removed": null,
+      "why": "Most supply-chain compromises are caught and yanked within hours, so simply not installing anything published in the last day removes most of the exposure for free. v11 defaults minimumReleaseAge to 1440 minutes and blockExoticSubdeps to true, the latter rejecting transitive dependencies that resolve to a git URL or tarball rather than the registry. Expect a CI surprise the first time you try to install a package published this morning.",
+      "migration": null,
+      "code": {
+        "now": "# pnpm-workspace.yaml — defaults in v11, shown explicitly\nminimumReleaseAge: 1440\nblockExoticSubdeps: true\n\n# packages you need without waiting out the quarantine\nminimumReleaseAgeExclude:\n  - '@my-org/*'",
+        "was": "# no equivalent — anything on the registry installed immediately"
+      },
+      "docs": ["pn.blog.v11", "pn.migration"]
+    }
+  ]
+}

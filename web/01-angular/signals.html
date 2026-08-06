@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signals — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="components.html|Components">
+  <meta name="web:next" content="inputs-outputs-queries.html|Inputs, outputs & queries">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+  <script defer src="../assets/js/viz/signal-graph.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Signals</h1>
+  <p class="lede">A value that knows who is reading it. That one property is
+  what lets Angular update exactly what depends on a change — and what makes
+  zoneless possible.</p>
+
+  <div class="at-glance">
+    <span class="label">The whole API</span>
+    <ul>
+      <li><code>signal(v)</code> — writable state. Read with <code>()</code>,
+      write with <code>.set()</code> or <code>.update()</code>.</li>
+      <li><code>computed(fn)</code> — derived, read-only, cached, lazy.</li>
+      <li><code>effect(fn)</code> — a side effect that re-runs when what it read
+      changes. For talking to the outside world, not for deriving state.</li>
+      <li><code>linkedSignal(…)</code> — derived <em>and</em> writable: resets
+      when its source changes, but can be overwritten in between.</li>
+      <li><code>untracked(fn)</code> — read without creating a dependency.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">import { signal, computed, effect, linkedSignal, untracked } from '@angular/core';
+
+export class Cart {
+  private items = signal&lt;Item[]&gt;([]);
+
+  // Derived state: cached, and recomputed only when `items` actually changes.
+  total = computed(() =&gt; this.items().reduce((n, i) =&gt; n + i.price, 0));
+  isEmpty = computed(() =&gt; this.items().length === 0);
+
+  // Writable, but resets whenever the cart changes.
+  selected = linkedSignal({
+    source: this.items,
+    computation: (items) =&gt; items[0] ?? null,
+  });
+
+  constructor() {
+    // Talking to the outside world — not deriving state.
+    effect(() =&gt; localStorage.setItem('cart', JSON.stringify(this.items())));
+  }
+
+  add(item: Item) {
+    // update() when the new value depends on the old one; set() otherwise.
+    this.items.update(items =&gt; [...items, item]);
+  }
+}</code></pre>
+
+  <h2>Try it</h2>
+  <p>Two signals feed two branches. <code>full → greeting</code> has an effect
+  at the end of it; <code>initials</code> has nothing reading it. The recompute
+  counters are real — this is a working signal graph, not a recording.</p>
+
+  <div class="demo" id="signal-graph"></div>
+
+  <p>Three things worth doing in that demo, because they are the three things
+  people get wrong:</p>
+  <ul>
+    <li><strong>Type in a box, then look before clicking anything.</strong>
+    <code>initials</code> goes <em>dirty</em> and stays there — nobody has asked
+    for it, so nothing is computed. Click "Read initials" and it recomputes on
+    the spot. A <code>computed()</code> nobody reads costs nothing, ever. The
+    other branch does recompute, because the effect at the end of it is a reader
+    and it wants an answer immediately.</li>
+    <li><strong>Click "change both".</strong> Two signals change, and the effect
+    still runs once — after the graph has settled. It never observes
+    <code>full</code> updated against a stale <code>first</code>. That property
+    is called <a href="../glossary.html#glitch-free">glitch-free</a>, and a
+    naive listener-based system does not have it.</li>
+    <li><strong>Click "set to the same value".</strong> Nothing happens at all.
+    Signals compare with <code>Object.is</code> before propagating.</li>
+  </ul>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: that equality check is by reference</span>
+    <code>items.update(list =&gt; { list.push(item); return list; })</code>
+    returns the same array, so <code>Object.is</code> says nothing changed and
+    <strong>nothing updates</strong>. Always produce a new reference —
+    <code>[...list, item]</code> — or pass a custom <code>equal</code> function.
+    This is the single most common signal bug.
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.signals.core">
+    <p class="change-note">The <code>BehaviorSubject</code> pattern it replaces
+    is still perfectly good RxJS — it is just the wrong tool for synchronous
+    state that a template reads. It needs an <code>async</code> pipe or a
+    subscription, it has no laziness, and deriving from two of them means
+    <code>combineLatest</code> for what is really just an expression.</p>
+  </div>
+
+  <h2>computed vs. effect: the decision</h2>
+  <p>Almost every signal mistake is an <code>effect()</code> that should have
+  been a <code>computed()</code>. The test is simple: <strong>if the function
+  produces a value, it is a computed.</strong> An effect exists to cause
+  something outside the reactive graph to happen.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You want to…</th><th>Use</th><th>Why not the other</th></tr></thead>
+      <tbody>
+        <tr><td>Show a total derived from a list</td><td><code>computed()</code></td>
+            <td>An effect writing to another signal runs a frame later and can loop.</td></tr>
+        <tr><td>Persist to <code>localStorage</code></td><td><code>effect()</code></td>
+            <td>Nothing reads the result — there is no value to cache.</td></tr>
+        <tr><td>Log or send analytics</td><td><code>effect()</code></td><td>Same.</td></tr>
+        <tr><td>Sync a third-party chart library</td><td><code>effect()</code> or <code>afterRenderEffect()</code></td>
+            <td>Use the latter if it touches the DOM.</td></tr>
+        <tr><td>Keep a form field in step with a selection</td><td><code>linkedSignal()</code></td>
+            <td>A computed cannot be written to; an effect would fight the user's typing.</td></tr>
+        <tr><td>Fetch data when an id changes</td><td><code>resource()</code></td>
+            <td>An effect gives you no loading state and no cancellation.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: writing signals inside an effect</span>
+    It is allowed but almost always wrong — it is how you get an infinite loop
+    or a value that lags one cycle behind. If you find yourself doing it, the
+    answer is usually <code>computed()</code> for pure derivation or
+    <code>linkedSignal()</code> for "derived but the user can override it".
+  </div>
+
+  <h2>untracked</h2>
+  <p>Inside a <code>computed</code> or <code>effect</code>, every signal you read
+  becomes a dependency. <code>untracked()</code> reads without subscribing —
+  useful when you need a current value for context but do not want changes to it
+  to trigger a re-run.</p>
+
+<pre><code class="language-typescript">effect(() =&gt; {
+  const item = this.selected();              // re-run when the selection changes
+  const user = untracked(() =&gt; this.user()); // but not when the user changes
+  analytics.track('selected', item, user);
+});</code></pre>
+
+  <h2>Reading a signal in a template</h2>
+  <p>Signals are called as functions in templates: <code>{{ count() }}</code>,
+  not <code>{{ count }}</code>. Forgetting the parentheses renders the function
+  itself and is a common first-day mistake — though with strict templates the
+  type checker usually catches it.</p>
+
+  <details class="legacy">
+    <summary>Before v16 — how component state used to work</summary>
+    <div class="layer-body">
+      <p>Two patterns, both of which you will still meet:</p>
+      <p><strong>Plain fields plus zone.js.</strong> You mutated
+      <code>this.count</code> and zone.js noticed that <em>something</em>
+      happened, so Angular re-checked the whole component tree. Simple to write,
+      impossible to make efficient, and the reason OnPush existed.</p>
+      <p><strong><code>BehaviorSubject</code> plus the async pipe.</strong> More
+      correct and OnPush-friendly, at the cost of RxJS ceremony for state that
+      was never really a stream:</p>
+<pre><code class="language-typescript">private count$ = new BehaviorSubject(0);
+double$ = this.count$.pipe(map(n =&gt; n * 2));
+
+// template: {{ double$ | async }}</code></pre>
+      <p>Both still work. Neither gives Angular the dependency information that
+      makes zoneless change detection possible.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals" data-doc="ng.guide.signals"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/essentials/signals" data-doc="ng.essentials.signals"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals/linked-signal" data-doc="ng.guide.linked-signal"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals/resource" data-doc="ng.guide.resource"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

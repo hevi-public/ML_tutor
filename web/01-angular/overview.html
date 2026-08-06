@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modern Angular in one page — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:next" content="components.html|Components">
+  <meta name="web:versions" content="Angular 22.0.8 · TypeScript 7.0.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Modern Angular in one page</h1>
+  <p class="lede">If you last wrote Angular before v16, almost every idiom you
+  know has a replacement. Here is the whole arc — what changed, in what order,
+  and which parts you can ignore.</p>
+
+  <div class="at-glance">
+    <span class="label">The four shifts that matter</span>
+    <ul>
+      <li><strong>NgModules became optional, then unnecessary.</strong>
+      Components declare their own <code>imports</code>. Standalone is the
+      default since v19; the <code>standalone: true</code> flag is now
+      redundant.</li>
+      <li><strong>Signals replaced "tell Angular something changed".</strong>
+      State that knows who reads it means Angular can update precisely what
+      depends on it, instead of re-checking the tree.</li>
+      <li><strong>Structural directives became template syntax.</strong>
+      <code>@if</code>, <code>@for</code>, <code>@switch</code>,
+      <code>@defer</code> and <code>@let</code> are part of the language, not
+      imports.</li>
+      <li><strong>Zone.js became optional.</strong> With signals carrying the
+      change information, the library that patched every browser API to guess
+      when to re-render is no longer needed.</li>
+    </ul>
+  </div>
+
+  <h2>The arc, version by version</h2>
+  <p>Set the version you are on and the badges throughout this section will tell
+  you what you already have:</p>
+  <div data-version-filter></div>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Version</th><th>The headline</th><th>What it meant in practice</th></tr></thead>
+      <tbody>
+        <tr><td><strong>14</strong><br><small>Jun 2022</small></td>
+            <td>Standalone components (preview), typed forms</td>
+            <td><code>inject()</code> becomes broadly usable — the quiet change that later makes functional guards and interceptors possible.</td></tr>
+        <tr><td><strong>15</strong><br><small>Nov 2022</small></td>
+            <td>Standalone stable, functional router guards</td>
+            <td>You could write a real application without a single NgModule.</td></tr>
+        <tr><td><strong>16</strong><br><small>May 2023</small></td>
+            <td>Signals (preview), <code>takeUntilDestroyed</code>, <code>DestroyRef</code></td>
+            <td>The reactivity rewrite starts. The <code>destroy$</code> Subject pattern becomes obsolete.</td></tr>
+        <tr><td><strong>17</strong><br><small>Nov 2023</small></td>
+            <td>Built-in control flow, <code>@defer</code>, esbuild/Vite builder, angular.dev</td>
+            <td>The biggest single break in template style since Angular 2. Builds get dramatically faster.</td></tr>
+        <tr><td><strong>18</strong><br><small>May 2024</small></td>
+            <td>Control flow and deferrable views stable; zoneless experimental</td>
+            <td><code>@let</code> arrives. Zoneless becomes something you can actually try.</td></tr>
+        <tr><td><strong>19</strong><br><small>Nov 2024</small></td>
+            <td>Standalone by default; <code>linkedSignal</code> and <code>resource()</code> in preview</td>
+            <td>The <code>standalone: true</code> flag stops being needed. <code>APP_INITIALIZER</code> and friends are deprecated for <code>provide*</code> functions.</td></tr>
+        <tr><td><strong>20</strong><br><small>May 2025</small></td>
+            <td>Signals stabilise</td>
+            <td><code>effect</code>, <code>linkedSignal</code> and <code>toSignal</code> leave preview. Vitest support appears experimentally.</td></tr>
+        <tr><td><strong>21</strong><br><small>Nov 2025</small></td>
+            <td>Vitest becomes the default test runner</td>
+            <td>The unified <code>@angular/build:unit-test</code> builder ships stable; Karma is deprecated.</td></tr>
+        <tr><td><strong>22</strong><br><small>Jun 2026</small></td>
+            <td>Signal Forms, Resource API and <code>@angular/aria</code> stable</td>
+            <td>OnPush becomes the default strategy. HttpClient uses fetch by default. <code>@Service()</code> replaces <code>@Injectable({ providedIn: 'root' })</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The translation table</h2>
+  <p>If you are reading or updating older code, this is the mapping. Each row
+  links to the page that covers it properly.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>If the code says…</th><th>Today you write…</th><th>Covered in</th></tr></thead>
+      <tbody>
+        <tr><td><code>@NgModule({ declarations: […] })</code></td><td>Nothing — components carry their own <code>imports</code></td><td><a href="components.html">Components</a></td></tr>
+        <tr><td><code>constructor(private x: X)</code></td><td><code>private x = inject(X)</code></td><td><a href="di.html">DI</a></td></tr>
+        <tr><td><code>@Injectable({ providedIn: 'root' })</code></td><td><code>@Service()</code></td><td><a href="di.html">DI</a></td></tr>
+        <tr><td><code>*ngIf</code> / <code>*ngFor</code> / <code>*ngSwitch</code></td><td><code>@if</code> / <code>@for</code> / <code>@switch</code></td><td><a href="templates.html">Templates</a></td></tr>
+        <tr><td><code>*ngIf="x as y"</code></td><td><code>@let y = x;</code></td><td><a href="templates.html">Templates</a></td></tr>
+        <tr><td><code>@Input()</code> / <code>@Output()</code></td><td><code>input()</code> / <code>output()</code></td><td><a href="inputs-outputs-queries.html">Inputs &amp; outputs</a></td></tr>
+        <tr><td><code>@ViewChild()</code> with <code>static</code></td><td><code>viewChild()</code></td><td><a href="inputs-outputs-queries.html">Queries</a></td></tr>
+        <tr><td><code>BehaviorSubject</code> for component state</td><td><code>signal()</code></td><td><a href="signals.html">Signals</a></td></tr>
+        <tr><td><code>destroy$</code> + <code>takeUntil</code></td><td><code>takeUntilDestroyed()</code></td><td><a href="../02-rxjs/subscriptions.html">Subscriptions</a></td></tr>
+        <tr><td><code>APP_INITIALIZER</code> with <code>multi: true</code></td><td><code>provideAppInitializer()</code></td><td><a href="di.html">DI</a></td></tr>
+        <tr><td><code>class MyGuard implements CanActivate</code></td><td>A plain function</td><td><a href="routing.html">Routing</a></td></tr>
+        <tr><td>Karma + Jasmine</td><td>Vitest</td><td><a href="../03-vitest/setup.html">Vitest</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What you can still ignore</h2>
+  <p>Not everything new is something you need. Three honest caveats:</p>
+
+  <div class="gotcha">
+    <span class="label">You do not have to rewrite working code</span>
+    Decorator inputs, NgModules and <code>*ngIf</code> all still work in v22 and
+    none of them is deprecated. The migrations exist so you can adopt the new
+    forms on your own schedule, not because the old ones are about to break. The
+    rows in <a href="../deprecations.html">what changed</a> marked
+    <em>removed</em> are the only ones with a deadline attached.
+  </div>
+
+  <p>RxJS has not been replaced either. Signals took over <em>synchronous state
+  a template reads</em>; RxJS still owns everything that is genuinely a stream
+  over time — debouncing, cancellation, retries, websockets, coordinating several
+  async sources. The two interoperate in both directions. That decision gets its
+  own page: <a href="../02-rxjs/signals-vs-rxjs.html">signals or RxJS?</a></p>
+
+  <p>And zoneless is not automatic. It is a provider you opt into, and an
+  application that mutates state outside signals will need work before it
+  behaves. See <a href="change-detection.html">change detection</a>.</p>
+
+  <h2>Where to start reading</h2>
+  <p>If you are actively porting a codebase, the order that causes the least
+  churn is: <a href="di.html">DI</a> (mechanical, low risk) →
+  <a href="templates.html">templates</a> (one schematic, large diff, no
+  behaviour change) → <a href="signals.html">signals</a> (the conceptual one) →
+  <a href="change-detection.html">zoneless</a> (only once the first three are
+  done).</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/roadmap" data-doc="ng.roadmap"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/reference/releases" data-doc="ng.releases"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/events/v22" data-doc="ng.events.v22"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/ngmodules/overview" data-doc="ng.guide.ngmodules"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -1,0 +1,616 @@
+/* Web Dev Reference — styles.
+
+   This track shares the site's design system rather than forking it: the import
+   below pulls in the tokens, header, layout, boxes, code blocks, page nav and
+   print rules from the ML tutor's stylesheet. Everything after it is specific to
+   a *reference* page shape — version badges, now/was change cards, cheat tables,
+   the docs chips — which the two course tracks have no use for. */
+
+@import url("../../../assets/css/site.css");
+
+/* ---------- Reference layout ---------- */
+
+/* Reference pages are table- and code-heavy: give them more room than prose. */
+main.ref { max-width: 58rem; }
+
+/* The generated views (ledger, timeline, docs index) are wide tables rather
+   than prose, so they get the full width available. */
+main.hub { max-width: 76rem; }
+
+/* ---------- Tool tags ---------- */
+
+.tool-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.tool-tag.angular { color: #b91c1c; background: #fde3e3; border-color: #f4bcbc; }
+.tool-tag.rxjs    { color: #a21caf; background: #f8e2fb; border-color: #eec0f5; }
+.tool-tag.vitest  { color: #15803d; background: #dcf3e3; border-color: #b6e3c6; }
+.tool-tag.pnpm    { color: #b45309; background: #fdf0d5; border-color: #f2d9a8; }
+.tool-tag.typescript { color: #1d4ed8; background: #dbe7ff; border-color: #b9d0fb; }
+
+@media (prefers-color-scheme: dark) {
+  .tool-tag.angular { color: #fca5a5; background: #3d1515; border-color: #5e2222; }
+  .tool-tag.rxjs    { color: #f0abfc; background: #3b1040; border-color: #5c1a63; }
+  .tool-tag.vitest  { color: #86efac; background: #123524; border-color: #1c5137; }
+  .tool-tag.pnpm    { color: #fcd34d; background: #3a2a0c; border-color: #574011; }
+  .tool-tag.typescript { color: #93b4ff; background: #1d3358; border-color: #2a4a7d; }
+}
+html[data-theme="dark"] .tool-tag.angular { color: #fca5a5; background: #3d1515; border-color: #5e2222; }
+html[data-theme="dark"] .tool-tag.rxjs    { color: #f0abfc; background: #3b1040; border-color: #5c1a63; }
+html[data-theme="dark"] .tool-tag.vitest  { color: #86efac; background: #123524; border-color: #1c5137; }
+html[data-theme="dark"] .tool-tag.pnpm    { color: #fcd34d; background: #3a2a0c; border-color: #574011; }
+html[data-theme="dark"] .tool-tag.typescript { color: #93b4ff; background: #1d3358; border-color: #2a4a7d; }
+
+/* ---------- Version badges ---------- */
+
+.badge {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-family: ui-monospace, Menlo, "Cascadia Code", monospace;
+  border-radius: 5px;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.badge.since      { color: var(--good); background: var(--good-soft); border-color: transparent; }
+.badge.deprecated { color: #b45309; background: #fdf0d5; border-color: transparent; }
+.badge.removed    { color: var(--bad); background: var(--bad-soft); border-color: transparent; }
+
+@media (prefers-color-scheme: dark) {
+  .badge.deprecated { color: #fcd34d; background: #3a2a0c; }
+}
+html[data-theme="dark"] .badge.deprecated { color: #fcd34d; background: #3a2a0c; }
+html[data-theme="light"] .badge.deprecated { color: #b45309; background: #fdf0d5; }
+
+/* Annotation added by version-filter.js once the reader picks their version. */
+.badge .vf {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding-left: 0.35rem;
+  border-left: 1px solid currentColor;
+  opacity: 0.85;
+  font-weight: 500;
+}
+.badge.vf-ok      { outline: 1px solid var(--good); }
+.badge.vf-future  { opacity: 0.55; }
+.badge.vf-warn    { outline: 1px solid var(--bad); }
+
+/* ---------- The now / was change card ---------- */
+
+.change {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 1.6rem 0;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.change > .change-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-inset);
+}
+.change > .change-head .change-title { font-weight: 700; margin-right: auto; }
+
+.change .change-body { padding: 0.4rem 1.1rem 1rem; }
+
+/* The two halves. .side.now is the answer; .side.was is context. */
+.change .sides { display: grid; gap: 0.9rem; margin: 0.9rem 0; }
+@media (min-width: 820px) {
+  .change .sides.split { grid-template-columns: 1fr 1fr; }
+}
+
+.change .side {
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 3px);
+  padding: 0.7rem 0.9rem;
+  background: var(--bg);
+}
+.change .side.now { border-left: 4px solid var(--good); }
+.change .side.was { border-left: 4px solid var(--text-soft); opacity: 0.92; }
+
+.change .side .side-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+.change .side.now .side-label { color: var(--good); }
+.change .side.was .side-label { color: var(--text-soft); }
+.change .side .summary-line { font-size: 0.95rem; }
+.change .side pre { margin: 0.6rem 0 0; }
+
+.change .why {
+  border-left: 4px solid var(--accent);
+  background: var(--bg-inset);
+  border-radius: calc(var(--radius) - 3px);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.95rem;
+  margin-top: 0.9rem;
+}
+.change .why .label {
+  display: block;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-soft); margin-bottom: 0.25rem;
+}
+
+.change .migration {
+  margin-top: 0.8rem;
+  font-size: 0.92rem;
+}
+.change .migration code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; }
+
+/* View toggle: side-by-side <-> unified diff */
+.change .view-toggle {
+  display: flex; gap: 0.3rem;
+}
+.change .view-toggle button {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-soft);
+  border-radius: 6px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.change .view-toggle button[aria-pressed="true"] {
+  border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
+}
+
+.change .diff { display: none; margin: 0.9rem 0 0; }
+.change.as-diff .sides { display: none; }
+.change.as-diff .diff { display: block; }
+.change .diff pre { margin: 0; }
+.change .diff .del,
+.change .diff .add { display: block; }
+.change .diff .del { background: var(--bad-soft); color: var(--bad); }
+.change .diff .add { background: var(--good-soft); color: var(--good); }
+/* The +/- markers are presentational only. Keeping them out of the text means
+   the copy button yields code you can paste, not a diff you have to clean up. */
+.change .diff .del::before { content: "- "; }
+.change .diff .add::before { content: "+ "; }
+
+/* ---------- At a glance ---------- */
+
+.at-glance {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 0.9rem 1.1rem;
+  margin: 1.4rem 0;
+}
+.at-glance .label {
+  display: block;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-soft); margin-bottom: 0.5rem;
+}
+.at-glance ul { margin: 0; padding-left: 1.1rem; }
+.at-glance li { margin: 0.3rem 0; font-size: 0.96rem; }
+
+/* ---------- Gotchas ---------- */
+
+.gotcha {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--bad);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 0.8rem 1.1rem;
+  margin: 1rem 0;
+}
+.gotcha .label {
+  display: block;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--bad); margin-bottom: 0.25rem;
+}
+
+/* ---------- Cheat tables ---------- */
+
+table.cheat {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2rem 0;
+  font-size: 0.93rem;
+}
+table.cheat th, table.cheat td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+table.cheat thead th {
+  font-size: 0.76rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  border-bottom: 2px solid var(--border);
+}
+table.cheat tbody tr:hover { background: var(--bg-soft); }
+table.cheat code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  /* Wrap at spaces first and only break inside a token that cannot fit on its
+     own line — so `ng generate @angular/core:inject` breaks after "generate"
+     rather than mid-identifier. `anywhere` would do the latter. Without any
+     wrapping at all, one long schematic name forces the whole table wider than
+     the page and pushes a column out of sight. */
+  overflow-wrap: break-word;
+}
+/* Wide tables scroll rather than pushing the page sideways. */
+.table-scroll { overflow-x: auto; margin: 1.2rem 0; }
+.table-scroll table.cheat { margin: 0; min-width: 34rem; }
+
+/* ---------- Copy button on code blocks ---------- */
+
+.code-wrap { position: relative; }
+.code-wrap .copy-btn {
+  position: absolute;
+  top: 0.45rem; right: 0.45rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-soft);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.code-wrap:hover .copy-btn,
+.code-wrap .copy-btn:focus-visible { opacity: 1; }
+.code-wrap .copy-btn.copied { color: var(--good); border-color: var(--good); opacity: 1; }
+@media (hover: none) { .code-wrap .copy-btn { opacity: 1; } }
+
+/* ---------- Official docs chips ---------- */
+
+.doc-links { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.8rem 0; padding: 0; list-style: none; }
+.doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.85rem;
+  text-decoration: none;
+  color: var(--accent);
+}
+.doc-chip:hover { border-color: var(--accent); background: var(--accent-soft); }
+.doc-chip::after { content: "↗"; font-size: 0.8em; opacity: 0.7; }
+.doc-chip .kind {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+}
+/* A link we could not confirm resolves — check:links will settle it. */
+.doc-chip.unverified { border-style: dashed; }
+
+/* ---------- Version dashboard (landing) ---------- */
+
+.version-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.9rem;
+  margin: 1.4rem 0;
+  padding: 0;
+  list-style: none;
+}
+.version-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 0.9rem 1rem;
+}
+.version-card .tool-tag { margin-bottom: 0.5rem; }
+.version-card .num {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.version-card .when { font-size: 0.82rem; color: var(--text-soft); }
+.version-card p { font-size: 0.86rem; color: var(--text-soft); margin: 0.5rem 0 0; }
+
+/* Support status pills used on versions.html */
+.status { font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 0.1rem 0.5rem; white-space: nowrap; }
+.status.active { color: var(--good); background: var(--good-soft); }
+.status.lts    { color: var(--accent); background: var(--accent-soft); }
+.status.eol    { color: var(--bad); background: var(--bad-soft); }
+
+/* ---------- Filter / control bars ---------- */
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 0.6rem 0.9rem;
+  margin: 1.2rem 0;
+}
+.filter-bar label { font-size: 0.85rem; color: var(--text-soft); }
+.filter-bar select,
+.filter-bar input[type="search"] {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+}
+.filter-bar input[type="search"] { flex: 1; min-width: 10rem; }
+
+/* ---------- Signal graph demo ---------- */
+
+#signal-graph svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.sg-edge { stroke: var(--border); stroke-width: 2; }
+.sg-edge.dirty { stroke: #b45309; stroke-dasharray: 4 3; }
+
+.sg-node rect { fill: var(--bg-inset); stroke: var(--border); stroke-width: 1.5; }
+.sg-node.signal rect { fill: var(--accent-soft); stroke: var(--accent); }
+.sg-node.effect rect { fill: var(--bg-soft); stroke: var(--text-soft); stroke-dasharray: 5 3; }
+.sg-node.dirty rect { stroke: #b45309; stroke-width: 2.5; }
+.sg-node.ran rect { fill: var(--good-soft); stroke: var(--good); stroke-width: 2.5; }
+
+.sg-name {
+  fill: var(--text); font-size: 13px; font-weight: 600; text-anchor: middle;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.sg-meta { fill: var(--text-soft); font-size: 10px; text-anchor: middle; }
+
+#signal-graph .controls .control input[type="text"] {
+  flex: 2;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.sg-log {
+  margin: 0.9rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.84rem;
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--text-soft);
+}
+.sg-log li { margin: 0.15rem 0; }
+.sg-log li:first-child { color: var(--text); }
+
+/* ---------- Marble player ---------- */
+
+#marbles svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  margin-top: 0.8rem;
+}
+#marbles .mb-ops { margin-bottom: 0; }
+
+.mb-line { stroke: var(--border); stroke-width: 2; }
+.mb-line.inner { stroke-dasharray: 3 3; }
+.mb-line.output { stroke: var(--text-soft); stroke-width: 2.5; }
+.mb-arrow { fill: var(--border); }
+.mb-wait { stroke: var(--text-soft); stroke-width: 6; opacity: 0.25; }
+.mb-cancel { stroke: var(--bad); stroke-width: 2.5; fill: none; }
+
+.mb-axis-label { fill: var(--text-soft); font-size: 9px; }
+.mb-marble-text { fill: #fff; font-size: 10px; font-weight: 700; text-anchor: middle; }
+.mb-marble.cancelled { opacity: 0.25; }
+.mb-note { fill: var(--text-soft); font-size: 10px; font-style: italic; }
+.mb-note.ignored { fill: var(--bad); }
+
+/* ---------- Change-detection visualiser ---------- */
+
+#cd-viz svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.cd-edge { stroke: var(--border); stroke-width: 1.5; }
+.cd-edge.active { stroke: var(--accent); stroke-width: 2.5; }
+
+.cd-node rect {
+  fill: var(--bg-inset); stroke: var(--border); stroke-width: 1.5;
+  opacity: 0.5;
+}
+.cd-node.checked rect { fill: var(--accent-soft); stroke: var(--accent); opacity: 1; }
+.cd-node.rendered rect { fill: var(--good-soft); stroke: var(--good); stroke-width: 2.5; opacity: 1; }
+.cd-node.reads rect { stroke-dasharray: 4 2; }
+.cd-label {
+  fill: var(--text); font-size: 11px; font-weight: 600; text-anchor: middle;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.cd-node:not(.checked) .cd-label { fill: var(--text-soft); }
+
+#cd-viz .controls .control select {
+  flex: 2;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+#cd-viz .readout.danger {
+  border-left: 4px solid var(--bad);
+  background: var(--bad-soft);
+  border-radius: calc(var(--radius) - 4px);
+  padding: 0.6rem 0.8rem;
+  color: var(--text);
+}
+
+.cd-key {
+  display: inline-block; width: 0.75rem; height: 0.75rem;
+  border-radius: 3px; vertical-align: -1px; margin-right: 0.15rem;
+  border: 1.5px solid var(--border); background: var(--bg-inset);
+}
+.cd-key.checked { background: var(--accent-soft); border-color: var(--accent); }
+.cd-key.rendered { background: var(--good-soft); border-color: var(--good); }
+.cd-key.reads { border-style: dashed; }
+
+/* ---------- Search results ---------- */
+
+.search-box { margin: 1.4rem 0 0.6rem; }
+.search-box input[type="search"] {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  font: inherit;
+  font-size: 1.05rem;
+}
+.search-box input[type="search"]:focus-visible { border-color: var(--accent); }
+.search-box .count { font-size: 0.85rem; color: var(--text-soft); margin: 0.4rem 0 0; }
+
+.results-group { margin: 1.8rem 0; }
+.results-group > h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+}
+.results-group > h3 .n {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.result {
+  padding: 0.6rem 0 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+.result:last-child { border-bottom: none; }
+.result h4 { margin: 0 0 0.2rem; font-size: 1.02rem; }
+.result h4 a { text-decoration: none; }
+.result h4 a:hover { text-decoration: underline; }
+.result .meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+  margin: 0.2rem 0; font-size: 0.8rem; color: var(--text-soft);
+}
+.result .snip { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--text-soft); }
+/* Off-site results are visibly off-site. */
+.result.doc h4 a::after { content: " ↗"; font-size: 0.85em; opacity: 0.7; }
+
+/* ---------- Ledger / timeline tables ---------- */
+
+.ledger-row-tool { white-space: nowrap; }
+.timeline-version {
+  margin: 2.2rem 0 0.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--border);
+  display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;
+}
+.timeline-version h3 { margin: 0; font-size: 1.25rem; }
+.timeline-version .date { font-size: 0.85rem; color: var(--text-soft); }
+.timeline-entry {
+  border-left: 3px solid var(--border);
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  margin: 0.9rem 0;
+}
+.timeline-entry.angular { border-left-color: #b91c1c; }
+.timeline-entry.rxjs    { border-left-color: #a21caf; }
+.timeline-entry.vitest  { border-left-color: #15803d; }
+.timeline-entry.pnpm    { border-left-color: #b45309; }
+.timeline-entry h4 { margin: 0 0 0.2rem; font-size: 1rem; }
+.timeline-entry .swap { font-size: 0.92rem; }
+.timeline-entry .swap .arrow { color: var(--text-soft); margin: 0 0.4rem; }
+.timeline-entry .swap .was { color: var(--text-soft); text-decoration: line-through; }
+.timeline-entry p { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--text-soft); }
+
+.empty-note {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+/* ---------- Legacy panel ---------- */
+
+details.legacy {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  margin: 1.2rem 0;
+  background: transparent;
+}
+details.legacy > summary {
+  cursor: pointer;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  list-style: none;
+}
+details.legacy > summary::before { content: "▸ "; }
+details.legacy[open] > summary::before { content: "▾ "; }
+details.legacy > summary::-webkit-details-marker { display: none; }
+details.legacy > .layer-body { padding: 0 1rem 0.9rem; font-size: 0.94rem; }
+
+/* ---------- Page footer stamp ---------- */
+
+.written-against {
+  margin-top: 3rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+
+/* ---------- Print ---------- */
+
+@media print {
+  /* .change .view-toggle needs matching specificity to win here — a media
+     query does not add any, so a bare `.view-toggle` loses to the two-class
+     rule above and the buttons print. */
+  .filter-bar, .copy-btn, .change .view-toggle { display: none; }
+  .change, .at-glance, .gotcha, table.cheat tr { break-inside: avoid; }
+  .change .sides.split { grid-template-columns: 1fr 1fr; }
+  details.legacy { border: none; }
+  details.legacy > summary { display: none; }
+  .doc-chip::after { content: ""; }
+}

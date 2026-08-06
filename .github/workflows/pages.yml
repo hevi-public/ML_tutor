@@ -37,12 +37,19 @@ jobs:
           npm run build:index
           npm run build:bass
           npm run build:git
+          npm run build:web
 
       # The git tutor's sandbox claims to be real git, so prove it on every
       # deploy: build every fixture with the browser engine and hand the
       # repositories to the runner's own git binary.
       - name: Verify the git sandbox against real git
         run: npm run verify:git
+
+      # Referential integrity only (--offline): every data-doc id resolves and
+      # every documentation href matches the registry. The network passes are
+      # deliberately excluded — a docs site being down must not block a deploy.
+      - name: Check documentation link registry
+        run: npm run check:links -- --offline
 
       # Stage the site. node_modules is gitignored but the pages reference it
       # by relative path, so copy exactly the vendored files the pages use.

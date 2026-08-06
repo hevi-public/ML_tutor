@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forms — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="async-data.html|Async data">
+  <meta name="web:next" content="routing.html|Routing">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Forms</h1>
+  <p class="lede">Signal Forms went stable in v22. The headline change: your
+  model <em>is</em> the form, rather than something you keep in sync with one.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>form(modelSignal, schema)</code> returns a
+      <strong>field tree</strong> mirroring your model's shape.</li>
+      <li>It does <strong>not copy your data</strong> — writing through a field
+      writes the model signal you passed in.</li>
+      <li>Every node exposes <code>value()</code>, <code>valid()</code>,
+      <code>invalid()</code>, <code>touched()</code>, <code>dirty()</code>,
+      <code>errors()</code>, <code>pending()</code>, <code>disabled()</code>,
+      <code>readonly()</code>, <code>hidden()</code>, <code>submitting()</code>.</li>
+      <li>Validation is declared against <strong>typed paths</strong>, so
+      renaming a field is a compile error rather than a silently dead rule.</li>
+      <li>Imports come from <code>@angular/forms/signals</code>. Reactive forms
+      are untouched and not deprecated.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">import { signal } from '@angular/core';
+import { form, required, email, minLength, disabled, submit }
+  from '@angular/forms/signals';
+
+export class ProfilePage {
+  // Your model. An ordinary writable signal — nothing form-specific about it.
+  profile = signal({ name: '', email: '', newsletter: false });
+
+  profileForm = form(this.profile, (path) =&gt; {
+    required(path.name, { message: 'We need a name.' });
+    minLength(path.name, 2);
+
+    required(path.email);
+    email(path.email);
+
+    // Rules can be conditional on the model's own values.
+    disabled(path.newsletter, ({ value }) =&gt; !value().email);
+  });
+
+  async save() {
+    await submit(this.profileForm, {
+      action: async (form) =&gt; {
+        await this.api.saveProfile(form().value());
+      },
+    });
+  }
+}</code></pre>
+
+<pre><code class="language-html">&lt;input [field]="profileForm.name" /&gt;
+@if (profileForm.name().touched() &amp;&amp; profileForm.name().invalid()) {
+  &lt;p class="error"&gt;{{ profileForm.name().errors()[0]?.message }}&lt;/p&gt;
+}
+
+&lt;button [disabled]="profileForm().invalid() || profileForm().submitting()"
+        (click)="save()"&gt;Save&lt;/button&gt;</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.forms.signal-forms">
+    <p class="change-note">The "does not copy" property is the one to hold on
+    to. With reactive forms you had a model and a <code>FormGroup</code>, and a
+    meaningful fraction of form code existed purely to move data between them —
+    <code>patchValue</code> on load, <code>getRawValue</code> on save, and a
+    subscription in between. Signal Forms delete that category of code, because
+    there is only ever one copy of the data.</p>
+  </div>
+
+  <h2>Which forms API</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>Signal Forms</th><th>Reactive forms</th><th>Template-driven</th></tr></thead>
+      <tbody>
+        <tr><td>Status</td><td>Stable in v22</td><td>Stable, not deprecated</td><td>Stable, not deprecated</td></tr>
+        <tr><td>Source of truth</td><td>Your model signal</td><td>The FormGroup</td><td>The template</td></tr>
+        <tr><td>Field access</td><td><code>form.name</code> — typed</td><td><code>form.get('name')</code> — a string</td><td><code>ngModel</code></td></tr>
+        <tr><td>State</td><td>Signals</td><td>Observables + getters</td><td>Getters</td></tr>
+        <tr><td>Validation</td><td>Functions on typed paths</td><td>Validator arrays</td><td>Attribute directives</td></tr>
+        <tr><td>Good for</td><td>New work of any size</td><td>Existing forms; migrate when convenient</td><td>Genuinely trivial forms</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Migrating gradually</h2>
+  <p>There is no schematic, and for a large form you would not want one — but
+  the migration is designed to be partial. <code>@angular/forms/signals/compat</code>
+  exists so a signal form and a reactive form can coexist while you move field
+  groups across one at a time, rather than rewriting a 40-field form in one
+  commit.</p>
+
+  <p>A sensible order: new forms use Signal Forms from the start; existing forms
+  move when you are already changing them for another reason. A working reactive
+  form is not a defect.</p>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: the field is a function, and so is its state</span>
+    <code>profileForm.name</code> is the field; <code>profileForm.name()</code>
+    is its state; <code>profileForm.name().value()</code> is the value. Two sets
+    of parentheses before you reach data takes some getting used to, and
+    forgetting one produces a type error that reads oddly until the pattern
+    clicks.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: the schema callback is not reactive</span>
+    The function you pass to <code>form()</code> runs once to declare rules. The
+    <em>rules</em> are reactive — a <code>disabled()</code> predicate re-evaluates
+    as values change — but the callback body itself does not re-run. Reading a
+    signal directly in it, rather than inside a rule's predicate, captures a
+    value at setup time and quietly never updates.
+  </div>
+
+  <details class="legacy">
+    <summary>Reactive forms — for the code you already have</summary>
+    <div class="layer-body">
+<pre><code class="language-typescript">profileForm = new FormGroup({
+  name: new FormControl('', [Validators.required, Validators.minLength(2)]),
+  email: new FormControl('', [Validators.required, Validators.email]),
+});
+
+ngOnInit() {
+  this.api.loadProfile().subscribe(p =&gt; this.profileForm.patchValue(p));
+}
+
+save() {
+  if (this.profileForm.invalid) return;
+  this.api.saveProfile(this.profileForm.getRawValue()).subscribe();
+}</code></pre>
+      <p>Two long-standing sharp edges, for context on why the API changed:
+      <code>form.get('name')</code> took a string, so a typo or a rename gave
+      you <code>null</code> at runtime rather than a compile error; and
+      <code>value</code> excluded disabled controls while
+      <code>getRawValue()</code> included them, which is a data-loss bug people
+      hit repeatedly.</p>
+      <p>Typed forms in v14 fixed the worst of the typing. None of this is
+      deprecated.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/forms/signals/overview" data-doc="ng.guide.forms.signals"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/events/v22" data-doc="ng.events.v22"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

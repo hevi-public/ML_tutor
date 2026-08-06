@@ -1,0 +1,219 @@
+{
+  "_comment": "Search-only entries: how people actually phrase a thing, mapped onto the page that answers it. These never render as pages — scripts/build-web-index.js folds them into the index so a natural phrasing finds the right target. Targets must be pages that exist; entries pointing into 01-angular/ … 04-pnpm/ are added along with those sections.",
+
+  "aliases": [
+    {
+      "title": "What replaced this API?",
+      "u": "deprecations.html",
+      "unit": "Reference",
+      "phrases": ["deprecated", "removed", "obsolete", "no longer works",
+        "what replaced", "instead of", "superseded", "breaking change",
+        "is this still supported", "should i still use"]
+    },
+    {
+      "title": "Am I on a supported version?",
+      "u": "versions.html",
+      "unit": "Reference",
+      "phrases": ["end of life", "eol", "lts", "support window", "still supported",
+        "when does my version expire", "should i upgrade", "how old is my angular",
+        "release cadence", "release schedule", "compatibility matrix",
+        "which typescript version", "which node version"]
+    },
+    {
+      "title": "Which command migrates this for me?",
+      "u": "migrations.html",
+      "unit": "Reference",
+      "phrases": ["schematic", "codemod", "ng update", "automatic migration",
+        "rewrite my code", "upgrade my code", "migrate automatically",
+        "how do i upgrade angular", "skip a major version"]
+    },
+    {
+      "title": "Where are the official docs?",
+      "u": "docs-index.html",
+      "unit": "Reference",
+      "phrases": ["official docs", "documentation", "api reference", "angular.dev",
+        "rxjs.dev", "vitest.dev", "pnpm.io", "where is the doc"]
+    },
+    {
+      "title": "Unsubscribing without leaking",
+      "u": "glossary.html#take-until-destroyed",
+      "unit": "Glossary",
+      "phrases": ["unsubscribe", "memory leak", "destroy$", "ngOnDestroy",
+        "takeUntil", "cleanup subscription", "do i need to unsubscribe"]
+    },
+    {
+      "title": "Cold vs. hot observables",
+      "u": "glossary.html#cold-hot",
+      "unit": "Glossary",
+      "phrases": ["cold", "hot", "why does my http call fire twice",
+        "multiple requests", "shared stream", "share replay", "one subscription"]
+    },
+    {
+      "title": "switchMap, mergeMap, concatMap or exhaustMap?",
+      "u": "glossary.html#flattening",
+      "unit": "Glossary",
+      "phrases": ["switchMap", "mergeMap", "concatMap", "exhaustMap", "flatMap",
+        "nested observable", "observable of observable", "which map operator",
+        "cancel previous request", "double submit"]
+    },
+    {
+      "title": "Angular without zone.js",
+      "u": "glossary.html#zoneless",
+      "unit": "Glossary",
+      "phrases": ["zoneless", "zone.js", "remove zone", "provideZonelessChangeDetection",
+        "why is my view not updating", "markForCheck", "detectChanges"]
+    },
+    {
+      "title": "Why doesn't my package's install script run?",
+      "u": "glossary.html#content-addressable-store",
+      "unit": "Glossary",
+      "phrases": ["postinstall", "install script", "lifecycle script",
+        "onlyBuiltDependencies", "allowBuilds", "esbuild not working",
+        "ignored build scripts", "pnpm approve builds"]
+    },
+    {
+      "title": "Module not found, but it is installed",
+      "u": "glossary.html#phantom-dependency",
+      "unit": "Glossary",
+      "phrases": ["cannot find module", "phantom dependency", "hoisting",
+        "works with npm but not pnpm", "node_modules missing package",
+        "shamefully-hoist", "symlink"]
+    },
+    {
+      "title": "Keeping every @angular/* on the same version",
+      "u": "glossary.html#catalog",
+      "unit": "Glossary",
+      "phrases": ["catalog", "single version policy", "version drift", "monorepo versions",
+        "pin dependency version", "same version everywhere"]
+    },
+    {
+      "title": "Testing a component's behaviour, not its markup",
+      "u": "glossary.html#harness",
+      "unit": "Glossary",
+      "phrases": ["component harness", "test harness", "brittle tests",
+        "querySelector in tests", "cdk harness"]
+    },
+
+    {
+      "title": "Why isn't my view updating?",
+      "u": "01-angular/change-detection.html",
+      "unit": "Angular",
+      "phrases": ["view not updating", "ui not refreshing", "template not updating",
+        "screen doesn't change", "have to click twice", "not re-rendering",
+        "detectChanges", "markForCheck", "ExpressionChangedAfterItHasBeenChecked"]
+    },
+    {
+      "title": "My signal changed but nothing happened",
+      "u": "01-angular/signals.html",
+      "unit": "Angular",
+      "phrases": ["signal not updating", "push does not work", "mutate array signal",
+        "object.is", "equality check", "same reference", "update vs set"]
+    },
+    {
+      "title": "computed or effect?",
+      "u": "01-angular/signals.html",
+      "unit": "Angular",
+      "phrases": ["computed vs effect", "when to use effect", "infinite loop effect",
+        "write signal in effect", "derived state", "linkedSignal"]
+    },
+    {
+      "title": "inject() must be called from an injection context",
+      "u": "01-angular/di.html",
+      "unit": "Angular",
+      "phrases": ["NG0203", "injection context", "inject must be called",
+        "runInInjectionContext", "inject in ngOnInit", "inject in callback"]
+    },
+    {
+      "title": "Reading a route parameter",
+      "u": "01-angular/routing.html",
+      "unit": "Angular",
+      "phrases": ["route param", "paramMap", "ActivatedRoute", "query param",
+        "withComponentInputBinding", "url parameter", "route input"]
+    },
+    {
+      "title": "Loading data with a loading spinner",
+      "u": "01-angular/async-data.html",
+      "unit": "Angular",
+      "phrases": ["loading state", "isLoading", "spinner", "httpResource",
+        "fetch data", "resource", "http get", "error state"]
+    },
+    {
+      "title": "window is not defined",
+      "u": "01-angular/ssr-hydration.html",
+      "unit": "Angular",
+      "phrases": ["window is not defined", "document is not defined", "localStorage ssr",
+        "hydration mismatch", "NG0500", "ngSkipHydration", "flicker on load"]
+    },
+    {
+      "title": "Cancelling the previous request",
+      "u": "02-rxjs/flattening.html",
+      "unit": "RxJS",
+      "phrases": ["cancel previous request", "race condition", "out of order response",
+        "stale results", "search as you type", "typeahead", "double submit",
+        "subscribe inside subscribe", "nested subscribe"]
+    },
+    {
+      "title": "One failed request killed my stream",
+      "u": "02-rxjs/errors-retry.html",
+      "unit": "RxJS",
+      "phrases": ["stream stops after error", "catchError", "observable dies",
+        "stops emitting", "retry with backoff", "error handling rxjs"]
+    },
+    {
+      "title": "Do I need to unsubscribe?",
+      "u": "02-rxjs/subscriptions.html",
+      "unit": "RxJS",
+      "phrases": ["do i need to unsubscribe", "memory leak", "async pipe",
+        "toSignal", "takeUntilDestroyed", "shareReplay leak"]
+    },
+    {
+      "title": "Setting an input in a test",
+      "u": "03-vitest/angular-testing.html",
+      "unit": "Vitest",
+      "phrases": ["setInput", "test signal input", "TestBed", "componentRef",
+        "test a component", "provideHttpClientTesting", "HttpTestingController"]
+    },
+    {
+      "title": "fakeAsync and tick don't work any more",
+      "u": "03-vitest/async-and-marbles.html",
+      "unit": "Vitest",
+      "phrases": ["fakeAsync", "tick", "whenStable", "flaky test", "async test",
+        "useFakeTimers", "advanceTimersByTime", "test debounce"]
+    },
+    {
+      "title": "getBoundingClientRect returns zero in tests",
+      "u": "03-vitest/browser-mode.html",
+      "unit": "Vitest",
+      "phrases": ["getBoundingClientRect", "offsetWidth zero", "jsdom layout",
+        "canvas in tests", "IntersectionObserver test", "browser mode"]
+    },
+    {
+      "title": "spyOn behaves differently from Jasmine",
+      "u": "03-vitest/migration.html",
+      "unit": "Vitest",
+      "phrases": ["spyOn calls through", "createSpyObj", "done callback",
+        "jasmine to vitest", "convert tests", "mockReturnValue"]
+    },
+    {
+      "title": "Keeping @angular/* versions in step",
+      "u": "04-pnpm/workspaces.html",
+      "unit": "pnpm",
+      "phrases": ["angular version mismatch", "catalog", "monorepo angular",
+        "same version", "workspace protocol", "filter changed packages"]
+    },
+    {
+      "title": "My .npmrc settings stopped working",
+      "u": "04-pnpm/config-and-gotchas.html",
+      "unit": "pnpm",
+      "phrases": ["npmrc ignored", "pnpm config not applied", "pnpm-workspace.yaml",
+        "pnpm field package.json", "npm_config", "pnpm 11 upgrade"]
+    },
+    {
+      "title": "Two copies of @angular/core",
+      "u": "04-pnpm/angular-and-pnpm.html",
+      "unit": "pnpm",
+      "phrases": ["duplicate angular", "two copies", "NullInjectorError",
+        "linked library", "peer dependency angular", "esbuild not installed"]
+    }
+  ]
+}

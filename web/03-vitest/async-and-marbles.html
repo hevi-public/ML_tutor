@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Async testing &amp; marbles — Web Dev Reference</title>
+
+  <meta name="web:section" content="Vitest">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="angular-testing.html|TestBed in 2026">
+  <meta name="web:next" content="browser-mode.html|Browser mode">
+  <meta name="web:versions" content="Vitest 4.1.10 · Angular 22.0.8 · RxJS 7.8.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Vitest</p>
+  <h1>Async testing &amp; marbles</h1>
+  <p class="lede">Zoneless removed <code>fakeAsync</code> from the toolbox.
+  Here is what replaces it, and how to test a stream without waiting in real
+  time.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>fakeAsync</code> / <code>tick</code> are <strong>zone-based</strong>
+      and do not work in a zoneless application.</li>
+      <li>For Angular's own async work: <code>await fixture.whenStable()</code>.</li>
+      <li>For timers you control: <code>vi.useFakeTimers()</code> and
+      <code>vi.advanceTimersByTime()</code>.</li>
+      <li>For stream timing precisely: RxJS's <code>TestScheduler</code> with
+      marble syntax.</li>
+      <li>Never <code>await new Promise(r =&gt; setTimeout(r, 500))</code> in a
+      test.</li>
+    </ul>
+  </div>
+
+  <h2>The decision</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You are waiting for…</th><th>Use</th></tr></thead>
+      <tbody>
+        <tr><td>Angular to render after a signal changed</td><td><code>await fixture.whenStable()</code></td></tr>
+        <tr><td>A promise you can reach</td><td><code>await</code> it directly</td></tr>
+        <tr><td>An Observable's first value</td><td><code>await firstValueFrom(obs$)</code></td></tr>
+        <tr><td>A <code>setTimeout</code> or <code>debounceTime</code> in your code</td><td><code>vi.useFakeTimers()</code> + <code>advanceTimersByTime()</code></td></tr>
+        <tr><td>Exact emission timing of a stream</td><td><code>TestScheduler</code> with marbles</td></tr>
+        <tr><td>An HTTP response</td><td><code>HttpTestingController.flush()</code> — no timers involved</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>whenStable</h2>
+
+<pre><code class="language-typescript">it('updates when the input changes', async () =&gt; {
+  const fixture = TestBed.createComponent(UserCard);
+  fixture.componentRef.setInput('user', { name: 'Ada' });
+
+  await fixture.whenStable();
+
+  expect(fixture.nativeElement.textContent).toContain('Ada');
+});</code></pre>
+
+  <p><code>whenStable()</code> resolves once Angular has finished the work it
+  knows about — pending change detection, effects, and resolved promises it is
+  tracking. It does <strong>not</strong> wait for a <code>setTimeout</code> you
+  wrote; that is what fake timers are for.</p>
+
+  <h2>Fake timers</h2>
+
+<pre><code class="language-typescript">beforeEach(() =&gt; vi.useFakeTimers());
+afterEach(() =&gt; vi.useRealTimers());
+
+it('debounces the search', async () =&gt; {
+  const spy = vi.fn();
+  service.search$.subscribe(spy);
+
+  service.term.set('a');
+  service.term.set('ab');
+  service.term.set('abc');
+
+  expect(spy).not.toHaveBeenCalled();      // still inside the debounce window
+
+  await vi.advanceTimersByTimeAsync(300);
+
+  expect(spy).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalledWith('abc');
+});</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Use the Async variants when promises are involved</span>
+    <code>advanceTimersByTime()</code> is synchronous: it fires the timers but
+    does not let queued promise callbacks run, so a chain of
+    <code>await</code>s stays stuck. <code>advanceTimersByTimeAsync()</code>
+    flushes the microtask queue between timers, which is almost always what an
+    RxJS pipeline needs.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Always restore</span>
+    Fake timers are global. Forgetting <code>vi.useRealTimers()</code> in
+    <code>afterEach</code> leaks them into every following test in the file, and
+    the failures appear somewhere unrelated.
+  </div>
+
+  <h2>Marble tests</h2>
+  <p>When the assertion is genuinely about <em>when</em> things emit — the whole
+  point of an operator like <code>debounceTime</code> or
+  <code>switchMap</code> — marble syntax states it directly and runs in virtual
+  time, so a five-second test finishes instantly.</p>
+
+<pre><code class="language-typescript">import { TestScheduler } from 'rxjs/testing';
+
+let scheduler: TestScheduler;
+
+beforeEach(() =&gt; {
+  scheduler = new TestScheduler((actual, expected) =&gt; {
+    expect(actual).toEqual(expected);
+  });
+});
+
+it('debounces', () =&gt; {
+  scheduler.run(({ cold, expectObservable }) =&gt; {
+    const source = cold('a-b-c------d|');
+    const expected =    '-----------(c|)---d|';
+
+    expectObservable(source.pipe(debounceTime(5, scheduler)))
+      .toBe(expected);
+  });
+});</code></pre>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Symbol</th><th>Means</th></tr></thead>
+      <tbody>
+        <tr><td><code>-</code></td><td>One frame of virtual time passing</td></tr>
+        <tr><td><code>a</code>, <code>b</code>…</td><td>A value emitted</td></tr>
+        <tr><td><code>|</code></td><td>Completion</td></tr>
+        <tr><td><code>#</code></td><td>An error</td></tr>
+        <tr><td><code>()</code></td><td>Several events in the same frame</td></tr>
+        <tr><td><code>^</code></td><td>Subscription point (hot observables only)</td></tr>
+        <tr><td><code>cold(…)</code></td><td>Starts when subscribed</td></tr>
+        <tr><td><code>hot(…)</code></td><td>Runs regardless of subscription</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Inside scheduler.run, time is virtual</span>
+    Operators pick up the test scheduler automatically inside
+    <code>run()</code>, so <code>debounceTime(300)</code> means 300 virtual
+    frames, not 300 milliseconds. Mixing in real timers or
+    <code>vi.useFakeTimers()</code> inside the same block produces confusing
+    results — pick one mechanism per test.
+  </div>
+
+  <p>Marble tests are precise and worth it for operator-level logic. For most
+  component tests they are more machinery than the assertion deserves — a fake
+  timer and a spy say the same thing more plainly.</p>
+
+  <h2>What replaced fakeAsync</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Was</th><th>Now</th></tr></thead>
+      <tbody>
+        <tr><td><code>fakeAsync(() =&gt; { … tick(300) … })</code></td><td><code>vi.useFakeTimers()</code> + <code>await vi.advanceTimersByTimeAsync(300)</code></td></tr>
+        <tr><td><code>tick()</code> to flush microtasks</td><td><code>await Promise.resolve()</code>, or <code>await fixture.whenStable()</code></td></tr>
+        <tr><td><code>flush()</code></td><td><code>await vi.runAllTimersAsync()</code></td></tr>
+        <tr><td><code>waitForAsync(() =&gt; …)</code></td><td>A plain <code>async</code> test</td></tr>
+        <tr><td><code>fixture.whenStable()</code> after <code>fakeAsync</code></td><td><code>await fixture.whenStable()</code> on its own</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Never sleep in a test</span>
+    <code>await new Promise(r =&gt; setTimeout(r, 500))</code> makes the suite
+    slower and still flaky — it either waits too long or, on a loaded CI
+    machine, not long enough. Every case above has a deterministic alternative.
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://vitest.dev" data-doc="vi.home"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/zoneless" data-doc="ng.guide.zoneless"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/api" data-doc="rx.api"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

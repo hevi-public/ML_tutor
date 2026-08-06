@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vitest setup — Web Dev Reference</title>
+
+  <meta name="web:section" content="Vitest">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="../02-rxjs/signals-vs-rxjs.html|Signals or RxJS?">
+  <meta name="web:next" content="migration.html|Migrating from Karma & Jasmine">
+  <meta name="web:versions" content="Vitest 4.1.10 · Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Vitest</p>
+  <h1>Vitest setup</h1>
+  <p class="lede">Angular drives Vitest through its own builder rather than the
+  Vitest CLI, which changes where configuration lives — and is the first thing
+  that confuses people arriving from a non-Angular project.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li>One builder for both runners: <code>@angular/build:unit-test</code>,
+      with <code>runner: "vitest"</code> (the default) or
+      <code>"karma"</code>.</li>
+      <li><strong>No <code>vitest.config.ts</code> by default.</strong> The
+      builder generates the Vite config from your build target.</li>
+      <li>Tests run in <strong>Node with jsdom</strong> unless you set
+      <code>browsers</code>.</li>
+      <li><code>providersFile</code> supplies Angular providers to every test;
+      <code>setupFiles</code> runs global setup. The TestBed is initialised for
+      you either way.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-json">// angular.json
+"test": {
+  "builder": "@angular/build:unit-test",
+  "options": {
+    "buildTarget": "::development",
+    "tsConfig": "tsconfig.spec.json",
+    "providersFile": "src/test-providers.ts",
+    "setupFiles": ["src/test-setup.ts"],
+    "coverage": true,
+    "coverageThresholds": { "statements": 80 }
+  }
+}</code></pre>
+
+<pre><code class="language-typescript">// src/test-providers.ts — a default export of providers for every test
+import { provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+
+export default [
+  provideZonelessChangeDetection(),
+  provideHttpClient(),
+  provideHttpClientTesting(),
+];</code></pre>
+
+  <p>Then <code>ng test</code>. There is no <code>vitest</code> command to run
+  and no config file to write for the common case — which is the point of the
+  builder, and also the thing to know before you go looking for one.</p>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.testing.vitest-default">
+    <p class="change-note">Worth separating two things that get conflated:
+    switching the <em>runner</em> is a one-line edit to
+    <code>angular.json</code>, and it does not touch your specs. Converting
+    Jasmine assertions to Vitest ones is the separate, larger job — see
+    <a href="migration.html">migrating</a>.</p>
+  </div>
+
+  <div class="change" data-change="vi.projects"></div>
+
+  <h2>Builder options</h2>
+  <p>The options that matter, from the builder's own schema:</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Option</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>buildTarget</code></td><td>Which build configuration the tests compile against — this is how the test build inherits your aliases, paths and defines</td></tr>
+        <tr><td><code>runner</code></td><td><code>"vitest"</code> (default) or <code>"karma"</code></td></tr>
+        <tr><td><code>runnerConfig</code></td><td>A path to a runner config file, or <code>true</code> to auto-detect one. Default <code>false</code> — no config file at all</td></tr>
+        <tr><td><code>providersFile</code></td><td>A TypeScript file whose default export is an array of Angular providers applied to every test</td></tr>
+        <tr><td><code>setupFiles</code></td><td>Global setup run before test files. Polyfills and the TestBed are initialised regardless</td></tr>
+        <tr><td><code>browsers</code></td><td>Run in real browsers instead of jsdom. See <a href="browser-mode.html">browser mode</a></td></tr>
+        <tr><td><code>include</code> / <code>exclude</code> / <code>filter</code></td><td>Which spec files to run</td></tr>
+        <tr><td><code>coverage</code>, <code>coverageThresholds</code>, <code>coverageReporters</code></td><td>Coverage, without needing a config file</td></tr>
+        <tr><td><code>watch</code>, <code>ui</code>, <code>debug</code>, <code>headless</code></td><td>How it runs locally</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: reaching for vitest.config.ts too early</span>
+    Most Vitest documentation and every blog post assumes you own the config
+    file. In an Angular project you usually do not, and adding one without
+    setting <code>runnerConfig</code> means it is silently ignored — you edit
+    settings and nothing changes. Use the builder options first; add a config
+    file only for genuinely Vitest-specific features, and point
+    <code>runnerConfig</code> at it.
+  </div>
+
+  <h2>jsdom or a real browser</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>jsdom (default)</th><th>Browser mode</th></tr></thead>
+      <tbody>
+        <tr><td>Speed</td><td>Fast</td><td>Slower to start</td></tr>
+        <tr><td>Layout &amp; sizing</td><td>Not implemented — every element measures zero</td><td>Real</td></tr>
+        <tr><td>Canvas, WebGL, media</td><td>Absent or stubbed</td><td>Real</td></tr>
+        <tr><td>CSS</td><td>Parsed, not applied visually</td><td>Real</td></tr>
+        <tr><td>Good for</td><td>Logic, services, most component tests</td><td>Anything measuring, drawing, or depending on real layout</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>jsdom is the right default. Reach for browser mode when a test fails for a
+  reason that is really "jsdom does not implement this" — most often
+  <code>getBoundingClientRect</code> returning zeros, or anything involving
+  scroll position or intersection observers.</p>
+
+  <h2>Keeping Karma for now</h2>
+  <p>The same builder runs Karma, so migrating the builder and migrating the
+  runner are separate steps:</p>
+
+<pre><code class="language-json">"test": {
+  "builder": "@angular/build:unit-test",
+  "options": {
+    "buildTarget": "::development",
+    "runner": "karma",
+    "runnerConfig": "karma.conf.js"
+  }
+}</code></pre>
+
+  <p>Useful as an intermediate state: you get onto the supported builder
+  immediately, then convert specs at your own pace. Karma is deprecated and
+  receives no new features, so this is a staging post rather than a
+  destination.</p>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/testing/migrating-to-vitest" data-doc="ng.guide.testing.vitest"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev" data-doc="vi.home"></a></li>
+    <li><a class="doc-chip" href="https://vitest.dev/guide/projects" data-doc="vi.projects"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/events/v21" data-doc="ng.events.v21"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

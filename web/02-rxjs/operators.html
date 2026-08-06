@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The operator index — Web Dev Reference</title>
+
+  <meta name="web:section" content="RxJS">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="creation.html|Creating streams">
+  <meta name="web:next" content="flattening.html|Flattening">
+  <meta name="web:versions" content="RxJS 7.8.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">RxJS</p>
+  <h1>The operator index</h1>
+  <p class="lede">RxJS has around a hundred operators. In an Angular application
+  you will use about fifteen. These are those fifteen, plus the ones worth
+  recognising when you meet them.</p>
+
+  <div class="at-glance">
+    <span class="label">The working set</span>
+    <ul>
+      <li><strong>Transform:</strong> <code>map</code>, <code>switchMap</code>,
+      <code>scan</code></li>
+      <li><strong>Filter:</strong> <code>filter</code>,
+      <code>distinctUntilChanged</code>, <code>take</code>,
+      <code>takeUntilDestroyed</code></li>
+      <li><strong>Time:</strong> <code>debounceTime</code>,
+      <code>throttleTime</code>, <code>delay</code></li>
+      <li><strong>Combine:</strong> <code>combineLatest</code>,
+      <code>withLatestFrom</code>, <code>merge</code>, <code>forkJoin</code></li>
+      <li><strong>Errors:</strong> <code>catchError</code>, <code>retry</code></li>
+      <li><strong>Side effects:</strong> <code>tap</code></li>
+    </ul>
+  </div>
+
+  <h2>Transformation</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Operator</th><th>Does</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><code>map(fn)</code></td><td>Transforms each value</td><td>The one you use most</td></tr>
+        <tr><td><code>scan(fn, seed)</code></td><td>Like <code>reduce</code>, but emits on every step</td><td>Running totals, accumulating state</td></tr>
+        <tr><td><code>reduce(fn, seed)</code></td><td>Emits only the final accumulated value</td><td>Needs the source to complete</td></tr>
+        <tr><td><code>pairwise()</code></td><td>Emits [previous, current]</td><td>Detecting direction of change</td></tr>
+        <tr><td><code>switchMap</code> and family</td><td>Flattens inner streams</td><td>See <a href="flattening.html">flattening</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Filtering</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Operator</th><th>Does</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><code>filter(fn)</code></td><td>Passes values matching a predicate</td><td></td></tr>
+        <tr><td><code>distinctUntilChanged()</code></td><td>Drops a value equal to the one before</td><td>Compares by reference — pass a comparator for objects</td></tr>
+        <tr><td><code>distinctUntilKeyChanged('id')</code></td><td>Same, comparing one property</td><td></td></tr>
+        <tr><td><code>take(n)</code></td><td>First n values, then completes</td><td>Completing is the point — it also unsubscribes</td></tr>
+        <tr><td><code>first()</code> / <code>last()</code></td><td>One value, then completes</td><td>Errors if the source completes empty</td></tr>
+        <tr><td><code>takeUntil(notifier$)</code></td><td>Until the notifier emits</td><td>In Angular, prefer <code>takeUntilDestroyed()</code></td></tr>
+        <tr><td><code>takeWhile(fn)</code></td><td>While the predicate holds</td><td>Pass <code>true</code> as the second argument to include the failing value</td></tr>
+        <tr><td><code>skip(n)</code></td><td>Ignores the first n</td><td>Skipping a BehaviorSubject's initial value</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Time</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Operator</th><th>Does</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>debounceTime(ms)</code></td><td>Emits only after a quiet gap</td><td>Search-as-you-type: wait until they stop typing</td></tr>
+        <tr><td><code>throttleTime(ms)</code></td><td>Emits at most once per interval</td><td>Scroll and resize handlers</td></tr>
+        <tr><td><code>auditTime(ms)</code></td><td>Emits the <em>last</em> value of each interval</td><td>Like throttle, but you want the newest not the oldest</td></tr>
+        <tr><td><code>delay(ms)</code></td><td>Shifts everything later</td><td>Rarely what you want in production</td></tr>
+        <tr><td><code>timeout(ms)</code></td><td>Errors if nothing arrives in time</td><td>Guarding a slow endpoint</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Combination</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Operator</th><th>Emits when</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>combineLatest([a$, b$])</code></td><td>Any source emits — once all have emitted at least once</td><td>"Recompute whenever any filter changes"</td></tr>
+        <tr><td><code>withLatestFrom(b$)</code></td><td>The <em>primary</em> source emits, sampling b</td><td>"On submit, take the current form value"</td></tr>
+        <tr><td><code>forkJoin([a$, b$])</code></td><td>All sources complete — emits their last values</td><td><code>Promise.all</code> for Observables</td></tr>
+        <tr><td><code>merge(a$, b$)</code></td><td>Any source emits, interleaved</td><td>Several event sources, one handler</td></tr>
+        <tr><td><code>concat(a$, b$)</code></td><td>In order, each after the previous completes</td><td>Sequenced work</td></tr>
+        <tr><td><code>race(a$, b$)</code></td><td>Only the first to emit; the rest are unsubscribed</td><td>Fastest-wins</td></tr>
+        <tr><td><code>startWith(v)</code></td><td>Emits v immediately, then the source</td><td>Initial state before the first real value</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">combineLatest waits for everyone</span>
+    It emits nothing at all until <em>every</em> source has produced at least one
+    value. One source that never emits means silence, and it looks exactly like
+    a bug elsewhere. <code>startWith()</code> on each input is the usual fix.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">forkJoin needs completion</span>
+    It waits for every source to complete. Give it a <code>Subject</code>, an
+    <code>interval</code>, or a <code>valueChanges</code> stream and it will
+    wait forever. HTTP calls complete, so <code>forkJoin</code> is right for
+    those and wrong for almost everything else.
+  </div>
+
+  <h2>Side effects and utility</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Operator</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>tap({ next, error, complete })</code></td><td>Runs a side effect without changing the stream. Logging, debugging</td></tr>
+        <tr><td><code>finalize(fn)</code></td><td>Runs on completion, error <em>or</em> unsubscribe. Turning off a spinner</td></tr>
+        <tr><td><code>toArray()</code></td><td>Collects everything into one array on completion</td></tr>
+        <tr><td><code>shareReplay({bufferSize:1, refCount:true})</code></td><td>Shares one run and replays the last value</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="rx.to-operators"></div>
+
+  <h2>Retired — recognise, don't write</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>If you see</th><th>Write instead</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><code>obs.toPromise()</code></td><td><code>firstValueFrom(obs)</code></td><td>removed in 8</td></tr>
+        <tr><td><code>retryWhen(…)</code></td><td><code>retry({ count, delay })</code></td><td>removed in 8</td></tr>
+        <tr><td><code>flatMap</code></td><td><code>mergeMap</code></td><td>removed in 8</td></tr>
+        <tr><td><code>mapTo(v)</code></td><td><code>map(() =&gt; v)</code></td><td>removed in 9</td></tr>
+        <tr><td><code>switchMapTo(o)</code></td><td><code>switchMap(() =&gt; o)</code></td><td>removed in 9</td></tr>
+        <tr><td><code>publish()</code>, <code>refCount()</code>, <code>multicast()</code></td><td><code>share()</code> / <code>shareReplay()</code></td><td>deprecated</td></tr>
+        <tr><td><code>combineLatest(a$, b$)</code> — loose arguments</td><td><code>combineLatest([a$, b$])</code></td><td>deprecated</td></tr>
+        <tr><td><code>throwError(err)</code></td><td><code>throwError(() =&gt; err)</code></td><td>deprecated</td></tr>
+        <tr><td><code>import { map } from 'rxjs/operators'</code></td><td><code>import { map } from 'rxjs'</code></td><td>both work in 7.8</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://rxjs.dev/api" data-doc="rx.api"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/guide/operators" data-doc="rx.guide.operators"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/api/deprecations" data-doc="rx.deprecations"></a></li>
+    <li><a class="doc-chip" href="https://rxjs.dev/deprecations/breaking-changes" data-doc="rx.breaking"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

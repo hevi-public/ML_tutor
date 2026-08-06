@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Components — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="overview.html|Modern Angular in one page">
+  <meta name="web:next" content="signals.html|Signals">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Components</h1>
+  <p class="lede">What a component looks like in v22, and everything that has
+  been stripped out of it since v14.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li>No <code>standalone: true</code> — it is the default since v19.</li>
+      <li>No <code>changeDetection</code> — OnPush is the default since v22.</li>
+      <li>Dependencies come from <code>imports</code> on the component, not a
+      module.</li>
+      <li>Host bindings go in the <code>host</code> object, not
+      <code>@HostBinding</code>/<code>@HostListener</code> decorators.</li>
+      <li>DOM work goes in <code>afterNextRender</code>, not
+      <code>ngAfterViewInit</code>.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">import { Component, input, output, computed, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+
+@Component({
+  selector: 'user-card',
+  imports: [DatePipe],
+  host: {
+    'class': 'user-card',
+    '[class.is-admin]': 'user().isAdmin',
+    '(keydown.escape)': 'dismissed.emit()',
+  },
+  template: `
+    <h3>{{ user().name }}</h3>
+    <p>Joined {{ user().joined | date }}</p>
+
+    @if (canEdit()) {
+      &lt;button (click)="edit()"&gt;Edit&lt;/button&gt;
+    }
+  `,
+})
+export class UserCard {
+  user = input.required&lt;User&gt;();
+  readOnly = input(false);
+
+  dismissed = output&lt;void&gt;();
+  edited = output&lt;User&gt;();
+
+  canEdit = computed(() =&gt; !this.readOnly() &amp;&amp; this.user().isAdmin);
+
+  edit() { this.edited.emit(this.user()); }
+}</code></pre>
+
+  <p>Nothing above is boilerplate you could remove. Compare it with the same
+  component written for Angular 15 and roughly a third of the lines were
+  ceremony.</p>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.components.standalone-default">
+    <p class="change-note">Components written between v15 and v18 carry an
+    explicit <code>standalone: true</code>. It still compiles — it is simply
+    redundant now, and the <code>ng generate @angular/core:standalone</code>
+    schematic will strip it along with any NgModules that existed only to
+    declare components.</p>
+  </div>
+
+  <div class="change" data-change="ng.cd.onpush-default">
+    <p class="change-note">This is the one v22 change that can alter runtime
+    behaviour rather than just syntax. A component that mutated an object in
+    place and relied on the old check-everything default to notice will stop
+    updating. If that bites, the <code>change-detection-eager</code> schematic
+    pins the old strategy explicitly so you can migrate component by component
+    rather than all at once.</p>
+  </div>
+
+  <h2>Host bindings</h2>
+  <p>The <code>host</code> object in the decorator replaced the
+  <code>@HostBinding</code> and <code>@HostListener</code> decorators. Both still
+  work, but mixing them is a known source of confusion: when the same property is
+  bound in both places, the decorator wins, which is rarely what anyone expects.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Intent</th><th>Now</th><th>Previously</th></tr></thead>
+      <tbody>
+        <tr><td>Static class</td><td><code>'class': 'card'</code></td><td><code>@HostBinding('class.card') card = true</code></td></tr>
+        <tr><td>Conditional class</td><td><code>'[class.active]': 'isActive()'</code></td><td><code>@HostBinding('class.active') get isActive()</code></td></tr>
+        <tr><td>Attribute</td><td><code>'[attr.aria-expanded]': 'open()'</code></td><td><code>@HostBinding('attr.aria-expanded')</code></td></tr>
+        <tr><td>Event</td><td><code>'(click)': 'onClick($event)'</code></td><td><code>@HostListener('click', ['$event'])</code></td></tr>
+        <tr><td>Key-filtered event</td><td><code>'(keydown.escape)': 'close()'</code></td><td><code>@HostListener('keydown.escape')</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha</span>
+    Host binding expressions are strings evaluated in the component's context,
+    so a typo is a runtime failure, not a compile error — the template type
+    checker does not cover them the way it covers a template. Keep them to a
+    single property or method call and put the logic in a
+    <code>computed()</code>.
+  </div>
+
+  <h2>Lifecycle</h2>
+  <p>Most lifecycle hooks are still there and still fine. Two things have
+  changed about how they are used.</p>
+
+  <p>First, <code>ngOnChanges</code> is largely obsolete: with signal inputs you
+  derive from an input in a <code>computed()</code> and it recalculates itself.
+  Second, DOM measurement moved to <code>afterNextRender</code> and
+  <code>afterRenderEffect</code>, which — unlike <code>ngAfterViewInit</code> —
+  do not run during server-side rendering, so they are the safe place to touch
+  the real DOM in an app that might later add SSR.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You want to…</th><th>Use</th><th>Not</th></tr></thead>
+      <tbody>
+        <tr><td>Derive a value from an input</td><td><code>computed()</code></td><td><code>ngOnChanges</code></td></tr>
+        <tr><td>React to an input changing</td><td><code>effect()</code></td><td><code>ngOnChanges</code></td></tr>
+        <tr><td>Measure or touch the DOM once</td><td><code>afterNextRender()</code></td><td><code>ngAfterViewInit</code></td></tr>
+        <tr><td>Keep the DOM in sync with state</td><td><code>afterRenderEffect()</code></td><td><code>ngAfterViewChecked</code></td></tr>
+        <tr><td>Clean up on destroy</td><td><code>inject(DestroyRef).onDestroy()</code> or <code>takeUntilDestroyed()</code></td><td><code>ngOnDestroy</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details class="legacy">
+    <summary>Before v15 — the NgModule era, for reading old code</summary>
+    <div class="layer-body">
+      <p>Every component had to be declared in exactly one NgModule, and could
+      only use another component if that module imported the module that
+      exported it. This is why old codebases have <code>SharedModule</code>,
+      and why adding one component to one template used to mean editing three
+      files.</p>
+<pre><code class="language-typescript">@NgModule({
+  declarations: [UserCard, UserList],
+  imports: [CommonModule],
+  exports: [UserCard],
+})
+export class UserModule {}</code></pre>
+      <p>The mental translation: <code>declarations</code> became nothing at
+      all, and the module's <code>imports</code> moved onto each component that
+      actually needed them. NgModules are not deprecated and large applications
+      still contain them, but nothing new requires one.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/components" data-doc="ng.guide.components"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/components/lifecycle" data-doc="ng.guide.lifecycle"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/components/dom-apis" data-doc="ng.guide.host"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/ngmodules/overview" data-doc="ng.guide.ngmodules"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

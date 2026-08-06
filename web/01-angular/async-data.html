@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Async data &amp; HTTP — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="change-detection.html|Change detection & zoneless">
+  <meta name="web:next" content="forms.html|Forms">
+  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Async data &amp; HTTP</h1>
+  <p class="lede">The resource API turns "fetch this, and tell me while it is
+  loading" into three signals — and gets cancellation right, which hand-rolled
+  versions rarely do.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><code>httpResource(url)</code> for the common case; <code>resource({ params, loader })</code>
+      when the source is not HTTP; <code>rxResource</code> when the loader
+      returns an Observable.</li>
+      <li>All three expose <code>value()</code>, <code>isLoading()</code>,
+      <code>error()</code> and <code>status()</code> as signals, plus
+      <code>reload()</code>.</li>
+      <li>The request is <strong>reactive</strong>: read a signal in it and it
+      re-fetches when that signal changes, abandoning the previous result.</li>
+      <li><code>HttpClient</code> uses <strong>fetch by default</strong> from
+      v22.</li>
+      <li>Interceptors are functions, not classes.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">import { httpResource, resource } from '@angular/core';
+
+export class UserDetail {
+  userId = input.required&lt;string&gt;();
+
+  // Re-fetches whenever userId() changes; the previous request is abandoned.
+  user = httpResource&lt;User&gt;(() =&gt; `/api/users/${this.userId()}`);
+
+  // Conditional: return undefined and the resource stays idle.
+  orders = httpResource&lt;Order[]&gt;(() =&gt;
+    this.user.hasValue() ? `/api/users/${this.userId()}/orders` : undefined);
+
+  // Non-HTTP sources use resource() with a loader.
+  location = resource({
+    params: () =&gt; ({ id: this.userId() }),
+    loader: ({ params, abortSignal }) =&gt;
+      navigator.geolocation ? getPosition(params.id, abortSignal) : Promise.resolve(null),
+  });
+}</code></pre>
+
+<pre><code class="language-html">@if (user.isLoading()) {
+  &lt;app-spinner /&gt;
+} @else if (user.error()) {
+  &lt;p class="error"&gt;Couldn't load that user.&lt;/p&gt;
+  &lt;button (click)="user.reload()"&gt;Try again&lt;/button&gt;
+} @else {
+  &lt;h2&gt;{{ user.value()?.name }}&lt;/h2&gt;
+}</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.data.resource">
+    <p class="change-note">The cancellation point deserves emphasis because it
+    is the bug the hand-rolled version always has. Type quickly in a search box
+    and you fire five requests; without cancellation, whichever server responds
+    last wins, and that is not necessarily the one matching what is on screen.
+    A resource abandons superseded requests, and the <code>abortSignal</code>
+    passed to a custom loader lets you actually abort them.</p>
+  </div>
+
+  <div class="change" data-change="ng.http.fetch-default">
+    <p class="change-note">Worth checking if you have interceptors or tests that
+    assume XHR-specific behaviour — upload progress events in particular behave
+    differently. The <code>http-xhr-backend</code> schematic pins the old
+    backend explicitly if you need time.</p>
+  </div>
+
+  <div class="change" data-change="ng.http.functional-interceptors"></div>
+
+  <h2>Setting up HttpClient</h2>
+
+<pre><code class="language-typescript">bootstrapApplication(App, {
+  providers: [
+    provideHttpClient(
+      withInterceptors([authInterceptor, retryInterceptor]),
+      // withFetch() is no longer needed — fetch is the default from v22
+    ),
+  ],
+});</code></pre>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Feature</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>withInterceptors([fn, …])</code></td><td>Functional interceptors, applied in array order</td></tr>
+        <tr><td><code>withInterceptorsFromDi()</code></td><td>Bridge for class interceptors you have not migrated yet</td></tr>
+        <tr><td><code>withFetch()</code></td><td>Redundant from v22 — fetch is the default</td></tr>
+        <tr><td><code>withXsrfConfiguration({…})</code></td><td>Custom CSRF cookie/header names</td></tr>
+        <tr><td><code>withRequestsMadeViaParent()</code></td><td>Let a child injector's requests use the parent's interceptors</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Choosing between resource, Observable and signal</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Situation</th><th>Reach for</th></tr></thead>
+      <tbody>
+        <tr><td>Load data for whatever the user is looking at</td><td><code>httpResource()</code></td></tr>
+        <tr><td>Same, but the loader is not HTTP</td><td><code>resource()</code></td></tr>
+        <tr><td>Same, but your loader already returns an Observable</td><td><code>rxResource()</code></td></tr>
+        <tr><td>A one-shot command (POST a form, delete a thing)</td><td><code>firstValueFrom(http.post(…))</code></td></tr>
+        <tr><td>A genuine stream — websocket, polling, server-sent events</td><td>RxJS, then <code>toSignal()</code></td></tr>
+        <tr><td>Debounce, throttle, retry with backoff, race</td><td>RxJS — this is what it is for</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: a resource is for reads</span>
+    Resources re-run when their request changes, which is exactly wrong for a
+    mutation — you do not want deleting a record to re-fire because a signal
+    moved. Use <code>HttpClient</code> directly for writes, then
+    <code>reload()</code> the resource that displays the result.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: <code>value()</code> can be undefined</span>
+    Before the first successful load there is no value. Either give
+    <code>resource()</code> a <code>defaultValue</code> — which narrows the type
+    and removes the <code>undefined</code> — or branch on
+    <code>isLoading()</code> / <code>hasValue()</code> in the template.
+  </div>
+
+  <details class="legacy">
+    <summary>Before v19 — the three-field pattern</summary>
+    <div class="layer-body">
+      <p>Every codebase wrote this, and every codebase wrote it slightly
+      differently:</p>
+<pre><code class="language-typescript">user?: User;
+loading = false;
+error?: unknown;
+
+ngOnInit() {
+  this.route.paramMap.pipe(
+    switchMap(p =&gt; {
+      this.loading = true;
+      return this.http.get&lt;User&gt;(`/api/users/${p.get('id')}`);
+    }),
+    takeUntil(this.destroy$),
+  ).subscribe({
+    next: u =&gt; { this.user = u; this.loading = false; },
+    error: e =&gt; { this.error = e; this.loading = false; },
+  });
+}</code></pre>
+      <p>The <code>switchMap</code> version above is the <em>good</em> one — it
+      cancels correctly. The common version used <code>mergeMap</code> or a bare
+      nested <code>subscribe</code>, and shipped the out-of-order bug.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/signals/resource" data-doc="ng.guide.resource"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/events/v22" data-doc="ng.events.v22"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/di" data-doc="ng.guide.di"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

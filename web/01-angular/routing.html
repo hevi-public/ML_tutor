@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Routing — Web Dev Reference</title>
+
+  <meta name="web:section" content="Angular">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="forms.html|Forms">
+  <meta name="web:next" content="ssr-hydration.html|SSR & hydration">
+  <meta name="web:versions" content="Angular 22.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Angular</p>
+  <h1>Routing</h1>
+  <p class="lede">Guards became functions, lazy loading became per-component,
+  and route parameters became inputs — so a routed component no longer needs to
+  know the router exists.</p>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li>Guards and resolvers are plain functions. The class-based interfaces
+      were <strong>removed in v16</strong> — one of the few hard deadlines.</li>
+      <li><code>loadComponent</code> lazy-loads a single standalone component;
+      <code>loadChildren</code> still loads a group of routes.</li>
+      <li><code>withComponentInputBinding()</code> binds route params, query
+      params, data and resolved values to component inputs.</li>
+      <li>Route config is a plain array — no <code>RouterModule.forRoot</code>.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+
+<pre><code class="language-typescript">// app.routes.ts
+export const routes: Routes = [
+  { path: '', loadComponent: () =&gt; import('./home').then(m =&gt; m.Home) },
+  {
+    path: 'users/:id',
+    loadComponent: () =&gt; import('./user-detail').then(m =&gt; m.UserDetail),
+    canActivate: [authGuard],
+    resolve: { breadcrumb: breadcrumbResolver },
+  },
+  {
+    path: 'admin',
+    canMatch: [adminGuard],           // skip the route entirely if it fails
+    loadChildren: () =&gt; import('./admin/routes').then(m =&gt; m.adminRoutes),
+  },
+  { path: '**', component: NotFound },
+];
+
+// main.ts
+bootstrapApplication(App, {
+  providers: [
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withViewTransitions(),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+    ),
+  ],
+});</code></pre>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="ng.routing.functional-guards">
+    <p class="change-note">This one has a real deadline attached, unlike most of
+    the changes in this reference: <code>CanActivate</code> and friends were
+    deprecated in v15 and <strong>removed in v16</strong>. Code still
+    implementing those interfaces does not compile on any currently supported
+    Angular version.</p>
+  </div>
+
+  <div class="change" data-change="ng.routing.input-binding">
+    <p class="change-note">The testing payoff is the real argument. A component
+    that takes <code>id</code> as an input can be tested by setting an input. A
+    component that reads <code>ActivatedRoute</code> needs the router harness,
+    or a mock whose shape you have to get right.</p>
+  </div>
+
+  <h2>Guards</h2>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Guard</th><th>Runs</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>CanMatchFn</code></td><td>Before the route is even matched</td><td>Feature flags, role-based routes — the lazy chunk is never downloaded if it fails</td></tr>
+        <tr><td><code>CanActivateFn</code></td><td>After matching, before activating</td><td>Authentication</td></tr>
+        <tr><td><code>CanActivateChildFn</code></td><td>Before activating any child</td><td>Guarding a whole section</td></tr>
+        <tr><td><code>CanDeactivateFn</code></td><td>Before leaving</td><td>"You have unsaved changes"</td></tr>
+        <tr><td><code>ResolveFn</code></td><td>Before activating</td><td>Data the route cannot render without</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>All return <code>boolean</code>, <code>UrlTree</code>, or a
+  <code>Promise</code>/<code>Observable</code> of either. Returning a
+  <code>UrlTree</code> redirects — prefer it to calling
+  <code>router.navigate()</code> inside a guard, which races with the navigation
+  already in progress.</p>
+
+  <div class="gotcha">
+    <span class="label">Prefer canMatch over canActivate for authorisation</span>
+    <code>canActivate</code> runs after the route matched, which means the lazy
+    chunk has already been fetched before you decide the user may not see it.
+    <code>canMatch</code> runs first, so a failed check downloads nothing and
+    falls through to the next matching route — which also gives you a clean way
+    to serve different components to different roles at the same path.
+  </div>
+
+  <h2>Resolvers vs. resource()</h2>
+  <p>A resolver blocks navigation until its data arrives. That is occasionally
+  what you want and usually not: the user clicks and nothing visibly happens
+  until the slowest resolver finishes.</p>
+
+  <p>With <code>httpResource()</code> in the component, navigation is instant and
+  the component renders its own loading state. Keep resolvers for the narrow case
+  where the route genuinely cannot exist without the data — for instance, to
+  redirect to a 404 before showing a shell for a record that is not there.</p>
+
+  <h2>Route params as inputs</h2>
+
+<pre><code class="language-typescript">// routes: 'users/:id?tab=orders', data: { section: 'admin' }
+export class UserDetail {
+  id = input.required&lt;string&gt;();      // path param
+  tab = input('profile');             // query param
+  section = input&lt;string&gt;();          // static route data
+  breadcrumb = input&lt;Crumb&gt;();        // resolved value
+
+  user = httpResource&lt;User&gt;(() =&gt; `/api/users/${this.id()}`);
+}</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: names collide silently</span>
+    Path params, query params, static <code>data</code> and resolved values all
+    bind into the same input namespace, so two sources with the same key means
+    one quietly wins. Keep the names distinct, especially between
+    <code>data</code> and resolvers.
+  </div>
+
+  <details class="legacy">
+    <summary>Before v15 — RouterModule and class guards</summary>
+    <div class="layer-body">
+<pre><code class="language-typescript">const routes: Routes = [
+  { path: 'users/:id', component: UserDetailComponent, canActivate: [AuthGuard] },
+  { path: 'admin', loadChildren: () =&gt; import('./admin/admin.module')
+      .then(m =&gt; m.AdminModule) },
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}</code></pre>
+      <p>And in the component, the parameter subscription that
+      <code>withComponentInputBinding()</code> replaces:</p>
+<pre><code class="language-typescript">ngOnInit() {
+  this.route.paramMap.subscribe(params =&gt; {
+    this.id = params.get('id')!;
+    this.load();
+  });
+}</code></pre>
+      <p>Worth remembering why that had to be a subscription rather than a
+      one-time read: navigating from <code>/users/1</code> to
+      <code>/users/2</code> reuses the component instance rather than recreating
+      it, so a value read in <code>ngOnInit</code> would never update. Signal
+      inputs handle that case by construction.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://angular.dev/guide/di" data-doc="ng.guide.di"></a></li>
+    <li><a class="doc-chip" href="https://angular.dev/guide/components/inputs" data-doc="ng.guide.inputs"></a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>
