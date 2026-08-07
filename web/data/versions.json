@@ -1,6 +1,6 @@
 {
-  "_comment": "Release dates verified against the npm registry (registry.npmjs.org time field). Support windows follow each project's published policy; Angular = 6 months active + 12 months LTS from the major's release date. Regenerate the 'current' fields when bumping: npm view <pkg> version",
-  "checkedOn": "2026-07-28",
+  "_comment": "Release dates verified against the package registries: npm (registry.npmjs.org time field) for the front-end tools, Maven Central directory listings for the JVM tools, services.gradle.org for Gradle, postgresql.org announcements for PostgreSQL server. Support windows follow each project's published policy; Angular = 6 months active + 12 months LTS; Spring Boot = ~13 months of OSS support per minor (eol here = OSS end — commercial support runs longer); PostgreSQL = five years per major. Regenerate the 'current' fields when bumping: npm view <pkg> version / the registry metadata.",
+  "checkedOn": "2026-08-07",
   "tools": {
     "angular": {
       "name": "Angular",
@@ -95,6 +95,132 @@
       "policy": "Angular pins a supported TypeScript range per major — check the compatibility table before upgrading either one.",
       "docs": "ts.home",
       "releases": []
+    },
+    "kotlin": {
+      "name": "Kotlin",
+      "current": "2.4.10",
+      "currentMajor": "2.4",
+      "cadence": "Two feature releases a year (x.y.0, roughly June and December), with x.y.20-style tooling updates between.",
+      "policy": "No LTS — fixes land in the newest line. Mind which version your build actually uses: Spring Boot's BOM pins its own Kotlin (2.3.21 on Boot 4.1) unless you override it.",
+      "docs": "kt.home",
+      "releases": [
+        { "v": "2.4", "date": "2026-06-03",
+          "headline": "Context parameters and explicit backing fields go stable; rich errors and collection literals arrive experimentally. JVM target 26." },
+        { "v": "2.3", "date": "2025-12-16",
+          "headline": "Unused-return-value checker, nested type aliases stable, Java 25 support. The line Spring Boot 4.1 pins (2.3.21)." },
+        { "v": "2.2", "date": "2025-06-23",
+          "headline": "Guard conditions, non-local break/continue and multi-dollar interpolation go stable; context parameters arrive in preview. Interface methods compile to JVM default methods." },
+        { "v": "2.1", "date": "2024-11-27",
+          "headline": "Preview syntax: guard conditions in when, non-local break/continue, $$-interpolation. JSpecify nullability violations become errors by default." },
+        { "v": "2.0", "date": "2024-05-20",
+          "headline": "K2: the rewritten compiler frontend goes stable and becomes the default — JetBrains measured up to ~94% faster clean builds. The 1.x → 2.x line every migration story starts from." },
+        { "v": "1.9", "date": "2023-07-05",
+          "headline": "The last pre-K2 line — what legacy Kotlin means in 2026: no K2, kapt-era tooling." }
+      ]
+    },
+    "spring": {
+      "name": "Spring Boot",
+      "current": "4.1.0",
+      "currentMajor": "4.1",
+      "cadence": "A minor every six months (May/June and November); each minor gets ~13 months of open-source patches.",
+      "policy": "OSS support per minor is ~13 months, then commercial-only (eol below = OSS end). 3.5 was the final 3.x line and left OSS support in June 2026. The Boot BOM decides your library versions — on 4.1: Framework 7.0.8, Security 7.1.0, Jackson 3.1.4, jOOQ 3.21.5, Kotlin 2.3.21.",
+      "docs": "sp.home",
+      "releases": [
+        { "v": "4.1", "date": "2026-06-10", "eol": "2027-07-31",
+          "headline": "Framework 7.0.8, Security 7.1. OpenTelemetry reads the standard OTel environment variables; process details in the info endpoint; Jackson 3.1. Runs on Java 17–26." },
+        { "v": "4.0", "date": "2025-11-20", "eol": "2026-12-31",
+          "headline": "The big one: Framework 7, Jackson 3 by default, JSpecify null-safety, API versioning, modular starters (spring-boot-starter-web → -webmvc), RestTestClient, Testcontainers 2, JUnit 6. Undertow support removed." },
+        { "v": "3.5", "date": "2025-05-22", "eol": "2026-06-30",
+          "headline": "The final 3.x line — out of OSS support since 2026-06-30 (commercial support continues into 2032). If you are here, the upgrade target is 4.x." },
+        { "v": "3.4", "date": "2024-11-21", "eol": "2025-12-31",
+          "headline": "MockMvcTester (AssertJ), structured logging (ecs/logstash/gelf), @MockitoBean replaces @MockBean." },
+        { "v": "3.2", "date": "2023-11-23", "eol": "2024-12-23",
+          "headline": "RestClient arrives; virtual threads via spring.threads.virtual.enabled (Java 21)." },
+        { "v": "3.0", "date": "2022-11-24", "eol": "2023-11-24",
+          "headline": "The jakarta.* break: Jakarta EE 9, Framework 6, Java 17 baseline, Micrometer Observation API." }
+      ]
+    },
+    "gradle": {
+      "name": "Gradle",
+      "current": "9.7.0",
+      "currentMajor": "9",
+      "cadence": "A major roughly every two years; minors every six-to-eight weeks. Pinned per project by the wrapper.",
+      "policy": "No LTS — only the current major line gets fixes. The wrapper makes upgrades per-repository: ./gradlew wrapper --gradle-version <v>.",
+      "docs": "gr.home",
+      "releases": [
+        { "v": "9", "date": "2025-07-31",
+          "headline": "Requires Java 17 to run; build scripts use Kotlin 2.2 (DSL) and Groovy 4; the configuration cache becomes the preferred — not yet default — execution mode (that flip is slated for Gradle 10). 9.1 adds Java 25." },
+        { "v": "8", "date": "2023-02-13",
+          "headline": "The line that set today's idioms: configuration cache stable (8.1), Kotlin DSL the default for new builds (8.2), full Java 21 (8.5)." },
+        { "v": "7", "date": "2021-04-09",
+          "headline": "Version catalogs (libs.versions.toml) arrive, stable in 7.4." }
+      ]
+    },
+    "postgres": {
+      "name": "PostgreSQL",
+      "current": "18.4",
+      "currentMajor": "18",
+      "cadence": "A major every September; quarterly minors (Feb/May/Aug/Nov).",
+      "policy": "Five years of fixes per major, then EOL — the final minor lands in the November five years after release. No LTS tiers: every supported major gets the same treatment.",
+      "docs": "pg.home",
+      "releases": [
+        { "v": "19", "date": null, "prerelease": "beta 2 (2026-07-16)",
+          "headline": "SQL/PGQ property-graph queries, ON CONFLICT DO SELECT, REPACK (online table rebuild), parallel autovacuum. GA expected in the usual September–October window." },
+        { "v": "18", "date": "2025-09-25", "eol": "2030-11-14",
+          "headline": "Asynchronous I/O (io_uring), uuidv7(), virtual generated columns, B-tree skip scan, temporal PK/FK constraints, OAuth authentication, RETURNING OLD/NEW." },
+        { "v": "17", "date": "2024-09-26", "eol": "2029-11-08",
+          "headline": "JSON_TABLE, incremental backup (pg_basebackup + pg_combinebackup), vacuum memory use cut up to 20×, logical-replication slots survive failover and pg_upgrade." },
+        { "v": "16", "date": "2023-09-14", "eol": "2028-11-09",
+          "headline": "pg_stat_io, parallel FULL hash joins, logical replication from standbys, SQL/JSON constructors." },
+        { "v": "15", "date": "2022-10-13", "eol": "2027-11-11",
+          "headline": "MERGE arrives. zstd compression, server-side backup compression, 25–400% faster sorts." },
+        { "v": "14", "date": "2021-09-30", "eol": "2026-11-12",
+          "headline": "The oldest line still in support — and only until this November. Plan the upgrade." }
+      ]
+    },
+    "jooq": {
+      "name": "jOOQ",
+      "current": "3.21.7",
+      "currentMajor": "3.21",
+      "cadence": "A minor roughly yearly; patch releases continuously across the last few minors.",
+      "policy": "The open-source edition is Apache-2.0 and licensed for use with open-source databases only (PostgreSQL qualifies) — commercial databases need a paid edition. OSS edition requires JDK 21 since 3.20. Spring Boot 4.1 manages 3.21.5.",
+      "docs": "jq.home",
+      "releases": [
+        { "v": "3.21", "date": "2026-03-23",
+          "headline": "Redacted columns, UDT improvements, more enterprise dialects. The line Boot 4.1 manages." },
+        { "v": "3.20", "date": "2025-02-19",
+          "headline": "JDK 21 baseline for the OSS edition; formal Kotlin 2 and Scala 3 support; reactor extensions." },
+        { "v": "3.19", "date": "2023-12-15",
+          "headline": "Implicit to-many path joins — the natural partner of MULTISET — and the official jooq-codegen-gradle plugin." },
+        { "v": "3.18", "date": "2023-03-08",
+          "headline": "Expanded SQL/JSON support and query diagnostics/linting." },
+        { "v": "3.17", "date": "2022-06-22",
+          "headline": "Kotlin coroutine support (jooq-kotlin-coroutines), reactive transactions, Java 17 baseline." },
+        { "v": "3.16", "date": "2022-01-05",
+          "headline": "Public query object model (QOM) API." },
+        { "v": "3.15", "date": "2021-07-06",
+          "headline": "The headline release: MULTISET nested collections and R2DBC support — type-safe nested DTOs straight from SQL, no ORM." }
+      ]
+    },
+    "jackson": {
+      "name": "Jackson",
+      "current": "3.2.1",
+      "currentMajor": "3.2",
+      "cadence": "Minors roughly quarterly on the 3.x line; the 2.x line continues in maintenance in parallel (currently 2.22).",
+      "policy": "Jackson 3 (tools.jackson.*) is where new work happens — Spring Boot 4 defaults to it (managing 3.1.x) while still managing a Jackson 2 BOM for migration. Framework 7 plans to drop Jackson 2 auto-detection in 7.1 and support in 7.2.",
+      "docs": "jk.home",
+      "releases": [
+        { "v": "3.2", "date": "2026-06-08",
+          "headline": "Current 3.x release branch." },
+        { "v": "3.1", "date": "2026-02-23",
+          "headline": "First 3.x LTS branch — what Spring Boot 4.1 manages (3.1.4)." },
+        { "v": "3.0", "date": "2025-10-03",
+          "headline": "The 2→3 break: Java packages and Maven groups move com.fasterxml.jackson.* → tools.jackson.* (annotations stay put, so 2 and 3 coexist), ObjectMapper becomes immutable behind JsonMapper.builder(), JacksonException goes unchecked, defaults get saner (unknown properties no longer fail, dates serialise as ISO strings). Java 17 baseline." },
+        { "v": "2.22", "date": "2026-06-01",
+          "headline": "Current 2.x maintenance branch — fine while dependencies catch up; the package rename means 2 and 3 can share a classpath." },
+        { "v": "2.21", "date": "2026-01-18",
+          "headline": "2.x LTS branch — what Boot 4.1's Jackson 2 BOM manages (2.21.4)." }
+      ]
     }
   }
 }

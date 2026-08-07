@@ -6,7 +6,7 @@
   <title>Versions &amp; support windows — Web Dev Reference</title>
 
   <meta name="web:root" content="./">
-  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 · pnpm 11.17.0">
+  <meta name="web:versions" content="Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 · pnpm 11.17.0 · Kotlin 2.4.10 · Spring Boot 4.1.0 · Gradle 9.7.0 · PostgreSQL 18.4 · jOOQ 3.21.7 · Jackson 3.2.1">
 
   <link rel="stylesheet" href="assets/css/site.css">
   <script defer src="assets/js/site.js"></script>
@@ -17,8 +17,9 @@
   <p class="unit-tag">Reference</p>
   <h1>Versions &amp; support windows</h1>
   <p class="lede">Which version is current, when yours stops being supported, and
-  what landed in each release. Dates come from the npm registry, so they are the
-  real publish dates rather than the blog-post dates.</p>
+  what landed in each release. Dates come from the package registries — npm for
+  the front end, Maven Central and services.gradle.org for the JVM tools — so
+  they are the real publish dates rather than the blog-post dates.</p>
 
   <div class="at-glance">
     <span class="label">At a glance</span>
@@ -26,6 +27,15 @@
       <li><strong>Angular ships twice a year</strong>, roughly May and November.
       Each major gets 6 months of active support, then 12 months of LTS — so a
       version is done 18 months after release.</li>
+      <li><strong>Spring Boot ships a minor every six months</strong>, and each
+      minor gets about 13 months of open-source patches. 3.5 was the last 3.x
+      line and left OSS support in June 2026.</li>
+      <li><strong>PostgreSQL ships a major every September</strong> and supports
+      it for five years — the only clock here measured in years, and the one
+      people forget until the November it expires.</li>
+      <li><strong>Kotlin and Gradle have no support windows</strong> — fixes
+      land in the newest line only. Your effective Kotlin version is often the
+      one Spring Boot's BOM pins (2.3.21 on Boot 4.1), not the newest (2.4.10).</li>
       <li><strong>RxJS 7.8 is the answer.</strong> RxJS 8 has been in alpha since
       2025 and is deliberately on hold until Observable is standardised on the web
       platform. Do not plan around a date.</li>
@@ -35,21 +45,28 @@
       <li><strong>pnpm 11 moved its configuration.</strong> If you upgrade from
       10, settings in <code>package.json</code> and <code>.npmrc</code> stop being
       read — see the pnpm section.</li>
+      <li><strong>Jackson is two parallel lines now.</strong> New work happens on
+      3.x (<code>tools.jackson.*</code>); 2.x continues in maintenance. Spring
+      Boot 4 defaults to Jackson 3.</li>
     </ul>
   </div>
 
   <h2>Are you still supported?</h2>
-  <p>Angular's support window is the one that bites, because it is the only one of
-  the four with a published clock. Find your major in the Angular table below: a
-  version marked <span class="status eol">out of support</span> receives no
-  further patches, including security patches.</p>
+  <p>Three of these tools have a published clock. <strong>Angular</strong>: 18
+  months per major. <strong>Spring Boot</strong>: ~13 months of open-source
+  support per minor — the Support column below tracks the OSS window;
+  commercial support runs years longer. <strong>PostgreSQL</strong>: five years
+  per major. A version marked
+  <span class="status eol">out of support</span> receives no further patches,
+  including security patches.</p>
 
   <div class="box prereq">
-    <span class="label">The short version</span>
-    Angular <strong>19 left support in May 2026</strong>. If you are on 19 or
-    below, upgrading is a security matter, not a features matter. Angular
-    <strong>20 and 21 are in LTS</strong> (fixes only). Angular <strong>22 is the
-    active line</strong>.
+    <span class="label">The short version, today</span>
+    <strong>Angular 19</strong> left support in May 2026 — 20/21 are in LTS, 22
+    is active. <strong>Spring Boot 3.x</strong> is entirely out of OSS support
+    since June 2026: the upgrade target is 4.x. <strong>PostgreSQL 13</strong>
+    died in November 2025, and <strong>14 goes this November</strong> — if you
+    are on 14, the upgrade is a security matter, not a features matter.
   </div>
 
   <div data-version-table>
@@ -57,6 +74,8 @@
   </div>
 
   <h2>Upgrading</h2>
+
+  <h3>Angular</h3>
   <p>Angular upgrades are one major at a time — <code>ng update</code> will refuse
   to skip. Each step runs the schematics that rewrite your code for that version's
   changes, which is why skipping majors by editing
@@ -88,6 +107,43 @@
     </table>
   </div>
 
+  <h3>The JVM stack</h3>
+  <p>There is no <code>ng update</code> here — versions live in your build, so
+  upgrades are edits to the build. The order that works: Gradle first (the
+  wrapper is per-repo), then the Spring Boot plugin version (its BOM moves
+  Framework, Security, Jackson and jOOQ together), then whatever the BOM does
+  not manage.</p>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead>
+        <tr><th>What you want</th><th>How</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Upgrade Gradle for this repository</td>
+          <td><code>./gradlew wrapper --gradle-version 9.7.0</code></td>
+        </tr>
+        <tr>
+          <td>See what is stopping the next Gradle major</td>
+          <td><code>./gradlew build --warning-mode all</code></td>
+        </tr>
+        <tr>
+          <td>Upgrade Spring Boot (and its whole BOM)</td>
+          <td>bump <code>org.springframework.boot</code> in the version catalog, then read the migration guide's list for that minor</td>
+        </tr>
+        <tr>
+          <td>Upgrade Kotlin</td>
+          <td>bump the <code>kotlin("jvm")</code> plugin in the catalog — but check what Boot's BOM pins first</td>
+        </tr>
+        <tr>
+          <td>Upgrade PostgreSQL a major</td>
+          <td><code>pg_upgrade</code> (in-place, fast) or logical replication (near-zero downtime); since 18, planner statistics survive the jump</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <p>The interactive, version-to-version checklist is on the official update
   guide, and the per-version migration schematics get their own page in this
   reference.</p>
@@ -99,6 +155,14 @@
       <span class="kind">reference</span> Versioning and releases</a></li>
     <li><a class="doc-chip" href="https://angular.dev/reference/versions" data-doc="ng.versions">
       <span class="kind">reference</span> Version compatibility</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide" data-doc="sp.migration.boot4">
+      <span class="kind">migration</span> Spring Boot 4.0 migration guide</a></li>
+    <li><a class="doc-chip" href="https://spring.io/support-policy/" data-doc="sp.support">
+      <span class="kind">reference</span> Spring support policy</a></li>
+    <li><a class="doc-chip" href="https://www.postgresql.org/support/versioning/" data-doc="pg.versioning">
+      <span class="kind">reference</span> PostgreSQL versioning policy</a></li>
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/upgrading_version_8.html" data-doc="gr.upgrade8to9">
+      <span class="kind">migration</span> Upgrading builds from Gradle 8</a></li>
   </ul>
 </main>
 </body>
