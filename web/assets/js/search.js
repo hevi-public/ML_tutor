@@ -100,7 +100,7 @@
 
     function badgesFor(e) {
       const out = [];
-      if (e.tool) out.push(`<span class="tool-tag ${e.tool}">${escapeHtml(e.tool)}</span>`);
+      if (e.tool) out.push(`<span class="tool-tag ${e.tool}">${escapeHtml(window.WebRef ? WebRef.toolLabel(e.tool) : e.tool)}</span>`);
       if (e.k === "change") {
         if (e.since) out.push(`<span class="badge since">since ${escapeHtml(e.since)}</span>`);
         if (e.removed) out.push(`<span class="badge removed">removed ${escapeHtml(e.removed)}</span>`);

@@ -13,7 +13,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "web");
-const DIRS = ["01-angular", "02-rxjs", "03-vitest", "04-pnpm"]
+const DIRS = ["01-angular", "02-rxjs", "03-vitest", "04-pnpm",
+  "05-kotlin", "06-spring", "07-gradle", "08-data"]
   .filter((d) => fs.existsSync(path.join(ROOT, d)));
 
 function textify(html) {
@@ -118,7 +119,7 @@ if (fs.existsSync(glossaryPath)) {
     if (slug.startsWith("_")) continue;
     entries.push({
       k: "page", t: e.term, u: `glossary.html#${slug}`, unit: "Glossary",
-      h: e.also || [], b: `${e.plain || ""} ${e.definition || ""}`,
+      h: e.see || [], b: `${e.plain || ""} ${e.definition || ""}`,
     });
   }
 }
