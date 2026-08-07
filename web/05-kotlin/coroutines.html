@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coroutines — or virtual threads? — Web Dev Reference</title>
+
+  <meta name="web:section" content="Kotlin">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="language.html|The language, by version">
+  <meta name="web:next" content="kotlin-on-the-jvm.html|Kotlin on the JVM">
+  <meta name="web:versions" content="Kotlin 2.4.10 · kotlinx-coroutines 1.11.0 (Boot BOM: 1.10.2) · Spring Boot 4.1.0 · Java 21+">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Kotlin</p>
+  <h1>Coroutines — or virtual threads?</h1>
+  <p class="lede">They solve different problems. Virtual threads make
+  <em>blocking cheap</em>, so thread-per-request code scales without a rewrite.
+  Coroutines make <em>concurrency structured</em> — cancellation, scoping and
+  streams as language-level facts. On Boot 4 with Java 21+, the usual answer is
+  both: virtual threads underneath, coroutines where the logic is actually
+  concurrent.</p>
+
+  <div class="at-glance">
+    <span class="label">The one-line test</span>
+    <ul>
+      <li>Request comes in, you call the DB, you return — <strong>virtual
+      threads</strong>. Plain blocking code, one property, done.</li>
+      <li>One request fans out to several calls that should share a deadline
+      and die together — <strong>coroutines</strong>. That is structured
+      concurrency, and no thread model gives it to you.</li>
+      <li>A stream of values over time (SSE, polling, batches) —
+      <strong>Flow</strong>.</li>
+      <li>An existing WebFlux service that works — <strong>leave it</strong>.
+      Rewrites need a reason, and "virtual threads exist" isn't one.</li>
+    </ul>
+  </div>
+
+  <h2>The table</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>You are modelling…</th><th>Use</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>A blocking request/response handler</td><td>Virtual threads</td>
+          <td>One request = one cheap thread. No API change, no colored functions.</td></tr>
+        <tr><td>Fan-out: call three services, fail together, one timeout</td><td>Coroutines (<code>coroutineScope</code> + <code>async</code>)</td>
+          <td>A failing child cancels its siblings and the scope — by construction, not by cleanup code you remembered to write.</td></tr>
+        <tr><td>A value that updates over time, many readers</td><td><code>StateFlow</code></td>
+          <td>Conflated, always-has-a-value semantics; collectors see the latest.</td></tr>
+        <tr><td>A cold stream the consumer pulls</td><td><code>Flow</code></td>
+          <td>Backpressure by suspension; operators compose like sequences.</td></tr>
+        <tr><td>Background work tied to a component's lifetime</td><td>A scoped <code>CoroutineScope</code> (+ <code>SupervisorJob</code>)</td>
+          <td>Shutdown = cancel the scope; nothing leaks past its owner.</td></tr>
+        <tr><td>CPU-bound work</td><td>Neither helps</td>
+          <td>Both multiplex <em>waiting</em>, not computing. Use <code>Dispatchers.Default</code> / a sized pool.</td></tr>
+        <tr><td>Backpressure across services, reactive drivers end-to-end</td><td>Reactive (WebFlux / R2DBC)</td>
+          <td>The one niche where the reactive stack still earns its complexity.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The interop</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Bridge</th><th>Direction</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()</code></td>
+          <td>coroutines → virtual threads</td>
+          <td>Run blocking calls from coroutines without eating <code>Dispatchers.IO</code>'s 64-thread budget.</td></tr>
+        <tr><td><code>suspend fun</code> handlers</td>
+          <td>Spring → coroutines</td>
+          <td>WebFlux is coroutine-native; Spring MVC accepts suspending handlers through async dispatch.</td></tr>
+        <tr><td><code>Flow</code> return values</td>
+          <td>Spring → streams</td>
+          <td>Rendered as SSE/streaming responses by the framework.</td></tr>
+        <tr><td><code>runBlocking { }</code></td>
+          <td>blocking world → coroutines</td>
+          <td>For main() and tests. In request paths it defeats the point — prefer a suspending entry or plain blocking code.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>The canonical shape</h2>
+  <pre><code class="language-kotlin">// Structured fan-out: three lookups, one deadline, all-or-nothing.
+suspend fun dashboard(id: UserId): Dashboard =
+    withTimeout(800.milliseconds) {          // 1 deadline for the whole scope
+        coroutineScope {
+            val user   = async { users.find(id) }        // 2 children start
+            val orders = async { orders.recent(id) }
+            val flags  = async { features.forUser(id) }
+            Dashboard(user.await(), orders.await(), flags.await())
+        }   // 3 any failure cancels the siblings and rethrows here
+    }</code></pre>
+  <p>The property to internalise: the scope is a <em>tree</em>. Cancelling a
+  parent cancels every child; a failing child fails the scope. Concurrency
+  gets the same discipline lexical scope gave local variables.</p>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: pinning is a Java-version fact</span>
+    On Java 21, a virtual thread that blocks inside a <code>synchronized</code>
+    block pins its carrier thread — old JDBC pools and drivers could stall
+    under load (pgJDBC replaced its internal <code>synchronized</code> with
+    locks back in 42.6 for exactly this reason). JDK 24 removed that
+    limitation (JEP 491), so on Java 25 pinning is no longer a design
+    constraint. Know which side of that line production runs on.
+  </div>
+
+  <h2>What changed</h2>
+  <div class="change" data-change="sp.virtual-threads"></div>
+
+  <h2>What NOT to migrate</h2>
+  <ul>
+    <li><strong>Working WebFlux services.</strong> Reactive code that already
+    exists and performs is not debt. Migrate when you touch it for other
+    reasons.</li>
+    <li><strong>Blocking repositories called from coroutines</strong> — don't
+    wrap every call in <code>async</code>. Sequential code should read
+    sequentially; reach for <code>async</code> only at real fan-out points.</li>
+    <li><strong>Coroutine code to "plain threads + virtual threads".</strong>
+    You would be re-implementing cancellation, deadlines and scoping by hand —
+    the parts coroutines do for free.</li>
+  </ul>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/coroutines-basics.html" data-doc="kt.coroutines">
+      <span class="kind">guide</span> Coroutines basics (structured concurrency)</a></li>
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/flow.html" data-doc="kt.flow">
+      <span class="kind">guide</span> Asynchronous Flow</a></li>
+    <li><a class="doc-chip" href="https://github.com/Kotlin/kotlinx.coroutines" data-doc="kt.coroutines-repo">
+      <span class="kind">reference</span> kotlinx.coroutines</a></li>
+    <li><a class="doc-chip" href="https://spring.io/blog/2022/10/11/embracing-virtual-threads/" data-doc="sp.blog.virtual-threads">
+      <span class="kind">guide</span> Embracing virtual threads</a></li>
+    <li><a class="doc-chip" href="https://www.youtube.com/watch?v=zluKcazgkV4" data-doc="kt.loom-talk">
+      <span class="kind">reference</span> Coroutines and Loom behind the scenes</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

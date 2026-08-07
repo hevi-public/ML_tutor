@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Kotlin language, by version — Web Dev Reference</title>
+
+  <meta name="web:section" content="Kotlin">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="overview.html|Kotlin overview">
+  <meta name="web:next" content="coroutines.html|Coroutines — or virtual threads?">
+  <meta name="web:versions" content="Kotlin 2.4.10">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Kotlin</p>
+  <h1>The language, by version</h1>
+  <p class="lede">What you can write on the line you are on. Each card below is
+  a versioned fact: the badge tells you when the syntax became stable, and the
+  version filter marks whether that includes you.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Stable since 2.2:</strong> guard conditions in
+      <code>when</code>, non-local <code>break</code>/<code>continue</code>,
+      <code>$$</code>-interpolation.</li>
+      <li><strong>Stable since 2.3:</strong> nested type aliases; the
+      unused-return-value checker arrives (opt-in).</li>
+      <li><strong>Stable since 2.4:</strong> context parameters, explicit
+      backing fields.</li>
+      <li><strong>Still experimental in 2.4:</strong> rich errors (union-typed
+      error returns) and collection literals. Read about them, don't ship
+      them.</li>
+    </ul>
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="kt.lang.guard-conditions"></div>
+
+  <div class="change" data-change="kt.lang.non-local-break"></div>
+
+  <div class="change" data-change="kt.lang.multi-dollar"></div>
+
+  <div class="change" data-change="kt.lang.context-parameters">
+    <p class="change-note">The strongest use in this stack is the transaction
+    handle: a repository function that must run inside a transaction declares
+    <code>context(tx: DSLContext)</code>, and only a transaction block can
+    provide it — the requirement becomes a compile-time fact. See
+    <a href="../08-data/jooq.html">the jOOQ page</a> for the wiring.</p>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: stable ≠ available</span>
+    A feature that is stable in 2.4 still fails on the 2.3 toolchain your
+    build may actually run (Spring Boot's BOM pins Kotlin 2.3.21). Before
+    reaching for context parameters, check which compiler CI uses — set the
+    version filter above to see which cards apply to you.
+  </div>
+
+  <h2>Coming, but not yet: rich errors and collection literals</h2>
+  <p>Both are experimental in 2.4 and both change daily code, which is exactly
+  why they should wait until they stabilise:</p>
+  <pre><code class="language-kotlin">// EXPERIMENTAL in 2.4 — shown so you recognise it, not so you ship it
+// Rich errors: a function admits failure in its type, without exceptions
+// or a wrapper class:
+fun parsePort(s: String): Int | ParseError
+
+// Collection literals:
+val ports = [8080, 8081, 9090]</code></pre>
+  <p>The stable answer for errors in 2.4 remains what it has been: a sealed
+  hierarchy when the caller must branch, exceptions when it cannot recover.</p>
+
+  <details class="legacy">
+    <summary>Reading pre-2.x code</summary>
+    <div class="layer-body">
+      <p>Old codebases fake the features above: nested <code>if</code> chains
+      where a guard condition belongs, <code>run</code>/labeled-return
+      contortions where non-local <code>break</code> belongs, and a
+      <code>${'$'}</code> incantation wherever a template needed a literal
+      dollar. They all still compile — recognising them as workarounds, not
+      style, is the point of the cards above.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/whatsnew22.html" data-doc="kt.whatsnew22">
+      <span class="kind">release</span> What's new in Kotlin 2.2.0</a></li>
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/whatsnew24.html" data-doc="kt.whatsnew24">
+      <span class="kind">release</span> What's new in Kotlin 2.4.0</a></li>
+    <li><a class="doc-chip" href="https://kotlinlang.org" data-doc="kt.home">
+      <span class="kind">guide</span> Kotlin</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kotlin on the JVM: KSP, interop, null-safety — Web Dev Reference</title>
+
+  <meta name="web:section" content="Kotlin">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="coroutines.html|Coroutines — or virtual threads?">
+  <meta name="web:next" content="../06-spring/overview.html|Spring Boot overview">
+  <meta name="web:versions" content="Kotlin 2.4.10 · KSP 2.3.11 · JSpecify 1.0.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Kotlin</p>
+  <h1>The JVM side: KSP, interop, null-safety</h1>
+  <p class="lede">The parts of Kotlin that are really contracts with the JVM:
+  which Java your bytecode targets, how annotation processing runs, and what
+  the compiler believes about Java's nulls.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Set the toolchain, not the target.</strong>
+      <code>jvmToolchain(25)</code> aligns Java and Kotlin compilation in one
+      line; without it, kotlinc's default JVM target is still 1.8.</li>
+      <li><strong>kapt is maintenance-mode; KSP is the processor.</strong> And
+      KSP versions stopped tracking Kotlin versions in late 2025 — one less
+      lockstep upgrade.</li>
+      <li><strong>JSpecify violations are compile errors</strong> since Kotlin
+      2.1 — which matters daily now that Spring Framework 7 annotates its whole
+      API.</li>
+      <li><strong>Boot 4 runs Java 17–26; 25 is the LTS to target</strong> —
+      and virtual threads need 21+.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">// build.gradle.kts — the three JVM decisions, made explicit
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ksp)                    // not kotlin-kapt
+}
+
+kotlin {
+    jvmToolchain(25)                           // one line: javac + kotlinc agree
+    compilerOptions {
+        allWarningsAsErrors = true             // JSpecify violations stay fatal
+    }
+}</code></pre>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="kt.jvm.kapt-ksp">
+    <p class="change-note">In this stack the processors that matter are jOOQ's
+    (none — codegen is a build step, not annotation processing), kotlinx
+    serialization (a compiler plugin, also not kapt) and mapping/DI libraries
+    like MapStruct or Dagger if you use them — those are the kapt holdouts to
+    check before deleting the plugin.</p>
+  </div>
+
+  <div class="change" data-change="kt.jvm.jspecify"></div>
+
+  <div class="change" data-change="kt.jvm.default-methods"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: platform types didn't go away</span>
+    JSpecify enforcement only covers annotated APIs. A Java library without
+    annotations still hands you platform types (<code>String!</code>) that the
+    compiler trusts blindly. The discipline: treat any un-annotated Java
+    boundary as <code>?</code> until proven otherwise — the compiler won't do
+    it for you there.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading kapt-era builds</summary>
+    <div class="layer-body">
+      <p><code>apply plugin: "kotlin-kapt"</code>, <code>kapt("…")</code>
+      dependency configurations, and generated sources under
+      <code>build/generated/source/kapt</code> mark the old world. The
+      mechanical translation is <code>ksp("…")</code> — but only after
+      confirming each processor ships KSP support, which nearly all
+      maintained ones now do.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/gradle-configure-project.html" data-doc="kt.gradle-config">
+      <span class="kind">guide</span> Configuring a Kotlin Gradle project</a></li>
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/java-interop.html" data-doc="kt.java-interop">
+      <span class="kind">guide</span> Calling Java from Kotlin</a></li>
+    <li><a class="doc-chip" href="https://github.com/google/ksp" data-doc="kt.ksp">
+      <span class="kind">reference</span> KSP — Kotlin Symbol Processing</a></li>
+    <li><a class="doc-chip" href="https://developer.android.com/build/migrate-to-ksp" data-doc="kt.ksp-migrate">
+      <span class="kind">migration</span> Migrate from kapt to KSP</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

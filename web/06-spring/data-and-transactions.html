@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring data access &amp; transactions — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="serialization.html|Serialization: Jackson 2 → 3">
+  <meta name="web:next" content="security.html|Security 6 → 7">
+  <meta name="web:versions" content="Spring Boot 4.1.0 · jOOQ 3.21 (BOM: 3.21.5)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Data access &amp; transactions</h1>
+  <p class="lede">This stack's data layer is jOOQ over JDBC — no JPA. Spring's
+  jobs here are the DataSource, the transaction boundary, and exception
+  translation. Most production incidents in this area are one of the
+  @Transactional gotchas below, none of which changed in years — which is
+  exactly why they're written down.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>spring-boot-starter-jooq wires everything:</strong> the
+      Boot-managed DSLContext joins Spring transactions automatically —
+      @Transactional and dsl.transaction { } compose.</li>
+      <li><strong>@Transactional works through proxies</strong> — which is
+      the root of every classic surprise: self-invocation, non-public
+      methods, and final classes (Kotlin: the allopen plugin's spring preset
+      handles that).</li>
+      <li><strong>Isolation defaults to the database's</strong> — for
+      Postgres that's READ COMMITTED. What each level actually permits is
+      <a href="../08-data/postgres-overview.html">demonstrable, not
+      theoretical</a>.</li>
+      <li><strong>Virtual threads changed the calculus:</strong> blocking on
+      JDBC in a transaction is fine — that's the model. Don't suspend inside
+      a blocking transaction.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">@Service
+class OrderService(private val dsl: DSLContext) {
+
+    // The service method is the transaction boundary — not the repository.
+    @Transactional
+    fun place(cmd: PlaceOrder): OrderId {
+        val id = dsl.insertInto(ORDERS)
+            .set(ORDERS.CUSTOMER_ID, cmd.customer.value)
+            .set(ORDERS.STATUS, OrderStatus.PLACED.name)
+            .returningResult(ORDERS.ID)
+            .fetchSingle().value1()
+
+        dsl.insertInto(OUTBOX)      // same tx: atomic with the order
+            .set(OUTBOX.PAYLOAD, cmd.toEventJson())
+            .execute()
+
+        return OrderId(id)
+    }
+
+    @Transactional(readOnly = true)   // hints the driver + guards intent
+    fun find(id: OrderId): Order? =
+        dsl.selectFrom(ORDERS).where(ORDERS.ID.eq(id.value)).fetchOne()?.toOrder()
+}</code></pre>
+
+  <h2>What it replaced</h2>
+  <div class="change" data-change="sp.data.jdbc-client">
+    <p class="change-note">In a jOOQ codebase JdbcClient is the odd-jobs tool —
+    the health-check query, the migration backfill script — anywhere codegen
+    types would be ceremony.</p>
+  </div>
+
+  <h2>The @Transactional gotchas, in one table</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Annotation silently ignored</td>
+          <td>Self-invocation: <code>this.otherMethod()</code> never crosses the proxy</td>
+          <td>Move the boundary to the caller, or inject the bean into itself sparingly</td></tr>
+        <tr><td>Annotation silently ignored (2)</td>
+          <td>Non-public method, or final class/method without the Kotlin allopen spring preset</td>
+          <td>Public methods on open beans; check the plugin is applied</td></tr>
+        <tr><td>Data committed despite an exception</td>
+          <td>The exception was caught inside the method — the interceptor never saw it</td>
+          <td>Rethrow, or mark rollback explicitly via TransactionStatus</td></tr>
+        <tr><td>"Connection is closed" under load</td>
+          <td>Long work (HTTP calls!) inside the transaction holding a pool connection</td>
+          <td>Do I/O outside the boundary; keep transactions to DB work</td></tr>
+        <tr><td>Deadlocks or 40001 under REPEATABLE READ+</td>
+          <td>Concurrent writers — expected behaviour, not a bug</td>
+          <td>Retry the transaction; see <a href="../08-data/postgres-overview.html">the isolation demo</a></td></tr>
+        <tr><td>Kotlin note</td>
+          <td>All Kotlin exceptions are unchecked — the "checked exceptions don't roll back" rule can't bite</td>
+          <td>…so <code>rollbackFor</code> cargo-cult is unnecessary here</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: two transaction APIs, one transaction</span>
+    <code>dsl.transaction { }</code> (jOOQ) and <code>@Transactional</code>
+    (Spring) both work — and with the Boot starter they participate in the
+    <em>same</em> Spring-managed transaction, so mixing them nests instead of
+    colliding. Pick one as the team idiom (this reference uses Spring's at
+    service level) and let the other appear only where it reads better.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading JPA-era services</summary>
+    <div class="layer-body">
+      <p>If a service you inherit is Hibernate-based: @Entity graphs, lazy
+      loading (and its N+1s), dirty checking and flush timing are a different
+      programming model, not a worse one — but its gotchas (LazyInitializationException,
+      accidental cascades) are exactly the class of implicit behaviour this
+      stack chose jOOQ to avoid. The comparison lives on
+      <a href="../08-data/jooq.html">the jOOQ page</a>.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-boot/" data-doc="sp.docs">
+      <span class="kind">guide</span> Spring Boot reference</a></li>
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-framework/reference/" data-doc="sp.fw.docs">
+      <span class="kind">guide</span> Spring Framework reference (tx)</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

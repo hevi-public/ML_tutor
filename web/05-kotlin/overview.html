@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kotlin in 2026: the 1.9 → 2.4 arc — Web Dev Reference</title>
+
+  <meta name="web:section" content="Kotlin">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="../04-pnpm/angular-and-pnpm.html|pnpm with Angular">
+  <meta name="web:next" content="language.html|The language, by version">
+  <meta name="web:versions" content="Kotlin 2.4.10 · Spring Boot 4.1.0 (BOM pins Kotlin 2.3.21)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Kotlin</p>
+  <h1>Kotlin in 2026: the 1.9 → 2.4 arc</h1>
+  <p class="lede">One story dominates recent Kotlin history: the K2 compiler
+  landed in 2.0 and everything since builds on it. This page is the map — which
+  line is current, which line your build <em>actually</em> uses, and what each
+  release added.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Current is 2.4.10.</strong> Kotlin ships two feature releases
+      a year (June and December-ish) with <code>x.y.20</code>-style tooling
+      updates between. There is no LTS — fixes land in the newest line.</li>
+      <li><strong>Your build's Kotlin is probably not 2.4.</strong> Spring
+      Boot's BOM pins its own Kotlin version — 2.3.21 on Boot 4.1 — unless you
+      override <code>kotlin.version</code> or manage the plugin yourself.</li>
+      <li><strong>K2 is the dividing line.</strong> 2.0 (May 2024) replaced the
+      compiler frontend; every language feature since exists only there. 1.9 is
+      legacy in the strong sense: unfixed and feature-frozen.</li>
+      <li><strong>Language features stabilise slowly and deliberately</strong> —
+      most preview for one or two releases first. What went stable where is on
+      <a href="language.html">the language page</a>.</li>
+    </ul>
+  </div>
+
+  <h2>The arc</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Line</th><th>Released</th><th>What defined it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1.9</strong></td><td>Jul 2023</td>
+          <td>The last K1 line. If a codebase is here, the K2 migration is the first move — everything below is unreachable.</td></tr>
+        <tr><td><strong>2.0</strong></td><td>May 2024</td>
+          <td>K2 stable and default: rewritten frontend, one semantic model, JetBrains-measured clean builds up to ~94% faster.</td></tr>
+        <tr><td><strong>2.1</strong></td><td>Nov 2024</td>
+          <td>Preview syntax (guard conditions, non-local break/continue, $$-interpolation). JSpecify nullability violations become <em>errors</em> by default.</td></tr>
+        <tr><td><strong>2.2</strong></td><td>Jun 2025</td>
+          <td>That preview syntax goes stable; context parameters arrive in preview. Interface methods compile to JVM default methods.</td></tr>
+        <tr><td><strong>2.3</strong></td><td>Dec 2025</td>
+          <td>Unused-return-value checker, nested type aliases stable, Java 25 support. The line Spring Boot 4.1 pins (2.3.21).</td></tr>
+        <tr><td><strong>2.4</strong></td><td>Jun 2026</td>
+          <td>Context parameters and explicit backing fields stable; rich errors and collection literals experimental. Java 26 target.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What it replaced</h2>
+  <div class="change" data-change="kt.compiler.k2">
+    <p class="change-note">If you maintain a 1.9-era service: the K2 migration is
+    mostly a version bump — the language is the same — but build plugins
+    (KSP, allopen, serialization) must move in the same step, and kapt-heavy
+    builds should migrate processors to KSP while they are at it.</p>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: you have three Kotlin versions</span>
+    The Gradle plugin version (your catalog), the version Spring Boot's BOM
+    pins for libraries (<code>kotlin.version</code> property — 2.3.21 on Boot
+    4.1), and the <code>kotlinx-coroutines</code> version (Boot manages 1.10.2;
+    current standalone is 1.11.0). They are allowed to differ — newer compiler
+    against older stdlib is supported — but when something "works locally",
+    this is the first place to look.
+  </div>
+
+  <details class="legacy">
+    <summary>Before 2.0 — for reading old build files</summary>
+    <div class="layer-body">
+      <p>Signs a build predates the K2 era: a <code>kotlin-kapt</code> plugin
+      doing heavy lifting, <code>freeCompilerArgs</code> full of
+      <code>-Xuse-k2</code> or language-version pins, and CI timings that
+      justify them. None of it is a recommendation — the compiler flags in
+      particular tend to survive long after the reason for them died.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://kotlinlang.org" data-doc="kt.home">
+      <span class="kind">guide</span> Kotlin</a></li>
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/k2-compiler-migration-guide.html" data-doc="kt.k2-migration">
+      <span class="kind">migration</span> K2 compiler migration guide</a></li>
+    <li><a class="doc-chip" href="https://kotlinlang.org/docs/whatsnew24.html" data-doc="kt.whatsnew24">
+      <span class="kind">release</span> What's new in Kotlin 2.4.0</a></li>
+  </ul>
+</main>
+</body>
+</html>

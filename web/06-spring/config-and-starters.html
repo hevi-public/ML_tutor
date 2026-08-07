@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring config &amp; starters — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="overview.html|Spring Boot overview">
+  <meta name="web:next" content="web.html|Controllers &amp; the three web clients">
+  <meta name="web:versions" content="Spring Boot 4.1.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Config &amp; starters</h1>
+  <p class="lede">Which starter to name since the Boot 4 renames, and how
+  configuration should look: immutable types bound at startup, profiles for
+  environments, and the handful of properties that changed behaviour recently.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Starters renamed in 4.0:</strong> <code>-web</code> →
+      <code>-webmvc</code>, <code>-web-services</code> →
+      <code>-webservices</code>, OAuth ones gained a <code>security-</code>
+      prefix. Test starters exist per technology
+      (<code>-webmvc-test</code>).</li>
+      <li><strong>Flyway/Liquibase need their own starter now</strong> —
+      having the library on the classpath no longer autoconfigures it.</li>
+      <li><strong>Model config as immutable @ConfigurationProperties
+      types</strong>; constructor binding is the default. Validate at the
+      edge with jakarta.validation.</li>
+      <li><strong><code>spring-boot-starter-classic</code> exists</strong> for
+      migrations that need the old monolithic classpath — use it to land the
+      upgrade, then delete it.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">// build.gradle.kts — the Boot 4 starter set for this stack
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-jooq")
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-jooq-test")
+}</code></pre>
+
+  <pre><code class="language-kotlin">// Configuration is a type, registered once
+@ConfigurationProperties("app.billing")
+@Validated
+data class BillingProperties(
+    @field:NotBlank val apiKey: String,
+    val endpoint: URI,
+    val timeout: Duration = Duration.ofSeconds(2),
+)
+
+@SpringBootApplication
+@ConfigurationPropertiesScan   // finds every @ConfigurationProperties type
+class App</code></pre>
+
+  <h2>What it replaced</h2>
+  <div class="change" data-change="sp.config.properties-binding"></div>
+
+  <h2>Properties worth knowing in 2026</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Property</th><th>Since</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>spring.threads.virtual.enabled</code></td><td>3.2</td>
+          <td>Virtual thread per request + virtual task executor (Java 21+). See <a href="../05-kotlin/coroutines.html">coroutines page</a>.</td></tr>
+        <tr><td><code>logging.structured.format.console</code></td><td>3.4</td>
+          <td>Structured log output: <code>ecs</code>, <code>logstash</code> or <code>gelf</code>.</td></tr>
+        <tr><td><code>spring.mvc.apiversion.*</code></td><td>4.0</td>
+          <td>How API versions resolve: header, query param, path segment or media-type param.</td></tr>
+        <tr><td><code>spring.jackson.json.read.* / write.*</code></td><td>4.0</td>
+          <td>The relocated Jackson JSON feature toggles (Jackson 3 era).</td></tr>
+        <tr><td><code>spring.jackson.use-jackson2-defaults</code></td><td>4.0</td>
+          <td>Migration aid: keep Jackson 2-era serialization behaviour under Jackson 3.</td></tr>
+        <tr><td><code>management.opentelemetry.*</code></td><td>4.1</td>
+          <td>OTel tuning; standard OTel env vars are honoured too.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: the silent starter miss</span>
+    After a 3.x → 4.0 upgrade, Flyway "stops running" and security "loses"
+    the OAuth client — because the classpath no longer implies the
+    autoconfiguration. Nothing errors; features just don't happen. The
+    migration guide's dependency table is the checklist; run with
+    <code>--debug</code> once and read the autoconfiguration report if
+    something feels absent.
+  </div>
+
+  <details class="legacy">
+    <summary>Older idioms you will still read</summary>
+    <div class="layer-body">
+      <p><code>@Value("${app.billing.timeout}")</code> on scattered
+      fields, mutable setter-bean properties classes,
+      <code>@ConstructorBinding</code> annotations (redundant since Boot 3),
+      and <code>application.properties</code> where the team since moved to
+      YAML. All still function; none is how new config should be written.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-boot/" data-doc="sp.docs">
+      <span class="kind">guide</span> Spring Boot reference</a></li>
+    <li><a class="doc-chip" href="https://spring.io/blog/2025/10/28/modularizing-spring-boot/" data-doc="sp.blog.modular">
+      <span class="kind">guide</span> Modularizing Spring Boot</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide" data-doc="sp.migration.boot4">
+      <span class="kind">migration</span> Boot 4.0 migration guide</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

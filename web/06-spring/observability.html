@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring observability — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="security.html|Security 6 → 7">
+  <meta name="web:next" content="testing.html|Testing">
+  <meta name="web:versions" content="Spring Boot 4.1.0 · Micrometer 1.17.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Observability</h1>
+  <p class="lede">The Boot 3 rebuild put one abstraction (Micrometer's
+  Observation) under metrics and traces, and Boot 4 finished the OpenTelemetry
+  story. What used to be three integration projects is now: add the starter,
+  set the endpoint, instrument the interesting paths.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>HTTP server/client, JDBC and friends are auto-observed</strong> —
+      custom Observations are for <em>your</em> domain operations, not for
+      re-instrumenting the framework.</li>
+      <li><strong>OTLP export = one starter</strong>
+      (<code>spring-boot-starter-opentelemetry</code>, Boot 4.0) — and since
+      4.1 the standard <code>OTEL_*</code> environment variables just work.</li>
+      <li><strong>Structured logs are a property</strong>
+      (<code>logging.structured.format.*</code>, Boot 3.4): ECS, Logstash or
+      GELF shape with correlation ids included.</li>
+      <li><strong>Actuator hygiene:</strong> expose <code>health</code> (and
+      <code>prometheus</code> if you scrape) — not <code>*</code>. The info
+      endpoint gained process/uptime details in 4.1.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-yaml"># application.yaml — the 2026 baseline
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  opentelemetry:
+    resource-attributes:
+      service.name: order-service
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces
+  tracing:
+    sampling:
+      probability: 0.1
+
+logging:
+  structured:
+    format:
+      console: ecs</code></pre>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="sp.obs.observation"></div>
+
+  <div class="change" data-change="sp.obs.structured-logging"></div>
+
+  <div class="change" data-change="sp.obs.otel-starter"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: cardinality is still your problem</span>
+    The Observation API makes tagging easy — including tagging wrongly.
+    <code>lowCardinalityKeyValue</code> values become metric label sets; put a
+    user id or order id there and the metrics backend melts. The rule:
+    enumerable values (status, channel, tenant tier) are low-cardinality tags;
+    identifiers belong on the span (<code>highCardinalityKeyValue</code>) or
+    in the log line.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading Boot 2-era observability</summary>
+    <div class="layer-body">
+      <p>Spring Cloud Sleuth for tracing (absorbed into Micrometer Tracing in
+      Boot 3), <code>micrometer-registry-prometheus</code> plus a zoo of
+      exporter-specific config, and log JSON via hand-rolled encoders. The
+      concepts map one-to-one; only the wiring shrank.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-boot/" data-doc="sp.docs">
+      <span class="kind">guide</span> Spring Boot reference (actuator &amp; observability)</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.1-Release-Notes" data-doc="sp.relnotes.boot41">
+      <span class="kind">release</span> Boot 4.1 release notes (OTel env vars)</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>
