@@ -1,5 +1,10 @@
 {
-  "_comment": "The change ledger — the single source of truth for every versioned fact on this site. Topic pages embed a record with <div class=\"change\" data-change=\"<id>\">; deprecations.html, timeline.html and migrations.html are generated from these same records, so the ledger can never drift from the prose. Fields: since/deprecated/removed are major versions of `tool` (null = not applicable). `migration` is the exact command that automates the change, if one exists. `docs` are ids into links.json.",
+  "_comment": "The change ledger — the single source of truth for every versioned fact on this site. Topic pages embed a record with <div class=\"change\" data-change=\"<id>\">; deprecations.html, timeline.html and migrations.html are generated from these same records, so the ledger can never drift from the prose. Fields: since/deprecated/removed are release lines of `tool` (major, or major.minor where the minor is the line — Spring Boot 4.1, jOOQ 3.21; null = not applicable). For tool 'spring' they are Spring BOOT lines even when the change belongs to Framework or Security — the title and why carry the library's own version. `migration` is the exact command that automates the change, if one exists. `docs` are ids into links.json. code.lang optionally overrides the sample language for the card (default per tool in changes.js).",
+  "_toolNames": {
+    "angular": "Angular", "rxjs": "RxJS", "vitest": "Vitest", "pnpm": "pnpm",
+    "typescript": "TypeScript", "kotlin": "Kotlin", "spring": "Spring Boot",
+    "gradle": "Gradle", "postgres": "PostgreSQL", "jooq": "jOOQ", "jackson": "Jackson"
+  },
   "changes": [
     {
       "id": "ng.di.inject-function",

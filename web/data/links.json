@@ -5,7 +5,14 @@
     "rxjs": { "name": "rxjs.dev", "base": "https://rxjs.dev" },
     "vitest": { "name": "vitest.dev", "base": "https://vitest.dev" },
     "pnpm": { "name": "pnpm.io", "base": "https://pnpm.io" },
-    "typescript": { "name": "typescriptlang.org", "base": "https://www.typescriptlang.org" }
+    "typescript": { "name": "typescriptlang.org", "base": "https://www.typescriptlang.org" },
+    "kotlin": { "name": "kotlinlang.org", "base": "https://kotlinlang.org" },
+    "spring": { "name": "spring.io", "base": "https://spring.io" },
+    "spring-docs": { "name": "docs.spring.io", "base": "https://docs.spring.io" },
+    "gradle": { "name": "gradle.org", "base": "https://gradle.org" },
+    "gradle-docs": { "name": "docs.gradle.org", "base": "https://docs.gradle.org" },
+    "postgres": { "name": "postgresql.org", "base": "https://www.postgresql.org" },
+    "jooq": { "name": "jooq.org", "base": "https://www.jooq.org" }
   },
   "links": {
     "ng.home": {
@@ -215,6 +222,262 @@
     "ts.home": {
       "url": "https://www.typescriptlang.org", "title": "TypeScript", "tool": "typescript", "kind": "guide",
       "tags": ["typescript", "home"], "verified": "unverified"
+    },
+    "kt.home": {
+      "url": "https://kotlinlang.org", "title": "Kotlin", "tool": "kotlin", "kind": "guide",
+      "tags": ["kotlin", "home", "docs"], "verified": "search"
+    },
+    "kt.whatsnew24": {
+      "url": "https://kotlinlang.org/docs/whatsnew24.html", "title": "What's new in Kotlin 2.4.0", "tool": "kotlin", "kind": "release",
+      "tags": ["kotlin 2.4", "context parameters stable", "rich errors", "collection literals"], "verified": "search"
+    },
+    "kt.whatsnew22": {
+      "url": "https://kotlinlang.org/docs/whatsnew22.html", "title": "What's new in Kotlin 2.2.0", "tool": "kotlin", "kind": "release",
+      "tags": ["kotlin 2.2", "guard conditions stable", "context parameters preview", "jvm default methods"], "verified": "search"
+    },
+    "kt.k2-migration": {
+      "url": "https://kotlinlang.org/docs/k2-compiler-migration-guide.html", "title": "K2 compiler migration guide", "tool": "kotlin", "kind": "migration",
+      "tags": ["k2", "compiler", "migrate to k2", "kotlin 2.0", "fir"], "verified": "search"
+    },
+    "kt.coroutines": {
+      "url": "https://kotlinlang.org/docs/coroutines-basics.html", "title": "Coroutines basics (structured concurrency)", "tool": "kotlin", "kind": "guide",
+      "tags": ["coroutines", "structured concurrency", "coroutineScope", "launch", "async"], "verified": "search"
+    },
+    "kt.flow": {
+      "url": "https://kotlinlang.org/docs/flow.html", "title": "Asynchronous Flow", "tool": "kotlin", "kind": "guide",
+      "tags": ["flow", "cold stream", "collect", "stateflow", "sharedflow"], "verified": "unverified"
+    },
+    "kt.java-interop": {
+      "url": "https://kotlinlang.org/docs/java-interop.html", "title": "Calling Java from Kotlin (interop & nullability)", "tool": "kotlin", "kind": "guide",
+      "tags": ["java interop", "platform types", "jspecify", "nullability annotations"], "verified": "search"
+    },
+    "kt.gradle-config": {
+      "url": "https://kotlinlang.org/docs/gradle-configure-project.html", "title": "Configuring a Kotlin Gradle project", "tool": "kotlin", "kind": "guide",
+      "tags": ["kotlin gradle plugin", "jvmToolchain", "jvm target", "kotlin jvm"], "verified": "search"
+    },
+    "kt.ksp": {
+      "url": "https://github.com/google/ksp", "title": "KSP — Kotlin Symbol Processing", "tool": "kotlin", "kind": "reference",
+      "tags": ["ksp", "ksp2", "annotation processing", "symbol processing"], "verified": "search"
+    },
+    "kt.ksp-migrate": {
+      "url": "https://developer.android.com/build/migrate-to-ksp", "title": "Migrate from kapt to KSP", "tool": "kotlin", "kind": "migration",
+      "tags": ["kapt", "ksp", "migrate kapt", "annotation processor slow"], "verified": "search"
+    },
+    "kt.coroutines-repo": {
+      "url": "https://github.com/Kotlin/kotlinx.coroutines", "title": "kotlinx.coroutines", "tool": "kotlin", "kind": "reference",
+      "tags": ["kotlinx-coroutines", "coroutines library", "dispatchers"], "verified": "search"
+    },
+    "kt.loom-talk": {
+      "url": "https://www.youtube.com/watch?v=zluKcazgkV4", "title": "Coroutines and Loom behind the scenes (KotlinConf'23)", "tool": "kotlin", "kind": "reference",
+      "tags": ["virtual threads", "loom", "coroutines vs virtual threads", "elizarov"], "verified": "search"
+    },
+    "sp.home": {
+      "url": "https://spring.io/projects/spring-boot", "title": "Spring Boot project", "tool": "spring", "kind": "guide",
+      "tags": ["spring boot", "home", "project page"], "verified": "search"
+    },
+    "sp.docs": {
+      "url": "https://docs.spring.io/spring-boot/", "title": "Spring Boot reference", "tool": "spring", "kind": "guide",
+      "tags": ["spring boot reference", "docs", "documentation"], "verified": "search"
+    },
+    "sp.fw.docs": {
+      "url": "https://docs.spring.io/spring-framework/reference/", "title": "Spring Framework reference", "tool": "spring", "kind": "guide",
+      "tags": ["spring framework", "reference", "mvc", "webflux", "core"], "verified": "search"
+    },
+    "sp.sec.docs": {
+      "url": "https://docs.spring.io/spring-security/reference/", "title": "Spring Security reference", "tool": "spring", "kind": "guide",
+      "tags": ["spring security", "reference", "filter chain", "authentication"], "verified": "search"
+    },
+    "sp.support": {
+      "url": "https://spring.io/support-policy/", "title": "Spring support policy", "tool": "spring", "kind": "reference",
+      "tags": ["support policy", "oss support", "commercial support", "eol", "how long is spring boot supported"], "verified": "search"
+    },
+    "sp.supported-versions": {
+      "url": "https://github.com/spring-projects/spring-boot/wiki/Supported-Versions", "title": "Spring Boot supported versions (wiki)", "tool": "spring", "kind": "reference",
+      "tags": ["supported versions", "which spring boot is supported", "eol dates"], "verified": "search"
+    },
+    "sp.blog.boot4": {
+      "url": "https://spring.io/blog/2025/11/20/spring-boot-4-0-0-available-now/", "title": "Spring Boot 4.0.0 available now", "tool": "spring", "kind": "release",
+      "tags": ["spring boot 4", "boot 4.0", "whats new", "announcement"], "verified": "search"
+    },
+    "sp.blog.fw7": {
+      "url": "https://spring.io/blog/2025/11/13/spring-framework-7-0-general-availability/", "title": "Spring Framework 7.0 general availability", "tool": "spring", "kind": "release",
+      "tags": ["spring framework 7", "framework 7", "announcement"], "verified": "search"
+    },
+    "sp.relnotes.boot40": {
+      "url": "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Release-Notes", "title": "Spring Boot 4.0 release notes", "tool": "spring", "kind": "release",
+      "tags": ["boot 4.0 release notes", "whats new in boot 4"], "verified": "search"
+    },
+    "sp.relnotes.boot41": {
+      "url": "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.1-Release-Notes", "title": "Spring Boot 4.1 release notes", "tool": "spring", "kind": "release",
+      "tags": ["boot 4.1 release notes", "whats new in boot 4.1"], "verified": "search"
+    },
+    "sp.migration.boot4": {
+      "url": "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide", "title": "Spring Boot 4.0 migration guide", "tool": "spring", "kind": "migration",
+      "tags": ["migrate to boot 4", "upgrade spring boot", "boot 3 to 4", "starter renamed"], "verified": "search"
+    },
+    "sp.blog.modular": {
+      "url": "https://spring.io/blog/2025/10/28/modularizing-spring-boot/", "title": "Modularizing Spring Boot", "tool": "spring", "kind": "guide",
+      "tags": ["modular starters", "spring-boot-starter-webmvc", "classic starters", "modules"], "verified": "search"
+    },
+    "sp.blog.http-clients": {
+      "url": "https://spring.io/blog/2025/09/30/the-state-of-http-clients-in-spring/", "title": "The state of HTTP clients in Spring", "tool": "spring", "kind": "guide",
+      "tags": ["resttemplate", "restclient", "webclient", "http interface", "which http client"], "verified": "search"
+    },
+    "sp.blog.api-versioning": {
+      "url": "https://spring.io/blog/2025/09/16/api-versioning-in-spring", "title": "API versioning in Spring", "tool": "spring", "kind": "guide",
+      "tags": ["api versioning", "version header", "mvc versioning"], "verified": "search"
+    },
+    "sp.blog.jackson3": {
+      "url": "https://spring.io/blog/2025/10/07/introducing-jackson-3-support-in-spring", "title": "Introducing Jackson 3 support in Spring", "tool": "spring", "kind": "release",
+      "tags": ["jackson 3 spring", "tools.jackson", "jsonmapper", "jackson migration"], "verified": "search"
+    },
+    "sp.blog.null-safety": {
+      "url": "https://spring.io/blog/2025/11/12/null-safe-applications-with-spring-boot-4", "title": "Null-safe applications with Spring Boot 4", "tool": "spring", "kind": "guide",
+      "tags": ["jspecify", "null safety", "nullable", "nullmarked"], "verified": "search"
+    },
+    "sp.blog.virtual-threads": {
+      "url": "https://spring.io/blog/2022/10/11/embracing-virtual-threads/", "title": "Embracing virtual threads", "tool": "spring", "kind": "guide",
+      "tags": ["virtual threads", "loom", "spring.threads.virtual.enabled", "blocking io"], "verified": "search"
+    },
+    "sp.sec.migration7": {
+      "url": "https://docs.spring.io/spring-security/reference/6.5/migration-7/configuration.html", "title": "Spring Security 7 configuration migration", "tool": "spring", "kind": "migration",
+      "tags": ["security 7 migration", "lambda dsl required", "and() removed", "authorizeRequests removed"], "verified": "search"
+    },
+    "gr.home": {
+      "url": "https://gradle.org", "title": "Gradle", "tool": "gradle", "kind": "guide",
+      "tags": ["gradle", "home", "build tool"], "verified": "search"
+    },
+    "gr.userguide": {
+      "url": "https://docs.gradle.org/current/userguide/userguide.html", "title": "Gradle user manual", "tool": "gradle", "kind": "guide",
+      "tags": ["gradle docs", "user manual", "user guide"], "verified": "unverified"
+    },
+    "gr.whatsnew9": {
+      "url": "https://gradle.org/whats-new/gradle-9/", "title": "What's new in Gradle 9", "tool": "gradle", "kind": "release",
+      "tags": ["gradle 9", "whats new", "announcement"], "verified": "search"
+    },
+    "gr.relnotes9": {
+      "url": "https://docs.gradle.org/9.0.0/release-notes.html", "title": "Gradle 9.0 release notes", "tool": "gradle", "kind": "release",
+      "tags": ["gradle 9 release notes", "9.0"], "verified": "search"
+    },
+    "gr.config-cache": {
+      "url": "https://docs.gradle.org/current/userguide/configuration_cache.html", "title": "Configuration cache", "tool": "gradle", "kind": "guide",
+      "tags": ["configuration cache", "config cache", "not compatible with configuration cache", "task graph cache"], "verified": "search"
+    },
+    "gr.build-cache": {
+      "url": "https://docs.gradle.org/current/userguide/build_cache.html", "title": "Build cache", "tool": "gradle", "kind": "guide",
+      "tags": ["build cache", "task outputs", "remote cache", "cacheable tasks"], "verified": "search"
+    },
+    "gr.catalogs": {
+      "url": "https://docs.gradle.org/current/userguide/version_catalogs.html", "title": "Version catalogs", "tool": "gradle", "kind": "guide",
+      "tags": ["version catalog", "libs.versions.toml", "libs.", "central dependency versions"], "verified": "unverified"
+    },
+    "gr.sharing-logic": {
+      "url": "https://docs.gradle.org/current/userguide/sharing_build_logic_between_subprojects.html", "title": "Sharing build logic between subprojects", "tool": "gradle", "kind": "guide",
+      "tags": ["convention plugins", "buildSrc", "build-logic", "allprojects", "subprojects", "cross configuration"], "verified": "search"
+    },
+    "gr.conv-plugins": {
+      "url": "https://docs.gradle.org/current/userguide/implementing_gradle_plugins_convention.html", "title": "Implementing convention plugins", "tool": "gradle", "kind": "guide",
+      "tags": ["convention plugin", "precompiled script plugin", "shared build configuration"], "verified": "search"
+    },
+    "gr.upgrade8to9": {
+      "url": "https://docs.gradle.org/current/userguide/upgrading_version_8.html", "title": "Upgrading builds from Gradle 8", "tool": "gradle", "kind": "migration",
+      "tags": ["upgrade gradle", "gradle 8 to 9", "deprecation warnings"], "verified": "unverified"
+    },
+    "gr.road-config-cache": {
+      "url": "https://blog.gradle.org/road-to-configuration-cache", "title": "The road to the configuration cache", "tool": "gradle", "kind": "reference",
+      "tags": ["configuration cache default", "gradle 10", "roadmap"], "verified": "search"
+    },
+    "gr.kotlin-dsl-default": {
+      "url": "https://blog.gradle.org/kotlin-dsl-is-now-the-default-for-new-gradle-builds", "title": "Kotlin DSL is now the default for new Gradle builds", "tool": "gradle", "kind": "release",
+      "tags": ["kotlin dsl default", "build.gradle.kts", "groovy dsl"], "verified": "search"
+    },
+    "pg.home": {
+      "url": "https://www.postgresql.org/docs/current/", "title": "PostgreSQL documentation", "tool": "postgres", "kind": "guide",
+      "tags": ["postgres", "postgresql", "docs", "home"], "verified": "search"
+    },
+    "pg.versioning": {
+      "url": "https://www.postgresql.org/support/versioning/", "title": "Versioning policy (support windows)", "tool": "postgres", "kind": "reference",
+      "tags": ["postgres eol", "support window", "five years", "when does postgres 15 expire"], "verified": "search"
+    },
+    "pg.release-notes": {
+      "url": "https://www.postgresql.org/docs/release/", "title": "Release notes index", "tool": "postgres", "kind": "release",
+      "tags": ["release notes", "what changed in postgres"], "verified": "search"
+    },
+    "pg.release18": {
+      "url": "https://www.postgresql.org/about/news/postgresql-18-released-3142/", "title": "PostgreSQL 18 released", "tool": "postgres", "kind": "release",
+      "tags": ["postgres 18", "async io", "uuidv7", "announcement"], "verified": "search"
+    },
+    "pg.merge": {
+      "url": "https://www.postgresql.org/docs/current/sql-merge.html", "title": "MERGE", "tool": "postgres", "kind": "reference",
+      "tags": ["merge", "upsert", "insert on conflict vs merge"], "verified": "search"
+    },
+    "pg.json-fns": {
+      "url": "https://www.postgresql.org/docs/current/functions-json.html", "title": "JSON functions (JSON_TABLE)", "tool": "postgres", "kind": "reference",
+      "tags": ["json_table", "jsonb functions", "json path"], "verified": "search"
+    },
+    "pg.isolation": {
+      "url": "https://www.postgresql.org/docs/current/transaction-iso.html", "title": "Transaction isolation", "tool": "postgres", "kind": "guide",
+      "tags": ["isolation levels", "read committed", "repeatable read", "serializable", "write skew", "ssi", "40001"], "verified": "search"
+    },
+    "pg.jdbc": {
+      "url": "https://jdbc.postgresql.org/", "title": "pgJDBC driver", "tool": "postgres", "kind": "reference",
+      "tags": ["jdbc driver", "org.postgresql", "connection"], "verified": "search"
+    },
+    "jq.home": {
+      "url": "https://www.jooq.org", "title": "jOOQ", "tool": "jooq", "kind": "guide",
+      "tags": ["jooq", "home", "typesafe sql"], "verified": "search"
+    },
+    "jq.manual": {
+      "url": "https://www.jooq.org/doc/latest/manual/", "title": "jOOQ manual", "tool": "jooq", "kind": "guide",
+      "tags": ["jooq manual", "docs", "reference"], "verified": "search"
+    },
+    "jq.multiset-manual": {
+      "url": "https://www.jooq.org/doc/latest/manual/sql-building/column-expressions/multiset-value-constructor/", "title": "MULTISET value constructor", "tool": "jooq", "kind": "reference",
+      "tags": ["multiset", "nested collections", "nested dto"], "verified": "unverified"
+    },
+    "jq.multiset-blog": {
+      "url": "https://blog.jooq.org/3-15-0-release-with-support-for-r2dbc-nested-row-array-and-multiset-types-5-new-sql-dialects-create-procedure-function-and-trigger-support-and-much-more/", "title": "jOOQ 3.15: MULTISET and R2DBC", "tool": "jooq", "kind": "release",
+      "tags": ["jooq 3.15", "multiset announcement", "r2dbc"], "verified": "search"
+    },
+    "jq.releases": {
+      "url": "https://github.com/jOOQ/jOOQ/releases", "title": "jOOQ releases", "tool": "jooq", "kind": "release",
+      "tags": ["jooq releases", "changelog", "3.21"], "verified": "search"
+    },
+    "jq.licensing": {
+      "url": "https://www.jooq.org/legal/licensing", "title": "jOOQ licensing", "tool": "jooq", "kind": "reference",
+      "tags": ["jooq license", "commercial database", "open source edition", "apache 2"], "verified": "search"
+    },
+    "jq.kotlin-coroutines": {
+      "url": "https://www.jooq.org/doc/latest/manual/sql-building/kotlin-sql-building/kotlin-coroutines/", "title": "Kotlin coroutines with jOOQ", "tool": "jooq", "kind": "guide",
+      "tags": ["jooq coroutines", "suspend", "transactionCoroutine", "r2dbc kotlin"], "verified": "search"
+    },
+    "jq.codegen-ddl": {
+      "url": "https://www.jooq.org/doc/latest/manual/code-generation/codegen-meta-sources/codegen-ddl/", "title": "Code generation from DDL files (DDLDatabase)", "tool": "jooq", "kind": "guide",
+      "tags": ["ddldatabase", "codegen without database", "generate from sql files"], "verified": "search"
+    },
+    "jq.codegen-testcontainers": {
+      "url": "https://blog.jooq.org/using-testcontainers-to-generate-jooq-code/", "title": "Using Testcontainers to generate jOOQ code", "tool": "jooq", "kind": "guide",
+      "tags": ["testcontainers codegen", "generate against real database", "flyway then codegen"], "verified": "search"
+    },
+    "jk.home": {
+      "url": "https://github.com/FasterXML/jackson", "title": "Jackson (FasterXML)", "tool": "jackson", "kind": "guide",
+      "tags": ["jackson", "home", "json"], "verified": "search"
+    },
+    "jk.rel3": {
+      "url": "https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.0", "title": "Jackson 3.0 release notes", "tool": "jackson", "kind": "release",
+      "tags": ["jackson 3", "tools.jackson", "package rename", "3.0 changes", "defaults changed"], "verified": "search"
+    },
+    "jk.releases": {
+      "url": "https://github.com/FasterXML/jackson/wiki/Jackson-Releases", "title": "Jackson release lines (2.x & 3.x)", "tool": "jackson", "kind": "reference",
+      "tags": ["jackson versions", "lts", "2.22", "3.2", "which jackson"], "verified": "search"
+    },
+    "jk.kotlin-module": {
+      "url": "https://github.com/FasterXML/jackson-module-kotlin", "title": "jackson-module-kotlin", "tool": "jackson", "kind": "reference",
+      "tags": ["kotlin module", "data class json", "KotlinModule", "strict null checks"], "verified": "search"
+    },
+    "jk.ga-blog": {
+      "url": "https://cowtowncoder.medium.com/jackson-3-0-0-ga-released-1f669cda529a", "title": "Jackson 3.0.0 GA released (announcement)", "tool": "jackson", "kind": "release",
+      "tags": ["jackson 3 ga", "announcement", "cowtowncoder"], "verified": "search"
     }
   }
 }
