@@ -33,6 +33,8 @@
   const TOOL_LABEL = {
     angular: "Angular", rxjs: "RxJS", vitest: "Vitest",
     pnpm: "pnpm", typescript: "TypeScript",
+    kotlin: "Kotlin", spring: "Spring Boot", gradle: "Gradle",
+    postgres: "PostgreSQL", jooq: "jOOQ", jackson: "Jackson",
   };
 
   window.WebRef = {

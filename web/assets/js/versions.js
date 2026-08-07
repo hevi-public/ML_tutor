@@ -16,7 +16,10 @@
     iso ? new Date(iso + "T00:00:00Z").toLocaleDateString(undefined,
       { year: "numeric", month: "short" }) : "—";
 
-  /* A major is "active" for 6 months, then in LTS until its eol date. */
+  /* Status is computed from whatever dates the release carries: past `eol` is
+     out of support; past `activeUntil` (for tools with an active/LTS split,
+     like Angular) is LTS; otherwise active. Tools with a single published
+     clock (PostgreSQL, Spring Boot) carry only `eol`. */
   function statusOf(release) {
     if (!release.date) return { key: "future", label: "not released" };
     const eol = release.eol ? new Date(release.eol) : null;
@@ -74,11 +77,15 @@
       mount.appendChild(meta);
       mount.appendChild(el("p", null, tool.policy));
 
+      // The Support column exists wherever the data carries a published
+      // clock — not for a hardcoded list of tools.
+      const hasWindows = tool.releases.some((r) => r.eol || r.activeUntil);
+
       const scroll = el("div", "table-scroll");
       const table = el("table", "cheat");
       table.innerHTML =
         "<thead><tr><th>Version</th><th>Released</th>" +
-        (key === "angular" ? "<th>Support</th>" : "") +
+        (hasWindows ? "<th>Support</th>" : "") +
         "<th>What landed</th></tr></thead>";
 
       const tbody = el("tbody");
@@ -88,7 +95,7 @@
         tr.appendChild(el("td", null,
           r.date ? fmt(r.date) : `<em>${r.prerelease || "unreleased"}</em>`));
 
-        if (key === "angular") {
+        if (hasWindows) {
           const s = statusOf(r);
           tr.appendChild(el("td", null,
             `<span class="status ${s.key}">${s.label}</span>` +

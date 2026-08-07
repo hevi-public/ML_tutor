@@ -214,6 +214,154 @@
       "unit": "pnpm",
       "phrases": ["duplicate angular", "two copies", "NullInjectorError",
         "linked library", "peer dependency angular", "esbuild not installed"]
+    },
+    {
+      "title": "Which Kotlin version does my build actually use?",
+      "u": "05-kotlin/overview.html",
+      "unit": "Kotlin",
+      "phrases": ["which kotlin version", "boot pins kotlin", "kotlin 2.4", "kotlin bom",
+        "kotlin version mismatch", "upgrade kotlin"]
+    },
+    {
+      "title": "Extra condition on a when branch",
+      "u": "05-kotlin/language.html",
+      "unit": "Kotlin",
+      "phrases": ["guard condition", "when with if", "when guard", "context parameters",
+        "dollar in string template", "break inside forEach"]
+    },
+    {
+      "title": "Coroutines, virtual threads, or WebFlux?",
+      "u": "05-kotlin/coroutines.html",
+      "unit": "Kotlin",
+      "phrases": ["virtual threads", "project loom", "should i use webflux", "reactive or blocking",
+        "thread per request", "structured concurrency", "suspend controller", "runBlocking bad"]
+    },
+    {
+      "title": "kapt is slow / KSP versions",
+      "u": "05-kotlin/kotlin-on-the-jvm.html",
+      "unit": "Kotlin",
+      "phrases": ["kapt slow", "annotation processing slow", "ksp version", "migrate kapt to ksp",
+        "platform type", "java interop null", "jvm toolchain"]
+    },
+    {
+      "title": "Is Spring Boot 3.x still supported?",
+      "u": "06-spring/overview.html",
+      "unit": "Spring Boot",
+      "phrases": ["spring boot eol", "boot 3 end of life", "boot 3.5 support", "upgrade to boot 4",
+        "spring boot 4 breaking changes", "what does the boot bom manage"]
+    },
+    {
+      "title": "Flyway stopped running after the Boot 4 upgrade",
+      "u": "06-spring/config-and-starters.html",
+      "unit": "Spring Boot",
+      "phrases": ["starter-web deprecated", "spring-boot-starter-webmvc", "flyway not running boot 4",
+        "renamed starters", "starter classic", "configuration properties data class"]
+    },
+    {
+      "title": "RestTemplate, RestClient or WebClient?",
+      "u": "06-spring/web.html",
+      "unit": "Spring Boot",
+      "phrases": ["resttemplate deprecated", "restclient vs webclient", "which http client",
+        "http interface", "httpexchange", "api versioning spring"]
+    },
+    {
+      "title": "com.fasterxml or tools.jackson?",
+      "u": "06-spring/serialization.html",
+      "unit": "Spring Boot",
+      "phrases": ["tools.jackson", "jackson 3 migration", "objectmapper immutable",
+        "jsoncomponent not working", "jackson unknown properties", "json null data class",
+        "kotlin module jackson"]
+    },
+    {
+      "title": "@Transactional is being ignored",
+      "u": "06-spring/data-and-transactions.html",
+      "unit": "Spring Boot",
+      "phrases": ["transactional not working", "transaction ignored", "self invocation",
+        "rollback not happening", "connection closed transaction", "jdbcclient"]
+    },
+    {
+      "title": "WebSecurityConfigurerAdapter is gone",
+      "u": "06-spring/security.html",
+      "unit": "Spring Boot",
+      "phrases": ["websecurityconfigureradapter", "and() removed", "authorizeRequests removed",
+        "security lambda dsl", "securityfilterchain", "passkeys spring"]
+    },
+    {
+      "title": "Sending traces and structured logs",
+      "u": "06-spring/observability.html",
+      "unit": "Spring Boot",
+      "phrases": ["opentelemetry spring", "otlp", "structured logging", "json logs",
+        "observation api", "micrometer tracing"]
+    },
+    {
+      "title": "@MockBean doesn't exist any more",
+      "u": "06-spring/testing.html",
+      "unit": "Spring Boot",
+      "phrases": ["mockbean removed", "mockitobean", "testcontainers spring",
+        "serviceconnection", "resttestclient", "mockk or mockito"]
+    },
+    {
+      "title": "The build is slow",
+      "u": "07-gradle/performance.html",
+      "unit": "Gradle",
+      "phrases": ["gradle slow", "configuration cache", "build cache", "speed up gradle",
+        "not compatible with configuration cache", "configure project every time"]
+    },
+    {
+      "title": "allprojects vs convention plugins",
+      "u": "07-gradle/structure.html",
+      "unit": "Gradle",
+      "phrases": ["allprojects", "subprojects", "convention plugin", "buildsrc vs build-logic",
+        "share build logic", "multi module gradle"]
+    },
+    {
+      "title": "Where do dependency versions go?",
+      "u": "07-gradle/kotlin-dsl-and-catalogs.html",
+      "unit": "Gradle",
+      "phrases": ["version catalog", "libs.versions.toml", "toml dependencies",
+        "build.gradle.kts", "kotlin dsl", "catalog vs bom"]
+    },
+    {
+      "title": "When does my PostgreSQL version die?",
+      "u": "08-data/postgres-overview.html",
+      "unit": "Data",
+      "phrases": ["postgres eol", "postgres 14 end of life", "postgres support window",
+        "postgres 19", "upgrade postgres major", "pg_upgrade"]
+    },
+    {
+      "title": "could not serialize access (40001)",
+      "u": "08-data/postgres-overview.html",
+      "unit": "Data",
+      "phrases": ["write skew", "40001", "could not serialize", "serialization failure",
+        "isolation level", "repeatable read anomaly", "lost update"]
+    },
+    {
+      "title": "UUID keys and upserts",
+      "u": "08-data/postgres-features.html",
+      "unit": "Data",
+      "phrases": ["uuidv7", "uuid primary key", "uuid v4 index", "upsert",
+        "on conflict vs merge", "json_table"]
+    },
+    {
+      "title": "Flyway checksum mismatch",
+      "u": "08-data/schema-and-migrations.html",
+      "unit": "Data",
+      "phrases": ["flyway checksum", "migration failed", "edited migration", "flyway repair",
+        "create index concurrently migration", "liquibase or flyway"]
+    },
+    {
+      "title": "Is jOOQ free? And why not JPA?",
+      "u": "08-data/jooq.html",
+      "unit": "Data",
+      "phrases": ["jooq license", "jooq commercial", "jooq free", "jooq vs jpa",
+        "jooq vs hibernate", "jooq codegen", "generate jooq classes"]
+    },
+    {
+      "title": "Fetching parents with children without N+1",
+      "u": "08-data/jooq-queries.html",
+      "unit": "Data",
+      "phrases": ["n+1", "multiset", "nested dto", "fetch children", "one query nested list",
+        "implicit join", "jooq kotlin mapping"]
     }
   ]
 }

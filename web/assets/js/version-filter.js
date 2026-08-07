@@ -15,7 +15,8 @@
   "use strict";
 
   const KEY = "web-ref:versions";
-  const TOOLS = ["angular", "rxjs", "vitest", "pnpm"];
+  const TOOLS = ["angular", "rxjs", "vitest", "pnpm",
+    "kotlin", "spring", "gradle", "postgres"];
 
   function load() {
     try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
@@ -26,8 +27,15 @@
     localStorage.setItem(KEY, JSON.stringify(state));
   }
 
-  /* Majors only — that is the granularity every badge is written at. */
-  const major = (v) => parseInt(String(v).split(".")[0], 10);
+  /* Badges are written at release-line granularity: the major alone for
+     Angular-style lines ("22"), major.minor where the minor is the line
+     (Spring Boot "4.1", jOOQ "3.21", Kotlin "2.2"). Compare the first two
+     components numerically so "4.0" < "4.1" and "3.19" < "3.21". */
+  const nums = (v) => String(v).split(".").map((x) => parseInt(x, 10));
+  const cmpVer = (a, b) => {
+    const [a0, a1] = nums(a), [b0, b1] = nums(b);
+    return a0 !== b0 ? a0 - b0 : (a1 || 0) - (b1 || 0);
+  };
 
   function annotate(state) {
     for (const badge of document.querySelectorAll(".badge[data-tool][data-version]")) {
@@ -37,9 +45,9 @@
       const mine = state[badge.dataset.tool];
       if (!mine) continue;
 
-      const theirs = major(badge.dataset.version);
-      const yours = major(mine);
-      if (Number.isNaN(theirs) || Number.isNaN(yours)) continue;
+      const theirs = badge.dataset.version;
+      const yours = mine;
+      if (Number.isNaN(nums(theirs)[0]) || Number.isNaN(nums(yours)[0])) continue;
 
       // The badge already says the version, so the annotation must not repeat
       // it — it answers only "does this apply to me?". The full sentence lives
@@ -48,15 +56,15 @@
       const label = WebRef.toolLabel(badge.dataset.tool);
       switch (badge.dataset.kind) {
         case "since":
-          if (yours >= theirs) { text = "✓ have"; cls = "vf-ok"; title = `Available on your ${label} ${mine}`; }
+          if (cmpVer(yours, theirs) >= 0) { text = "✓ have"; cls = "vf-ok"; title = `Available on your ${label} ${mine}`; }
           else { text = "not yet"; cls = "vf-future"; title = `Not available until ${label} ${theirs} — you are on ${mine}`; }
           break;
         case "deprecated":
-          if (yours >= theirs) { text = "⚠ for you"; cls = "vf-warn"; title = `Deprecated as of your ${label} ${mine}`; }
+          if (cmpVer(yours, theirs) >= 0) { text = "⚠ for you"; cls = "vf-warn"; title = `Deprecated as of your ${label} ${mine}`; }
           else { text = "not yet"; cls = "vf-future"; title = `Not deprecated until ${label} ${theirs} — you are on ${mine}`; }
           break;
         case "removed":
-          if (yours >= theirs) { text = "⚠ gone"; cls = "vf-warn"; title = `Removed in your ${label} ${mine} — this will not build`; }
+          if (cmpVer(yours, theirs) >= 0) { text = "⚠ gone"; cls = "vf-warn"; title = `Removed in your ${label} ${mine} — this will not build`; }
           else { text = "still here"; cls = "vf-ok"; title = `Still present on ${label} ${mine}; removed in ${theirs}`; }
           break;
       }
@@ -96,7 +104,7 @@
         const opt = document.createElement("option");
         opt.value = r.v;
         opt.textContent = `${meta.name} ${r.v}`;
-        if (state[tool] && major(state[tool]) === major(r.v)) opt.selected = true;
+        if (state[tool] && cmpVer(state[tool], r.v) === 0) opt.selected = true;
         select.appendChild(opt);
       }
 

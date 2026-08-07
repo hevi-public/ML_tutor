@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL features by version — Web Dev Reference</title>
+
+  <meta name="web:section" content="Data">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="postgres-overview.html|PostgreSQL overview">
+  <meta name="web:next" content="schema-and-migrations.html|Schema &amp; migrations">
+  <meta name="web:versions" content="PostgreSQL 18.4">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Data</p>
+  <h1>Features by version</h1>
+  <p class="lede">The SQL you can write depends on the major you run. Each
+  card is one capability with the version it landed in — set the filter to
+  your production major and the badges tell you what's already yours.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>On 15+</strong> you have MERGE.</li>
+      <li><strong>On 17+</strong> you have JSON_TABLE and incremental
+      backups.</li>
+      <li><strong>On 18</strong> you have uuidv7(), virtual generated columns,
+      skip scan and RETURNING old/new — 18 is unusually rich in
+      every-day-SQL features.</li>
+      <li><strong>Upsert guidance:</strong> plain two-case upsert stays
+      INSERT … ON CONFLICT; MERGE is for decision tables.</li>
+    </ul>
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="pg.uuidv7"></div>
+
+  <div class="change" data-change="pg.merge"></div>
+
+  <div class="change" data-change="pg.json-table"></div>
+
+  <div class="change" data-change="pg.virtual-generated"></div>
+
+  <div class="change" data-change="pg.skip-scan"></div>
+
+  <div class="change" data-change="pg.returning-old-new"></div>
+
+  <div class="change" data-change="pg.incremental-backup"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: features vs managed-Postgres lag</span>
+    A feature existing in the major is necessary, not sufficient: managed
+    providers trail new majors by weeks-to-months, and extensions lag
+    further. The version filter on this page tells you what the <em>engine</em>
+    can do — your platform's supported-version page tells you when you can
+    have it.
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://www.postgresql.org/about/news/postgresql-18-released-3142/" data-doc="pg.release18">
+      <span class="kind">release</span> PostgreSQL 18 released</a></li>
+    <li><a class="doc-chip" href="https://www.postgresql.org/docs/current/sql-merge.html" data-doc="pg.merge">
+      <span class="kind">reference</span> MERGE</a></li>
+    <li><a class="doc-chip" href="https://www.postgresql.org/docs/current/functions-json.html" data-doc="pg.json-fns">
+      <span class="kind">reference</span> JSON functions (JSON_TABLE)</a></li>
+  </ul>
+</main>
+</body>
+</html>

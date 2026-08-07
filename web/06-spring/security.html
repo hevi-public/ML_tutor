@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Security 6 → 7 — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="data-and-transactions.html|Data &amp; transactions">
+  <meta name="web:next" content="observability.html|Observability">
+  <meta name="web:versions" content="Spring Security 7.1.0 · Spring Boot 4.1.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Security 6 → 7</h1>
+  <p class="lede">Security's decade-long migration finished: configuration is
+  beans, the DSL is lambdas, and there is exactly one way to write it. If your
+  config compiles unchanged on Security 7, you were already writing it the
+  modern way.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>One idiom: SecurityFilterChain beans + lambda DSL.</strong>
+      Security 7 (with Boot 4) removed <code>and()</code> and
+      <code>authorizeRequests()</code> — the old chained style no longer
+      compiles.</li>
+      <li><strong>Method security is @EnableMethodSecurity</strong> +
+      <code>@PreAuthorize</code>; the old @EnableGlobalMethodSecurity is a
+      Boot-2-era marker.</li>
+      <li><strong>Passkeys and one-time tokens are built in</strong> since
+      Security 6.4 (Boot 3.4) — passwordless stopped being a custom
+      filter project.</li>
+      <li><strong>For a token-secured API</strong> the whole config is ~15
+      lines: resource server + JWT + route rules (below).</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity          // @PreAuthorize on service methods
+class SecurityConfig {
+
+    @Bean
+    fun api(http: HttpSecurity): SecurityFilterChain {
+        http {
+            authorizeHttpRequests {
+                authorize("/actuator/health", permitAll)
+                authorize("/api/admin/**", hasRole("ADMIN"))
+                authorize(anyRequest, authenticated)
+            }
+            oauth2ResourceServer { jwt { } }     // spring.security.oauth2.resourceserver.jwt.*
+            sessionManagement { sessionCreationPolicy = STATELESS }
+            csrf { disable() }                    // token API: no cookies, no CSRF surface
+        }
+        return http.build()
+    }
+}</code></pre>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="sp.sec.component-config"></div>
+
+  <div class="change" data-change="sp.sec.lambda-only"></div>
+
+  <div class="change" data-change="sp.sec.passkeys"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: the filter chain matcher trap</span>
+    With multiple SecurityFilterChain beans, the <em>first</em> chain whose
+    <code>securityMatcher</code> fits the request wins — entirely. A broad
+    chain declared before a narrow one silently swallows the narrow one's
+    routes, and everything looks configured while the wrong rules run. Order
+    chains most-specific first (<code>@Order</code>), and give every chain an
+    explicit <code>securityMatcher</code>.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading Boot 2-era security</summary>
+    <div class="layer-body">
+      <p><code>WebSecurityConfigurerAdapter</code> subclasses,
+      <code>antMatchers()</code> (renamed <code>requestMatchers()</code> in
+      5.8), <code>@EnableGlobalMethodSecurity(prePostEnabled = true)</code>,
+      and <code>.and()</code> chains. The migration is mechanical and
+      one-directional: each <code>configure(…)</code> override becomes a bean,
+      each chained clause becomes a lambda block — the migration guide chip
+      below has the table.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-security/reference/" data-doc="sp.sec.docs">
+      <span class="kind">guide</span> Spring Security reference</a></li>
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-security/reference/6.5/migration-7/configuration.html" data-doc="sp.sec.migration7">
+      <span class="kind">migration</span> Security 7 configuration migration</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

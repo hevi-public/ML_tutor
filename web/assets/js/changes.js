@@ -28,15 +28,24 @@
     return pre;
   }
 
+  /* The language a tool's code samples are written in — not the tool itself:
+     Gradle build files here are Kotlin DSL, Spring/jOOQ/Jackson samples are
+     Kotlin application code, Postgres samples are SQL. A record can override
+     this per-card with code.lang (e.g. "yaml" for an application.yaml
+     snippet). All of these grammars ship in the hljs common bundle. */
+  const SAMPLE_LANG = {
+    pnpm: "yaml", postgres: "sql", kotlin: "kotlin", spring: "kotlin",
+    gradle: "kotlin", jooq: "kotlin", jackson: "kotlin",
+  };
   function languageFor(tool) {
-    return tool === "pnpm" ? "yaml" : "typescript";
+    return SAMPLE_LANG[tool] || "typescript";
   }
 
-  function renderSide(kind, label, summary, code, tool) {
+  function renderSide(kind, label, summary, code, lang) {
     const side = el("div", `side ${kind}`);
     side.appendChild(el("span", "side-label", label));
     side.appendChild(el("div", "summary-line", summary));
-    if (code) side.appendChild(codeBlock(code, languageFor(tool)));
+    if (code) side.appendChild(codeBlock(code, lang));
     return side;
   }
 
@@ -81,10 +90,11 @@
     const note = host.querySelector(".change-note");
     if (note) body.appendChild(note);
 
+    const lang = change.code?.lang || languageFor(change.tool);
     const sides = el("div", "sides" + (change.code ? " split" : ""));
-    sides.appendChild(renderSide("now", "Now", change.now, change.code?.now, change.tool));
+    sides.appendChild(renderSide("now", "Now", change.now, change.code?.now, lang));
     if (change.was) {
-      sides.appendChild(renderSide("was", "Previously", change.was, change.code?.was, change.tool));
+      sides.appendChild(renderSide("was", "Previously", change.was, change.code?.was, lang));
     }
     body.appendChild(sides);
 

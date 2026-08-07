@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serialization: Jackson 2 → 3 — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="web.html|Controllers &amp; the three web clients">
+  <meta name="web:next" content="data-and-transactions.html|Data &amp; transactions">
+  <meta name="web:versions" content="Jackson 3.2.1 (Boot BOM: 3.1.4 + Jackson-2 BOM 2.21.4) · Spring Boot 4.1.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Serialization: Jackson 2 → 3</h1>
+  <p class="lede">Jackson finally shipped its break (Oct 2025): new packages,
+  an immutable mapper, honest defaults. Boot 4 adopted it as the default —
+  this page is what actually changes in a Kotlin service, and how the
+  two-Jacksons transition period works.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Boot 4 = Jackson 3 by default</strong> (BOM: 3.1.4). A
+      Jackson 2 BOM (2.21.4) stays managed so migrating dependencies
+      resolve consistently.</li>
+      <li><strong>The annotations did not move.</strong>
+      <code>@JsonProperty</code> and friends stay at
+      <code>com.fasterxml.jackson.annotation</code> — deliberately, so both
+      lines coexist while libraries migrate.</li>
+      <li><strong>Your @JsonComponent is now @JacksonComponent</strong>, and
+      builder customizers target <code>JsonMapper.builder()</code>.</li>
+      <li><strong>The clock is running:</strong> Framework 7.1 stops
+      auto-detecting Jackson 2; 7.2 drops support. The escape hatches are for
+      landing, not living.</li>
+    </ul>
+  </div>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="jk.jackson3-break"></div>
+
+  <div class="change" data-change="jk.defaults">
+    <p class="change-note">In a Boot app most of these were already overridden
+    to the new values by Boot's defaults — which is why many services notice
+    the flip only in tests that construct a bare ObjectMapper.</p>
+  </div>
+
+  <div class="change" data-change="jk.kotlin-module"></div>
+
+  <div class="change" data-change="sp.jackson-components"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: the mixed-classpath months</span>
+    A library that hasn't migrated exposes <code>com.fasterxml</code> types in
+    its API — you cannot hand it a <code>tools.jackson</code> mapper. The two
+    lines coexist fine as <em>parallel</em> stacks (that's the design), but a
+    single object graph must be serialized by one of them end-to-end. When a
+    dependency forces Jackson 2, keep it on the managed 2.21.x BOM and isolate
+    it behind its own mapper rather than downgrading the app.
+  </div>
+
+  <h2>kotlinx.serialization — when instead?</h2>
+  <p>Boot 4 ships a <code>spring-boot-starter-kotlin-serialization</code>: a
+  compile-time, reflection-free alternative that's attractive for pure-Kotlin
+  wire types (and required on platforms without reflection). The trade: no
+  Jackson ecosystem (jOOQ JSON columns, Micrometer, third-party modules all
+  speak Jackson), annotations on every class, and less flexible unknown-shape
+  handling. For a Spring service whose JSON is API payloads, Jackson 3 with
+  the Kotlin module remains the default answer; reach for kotlinx when the
+  types are shared with multiplatform code.</p>
+
+  <details class="legacy">
+    <summary>Reading Jackson 2-era configuration</summary>
+    <div class="layer-body">
+      <p><code>new ObjectMapper()</code> mutated across half a dozen
+      <code>configure(…)</code> calls, <code>JavaTimeModule</code> registered
+      by hand, <code>@JsonComponent</code> serializers, and
+      <code>WRITE_DATES_AS_TIMESTAMPS</code> disabled in every service since
+      2015. Jackson 3 made most of that ceremony the default behaviour; the
+      remaining intent moves into one builder customizer.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.0" data-doc="jk.rel3">
+      <span class="kind">release</span> Jackson 3.0 release notes</a></li>
+    <li><a class="doc-chip" href="https://spring.io/blog/2025/10/07/introducing-jackson-3-support-in-spring" data-doc="sp.blog.jackson3">
+      <span class="kind">release</span> Jackson 3 support in Spring</a></li>
+    <li><a class="doc-chip" href="https://github.com/FasterXML/jackson-module-kotlin" data-doc="jk.kotlin-module">
+      <span class="kind">reference</span> jackson-module-kotlin</a></li>
+    <li><a class="doc-chip" href="https://github.com/FasterXML/jackson/wiki/Jackson-Releases" data-doc="jk.releases">
+      <span class="kind">reference</span> Jackson release lines</a></li>
+  </ul>
+</main>
+</body>
+</html>

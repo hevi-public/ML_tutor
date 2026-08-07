@@ -1,5 +1,10 @@
 {
-  "_comment": "The change ledger — the single source of truth for every versioned fact on this site. Topic pages embed a record with <div class=\"change\" data-change=\"<id>\">; deprecations.html, timeline.html and migrations.html are generated from these same records, so the ledger can never drift from the prose. Fields: since/deprecated/removed are major versions of `tool` (null = not applicable). `migration` is the exact command that automates the change, if one exists. `docs` are ids into links.json.",
+  "_comment": "The change ledger — the single source of truth for every versioned fact on this site. Topic pages embed a record with <div class=\"change\" data-change=\"<id>\">; deprecations.html, timeline.html and migrations.html are generated from these same records, so the ledger can never drift from the prose. Fields: since/deprecated/removed are release lines of `tool` (major, or major.minor where the minor is the line — Spring Boot 4.1, jOOQ 3.21; null = not applicable). For tool 'spring' they are Spring BOOT lines even when the change belongs to Framework or Security — the title and why carry the library's own version. `migration` is the exact command that automates the change, if one exists. `docs` are ids into links.json. code.lang optionally overrides the sample language for the card (default per tool in changes.js).",
+  "_toolNames": {
+    "angular": "Angular", "rxjs": "RxJS", "vitest": "Vitest", "pnpm": "pnpm",
+    "typescript": "TypeScript", "kotlin": "Kotlin", "spring": "Spring Boot",
+    "gradle": "Gradle", "postgres": "PostgreSQL", "jooq": "jOOQ", "jackson": "Jackson"
+  },
   "changes": [
     {
       "id": "ng.di.inject-function",
@@ -498,6 +503,668 @@
         "was": "# no equivalent — anything on the registry installed immediately"
       },
       "docs": ["pn.blog.v11", "pn.migration"]
+    },
+    {
+      "id": "kt.compiler.k2",
+      "tool": "kotlin", "topic": "compiler", "page": "05-kotlin/overview.html",
+      "title": "The compiler your build runs",
+      "now": "K2 — the rewritten frontend, default on every 2.x toolchain",
+      "was": "K1, the 1.x frontend",
+      "since": "2.0", "deprecated": null, "removed": null,
+      "why": "K2 rebuilt the compiler frontend on one semantic model (FIR): JetBrains' published benchmarks measured clean builds up to ~94% faster, and every language feature since 2.0 — guard conditions, context parameters — exists only on K2. 1.9 is the last K1 line: staying there means no fixes and a growing feature gap.",
+      "migration": null,
+      "docs": ["kt.k2-migration", "kt.home"]
+    },
+    {
+      "id": "kt.lang.guard-conditions",
+      "tool": "kotlin", "topic": "language", "page": "05-kotlin/language.html",
+      "title": "One when branch, one extra condition",
+      "now": "Guard conditions: is Rainy if it.mmPerHour > 30 ->",
+      "was": "A nested if inside the branch, or the when flattened into booleans",
+      "since": "2.2", "deprecated": null, "removed": null,
+      "why": "Stable in 2.2 after previewing in 2.1. The subject check and its refinement collapse into one readable branch, and exhaustiveness checking on the subject still applies — the else-less when keeps working.",
+      "migration": null,
+      "code": {
+        "now": "when (weather) {\n    is Sunny -> \"clear\"\n    is Rainy if weather.mmPerHour > 30 -> \"storm\"\n    is Rainy -> \"rain\"\n}",
+        "was": "when (weather) {\n    is Sunny -> \"clear\"\n    is Rainy ->\n        if (weather.mmPerHour > 30) \"storm\" else \"rain\"\n}"
+      },
+      "docs": ["kt.whatsnew22"]
+    },
+    {
+      "id": "kt.lang.non-local-break",
+      "tool": "kotlin", "topic": "language", "page": "05-kotlin/language.html",
+      "title": "break and continue from inside a lambda",
+      "now": "Non-local break/continue: loop control passes through inline lambdas",
+      "was": "return@forEach labels and boolean flags to fake loop control",
+      "since": "2.2", "deprecated": null, "removed": null,
+      "why": "Non-local return through an inline lambda always worked; break and continue joined it in 2.2 (previewed in 2.1). Inside a lambda passed to an inline function, they now control the nearest enclosing real loop.",
+      "migration": null,
+      "code": {
+        "now": "for (batch in batches) {\n    batch.items.forEach { item ->\n        if (item.corrupt) continue  // continues the outer for\n        process(item)\n    }\n}",
+        "was": "for (batch in batches) {\n    var corrupt = false\n    batch.items.forEach inner@{ item ->\n        if (item.corrupt) { corrupt = true; return@inner }\n        process(item)\n    }\n    if (corrupt) continue\n}"
+      },
+      "docs": ["kt.whatsnew22"]
+    },
+    {
+      "id": "kt.lang.multi-dollar",
+      "tool": "kotlin", "topic": "language", "page": "05-kotlin/language.html",
+      "title": "A literal $ inside a string template",
+      "now": "Multi-dollar interpolation: $$\"…\" makes a single $ literal",
+      "was": "${'$'} contortions or concatenation",
+      "since": "2.2", "deprecated": null, "removed": null,
+      "why": "With $$ before the opening quote, interpolation needs $$ and a lone $ is just a character — which is exactly what JSON-schema documents, Gradle version catalogs in scripts, and regex-heavy strings needed.",
+      "migration": null,
+      "code": {
+        "now": "val schema = $$\"\"\"\n    { \"$schema\": \"https://json-schema.org/draft-07/schema\",\n      \"maxItems\": $$maxItems }\n\"\"\"",
+        "was": "val schema = \"\"\"\n    { \"${'$'}schema\": \"https://json-schema.org/draft-07/schema\",\n      \"maxItems\": $maxItems }\n\"\"\""
+      },
+      "docs": ["kt.whatsnew22"]
+    },
+    {
+      "id": "kt.lang.context-parameters",
+      "tool": "kotlin", "topic": "language", "page": "05-kotlin/language.html",
+      "title": "Dependencies a call needs but should not pass by hand",
+      "now": "context(tx: DSLContext) fun … — provided once with with(…) at the call site",
+      "was": "An explicit first parameter threaded through every signature",
+      "since": "2.4", "deprecated": null, "removed": null,
+      "why": "Preview in 2.2, stable in 2.4. Context parameters declare requirements — a transaction handle, a logger, a request scope — that the caller provides once with with(...), instead of every function in the chain carrying them. The older 'context receivers' experiment was withdrawn; this is the shipped form.",
+      "migration": null,
+      "code": {
+        "now": "context(tx: DSLContext)\nfun insertUser(user: NewUser): UserRecord =\n    tx.insertInto(USERS).set(user.toRecord())\n      .returning().fetchSingle()\n\n// call site — the transaction provides the context once\ndb.transaction { cfg ->\n    with(cfg.dsl()) {\n        insertUser(user)\n        insertAudit(\"user created\")\n    }\n}",
+        "was": "fun insertUser(tx: DSLContext, user: NewUser): UserRecord =\n    tx.insertInto(USERS).set(user.toRecord())\n      .returning().fetchSingle()\n\ndb.transaction { cfg ->\n    insertUser(cfg.dsl(), user)\n    insertAudit(cfg.dsl(), \"user created\")\n}"
+      },
+      "docs": ["kt.whatsnew24"]
+    },
+    {
+      "id": "kt.jvm.kapt-ksp",
+      "tool": "kotlin", "topic": "jvm", "page": "05-kotlin/kotlin-on-the-jvm.html",
+      "title": "Annotation processing on Kotlin",
+      "now": "KSP — KSP2, on its own 2.3.x version line",
+      "was": "kapt, generating Java stubs so javac processors could run",
+      "since": "2.1", "deprecated": null, "removed": null,
+      "why": "kapt is officially in maintenance mode: it still works (the K2 implementation became the default in 2.1.20) but gets no new features. KSP processes Kotlin symbols directly instead of faking Java, which is roughly twice as fast — and since KSP 2.3.0 (Oct 2025) its version no longer needs to match your Kotlin version, so a Kotlin bump no longer waits on a KSP release.",
+      "migration": null,
+      "docs": ["kt.ksp", "kt.ksp-migrate"]
+    },
+    {
+      "id": "kt.jvm.jspecify",
+      "tool": "kotlin", "topic": "jvm", "page": "05-kotlin/kotlin-on-the-jvm.html",
+      "title": "Nullability of the Java APIs you call",
+      "now": "JSpecify annotations are enforced — a violation is a compile error",
+      "was": "Platform types: Java values were trusted, and failed at runtime",
+      "since": "2.1", "deprecated": null, "removed": null,
+      "why": "Kotlin 2.1 turned strict mode for JSpecify annotations on by default, and Spring Framework 7 annotated its entire API surface with them — so the framework you call most now tells the compiler exactly what can be null. Code that would have NPE'd on a platform type stops compiling instead of stopping production.",
+      "migration": null,
+      "code": {
+        "now": "// Framework 7 API, JSpecify-annotated\nval user = repository.findById(id)   // typed User? — the compiler\nuser?.let { render(it) }             // forces you to decide",
+        "was": "// pre-JSpecify: platform type User!\nval user = repository.findById(id)\nrender(user)   // compiles; NPEs at runtime when absent"
+      },
+      "docs": ["kt.java-interop", "sp.blog.null-safety"]
+    },
+    {
+      "id": "kt.jvm.default-methods",
+      "tool": "kotlin", "topic": "jvm", "page": "05-kotlin/kotlin-on-the-jvm.html",
+      "title": "Kotlin interfaces, seen from Java",
+      "now": "Interface methods with bodies compile to JVM default methods",
+      "was": "Synthetic DefaultImpls classes Java callers had to know about",
+      "since": "2.2", "deprecated": null, "removed": null,
+      "why": "Java code calling a Kotlin interface finally sees an ordinary default method instead of Interface.DefaultImpls.method(instance). 2.2 made -Xjvm-default=all-compatibility the default, keeping binary compatibility with implementations compiled before the switch.",
+      "migration": null,
+      "docs": ["kt.whatsnew22", "kt.java-interop"]
+    },
+    {
+      "id": "sp.virtual-threads",
+      "tool": "spring", "topic": "web", "page": "05-kotlin/coroutines.html",
+      "title": "Handling blocking requests at scale",
+      "now": "spring.threads.virtual.enabled=true (Java 21+): a virtual thread per request",
+      "was": "Tuning a platform thread pool — or rewriting the service on WebFlux for throughput",
+      "since": "3.2", "deprecated": null, "removed": null,
+      "why": "Virtual threads make thread-per-request cheap: one property switches Tomcat/Jetty request processing, @Async and the application task executor. The scalability argument for going reactive disappears for plain blocking services — keep coroutines and Flow for structure, streaming and cancellation, not for thread economics.",
+      "migration": null,
+      "code": {
+        "lang": "yaml",
+        "now": "# application.yaml — Boot 3.2+, running on Java 21+\nspring:\n  threads:\n    virtual:\n      enabled: true",
+        "was": "# guessing at pool sizes\nserver:\n  tomcat:\n    threads:\n      max: 800"
+      },
+      "docs": ["sp.blog.virtual-threads", "sp.docs"]
+    },
+    {
+      "id": "sp.jakarta",
+      "tool": "spring", "topic": "platform", "page": "06-spring/overview.html",
+      "title": "The javax → jakarta namespace break",
+      "now": "jakarta.* imports — Jakarta EE (Servlet 6+, Validation 3+)",
+      "was": "javax.servlet, javax.validation, javax.persistence…",
+      "since": "3.0", "deprecated": null, "removed": null,
+      "why": "Java EE moved to the Eclipse Foundation and the javax trademark stayed behind, so the packages had to rename. Boot 3.0 / Framework 6.0 crossed that line (with the Java 17 baseline) and the two worlds cannot mix on one classpath — which is why every library had to publish a jakarta build, and why ancient transitive dependencies still break Boot upgrades today.",
+      "migration": null,
+      "code": {
+        "now": "import jakarta.servlet.http.HttpServletRequest\nimport jakarta.validation.constraints.NotBlank",
+        "was": "import javax.servlet.http.HttpServletRequest\nimport javax.validation.constraints.NotBlank"
+      },
+      "docs": ["sp.docs"]
+    },
+    {
+      "id": "sp.starter-modularization",
+      "tool": "spring", "topic": "build", "page": "06-spring/overview.html",
+      "title": "What a starter pulls in",
+      "now": "Focused modules: spring-boot-starter-webmvc, per-technology spring-boot-<tech> jars",
+      "was": "spring-boot-starter-web and one monolithic autoconfigure jar",
+      "since": "4.0", "deprecated": null, "removed": null,
+      "why": "Boot 4.0 split the monolith into technology modules (org.springframework.boot.<tech> packages) with matching starters and test starters. spring-boot-starter-web is deprecated in favour of -webmvc; Flyway and Liquibase now need their own starter instead of riding along. spring-boot-starter-classic restores the old everything-available classpath as a migration aid — a bridge, not a destination.",
+      "migration": null,
+      "code": {
+        "now": "dependencies {\n    implementation(\"org.springframework.boot:spring-boot-starter-webmvc\")\n    implementation(\"org.springframework.boot:spring-boot-starter-flyway\")\n    testImplementation(\"org.springframework.boot:spring-boot-starter-webmvc-test\")\n}",
+        "was": "dependencies {\n    implementation(\"org.springframework.boot:spring-boot-starter-web\")\n    implementation(\"org.flywaydb:flyway-core\")  // rode the autoconfigure monolith\n    testImplementation(\"org.springframework.boot:spring-boot-starter-test\")\n}"
+      },
+      "docs": ["sp.blog.modular", "sp.migration.boot4"]
+    },
+    {
+      "id": "sp.config.properties-binding",
+      "tool": "spring", "topic": "config", "page": "06-spring/config-and-starters.html",
+      "title": "Binding configuration to types",
+      "now": "@ConfigurationProperties on an immutable Kotlin data class — constructor binding by default",
+      "was": "A mutable JavaBean full of setters, or @Value scattered across fields",
+      "since": "3.0", "deprecated": null, "removed": null,
+      "why": "Since Boot 3, a single-constructor type binds through its constructor with no @ConstructorBinding ceremony — so configuration becomes an immutable value object, validated once at startup, instead of mutable state any bean can poke. @Value survives for one-off reads, not for modelling config.",
+      "migration": null,
+      "code": {
+        "now": "@ConfigurationProperties(\"app.billing\")\ndata class BillingProperties(\n    val endpoint: URI,\n    val timeout: Duration = Duration.ofSeconds(2),\n)",
+        "was": "@Component\n@ConfigurationProperties(\"app.billing\")\nclass BillingProperties {\n    var endpoint: String? = null\n    var timeout: Int = 2000\n}"
+      },
+      "docs": ["sp.docs"]
+    },
+    {
+      "id": "sp.web.restclient",
+      "tool": "spring", "topic": "web", "page": "06-spring/web.html",
+      "title": "Calling another service from blocking code",
+      "now": "RestClient — fluent, synchronous, built on the same infrastructure",
+      "was": "RestTemplate — in maintenance mode since Framework 5, deprecated in the 7.x docs",
+      "since": "3.2", "deprecated": null, "removed": null,
+      "why": "RestTemplate was declared feature-complete years ago, and WebClient forced a reactive stack onto callers who only wanted a nicer API. RestClient (Framework 6.1 / Boot 3.2) is that nicer API without the reactive tax — and under virtual threads, blocking calls scale anyway. Framework 7 documents RestTemplate as deprecated, with @Deprecated planned for 7.1.",
+      "migration": null,
+      "code": {
+        "now": "val client = builder.baseUrl(\"https://api.example.com\").build()\n\nval user: User = client.get()\n    .uri(\"/users/{id}\", id)\n    .retrieve()\n    .body(User::class.java)!!",
+        "was": "val user = restTemplate.getForObject(\n    \"https://api.example.com/users/{id}\",\n    User::class.java, id)!!"
+      },
+      "docs": ["sp.blog.http-clients", "sp.docs"]
+    },
+    {
+      "id": "sp.web.http-interfaces",
+      "tool": "spring", "topic": "web", "page": "06-spring/web.html",
+      "title": "Declaring a client instead of writing one",
+      "now": "@HttpExchange interfaces, registered in groups with @ImportHttpServices",
+      "was": "A hand-written client class per remote service, wrapping RestTemplate or WebClient",
+      "since": "4.0", "deprecated": null, "removed": null,
+      "why": "The @HttpExchange annotations existed since Framework 6.0, but Framework 7 made them first-class citizens: @ImportHttpServices registers a whole group of interfaces as beans, with per-group base URLs and client customisation — so the boilerplate client class disappears and the wire contract lives in one annotated interface.",
+      "migration": null,
+      "code": {
+        "now": "interface UserApi {\n    @GetExchange(\"/users/{id}\")\n    fun find(@PathVariable id: UserId): User\n}\n\n@Configuration\n@ImportHttpServices(group = \"billing\", types = [UserApi::class])\nclass Clients   // per-group baseUrl/auth via a group configurer",
+        "was": "@Component\nclass UserApiClient(private val rest: RestClient) {\n    fun find(id: UserId): User =\n        rest.get().uri(\"/users/{id}\", id)\n            .retrieve().body(User::class.java)!!\n}"
+      },
+      "docs": ["sp.blog.http-clients", "sp.fw.docs"]
+    },
+    {
+      "id": "sp.web.api-versioning",
+      "tool": "spring", "topic": "web", "page": "06-spring/web.html",
+      "title": "Versioning an HTTP API",
+      "now": "First-class: version on the mapping, strategy in configuration",
+      "was": "Hand-rolled /v2/ URL prefixes and header parsing in filters",
+      "since": "4.0", "deprecated": null, "removed": null,
+      "why": "Framework 7 added API versioning to MVC and WebFlux — mappings declare the version they serve, spring.mvc.apiversion.* picks the resolution strategy (header, query parameter, path segment or media-type parameter), and deprecation can be signalled to clients. The clients (RestClient, WebClient, HTTP interfaces) and the test support understand versions too.",
+      "migration": null,
+      "code": {
+        "now": "@GetMapping(\"/orders/{id}\", version = \"2\")\nfun orderV2(@PathVariable id: OrderId): OrderV2 = …\n\n# application.yaml\n# spring.mvc.apiversion.use.header: API-Version",
+        "was": "@GetMapping(\"/v2/orders/{id}\")   // convention, enforced nowhere\nfun orderV2(@PathVariable id: OrderId): OrderV2 = …"
+      },
+      "docs": ["sp.blog.api-versioning", "sp.relnotes.boot40"]
+    },
+    {
+      "id": "jk.jackson3-break",
+      "tool": "jackson", "topic": "serialization", "page": "06-spring/serialization.html",
+      "title": "The Jackson you import",
+      "now": "tools.jackson.* — Jackson 3, an immutable mapper built via JsonMapper.builder()",
+      "was": "com.fasterxml.jackson.* — Jackson 2, a mutable ObjectMapper you configure after construction",
+      "since": "3.0", "deprecated": null, "removed": null,
+      "why": "Jackson 3 (GA Oct 2025) moved Java packages and Maven groups to tools.jackson.* — except the annotations, which stay at com.fasterxml.jackson.annotation precisely so 2 and 3 can coexist on one classpath while libraries migrate. The mapper is immutable once built, JacksonException is unchecked, and java.time/Optional/parameter-names support merged into databind instead of being three add-on modules.",
+      "migration": null,
+      "code": {
+        "now": "import tools.jackson.databind.json.JsonMapper\n\nval mapper = JsonMapper.builder()\n    .findAndAddModules()\n    .build()   // immutable from here",
+        "was": "import com.fasterxml.jackson.databind.ObjectMapper\n\nval mapper = ObjectMapper()\nmapper.registerModule(JavaTimeModule())   // mutate-after-build\nmapper.disable(WRITE_DATES_AS_TIMESTAMPS)"
+      },
+      "docs": ["jk.rel3", "jk.ga-blog"]
+    },
+    {
+      "id": "jk.defaults",
+      "tool": "jackson", "topic": "serialization", "page": "06-spring/serialization.html",
+      "title": "What Jackson does when you don't configure it",
+      "now": "Unknown properties ignored; dates as ISO-8601 strings; enums via toString",
+      "was": "Unknown properties threw; dates as epoch timestamps; enums by name",
+      "since": "3.0", "deprecated": null, "removed": null,
+      "why": "Jackson 3 flipped the defaults nearly every codebase flipped manually: FAIL_ON_UNKNOWN_PROPERTIES off (tolerant reading), WRITE_DATES_AS_TIMESTAMPS off (ISO strings), enum round-tripping via toString on, FAIL_ON_TRAILING_TOKENS on (stricter about garbage after the document). Audit any code that relied on the old behaviour rather than configuring it explicitly.",
+      "migration": null,
+      "docs": ["jk.rel3"]
+    },
+    {
+      "id": "jk.kotlin-module",
+      "tool": "jackson", "topic": "serialization", "page": "06-spring/serialization.html",
+      "title": "Kotlin data classes and Jackson",
+      "now": "tools.jackson.module:jackson-module-kotlin — strict null checks on by default",
+      "was": "The 2.x Kotlin module — a non-null Kotlin field could still receive a JSON null",
+      "since": "3.0", "deprecated": null, "removed": null,
+      "why": "The 3.x Kotlin module versions with the Jackson 3 line and turns StrictNullChecks and singleton support on by default — a JSON null landing in a non-null constructor parameter now fails at parse time with a clear error instead of surfacing later as an impossible NPE.",
+      "migration": null,
+      "docs": ["jk.kotlin-module", "jk.releases"]
+    },
+    {
+      "id": "sp.jackson-components",
+      "tool": "spring", "topic": "serialization", "page": "06-spring/serialization.html",
+      "title": "Customising JSON in Boot",
+      "now": "JsonMapperBuilderCustomizer beans and @JacksonComponent",
+      "was": "Jackson2ObjectMapperBuilderCustomizer and @JsonComponent",
+      "since": "4.0", "deprecated": null, "removed": null,
+      "why": "Boot 4 wires Jackson 3 by default, and the customisation surface renamed with it: builder customizers target JsonMapper.builder(), @JsonComponent became @JacksonComponent, and the JSON-specific properties moved under spring.jackson.json.read/write. Jackson 2 remains available during migration via the spring-boot-jackson2 module and spring.jackson.use-jackson2-defaults — but Framework 7 plans to stop auto-detecting Jackson 2 in 7.1 and drop it in 7.2, so treat those as exits, not homes.",
+      "migration": null,
+      "code": {
+        "now": "@Bean\nfun mapperTweaks() = JsonMapperBuilderCustomizer { builder ->\n    builder.changeDefaultPropertyInclusion { it.withValueInclusion(NON_NULL) }\n}",
+        "was": "@Bean\nfun mapperTweaks() = Jackson2ObjectMapperBuilderCustomizer { builder ->\n    builder.serializationInclusion(NON_NULL)\n}"
+      },
+      "docs": ["sp.blog.jackson3", "sp.migration.boot4"]
+    },
+    {
+      "id": "sp.data.jdbc-client",
+      "tool": "spring", "topic": "data", "page": "06-spring/data-and-transactions.html",
+      "title": "Plain SQL without jOOQ",
+      "now": "JdbcClient — fluent, named parameters, mapped to data classes",
+      "was": "JdbcTemplate with positional ? params and RowMapper boilerplate",
+      "since": "3.2", "deprecated": null, "removed": null,
+      "why": "For the one-off query that doesn't warrant jOOQ's codegen, JdbcClient (Framework 6.1) gives named parameters and a fluent mapping API over the same infrastructure. JdbcTemplate is not deprecated — JdbcClient is just the version of it you'd design today.",
+      "migration": null,
+      "code": {
+        "now": "val count = jdbc.sql(\"select count(*) from orders where status = :s\")\n    .param(\"s\", status)\n    .query(Int::class.java)\n    .single()",
+        "was": "val count = jdbcTemplate.queryForObject(\n    \"select count(*) from orders where status = ?\",\n    Int::class.java, status)"
+      },
+      "docs": ["sp.docs"]
+    },
+    {
+      "id": "sp.sec.component-config",
+      "tool": "spring", "topic": "security", "page": "06-spring/security.html",
+      "title": "Configuring HTTP security",
+      "now": "A SecurityFilterChain bean, written in the lambda DSL",
+      "was": "Subclassing WebSecurityConfigurerAdapter",
+      "since": "3.0", "deprecated": null, "removed": null,
+      "why": "The adapter was deprecated in Security 5.7 (Boot 2.7) and removed in Security 6 (Boot 3): configuration became ordinary beans you compose instead of a template class you override. Security 7 (Boot 4) finished the story by making the lambda DSL the only DSL.",
+      "migration": null,
+      "code": {
+        "now": "@Bean\nfun api(http: HttpSecurity): SecurityFilterChain {\n    http {\n        authorizeHttpRequests {\n            authorize(\"/actuator/health\", permitAll)\n            authorize(anyRequest, authenticated)\n        }\n        oauth2ResourceServer { jwt { } }\n        csrf { disable() }   // a deliberate choice for a token API\n    }\n    return http.build()\n}",
+        "was": "@EnableWebSecurity\nclass SecurityConfig : WebSecurityConfigurerAdapter() {\n    override fun configure(http: HttpSecurity) {\n        http.authorizeRequests()\n            .antMatchers(\"/actuator/health\").permitAll()\n            .anyRequest().authenticated()\n            .and()\n            .oauth2ResourceServer().jwt()\n    }\n}"
+      },
+      "docs": ["sp.sec.docs", "sp.sec.migration7"]
+    },
+    {
+      "id": "sp.sec.lambda-only",
+      "tool": "spring", "topic": "security", "page": "06-spring/security.html",
+      "title": "Chaining security config with .and()",
+      "now": "Gone — each concern is one lambda block; authorizeHttpRequests replaces authorizeRequests",
+      "was": "http.authorizeRequests()…​.and().csrf()…​.and() chains",
+      "since": null, "deprecated": "3.1", "removed": "4.0",
+      "why": "Security 6.1 deprecated the non-lambda methods; Security 7 (Boot 4) removed them along with authorizeRequests(). The lambda DSL makes nesting explicit and closes the class of bugs where an .and() attached configuration to the wrong parent.",
+      "migration": null,
+      "docs": ["sp.sec.migration7"]
+    },
+    {
+      "id": "sp.sec.passkeys",
+      "tool": "spring", "topic": "security", "page": "06-spring/security.html",
+      "title": "Passwordless sign-in",
+      "now": "Built in: webAuthn { } (passkeys) and one-time-token login",
+      "was": "Custom filters around third-party WebAuthn libraries",
+      "since": "3.4", "deprecated": null, "removed": null,
+      "why": "Security 6.4 (Boot 3.4) shipped passkey support in the DSL, backed by WebAuthn4J, plus magic-link style one-time tokens — the two passwordless flows teams were hand-rolling.",
+      "migration": null,
+      "docs": ["sp.sec.docs"]
+    },
+    {
+      "id": "sp.obs.observation",
+      "tool": "spring", "topic": "observability", "page": "06-spring/observability.html",
+      "title": "Instrumenting code once",
+      "now": "The Micrometer Observation API — one Observation yields metrics and a span",
+      "was": "A Timer for the metric and manual tracer code for the span, kept in sync by hope",
+      "since": "3.0", "deprecated": null, "removed": null,
+      "why": "Boot 3 rebuilt instrumentation on Observation: wrap the operation once, and registered handlers project it into Micrometer metrics and Micrometer Tracing spans consistently — same names, same tags, no drift between the two.",
+      "migration": null,
+      "code": {
+        "now": "Observation.createNotStarted(\"order.place\", registry)\n    .lowCardinalityKeyValue(\"channel\", channel)\n    .observe { orders.place(cmd) }",
+        "was": "val sample = Timer.start(meterRegistry)\nval span = tracer.nextSpan().name(\"order.place\").start()\ntry { orders.place(cmd) } finally {\n    sample.stop(meterRegistry.timer(\"order.place\"))\n    span.end()\n}"
+      },
+      "docs": ["sp.docs"]
+    },
+    {
+      "id": "sp.obs.structured-logging",
+      "tool": "spring", "topic": "observability", "page": "06-spring/observability.html",
+      "title": "Log output machines can read",
+      "now": "Built in: logging.structured.format.console=ecs (or logstash, gelf)",
+      "was": "A logstash-logback-encoder dependency and a logback-spring.xml per service",
+      "since": "3.4", "deprecated": null, "removed": null,
+      "why": "Boot 3.4 made structured logging a property instead of a project: pick Elastic Common Schema, Logstash or GELF shapes for console or file, keep MDC and correlation ids, and delete the XML.",
+      "migration": null,
+      "code": {
+        "lang": "yaml",
+        "now": "logging:\n  structured:\n    format:\n      console: ecs",
+        "was": "<!-- logback-spring.xml -->\n<appender name=\"json\"\n    class=\"ch.qos.logback.core.ConsoleAppender\">\n  <encoder class=\"net.logstash.logback.encoder.LogstashEncoder\"/>\n</appender>"
+      },
+      "docs": ["sp.docs"]
+    },
+    {
+      "id": "sp.obs.otel-starter",
+      "tool": "spring", "topic": "observability", "page": "06-spring/observability.html",
+      "title": "Shipping telemetry over OTLP",
+      "now": "spring-boot-starter-opentelemetry — metrics and traces, OTEL_* env vars honoured",
+      "was": "A hand-assembled stack: tracing bridge, exporters and registry wired one property at a time",
+      "since": "4.0", "deprecated": null, "removed": null,
+      "why": "Boot 4.0 collected the OpenTelemetry pieces into one starter; 4.1 made the fired-up SDK read the standard OTEL_* environment variables, so the same container config works for a Boot app as for everything else in the cluster.",
+      "migration": null,
+      "docs": ["sp.relnotes.boot40", "sp.relnotes.boot41"]
+    },
+    {
+      "id": "sp.test.mockitobean",
+      "tool": "spring", "topic": "testing", "page": "06-spring/testing.html",
+      "title": "Mocking a bean in a Spring test",
+      "now": "@MockitoBean / @MockitoSpyBean — Framework-provided",
+      "was": "@MockBean / @SpyBean — Boot's own, since removed",
+      "since": "3.4", "deprecated": "3.4", "removed": "4.0",
+      "why": "Framework 6.2 absorbed the idea and Boot deprecated its annotations in 3.4, then removed them in 4.0. Mind the differences while migrating: @MockitoBean does not work on @Configuration classes, and reusable setups move to the class-level types attribute.",
+      "migration": null,
+      "code": {
+        "now": "@WebMvcTest(OrderController::class)\nclass OrderControllerTest {\n    @MockitoBean lateinit var orders: OrderService\n}",
+        "was": "@WebMvcTest(OrderController::class)\nclass OrderControllerTest {\n    @MockBean lateinit var orders: OrderService\n}"
+      },
+      "docs": ["sp.migration.boot4", "sp.docs"]
+    },
+    {
+      "id": "sp.test.service-connection",
+      "tool": "spring", "topic": "testing", "page": "06-spring/testing.html",
+      "title": "Pointing tests at a Testcontainers database",
+      "now": "@ServiceConnection on the container — Boot derives url, user, password",
+      "was": "@DynamicPropertySource methods copying container properties by hand",
+      "since": "3.1", "deprecated": null, "removed": null,
+      "why": "The container itself is the source of truth for its coordinates, so Boot 3.1 taught autoconfiguration to read them directly. The property-copying ceremony — and the typos in it — disappear.",
+      "migration": null,
+      "code": {
+        "now": "@Testcontainers\n@SpringBootTest\nclass OrderFlowTest {\n    companion object {\n        @Container @ServiceConnection\n        val pg = PostgreSQLContainer(\"postgres:18\")\n    }\n}",
+        "was": "companion object {\n    @Container\n    val pg = PostgreSQLContainer(\"postgres:16\")\n\n    @JvmStatic @DynamicPropertySource\n    fun props(r: DynamicPropertyRegistry) {\n        r.add(\"spring.datasource.url\", pg::getJdbcUrl)\n        r.add(\"spring.datasource.username\", pg::getUsername)\n        r.add(\"spring.datasource.password\", pg::getPassword)\n    }\n}"
+      },
+      "docs": ["sp.docs"]
+    },
+    {
+      "id": "sp.test.resttestclient",
+      "tool": "spring", "topic": "testing", "page": "06-spring/testing.html",
+      "title": "Calling your app from a test",
+      "now": "RestTestClient — one fluent client, bound to MockMvc or a live server",
+      "was": "Two idioms: TestRestTemplate against a port, MockMvc's perform/andExpect for mock requests",
+      "since": "4.0", "deprecated": null, "removed": null,
+      "why": "Framework 7 gave the blocking world what WebTestClient gave the reactive one: the same fluent request/assertion API whether the target is a mock servlet environment, a running server on a random port, or a plain controller instance. Boot 4 autowires it in @SpringBootTest.",
+      "migration": null,
+      "docs": ["sp.relnotes.boot40", "sp.fw.docs"]
+    },
+    {
+      "id": "gr.nine",
+      "tool": "gradle", "topic": "platform", "page": "07-gradle/overview.html",
+      "title": "Running the build tool itself",
+      "now": "Gradle 9 — needs Java 17+ to run; scripts compile on Kotlin 2.2 (DSL) and Groovy 4",
+      "was": "Gradle 8 — ran on Java 8+, Kotlin 1.9-era DSL, Groovy 3",
+      "since": "9", "deprecated": null, "removed": null,
+      "why": "The 9.0 jump (July 2025) modernised the tool's own platform: a Java 17 floor for the daemon, current Kotlin in build scripts, Groovy 4. Nothing about your application's Java version changes — the daemon JVM and your toolchain JVM are separate decisions.",
+      "migration": null,
+      "code": {
+        "lang": "plaintext",
+        "now": "./gradlew wrapper --gradle-version 9.7.0\n# then commit gradle/wrapper/gradle-wrapper.properties",
+        "was": "distributionUrl=.../gradle-8.14.5-bin.zip"
+      },
+      "docs": ["gr.relnotes9", "gr.whatsnew9"]
+    },
+    {
+      "id": "gr.kotlin-dsl-default",
+      "tool": "gradle", "topic": "dsl", "page": "07-gradle/kotlin-dsl-and-catalogs.html",
+      "title": "The language of build scripts",
+      "now": "Kotlin DSL (build.gradle.kts) — the default for new builds",
+      "was": "Groovy (build.gradle)",
+      "since": "8.2", "deprecated": null, "removed": null,
+      "why": "Since 8.2, gradle init generates Kotlin DSL — typed accessors, IDE completion and refactoring across build code, and one language for app and build. Groovy scripts keep working indefinitely; the choice only really costs when a build mixes both and every snippet must be translated on the way in.",
+      "migration": null,
+      "docs": ["gr.kotlin-dsl-default", "gr.userguide"]
+    },
+    {
+      "id": "gr.version-catalogs",
+      "tool": "gradle", "topic": "dependencies", "page": "07-gradle/kotlin-dsl-and-catalogs.html",
+      "title": "Where dependency versions live",
+      "now": "gradle/libs.versions.toml — one catalog, typed libs.* accessors",
+      "was": "ext {} property maps, buildSrc constants objects, versions repeated per module",
+      "since": "7.4", "deprecated": null, "removed": null,
+      "why": "Stable since 7.4 and the assumed idiom in current docs: every module references libs.spring.boot.starter.webmvc and the version exists in exactly one TOML file — with bundles for groups and plugin coordinates included. Renovate and Dependabot both understand the format.",
+      "migration": null,
+      "code": {
+        "lang": "plaintext",
+        "now": "# gradle/libs.versions.toml\n[versions]\nkotlin = \"2.4.10\"\nspring-boot = \"4.1.0\"\n\n[libraries]\njooq = { module = \"org.jooq:jooq\" }  # version via Boot BOM\n\n[plugins]\nkotlin-jvm = { id = \"org.jetbrains.kotlin.jvm\", version.ref = \"kotlin\" }\nspring-boot = { id = \"org.springframework.boot\", version.ref = \"spring-boot\" }",
+        "was": "// root build.gradle\next {\n    kotlinVersion = '1.9.24'\n    springBootVersion = '3.2.5'\n}\n// module build.gradle\nimplementation \"org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion\""
+      },
+      "docs": ["gr.catalogs"]
+    },
+    {
+      "id": "gr.convention-plugins",
+      "tool": "gradle", "topic": "structure", "page": "07-gradle/structure.html",
+      "title": "Sharing build logic across modules",
+      "now": "Convention plugins in an included build-logic build",
+      "was": "allprojects { } / subprojects { } blocks reaching into other projects",
+      "since": "9", "deprecated": null, "removed": null,
+      "why": "Cross-project configuration couples every module to the root script and is exactly what the configuration cache and isolated projects cannot track — the docs now call it discouraged. Gradle 9 made the cost concrete: builds that stay on allprojects forfeit the caching the 9.x line is built around. A convention plugin is the same code, owned as a plugin each module opts into.",
+      "migration": null,
+      "code": {
+        "now": "// build-logic/src/main/kotlin/conventions.kotlin-service.gradle.kts\nplugins {\n    id(\"org.jetbrains.kotlin.jvm\")\n}\nkotlin { jvmToolchain(25) }\ntasks.withType<Test>().configureEach { useJUnitPlatform() }\n\n// a module's build.gradle.kts\nplugins { id(\"conventions.kotlin-service\") }",
+        "was": "// root build.gradle.kts\nallprojects {\n    apply(plugin = \"org.jetbrains.kotlin.jvm\")\n    tasks.withType<Test>().configureEach { useJUnitPlatform() }\n}"
+      },
+      "docs": ["gr.sharing-logic", "gr.conv-plugins"]
+    },
+    {
+      "id": "gr.config-cache",
+      "tool": "gradle", "topic": "performance", "page": "07-gradle/performance.html",
+      "title": "Reusing the configuration phase",
+      "now": "Configuration cache on — the preferred mode across 9.x",
+      "was": "Every invocation re-configured the entire build before running a task",
+      "since": "8.1", "deprecated": null, "removed": null,
+      "why": "Stable in 8.1, preferred in 9.0, slated to become the default in Gradle 10: Gradle serialises the task graph and skips configuration entirely when nothing relevant changed — the difference between seconds and nothing on warm invocations. The blockers are plugins doing config-cache-unsupported things; the problems report names them.",
+      "migration": null,
+      "code": {
+        "lang": "plaintext",
+        "now": "# gradle.properties\norg.gradle.configuration-cache=true\norg.gradle.configuration-cache.parallel=true",
+        "was": "$ gradle test\n> Configure project :   (…every single time…)"
+      },
+      "docs": ["gr.config-cache", "gr.road-config-cache"]
+    },
+    {
+      "id": "pg.async-io",
+      "tool": "postgres", "topic": "performance", "page": "08-data/postgres-overview.html",
+      "title": "How reads hit the disk",
+      "now": "An asynchronous I/O subsystem — io_uring on Linux, visible in pg_aios",
+      "was": "Synchronous reads, issued one at a time per backend",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "The headline of 18: sequential scans, bitmap heap scans and vacuum can keep many reads in flight, which is where the published multi-x read speedups come from. Mostly free at upgrade time — io_method and effective_io_concurrency are the tuning knobs if defaults disappoint.",
+      "migration": null,
+      "docs": ["pg.release18"]
+    },
+    {
+      "id": "pg.upgrade-stats",
+      "tool": "postgres", "topic": "operations", "page": "08-data/postgres-overview.html",
+      "title": "Planner statistics across a major upgrade",
+      "now": "pg_upgrade carries optimizer statistics over",
+      "was": "Every major upgrade began with an ANALYZE storm and a slow morning",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "Until 18, pg_upgrade dropped planner statistics, so the hours after an upgrade ran on guesses. Statistics now survive the jump — removing the main operational excuse for postponing majors.",
+      "migration": null,
+      "docs": ["pg.release18", "pg.versioning"]
+    },
+    {
+      "id": "pg.uuidv7",
+      "tool": "postgres", "topic": "features", "page": "08-data/postgres-features.html",
+      "title": "Generating primary-key UUIDs",
+      "now": "uuidv7() — time-ordered, so B-tree-friendly",
+      "was": "gen_random_uuid() (v4) — random, so index-hostile at scale",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "Random v4 keys scatter inserts across the whole index; v7 keys are time-prefixed, so new rows land in the same hot pages and range scans over recent data stay cheap — the ULID idea, standardised (RFC 9562) and in core.",
+      "migration": null,
+      "code": {
+        "lang": "sql",
+        "now": "CREATE TABLE orders (\n  id uuid PRIMARY KEY DEFAULT uuidv7(),\n  placed_at timestamptz NOT NULL DEFAULT now()\n);",
+        "was": "CREATE TABLE orders (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid()\n);\n-- fine at small scale; page-splits everywhere at large scale"
+      },
+      "docs": ["pg.release18"]
+    },
+    {
+      "id": "pg.merge",
+      "tool": "postgres", "topic": "features", "page": "08-data/postgres-features.html",
+      "title": "Insert-or-update-or-delete in one statement",
+      "now": "MERGE — multiple WHEN clauses, one pass",
+      "was": "Writable-CTE contortions once the logic outgrew ON CONFLICT",
+      "since": "15", "deprecated": null, "removed": null,
+      "why": "For the plain two-case upsert, INSERT … ON CONFLICT remains the right (and concurrency-safer) tool. MERGE earns its keep when the decision table grows — matched-and-stale → update, matched-and-gone → delete, not-matched → insert — which previously meant chained CTEs or application loops.",
+      "migration": null,
+      "code": {
+        "lang": "sql",
+        "now": "MERGE INTO inventory i\nUSING incoming s ON i.sku = s.sku\nWHEN MATCHED AND s.qty = 0 THEN DELETE\nWHEN MATCHED THEN UPDATE SET qty = s.qty\nWHEN NOT MATCHED THEN INSERT (sku, qty) VALUES (s.sku, s.qty);",
+        "was": "WITH upd AS (\n  UPDATE inventory i SET qty = s.qty\n  FROM incoming s WHERE i.sku = s.sku\n  RETURNING i.sku\n)\nINSERT INTO inventory (sku, qty)\nSELECT sku, qty FROM incoming\nWHERE sku NOT IN (SELECT sku FROM upd);\n-- and the delete case still isn't handled"
+      },
+      "docs": ["pg.merge"]
+    },
+    {
+      "id": "pg.json-table",
+      "tool": "postgres", "topic": "features", "page": "08-data/postgres-features.html",
+      "title": "Turning a JSON document into rows",
+      "now": "JSON_TABLE() — declare columns, get a relation",
+      "was": "jsonb_array_elements() chains with lateral joins and casts",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "The SQL/JSON standard's answer to shredding documents: one call declares the paths, types and nested structure, and the result is an ordinary relation you can join. The old idiom worked but buried the schema in a pile of operators.",
+      "migration": null,
+      "code": {
+        "lang": "sql",
+        "now": "SELECT o.id, li.sku, li.qty\nFROM orders o,\n  JSON_TABLE(o.payload, '$.lines[*]' COLUMNS (\n    sku text PATH '$.sku',\n    qty int  PATH '$.qty'\n  )) AS li;",
+        "was": "SELECT o.id,\n       l->>'sku' AS sku,\n       (l->>'qty')::int AS qty\nFROM orders o,\nLATERAL jsonb_array_elements(o.payload->'lines') AS l;"
+      },
+      "docs": ["pg.json-fns"]
+    },
+    {
+      "id": "pg.virtual-generated",
+      "tool": "postgres", "topic": "features", "page": "08-data/postgres-features.html",
+      "title": "Computed columns",
+      "now": "Virtual generated columns — computed on read, stored nowhere",
+      "was": "STORED generated columns, or triggers keeping a real column in sync",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "Since 12, generated columns had to be STORED — paid for on every write and in every row's bytes. 18 adds the virtual kind: the expression evaluates at read time, which is usually what a derived display value wanted all along.",
+      "migration": null,
+      "code": {
+        "lang": "sql",
+        "now": "ALTER TABLE orders ADD COLUMN total_display numeric\n  GENERATED ALWAYS AS (subtotal + tax) VIRTUAL;",
+        "was": "ALTER TABLE orders ADD COLUMN total_display numeric\n  GENERATED ALWAYS AS (subtotal + tax) STORED;"
+      },
+      "docs": ["pg.release18"]
+    },
+    {
+      "id": "pg.skip-scan",
+      "tool": "postgres", "topic": "features", "page": "08-data/postgres-features.html",
+      "title": "Multicolumn indexes without the leading column",
+      "now": "B-tree skip scan: (tenant_id, created_at) serves WHERE created_at > …",
+      "was": "A second single-column index, or a sequential scan",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "The old rule — a composite index is useless unless the query constrains its leading column — softened in 18: when the leading column is low-cardinality, the planner can iterate its values and dive the index per value. Fewer redundant indexes, less write amplification.",
+      "migration": null,
+      "docs": ["pg.release18"]
+    },
+    {
+      "id": "pg.returning-old-new",
+      "tool": "postgres", "topic": "features", "page": "08-data/postgres-features.html",
+      "title": "Seeing before and after in one write",
+      "now": "RETURNING old.balance, new.balance on UPDATE/INSERT/DELETE/MERGE",
+      "was": "A prior SELECT, or a trigger writing an audit row, to capture the previous value",
+      "since": "18", "deprecated": null, "removed": null,
+      "why": "Audit trails and optimistic-concurrency checks kept re-reading rows around writes. 18 lets the write itself report both versions atomically.",
+      "migration": null,
+      "code": {
+        "lang": "sql",
+        "now": "UPDATE accounts SET balance = balance - 50\nWHERE id = 7\nRETURNING old.balance AS before, new.balance AS after;",
+        "was": "SELECT balance FROM accounts WHERE id = 7;  -- hope nothing changes\nUPDATE accounts SET balance = balance - 50 WHERE id = 7;"
+      },
+      "docs": ["pg.release18"]
+    },
+    {
+      "id": "pg.incremental-backup",
+      "tool": "postgres", "topic": "operations", "page": "08-data/postgres-features.html",
+      "title": "Backups between the full ones",
+      "now": "pg_basebackup --incremental, reassembled with pg_combinebackup",
+      "was": "Full base backups plus WAL archives — storage and restore time paid in full",
+      "since": "17", "deprecated": null, "removed": null,
+      "why": "17's WAL summarizer lets a base backup contain only pages changed since a previous one, cutting both backup storage and the nightly window; pg_combinebackup reconstructs a full backup from the chain at restore time.",
+      "migration": null,
+      "docs": ["pg.release-notes"]
+    },
+    {
+      "id": "sp.flyway-starter",
+      "tool": "spring", "topic": "data", "page": "08-data/schema-and-migrations.html",
+      "title": "How migrations run in Boot 4",
+      "now": "spring-boot-starter-flyway (or -liquibase) — explicit",
+      "was": "flyway-core on the classpath was enough to run on startup",
+      "since": "4.0", "deprecated": null, "removed": null,
+      "why": "Boot 4's modularization moved Flyway/Liquibase autoconfiguration into their own starters. Same behaviour once present — migrations on startup against the app DataSource — but presence is now an explicit dependency choice instead of a classpath side effect.",
+      "migration": null,
+      "docs": ["sp.blog.modular", "sp.migration.boot4"]
+    },
+    {
+      "id": "jq.codegen-gradle",
+      "tool": "jooq", "topic": "codegen", "page": "08-data/jooq.html",
+      "title": "Generating the schema classes",
+      "now": "The official jooq-codegen-gradle plugin, run against a migrated database",
+      "was": "Community Gradle plugins with drifting configuration models",
+      "since": "3.19", "deprecated": null, "removed": null,
+      "why": "Codegen is jOOQ's foundation — the generated tables are what make queries type-checked — and since 3.19 the Gradle plugin is first-party, so its configuration tracks the tool instead of chasing it. Point it at a database your migrations just built and commit the output.",
+      "migration": null,
+      "docs": ["jq.manual", "jq.codegen-testcontainers"]
+    },
+    {
+      "id": "jq.kotlin-coroutines",
+      "tool": "jooq", "topic": "kotlin", "page": "08-data/jooq.html",
+      "title": "jOOQ from suspend functions",
+      "now": "jooq-kotlin-coroutines — transactionCoroutine over the R2DBC integration",
+      "was": "runBlocking bridges wrapped around the blocking API",
+      "since": "3.17", "deprecated": null, "removed": null,
+      "why": "The coroutine module suspends over jOOQ's reactive (R2DBC) execution rather than parking threads. With virtual threads the plain blocking API inside a coroutine dispatcher is also legitimate — pick one bridge per codebase, not both.",
+      "migration": null,
+      "docs": ["jq.kotlin-coroutines"]
+    },
+    {
+      "id": "jq.multiset",
+      "tool": "jooq", "topic": "queries", "page": "08-data/jooq-queries.html",
+      "title": "Fetching a parent with its children",
+      "now": "MULTISET subqueries mapped to nested data classes — one query, one round trip",
+      "was": "JOIN + groupBy in memory, N+1 loops, or an ORM entity graph",
+      "since": "3.15", "deprecated": null, "removed": null,
+      "why": "MULTISET turns a correlated subquery into a typed nested collection, serialised by the database (SQL/JSON underneath) and deserialised straight into your DTO shape. The flat-join-then-regroup dance — and its duplicated parent rows — disappears, without adopting an ORM's change tracking.",
+      "migration": null,
+      "code": {
+        "now": "val orders: List<OrderWithLines> = dsl\n    .select(\n        ORDERS.ID,\n        ORDERS.PLACED_AT,\n        multiset(\n            select(ORDER_LINES.SKU, ORDER_LINES.QTY)\n            .from(ORDER_LINES)\n            .where(ORDER_LINES.ORDER_ID.eq(ORDERS.ID))\n        ).convertFrom { it.map(mapping(::Line)) }\n    )\n    .from(ORDERS)\n    .where(ORDERS.CUSTOMER_ID.eq(customerId))\n    .fetch(mapping(::OrderWithLines))",
+        "was": "val rows = dsl.select(ORDERS.ID, ORDERS.PLACED_AT,\n        ORDER_LINES.SKU, ORDER_LINES.QTY)\n    .from(ORDERS)\n    .leftJoin(ORDER_LINES).on(ORDER_LINES.ORDER_ID.eq(ORDERS.ID))\n    .where(ORDERS.CUSTOMER_ID.eq(customerId))\n    .fetch()\n\nval orders = rows.groupBy { it[ORDERS.ID] }   // parent repeated per line\n    .map { (_, group) -> group.toOrderWithLines() }"
+      },
+      "docs": ["jq.multiset-manual", "jq.multiset-blog"]
+    },
+    {
+      "id": "jq.implicit-path-joins",
+      "tool": "jooq", "topic": "queries", "page": "08-data/jooq-queries.html",
+      "title": "Walking foreign keys in a query",
+      "now": "Path joins: ORDERS.customer().NAME — to-one and, since 3.19, to-many",
+      "was": "An explicit JOIN … ON for every hop",
+      "since": "3.19", "deprecated": null, "removed": null,
+      "why": "The generated code knows the foreign keys, so the query can walk them as properties; jOOQ synthesises the joins. To-one paths came earlier; 3.19 extended paths to to-many (and many-to-many) relationships, which pairs naturally with MULTISET for the child collections.",
+      "migration": null,
+      "code": {
+        "now": "dsl.select(ORDERS.ID, ORDERS.customer().NAME)\n   .from(ORDERS)\n   .where(ORDERS.customer().TIER.eq(\"GOLD\"))\n   .fetch()",
+        "was": "dsl.select(ORDERS.ID, CUSTOMERS.NAME)\n   .from(ORDERS)\n   .join(CUSTOMERS).on(CUSTOMERS.ID.eq(ORDERS.CUSTOMER_ID))\n   .where(CUSTOMERS.TIER.eq(\"GOLD\"))\n   .fetch()"
+      },
+      "docs": ["jq.manual", "jq.releases"]
     }
   ]
 }

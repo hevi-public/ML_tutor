@@ -192,5 +192,107 @@
     "plain": "The exact tree that was installed, written down so it can be reproduced.",
     "definition": "A generated file pinning every resolved version and integrity hash. Committing it is what makes an install reproducible; installing with --frozen-lockfile in CI is what proves nobody changed a dependency without changing the lockfile.",
     "see": ["content-addressable-store"]
+  },
+  "k2": {
+    "term": "K2",
+    "plain": "Kotlin's rewritten compiler frontend — the 2.x era.",
+    "definition": "The compiler frontend that became stable and default in Kotlin 2.0, built on one semantic model (FIR) shared by all backends and the IDE. Substantially faster, and the foundation every post-2.0 language feature requires — which is what makes 1.9 legacy in the strong sense.",
+    "see": ["ksp"]
+  },
+  "ksp": {
+    "term": "KSP",
+    "plain": "Kotlin's native replacement for kapt annotation processing.",
+    "definition": "Kotlin Symbol Processing reads Kotlin declarations directly instead of generating Java stubs for javac processors, roughly halving processing time. KSP2 runs on stable compiler APIs, and since KSP 2.3.0 its version no longer needs to match the Kotlin version. kapt remains in maintenance mode for the holdouts.",
+    "see": ["k2"]
+  },
+  "structured-concurrency": {
+    "term": "Structured concurrency",
+    "plain": "Concurrent work owned by a scope, like locals are owned by a block.",
+    "definition": "The coroutine discipline where every coroutine lives in a scope tree: cancelling a parent cancels the children, a failing child fails the scope, and nothing outlives its owner. It is what coroutines offer that raw threads — virtual or not — do not.",
+    "see": ["virtual-threads", "flow"]
+  },
+  "virtual-threads": {
+    "term": "Virtual threads",
+    "plain": "JVM threads cheap enough to give one to every request.",
+    "definition": "Java 21's user-mode threads: blocking parks the virtual thread, not the OS carrier, so thread-per-request code scales without a reactive rewrite. One Boot property (spring.threads.virtual.enabled) switches the request path over. JDK 24 removed the synchronized-pinning caveat.",
+    "see": ["structured-concurrency"]
+  },
+  "flow": {
+    "term": "Flow",
+    "plain": "Kotlin's cold asynchronous stream.",
+    "definition": "A sequence of values produced on collection — nothing runs until something collects, and backpressure falls out of suspension. StateFlow and SharedFlow are its hot variants for state and broadcast. Spring renders Flow return values as streaming responses.",
+    "see": ["structured-concurrency", "cold-hot"]
+  },
+  "bom": {
+    "term": "BOM",
+    "plain": "A published list of library versions designed to agree with each other.",
+    "definition": "A bill of materials — a POM that only manages versions. Importing Spring Boot's BOM means your Jackson, jOOQ and Kotlin versions are the ones Boot tested together, and explains why 'current' and 'the version you run' differ. Override a BOM-managed version only visibly and with a reason.",
+    "see": ["version-catalog"]
+  },
+  "version-catalog": {
+    "term": "Version catalog",
+    "plain": "Gradle's one TOML file where dependency coordinates live.",
+    "definition": "gradle/libs.versions.toml, exposed to build scripts as typed libs.* accessors. It centralises versions the way a BOM does, but for your build's own declarations — the working division is: the BOM owns what it manages, the catalog owns the rest.",
+    "see": ["bom", "convention-plugin"]
+  },
+  "convention-plugin": {
+    "term": "Convention plugin",
+    "plain": "A Gradle plugin that says what being 'one of our modules' means.",
+    "definition": "A (usually precompiled-script) plugin in an included build-logic build that applies the team's defaults — toolchain, warnings, test setup. Modules opt in via one plugins { } line, replacing allprojects/subprojects cross-configuration, which the docs now discourage and the configuration cache penalises.",
+    "see": ["configuration-cache", "version-catalog"]
+  },
+  "configuration-cache": {
+    "term": "Configuration cache",
+    "plain": "Gradle skipping the 'Configure project' phase entirely.",
+    "definition": "Gradle serialises the configured task graph and reuses it while build logic is unchanged — distinct from the build cache, which reuses task outputs. Stable in 8.1, the preferred mode across 9.x, and slated to become the default in Gradle 10. Incompatible plugins are the usual blocker; the problems report names them.",
+    "see": ["convention-plugin"]
+  },
+  "platform-type": {
+    "term": "Platform type",
+    "plain": "A Java value Kotlin can't vouch for — String! rather than String or String?.",
+    "definition": "The type Kotlin assigns to un-annotated Java APIs: the compiler trusts you and defers null failures to runtime. JSpecify annotations remove the ambiguity — and since Kotlin 2.1 violations of them are compile errors, which is why Framework 7 annotating its API surface matters daily.",
+    "see": ["jspecify"]
+  },
+  "jspecify": {
+    "term": "JSpecify",
+    "plain": "The standard nullness annotations Java libraries now agree on.",
+    "definition": "One set of annotations (@Nullable, @NonNull, @NullMarked) with precisely specified semantics, replacing a decade of competing ones. Spring Framework 7 adopted it across its API; Kotlin enforces it strictly by default — Java's nulls became machine-checked contracts at the interop boundary.",
+    "see": ["platform-type"]
+  },
+  "mvcc": {
+    "term": "MVCC",
+    "plain": "Readers see a snapshot; writers make new row versions.",
+    "definition": "Multi-Version Concurrency Control — PostgreSQL keeps multiple versions of each row so reads never block writes: every statement (or transaction) sees the versions current at its snapshot. It is why dirty reads are impossible at every isolation level, and why vacuum exists to reclaim dead versions.",
+    "see": ["snapshot-isolation", "write-skew"]
+  },
+  "snapshot-isolation": {
+    "term": "Snapshot isolation",
+    "plain": "What PostgreSQL's REPEATABLE READ actually is.",
+    "definition": "The whole transaction reads from one snapshot, and updating a row a concurrent transaction changed fails with a serialization error (first-updater-wins). Stronger than the SQL standard requires — no phantoms — but write skew remains possible, because two transactions can each write what the other only read.",
+    "see": ["mvcc", "write-skew", "ssi"]
+  },
+  "write-skew": {
+    "term": "Write skew",
+    "plain": "Two transactions each check a rule, then break it together.",
+    "definition": "Both read the same invariant (say, 'at least one doctor on call'), each writes a different row, and the combined result violates what both verified — with no statement failing. Snapshot isolation permits it; only SERIALIZABLE prevents it. The isolation demo on the PostgreSQL page runs this live.",
+    "see": ["snapshot-isolation", "ssi"]
+  },
+  "ssi": {
+    "term": "SSI",
+    "plain": "How PostgreSQL makes SERIALIZABLE affordable.",
+    "definition": "Serializable Snapshot Isolation: snapshot reads plus tracking of read/write dependencies between concurrent transactions; when a dangerous structure forms, one transaction aborts with SQLSTATE 40001 rather than anything blocking. The application's part of the contract is retrying.",
+    "see": ["snapshot-isolation", "write-skew"]
+  },
+  "multiset": {
+    "term": "MULTISET",
+    "plain": "A query column whose value is another query's rows.",
+    "definition": "jOOQ's nested-collection operator (since 3.15): a correlated subquery becomes a typed List inside each row, serialised via SQL/JSON in one round trip and mapped straight into nested data classes. It is the feature that removes both N+1 loops and flat-join regrouping.",
+    "see": ["mvcc"]
+  },
+  "jakarta-namespace": {
+    "term": "jakarta.*",
+    "plain": "The package rename that split the Java enterprise world in two.",
+    "definition": "When Java EE moved to Eclipse, javax.* stayed behind as a trademark and everything living moved to jakarta.* (Boot 3 / Framework 6, Nov 2022). The two cannot mix on a classpath, which is why one pre-2023 transitive dependency can still break a modern build.",
+    "see": ["bom"]
   }
 }

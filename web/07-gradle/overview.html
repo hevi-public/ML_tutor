@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gradle: the 8 → 9 arc — Web Dev Reference</title>
+
+  <meta name="web:section" content="Gradle">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="../06-spring/testing.html|Testing Spring services">
+  <meta name="web:next" content="kotlin-dsl-and-catalogs.html|Kotlin DSL &amp; version catalogs">
+  <meta name="web:versions" content="Gradle 9.7.0 (services.gradle.org, checked today)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Gradle</p>
+  <h1>Gradle: the 8 → 9 arc</h1>
+  <p class="lede">Gradle's last few years read as one project: make builds
+  declarative enough to cache aggressively. Kotlin DSL, version catalogs and
+  convention plugins are the idioms; the configuration cache is the payoff.
+  This page is the arc and the upgrade mechanics.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Current is 9.7.0.</strong> Only the current major line gets
+      fixes — there is no LTS. The wrapper pins the version per repository,
+      so upgrading is a one-line, one-repo decision.</li>
+      <li><strong>The modern idioms arrived in 8.x</strong> (config cache
+      stable 8.1, Kotlin DSL default 8.2); <strong>9.x makes them the
+      mainline</strong> and Gradle 10 is slated to flip the configuration
+      cache on by default.</li>
+      <li><strong>Two JVMs, two decisions:</strong> the daemon needs Java 17+
+      to run Gradle 9; your code compiles on whatever the toolchain says
+      (<code>jvmToolchain(25)</code>). Don't conflate them.</li>
+      <li><strong>Deprecation warnings are the upgrade path:</strong>
+      <code>--warning-mode all</code> on the current major tells you exactly
+      what the next major will break.</li>
+    </ul>
+  </div>
+
+  <h2>The arc</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Line</th><th>Released</th><th>What defined it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>7</strong></td><td>Apr 2021</td>
+          <td>Version catalogs arrive (stable in 7.4, Feb 2022).</td></tr>
+        <tr><td><strong>8</strong></td><td>Feb 2023</td>
+          <td>Configuration cache stable (8.1); Kotlin DSL becomes the default for new builds (8.2); full Java 21 (8.5).</td></tr>
+        <tr><td><strong>9</strong></td><td>Jul 2025</td>
+          <td>Java 17+ required to run; Kotlin 2.2 build scripts, Groovy 4; configuration cache the preferred mode; Java 25 support in 9.1.</td></tr>
+        <tr><td><strong>10</strong></td><td>expected 2026</td>
+          <td>Announced goal: configuration cache on by default.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What it replaced</h2>
+  <div class="change" data-change="gr.nine"></div>
+
+  <h2>Upgrading a repository</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>What you want</th><th>Command</th></tr></thead>
+      <tbody>
+        <tr><td>Pin a new Gradle for this repo</td>
+          <td><code>./gradlew wrapper --gradle-version 9.7.0</code></td></tr>
+        <tr><td>Find what the next major will break</td>
+          <td><code>./gradlew build --warning-mode all</code></td></tr>
+        <tr><td>Check plugin compatibility first</td>
+          <td>Kotlin plugin, Boot plugin and jOOQ codegen plugin release notes — these three gate this stack's upgrades</td></tr>
+        <tr><td>See where build time goes</td>
+          <td><code>./gradlew build --scan</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: "unsupported class file version" isn't about your code</span>
+    When a Gradle upgrade fails with class-file-version errors, the daemon JVM
+    is usually the culprit — CI images pinning an old JDK for the
+    <em>build tool</em> while the toolchain happily provisions the right JDK
+    for the <em>code</em>. Set the daemon JVM explicitly
+    (<code>org.gradle.java.home</code> or the CI image) and let toolchains own
+    compilation.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading Gradle 6/7-era builds</summary>
+    <div class="layer-body">
+      <p>Groovy scripts with <code>compile</code>/<code>runtime</code>
+      configurations (removed in 7 — today it's
+      <code>implementation</code>/<code>runtimeOnly</code>/<code>api</code>),
+      <code>ext {}</code> version maps, and <code>apply plugin:</code> lines
+      instead of a <code>plugins {}</code> block. Each is mechanical to
+      modernise, and the deprecation warnings enumerate them for you.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://gradle.org" data-doc="gr.home">
+      <span class="kind">guide</span> Gradle</a></li>
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/userguide.html" data-doc="gr.userguide">
+      <span class="kind">guide</span> Gradle user manual</a></li>
+    <li><a class="doc-chip" href="https://gradle.org/whats-new/gradle-9/" data-doc="gr.whatsnew9">
+      <span class="kind">release</span> What's new in Gradle 9</a></li>
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/upgrading_version_8.html" data-doc="gr.upgrade8to9">
+      <span class="kind">migration</span> Upgrading builds from Gradle 8</a></li>
+  </ul>
+</main>
+</body>
+</html>

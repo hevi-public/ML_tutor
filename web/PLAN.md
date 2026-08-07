@@ -1,12 +1,19 @@
 # Web Dev Reference — architecture
 
-A working developer's reference for the Angular stack, as the site's third
+A working developer's reference for the full stack, as the site's third
 track. Unlike the ML and bass tutors it is **not a course**: there is no
 progress tracking, no quizzes, and no linear expectation. It is meant to be
 searched, not read.
 
-Current as of **2026-07-28**: Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 ·
-pnpm 11.17.0 · TypeScript 7.0.2.
+Two halves, one architecture: the front end (Angular · RxJS · Vitest · pnpm)
+and the back end (Kotlin · Spring Boot · Gradle · PostgreSQL · jOOQ ·
+Jackson) share the ledger, the registries, the search index and every
+generated view.
+
+Current as of **2026-08-07**: Angular 22.0.8 · RxJS 7.8.2 · Vitest 4.1.10 ·
+pnpm 11.17.0 · TypeScript 7.0.2 · Kotlin 2.4.10 · Spring Boot 4.1.0
+(Framework 7.0.8, Security 7.1.0) · Gradle 9.7.0 · PostgreSQL 18.4 (19 β2) ·
+jOOQ 3.21.7 · Jackson 3.2.1.
 
 ---
 
@@ -61,7 +68,7 @@ web/
 ├── migrations.html       schematics, and what has none            │ from the
 ├── docs-index.html       every official link, filterable          ┘ ledger
 ├── search.html           pages + change records + official docs
-├── glossary.html         32 terms
+├── glossary.html         49 terms
 ├── assets/
 │   ├── css/site.css      @imports the shared design system, then adds
 │   │                     reference components (change cards, badges, tool
@@ -76,7 +83,7 @@ web/
 │       ├── docs.js       resolves data-doc ids to chips
 │       ├── version-filter.js  "I'm on Angular 19" → annotates every badge
 │       ├── versions.js   the dashboard and release tables
-│       └── viz/          signal-graph · change-detection · marbles
+│       └── viz/          signal-graph · change-detection · marbles · isolation
 ├── data/
 │   ├── changes.json      the ledger — the single source of versioned truth
 │   ├── links.json        every official doc URL, referenced by id
@@ -85,6 +92,7 @@ web/
 │   ├── aliases.json      search-only: how people actually phrase things
 │   └── search-index.json generated
 ├── 01-angular/  (12)  02-rxjs/ (7)  03-vitest/ (6)  04-pnpm/ (5)
+├── 05-kotlin/   (4)   06-spring/ (8)  07-gradle/ (4)  08-data/ (5)
 ```
 
 ## 3. Page contract
@@ -105,8 +113,24 @@ Page flow — deliberately not the tutor flow:
 *At a glance → Do it this way now → What it replaced (change cards) → Gotchas
 → Live demo → Legacy panel → Official docs*
 
-All 30 section pages form one unbroken `prev`/`next` chain, Angular → RxJS →
-Vitest → pnpm.
+All 51 section pages form one unbroken `prev`/`next` chain, Angular → RxJS →
+Vitest → pnpm → Kotlin → Spring → Gradle → Data.
+
+**Backend conventions** (established with the 05–08 sections):
+
+- Ledger `since`/`deprecated`/`removed` values are *release lines* — a major
+  (`"18"`), or major.minor where the minor is the line (`"4.1"`, `"3.21"`,
+  `"2.2"`); the version filter compares the first two components numerically.
+- Records with `tool: "spring"` date changes in **Spring Boot** lines even
+  when the change belongs to Framework or Security (the title and `why`
+  carry the library's own version) — one clock per tool id keeps the filter
+  meaningful.
+- Code samples highlight per tool (Kotlin for kotlin/spring/gradle/jooq/
+  jackson, SQL for postgres, YAML for pnpm) with a per-record `code.lang`
+  override for e.g. application.yaml snippets.
+- `versions.json` support windows: Spring Boot carries `eol` = end of OSS
+  support; PostgreSQL carries its five-year EOL dates; the Support column on
+  versions.html renders for any tool whose releases carry windows.
 
 ## 4. Links: registered, never inline
 
@@ -159,6 +183,10 @@ screen are real:
   schedules nothing.
 - **`viz/marbles.js`** — simulates the four flattening operators over a shared,
   editable source in virtual time.
+- **`viz/isolation.js`** — two sessions against a miniature MVCC (snapshot
+  reads, first-updater-wins, an SSI pivot check). The same interleaving
+  produces a different anomaly per isolation level because the engine, not a
+  script, decides — including write skew surviving REPEATABLE READ.
 
 Plus the cross-cutting **version filter**: set your versions once and every
 badge site-wide annotates itself, persisted under `web-ref:versions`.
@@ -184,8 +212,18 @@ gives exact version-in/version-out; `schematics/migrations.json` and
 were caught that way — a migration schematic that does not exist, a pnpm CLI
 flag that does not exist, and a mis-stated zoneless timeline.
 
+On the JVM side the same principle runs through Maven Central: release dates
+come from the registry's directory listings, `spring-boot-dependencies-<v>.pom`
+is the authority on what Boot manages (it settled Jackson-3-in-Boot-4 and both
+Gradle-9 claims the planning doc had wrong), and `services.gradle.org` dates
+Gradle. Doc-host URLs are grounded in search results and verified by
+`npm run check:links` run locally; PostgreSQL server facts come from the
+project's announcements and versioning-policy page.
+
 ## 8. Out of scope
 
-NgRx and other state libraries, Nx, Angular Material component reference,
-Playwright/Cypress e2e. Room for `05-*` sections; the `web/` naming is
-deliberately broader than the current four tools.
+Front end: NgRx and other state libraries, Nx, Angular Material component
+reference, Playwright/Cypress e2e. Back end: JPA/Hibernate as a first-class
+section (jOOQ is the chosen data layer; JPA appears only in the comparison
+table), Kubernetes/Docker, Kafka and messaging, GraphQL. Room for `09-*`
+sections.

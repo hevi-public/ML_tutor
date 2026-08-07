@@ -13,7 +13,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "web");
-const DIRS = ["01-angular", "02-rxjs", "03-vitest", "04-pnpm"]
+const DIRS = ["01-angular", "02-rxjs", "03-vitest", "04-pnpm",
+  "05-kotlin", "06-spring", "07-gradle", "08-data"]
   .filter((d) => fs.existsSync(path.join(ROOT, d)));
 
 function textify(html) {
@@ -118,7 +119,7 @@ if (fs.existsSync(glossaryPath)) {
     if (slug.startsWith("_")) continue;
     entries.push({
       k: "page", t: e.term, u: `glossary.html#${slug}`, unit: "Glossary",
-      h: e.also || [], b: `${e.plain || ""} ${e.definition || ""}`,
+      h: e.see || [], b: `${e.plain || ""} ${e.definition || ""}`,
     });
   }
 }
@@ -139,7 +140,9 @@ if (fs.existsSync(aliasPath)) {
 }
 
 const out = path.join(ROOT, "data", "search-index.json");
-fs.writeFileSync(out, JSON.stringify(entries));
+// One entry per few lines rather than one 270 KB line: parses identically,
+// and a regenerated index produces a reviewable diff instead of an opaque blob.
+fs.writeFileSync(out, JSON.stringify(entries, null, 1));
 
 const counts = entries.reduce((acc, e) => ((acc[e.k] = (acc[e.k] || 0) + 1), acc), {});
 console.log(

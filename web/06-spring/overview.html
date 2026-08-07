@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Boot 3 → 4, Framework 7 — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="../05-kotlin/kotlin-on-the-jvm.html|Kotlin on the JVM">
+  <meta name="web:next" content="config-and-starters.html|Config &amp; starters">
+  <meta name="web:versions" content="Spring Boot 4.1.0 · Framework 7.0.8 · Security 7.1.0 (BOM checked on Maven Central)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Spring Boot 3 → 4, Framework 7</h1>
+  <p class="lede">Boot 4 (Nov 2025) is the biggest release since the jakarta
+  break: Framework 7, Jackson 3 by default, JSpecify null-safety, modular
+  starters and first-class API versioning. This page is the arc, the support
+  clock, and exactly what the 4.1 BOM manages.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Current is Boot 4.1.0</strong> (June 2026), on Framework
+      7.0.8 and Security 7.1.0. Runs on Java 17–26; 25 is the LTS to be on.</li>
+      <li><strong>All of 3.x is out of OSS support</strong> since 30 June 2026
+      (3.5 was the last line; commercial support continues). The upgrade
+      target is 4.x — see <a href="../versions.html">versions</a> for the
+      clocks.</li>
+      <li><strong>The BOM is the version authority.</strong> Boot 4.1 decides
+      Jackson 3.1.4, jOOQ 3.21.5, Kotlin 2.3.21 and friends — override only
+      with a reason you can defend.</li>
+      <li><strong>Migration effort is real but mechanical</strong>: renamed
+      starters, removed @MockBean, Jackson 3 types — the migration guide's
+      list, not a rewrite.</li>
+    </ul>
+  </div>
+
+  <h2>The arc</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Boot</th><th>Released</th><th>What defined it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>3.0</strong></td><td>Nov 2022</td>
+          <td>The jakarta.* break. Framework 6, Java 17 baseline, Micrometer Observation API.</td></tr>
+        <tr><td><strong>3.2</strong></td><td>Nov 2023</td>
+          <td>RestClient; virtual threads behind one property (Java 21).</td></tr>
+        <tr><td><strong>3.4</strong></td><td>Nov 2024</td>
+          <td>MockMvcTester (AssertJ), structured logging (ecs/logstash/gelf), @MockitoBean replaces @MockBean.</td></tr>
+        <tr><td><strong>3.5</strong></td><td>May 2025</td>
+          <td>The final 3.x line. OSS support ended 2026-06-30.</td></tr>
+        <tr><td><strong>4.0</strong></td><td>Nov 2025</td>
+          <td>Framework 7: Jackson 3 default, JSpecify null-safety, API versioning, HTTP service client groups, modular starters, RestTestClient, Testcontainers 2, JUnit 6. Undertow removed.</td></tr>
+        <tr><td><strong>4.1</strong></td><td>Jun 2026</td>
+          <td>Current. Security 7.1; OpenTelemetry honours standard OTel env vars; process details in the info endpoint.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What the Boot 4.1 BOM manages</h2>
+  <p>Read from <code>spring-boot-dependencies:4.1.0</code> on Maven Central —
+  this is what you get without writing a single version number:</p>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Library</th><th>Managed version</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Spring Framework / Security</td><td>7.0.8 / 7.1.0</td><td></td></tr>
+        <tr><td>Jackson</td><td><strong>3.1.4</strong> (+ Jackson 2 BOM 2.21.4)</td><td>Jackson 3 is the default; 2 is managed for migration</td></tr>
+        <tr><td>jOOQ</td><td>3.21.5</td><td>current standalone is 3.21.7</td></tr>
+        <tr><td>Kotlin / coroutines</td><td>2.3.21 / 1.10.2</td><td>current standalone: 2.4.10 / 1.11.0</td></tr>
+        <tr><td>Flyway / Liquibase</td><td>12.4.0 / 5.0.3</td><td>each needs its own starter since 4.0</td></tr>
+        <tr><td>JUnit / Mockito / AssertJ</td><td>6.0.3 / 5.23.0 / 3.27.7</td><td>JUnit 6 — see <a href="testing.html">testing</a></td></tr>
+        <tr><td>Testcontainers</td><td>2.0.5</td><td>the 2.x line</td></tr>
+        <tr><td>Micrometer / tracing</td><td>1.17.0 / 1.7.0</td><td></td></tr>
+        <tr><td>PostgreSQL JDBC</td><td>42.7.11</td><td>current standalone is 42.7.13</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="sp.starter-modularization"></div>
+
+  <div class="change" data-change="sp.jakarta">
+    <p class="change-note">Kept in the ledger because you still meet it: any
+    dependency last built for Boot 2 drags javax.* onto the classpath, and the
+    failure modes (NoClassDefFoundError on jakarta types) point everywhere
+    except at the real culprit.</p>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: "Boot 4 upgrade" is mostly a Framework 7 upgrade</span>
+    The changes that bite are Framework-level: JSpecify annotations turning
+    sloppy nullness into Kotlin compile errors, Jackson 3 types in signatures,
+    ListenableFuture gone. Read the Boot migration guide first, but budget the
+    time for Framework 7's list — that is where the code edits live.
+  </div>
+
+  <details class="legacy">
+    <summary>Boot 2 — for reading old services</summary>
+    <div class="layer-body">
+      <p>javax.* imports, spring.factories autoconfiguration registration,
+      WebSecurityConfigurerAdapter subclasses and @EnableGlobalMethodSecurity
+      date a codebase to the Boot 2 era (out of OSS support since 2023). The
+      2→3 jump is the expensive one — jakarta plus Java 17 — after which
+      3.5→4.x is routine.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-boot/" data-doc="sp.docs">
+      <span class="kind">guide</span> Spring Boot reference</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Release-Notes" data-doc="sp.relnotes.boot40">
+      <span class="kind">release</span> Boot 4.0 release notes</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.1-Release-Notes" data-doc="sp.relnotes.boot41">
+      <span class="kind">release</span> Boot 4.1 release notes</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide" data-doc="sp.migration.boot4">
+      <span class="kind">migration</span> Boot 4.0 migration guide</a></li>
+    <li><a class="doc-chip" href="https://spring.io/blog/2025/11/13/spring-framework-7-0-general-availability/" data-doc="sp.blog.fw7">
+      <span class="kind">release</span> Framework 7.0 GA</a></li>
+    <li><a class="doc-chip" href="https://spring.io/blog/2025/11/20/spring-boot-4-0-0-available-now/" data-doc="sp.blog.boot4">
+      <span class="kind">release</span> Spring Boot 4.0.0 available now</a></li>
+  </ul>
+</main>
+</body>
+</html>

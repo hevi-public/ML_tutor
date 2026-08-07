@@ -35,6 +35,12 @@ main.hub { max-width: 76rem; }
 .tool-tag.vitest  { color: #15803d; background: #dcf3e3; border-color: #b6e3c6; }
 .tool-tag.pnpm    { color: #b45309; background: #fdf0d5; border-color: #f2d9a8; }
 .tool-tag.typescript { color: #1d4ed8; background: #dbe7ff; border-color: #b9d0fb; }
+.tool-tag.kotlin  { color: #6d28d9; background: #ede9fe; border-color: #d6c9f8; }
+.tool-tag.spring  { color: #4d7c0f; background: #ecf6d8; border-color: #d4e9a9; }
+.tool-tag.gradle  { color: #0f766e; background: #d7f0ee; border-color: #a9dfda; }
+.tool-tag.postgres { color: #0369a1; background: #dbeffa; border-color: #aadcf2; }
+.tool-tag.jooq    { color: #be185d; background: #fbe2ee; border-color: #f3b9d4; }
+.tool-tag.jackson { color: #475569; background: #e7ecf2; border-color: #c9d3df; }
 
 @media (prefers-color-scheme: dark) {
   .tool-tag.angular { color: #fca5a5; background: #3d1515; border-color: #5e2222; }
@@ -42,12 +48,24 @@ main.hub { max-width: 76rem; }
   .tool-tag.vitest  { color: #86efac; background: #123524; border-color: #1c5137; }
   .tool-tag.pnpm    { color: #fcd34d; background: #3a2a0c; border-color: #574011; }
   .tool-tag.typescript { color: #93b4ff; background: #1d3358; border-color: #2a4a7d; }
+  .tool-tag.kotlin  { color: #c4b5fd; background: #29184d; border-color: #422a80; }
+  .tool-tag.spring  { color: #bef264; background: #22300d; border-color: #3a5314; }
+  .tool-tag.gradle  { color: #5eead4; background: #0d2f2b; border-color: #155a51; }
+  .tool-tag.postgres { color: #7dd3fc; background: #0c2c40; border-color: #155a86; }
+  .tool-tag.jooq    { color: #f9a8d4; background: #43102a; border-color: #6d1b45; }
+  .tool-tag.jackson { color: #cbd5e1; background: #252f3b; border-color: #3c4a5d; }
 }
 html[data-theme="dark"] .tool-tag.angular { color: #fca5a5; background: #3d1515; border-color: #5e2222; }
 html[data-theme="dark"] .tool-tag.rxjs    { color: #f0abfc; background: #3b1040; border-color: #5c1a63; }
 html[data-theme="dark"] .tool-tag.vitest  { color: #86efac; background: #123524; border-color: #1c5137; }
 html[data-theme="dark"] .tool-tag.pnpm    { color: #fcd34d; background: #3a2a0c; border-color: #574011; }
 html[data-theme="dark"] .tool-tag.typescript { color: #93b4ff; background: #1d3358; border-color: #2a4a7d; }
+html[data-theme="dark"] .tool-tag.kotlin  { color: #c4b5fd; background: #29184d; border-color: #422a80; }
+html[data-theme="dark"] .tool-tag.spring  { color: #bef264; background: #22300d; border-color: #3a5314; }
+html[data-theme="dark"] .tool-tag.gradle  { color: #5eead4; background: #0d2f2b; border-color: #155a51; }
+html[data-theme="dark"] .tool-tag.postgres { color: #7dd3fc; background: #0c2c40; border-color: #155a86; }
+html[data-theme="dark"] .tool-tag.jooq    { color: #f9a8d4; background: #43102a; border-color: #6d1b45; }
+html[data-theme="dark"] .tool-tag.jackson { color: #cbd5e1; background: #252f3b; border-color: #3c4a5d; }
 
 /* ---------- Version badges ---------- */
 
@@ -256,6 +274,10 @@ table.cheat code {
   overflow-wrap: break-word;
 }
 /* Wide tables scroll rather than pushing the page sideways. */
+/* JVM-length identifiers in prose (providers.environmentVariable(...)) must
+   wrap rather than widen the page on narrow screens. */
+main :not(pre) > code { overflow-wrap: anywhere; }
+
 .table-scroll { overflow-x: auto; margin: 1.2rem 0; }
 .table-scroll table.cheat { margin: 0; min-width: 34rem; }
 
@@ -338,6 +360,7 @@ table.cheat code {
 .status.active { color: var(--good); background: var(--good-soft); }
 .status.lts    { color: var(--accent); background: var(--accent-soft); }
 .status.eol    { color: var(--bad); background: var(--bad-soft); }
+.status.future { color: var(--text-soft); background: var(--bg-soft); border: 1px dashed var(--border); }
 
 /* ---------- Filter / control bars ---------- */
 
@@ -557,11 +580,37 @@ table.cheat code {
 .timeline-entry.rxjs    { border-left-color: #a21caf; }
 .timeline-entry.vitest  { border-left-color: #15803d; }
 .timeline-entry.pnpm    { border-left-color: #b45309; }
+.timeline-entry.kotlin  { border-left-color: #6d28d9; }
+.timeline-entry.spring  { border-left-color: #4d7c0f; }
+.timeline-entry.gradle  { border-left-color: #0f766e; }
+.timeline-entry.postgres { border-left-color: #0369a1; }
+.timeline-entry.jooq    { border-left-color: #be185d; }
+.timeline-entry.jackson { border-left-color: #475569; }
 .timeline-entry h4 { margin: 0 0 0.2rem; font-size: 1rem; }
-.timeline-entry .swap { font-size: 0.92rem; }
+.timeline-entry .swap { font-size: 0.92rem; overflow-wrap: anywhere; }
 .timeline-entry .swap .arrow { color: var(--text-soft); margin: 0 0.4rem; }
 .timeline-entry .swap .was { color: var(--text-soft); text-decoration: line-through; }
 .timeline-entry p { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--text-soft); }
+
+/* ---------- Transaction isolation demo (08-data) ---------- */
+
+/* A demo select's widest option must not widen the page on phones — the
+   select and its grid/flex ancestors all need permission to shrink. */
+.demo select { max-width: 100%; min-width: 0; }
+.demo .control { min-width: 0; }
+.iso-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0; }
+@media (max-width: 640px) { .iso-grid { grid-template-columns: 1fr; } }
+.iso-session { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-soft); padding: 0.7rem 0.9rem; }
+.iso-log { list-style: none; margin: 0.5rem 0 0; padding: 0; font-family: ui-monospace, Menlo, "Cascadia Code", monospace; font-size: 0.78rem; }
+.iso-log li { padding: 0.25rem 0; border-top: 1px dashed var(--border); overflow-wrap: anywhere; }
+.iso-log li:first-child { border-top: 0; }
+.iso-log li.err code, .iso-log li.err .result { color: var(--bad); }
+.iso-log .result { color: var(--text-soft); white-space: pre-wrap; }
+.iso-state { font-family: ui-monospace, Menlo, "Cascadia Code", monospace; font-size: 0.8rem; color: var(--text-soft); border: 1px dashed var(--border); border-radius: var(--radius); padding: 0.5rem 0.8rem; overflow-wrap: anywhere; }
+.iso-verdict { margin-top: 0.8rem; border-radius: var(--radius); padding: 0.7rem 0.9rem; font-size: 0.92rem; }
+.iso-verdict:empty { display: none; }
+.iso-verdict.ok { border: 1px solid var(--good); color: var(--good); background: var(--good-soft); }
+.iso-verdict.broken { border: 1px solid var(--bad); color: var(--bad); background: var(--bad-soft); }
 
 .empty-note {
   border: 1px dashed var(--border);

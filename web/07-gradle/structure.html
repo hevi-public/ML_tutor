@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gradle structure &amp; convention plugins — Web Dev Reference</title>
+
+  <meta name="web:section" content="Gradle">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="kotlin-dsl-and-catalogs.html|Kotlin DSL &amp; version catalogs">
+  <meta name="web:next" content="performance.html|Configuration cache &amp; performance">
+  <meta name="web:versions" content="Gradle 9.7.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Gradle</p>
+  <h1>Structure &amp; convention plugins</h1>
+  <p class="lede">How a multi-module build shares configuration without the
+  root script reaching into every project. One pattern — convention plugins in
+  an included <code>build-logic</code> build — replaced a decade of
+  <code>allprojects</code> folklore.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Each module declares what it is</strong>
+      (<code>plugins { id("conventions.kotlin-service") }</code>); the
+      convention plugin says what that means. No module is configured from
+      outside.</li>
+      <li><strong><code>build-logic</code> (included build) over
+      <code>buildSrc</code></strong> is the current convention for where those
+      plugins live — same code, better isolation.</li>
+      <li><strong><code>allprojects</code>/<code>subprojects</code> is
+      documented as discouraged</strong> — it couples projects and blocks the
+      configuration-cache/isolated-projects direction Gradle is moving in.</li>
+      <li><strong>Precompiled script plugins are enough.</strong> A convention
+      plugin is just a <code>.gradle.kts</code> file in build-logic; writing a
+      Plugin&lt;Project&gt; class is rarely necessary.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-plaintext">.
+├── settings.gradle.kts          # includeBuild("build-logic"); module list
+├── gradle/libs.versions.toml
+├── build-logic/
+│   ├── settings.gradle.kts      # pulls in the same version catalog
+│   └── src/main/kotlin/
+│       ├── conventions.kotlin-base.gradle.kts      # toolchain, warnings, tests
+│       └── conventions.kotlin-service.gradle.kts   # base + Boot + jOOQ codegen
+├── service-orders/build.gradle.kts   # plugins { id("conventions.kotlin-service") }
+└── lib-domain/build.gradle.kts       # plugins { id("conventions.kotlin-base") }</code></pre>
+
+  <pre><code class="language-kotlin">// build-logic/src/main/kotlin/conventions.kotlin-base.gradle.kts
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+}
+
+kotlin {
+    jvmToolchain(25)
+    compilerOptions { allWarningsAsErrors = true }
+}
+
+tasks.withType&lt;Test&gt;().configureEach {
+    useJUnitPlatform()
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+}</code></pre>
+
+  <h2>What it replaced</h2>
+  <div class="change" data-change="gr.convention-plugins"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: plugin versions live in build-logic's classpath</span>
+    A convention plugin that does <code>id("org.jetbrains.kotlin.jvm")</code>
+    doesn't state a version — the version comes from build-logic's own
+    dependencies (<code>implementation(libs.plugins.kotlin.jvm.toDep())</code>
+    or the marker artifact). Forgetting this puts you back to "which Kotlin is
+    this build actually running" — pin it once in build-logic, sourced from
+    the same catalog.
+  </div>
+
+  <details class="legacy">
+    <summary>buildSrc, and the invalidation folklore</summary>
+    <div class="layer-body">
+      <p><code>buildSrc</code> works fine for the same purpose, and the old
+      lore that any buildSrc change invalidates the whole build stopped being
+      true around Gradle 8. The reasons build-logic won as the convention are
+      softer: it behaves like a normal included build, doesn't sit on every
+      classpath implicitly, and scales to being shared between repos. No
+      urgency to migrate a working buildSrc — just don't start a new one.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/sharing_build_logic_between_subprojects.html" data-doc="gr.sharing-logic">
+      <span class="kind">guide</span> Sharing build logic between subprojects</a></li>
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/implementing_gradle_plugins_convention.html" data-doc="gr.conv-plugins">
+      <span class="kind">guide</span> Implementing convention plugins</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jOOQ queries: MULTISET &amp; row mapping — Web Dev Reference</title>
+
+  <meta name="web:section" content="Data">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="jooq.html|jOOQ: the model">
+  <meta name="web:versions" content="jOOQ 3.21.7 · Kotlin 2.4.10">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Data</p>
+  <h1>Queries: MULTISET &amp; row mapping</h1>
+  <p class="lede">The two features that make jOOQ feel unfair: MULTISET turns
+  nested collections into a typed, single-round-trip query, and path joins
+  make foreign keys walkable. Together they produce the DTO shape your API
+  wanted, straight from SQL.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Nested lists → MULTISET</strong> (3.15+): the database
+      serialises children per parent; jOOQ deserialises into your data
+      classes. No duplicated parent rows, no in-memory regrouping.</li>
+      <li><strong>Foreign keys → path joins</strong>:
+      <code>ORDERS.customer().NAME</code>; to-many paths since 3.19.</li>
+      <li><strong>Mapping → constructor references</strong>:
+      <code>fetch(mapping(::OrderSummary))</code> — positional, type-checked
+      at compile time.</li>
+      <li><strong>Know your fetch vocabulary:</strong>
+      <code>fetchOne</code> (0..1, throws on 2+), <code>fetchSingle</code>
+      (exactly 1), <code>fetchOptional</code>, plain <code>fetch</code> for
+      lists.</li>
+    </ul>
+  </div>
+
+  <h2>What changed</h2>
+
+  <div class="change" data-change="jq.multiset">
+    <p class="change-note">Under the hood the MULTISET is emitted as SQL/JSON
+    and parsed back — which is why it works over plain JDBC, and why the
+    query stays one round trip regardless of nesting depth.</p>
+  </div>
+
+  <div class="change" data-change="jq.implicit-path-joins"></div>
+
+  <h2>The canonical shape</h2>
+  <pre><code class="language-kotlin">// The API DTO — exactly what the endpoint returns
+data class CustomerOrders(
+    val name: String,
+    val orders: List<OrderWithLines>,
+)
+data class OrderWithLines(val id: UUID, val lines: List<Line>)
+data class Line(val sku: String, val qty: Int)
+
+fun customerOrders(id: CustomerId): CustomerOrders? =
+    dsl.select(
+        CUSTOMERS.NAME,
+        multiset(
+            select(
+                ORDERS.ID,
+                multiset(
+                    select(ORDER_LINES.SKU, ORDER_LINES.QTY)
+                    .from(ORDER_LINES)
+                    .where(ORDER_LINES.ORDER_ID.eq(ORDERS.ID))
+                ).convertFrom { it.map(mapping(::Line)) }
+            )
+            .from(ORDERS)
+            .where(ORDERS.CUSTOMER_ID.eq(CUSTOMERS.ID))
+        ).convertFrom { it.map(mapping(::OrderWithLines)) }
+    )
+    .from(CUSTOMERS)
+    .where(CUSTOMERS.ID.eq(id.value))
+    .fetchOne(mapping(::CustomerOrders))
+// Two levels of nesting, one SQL statement, zero N+1.</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: MULTISET output is ordered only if you say so</span>
+    Children arrive in whatever order the database produced them. If the API
+    promises ordered lines, put an <code>orderBy</code> <em>inside</em> the
+    MULTISET subquery — sorting the outer query does nothing for the nested
+    collections.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: R2DBC + coroutines is its own lane</span>
+    The suspend integration rides on R2DBC — a different driver with a
+    different pool (and no MULTISET emulation gaps on Postgres, but test it).
+    With virtual threads, blocking JDBC from coroutines via a
+    virtual-thread dispatcher is the boring, robust default; choose R2DBC
+    deliberately, not because suspend looked nicer.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading pre-MULTISET jOOQ</summary>
+    <div class="layer-body">
+      <p>Flat left-join selects regrouped with <code>fetchGroups</code> or
+      Kotlin's <code>groupBy</code>, <code>into(MyDto::class.java)</code>
+      reflection mapping (works, but positional <code>mapping()</code>
+      type-checks), and hand-batched child queries. All still function;
+      MULTISET replaced the reasons for them.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://www.jooq.org/doc/latest/manual/sql-building/column-expressions/multiset-value-constructor/" data-doc="jq.multiset-manual">
+      <span class="kind">reference</span> MULTISET value constructor</a></li>
+    <li><a class="doc-chip" href="https://blog.jooq.org/3-15-0-release-with-support-for-r2dbc-nested-row-array-and-multiset-types-5-new-sql-dialects-create-procedure-function-and-trigger-support-and-much-more/" data-doc="jq.multiset-blog">
+      <span class="kind">release</span> jOOQ 3.15: MULTISET and R2DBC</a></li>
+    <li><a class="doc-chip" href="https://www.jooq.org/doc/latest/manual/sql-building/kotlin-sql-building/kotlin-coroutines/" data-doc="jq.kotlin-coroutines">
+      <span class="kind">guide</span> Kotlin coroutines with jOOQ</a></li>
+    <li><a class="doc-chip" href="https://github.com/jOOQ/jOOQ/releases" data-doc="jq.releases">
+      <span class="kind">release</span> jOOQ releases</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring controllers &amp; the three web clients — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="config-and-starters.html|Config &amp; starters">
+  <meta name="web:next" content="serialization.html|Serialization: Jackson 2 → 3">
+  <meta name="web:versions" content="Spring Boot 4.1.0 · Framework 7.0.8">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Controllers &amp; the three web clients</h1>
+  <p class="lede">The server side has been stable for years — annotated
+  controllers returning value types. The client side is where three
+  generations coexist in real codebases, and where Framework 7 finally settled
+  the question.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Server: @RestController + Kotlin data classes.</strong>
+      Nothing controversial; validation at the boundary with
+      jakarta.validation.</li>
+      <li><strong>Client, blocking code: RestClient.</strong> RestTemplate is
+      docs-deprecated in 7.x; WebClient is for reactive stacks.</li>
+      <li><strong>Client, more than a couple of endpoints: @HttpExchange
+      interfaces</strong>, registered as a group with
+      <code>@ImportHttpServices</code> (Framework 7).</li>
+      <li><strong>API versioning is now the framework's job</strong> — the
+      mapping declares its version; configuration decides how clients say
+      which one they want.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">@RestController
+@RequestMapping("/orders")
+class OrderController(private val orders: OrderService) {
+
+    @GetMapping("/{id}")
+    fun find(@PathVariable id: OrderId): OrderResponse =
+        orders.find(id) ?: throw OrderNotFound(id)
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    fun create(@Valid @RequestBody req: CreateOrder): OrderResponse =
+        orders.create(req)
+}
+
+// Errors: one @RestControllerAdvice producing ProblemDetail (RFC 9457),
+// not per-controller try/catch.</code></pre>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="sp.web.restclient">
+    <p class="change-note">The decision table, compressed: blocking service →
+    RestClient · reactive service → WebClient · several endpoints on one
+    remote API → an @HttpExchange interface (next card), which runs on either
+    client underneath.</p>
+  </div>
+
+  <div class="change" data-change="sp.web.http-interfaces"></div>
+
+  <div class="change" data-change="sp.web.api-versioning"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: WebClient still drags in reactor</span>
+    Adding WebClient to an MVC service pulls the reactive stack onto the
+    classpath for one client — and with virtual threads enabled, buys nothing.
+    The reverse trap: Spring MVC accepts Kotlin <code>suspend</code> handlers
+    (via async dispatch), but the blocking-with-virtual-threads model is
+    simpler unless the handler genuinely orchestrates concurrent work.
+  </div>
+
+  <details class="legacy">
+    <summary>RestTemplate-era clients — for reading old code</summary>
+    <div class="layer-body">
+      <p><code>restTemplate.exchange(url, HttpMethod.GET, entity,
+      typeRef)</code> with hand-built HttpHeaders, per-service
+      <code>*Client</code> classes holding a RestTemplate, and
+      <code>getForObject</code> null-handling by convention. Maintenance mode
+      since Framework 5 (2017); Framework 7's docs mark it deprecated with the
+      annotation to follow in 7.1. Translate to RestClient mechanically when
+      you touch one.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://spring.io/blog/2025/09/30/the-state-of-http-clients-in-spring/" data-doc="sp.blog.http-clients">
+      <span class="kind">guide</span> The state of HTTP clients in Spring</a></li>
+    <li><a class="doc-chip" href="https://spring.io/blog/2025/09/16/api-versioning-in-spring" data-doc="sp.blog.api-versioning">
+      <span class="kind">guide</span> API versioning in Spring</a></li>
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-framework/reference/" data-doc="sp.fw.docs">
+      <span class="kind">guide</span> Spring Framework reference</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

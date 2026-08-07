@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Web Dev Reference — Angular, RxJS, Vitest, pnpm</title>
+  <title>Web Dev Reference — Angular · RxJS · Vitest · pnpm · Kotlin · Spring · Gradle · PostgreSQL</title>
 
   <meta name="web:root" content="./">
 
@@ -14,7 +14,7 @@
 <body>
 <main class="wide">
   <div class="hero">
-    <h1>The Angular stack, current as of today</h1>
+    <h1>The full stack, current as of today</h1>
     <p class="lede">What the right way to do it is <em>now</em>, what it was
     before, why it changed, and the official docs one click away. A working
     reference, not a course — so you can stop reconstructing the answer from five
@@ -26,7 +26,8 @@
     <div class="box">Loading version data…</div>
   </div>
   <p style="font-size:0.88rem;color:var(--text-soft)">
-    Release dates verified against the npm registry. Last checked
+    Release dates verified against the package registries — npm for the front
+    end, Maven Central and services.gradle.org for the JVM side. Last checked
     <strong data-checked-on>—</strong>. See the full release history and support
     windows on <a href="versions.html">versions</a>.</p>
 
@@ -90,6 +91,44 @@
       <a href="04-pnpm/config-and-gotchas.html">config &amp; gotchas</a> ·
       <a href="04-pnpm/angular-and-pnpm.html">pnpm with Angular</a></p>
     </li>
+    <li class="unit-card">
+      <span class="num">KOTLIN</span><br>
+      <a href="05-kotlin/overview.html">Kotlin 2.4</a>
+      <p><a href="05-kotlin/overview.html">The 1.9→2.4 arc &amp; K2</a> ·
+      <a href="05-kotlin/language.html">the language, by version</a> ·
+      <a href="05-kotlin/coroutines.html">coroutines — or virtual threads?</a> ·
+      <a href="05-kotlin/kotlin-on-the-jvm.html">the JVM side: KSP, interop, null-safety</a></p>
+    </li>
+    <li class="unit-card">
+      <span class="num">SPRING</span><br>
+      <a href="06-spring/overview.html">Spring Boot 4</a>
+      <p><a href="06-spring/overview.html">The Boot 3→4 / Framework 7 arc</a> ·
+      <a href="06-spring/config-and-starters.html">config &amp; starters</a> ·
+      <a href="06-spring/web.html">controllers &amp; the three web clients</a> ·
+      <a href="06-spring/data-and-transactions.html">transactions</a> ·
+      <a href="06-spring/security.html">Security 6→7</a> ·
+      <a href="06-spring/serialization.html">Jackson 2→3</a> ·
+      <a href="06-spring/observability.html">observability</a> ·
+      <a href="06-spring/testing.html">testing</a></p>
+    </li>
+    <li class="unit-card">
+      <span class="num">GRADLE</span><br>
+      <a href="07-gradle/overview.html">Gradle 9</a>
+      <p><a href="07-gradle/overview.html">The 8→9 arc</a> ·
+      <a href="07-gradle/kotlin-dsl-and-catalogs.html">Kotlin DSL &amp; version catalogs</a> ·
+      <a href="07-gradle/structure.html">convention plugins &amp; structure</a> ·
+      <a href="07-gradle/performance.html">configuration cache &amp; performance</a></p>
+    </li>
+    <li class="unit-card">
+      <span class="num">DATA</span><br>
+      <a href="08-data/postgres-overview.html">PostgreSQL 18 · jOOQ 3.21</a>
+      <p><a href="08-data/postgres-overview.html">The 15→18 arc (19 in beta)</a> ·
+      <a href="08-data/postgres-features.html">uuidv7, MERGE, JSON_TABLE</a> ·
+      <a href="08-data/schema-and-migrations.html">Flyway &amp; schema history</a> ·
+      <a href="08-data/jooq.html">jOOQ: the model</a> ·
+      <a href="08-data/jooq-queries.html">MULTISET &amp; row mapping</a>.
+      One live demo.</p>
+    </li>
   </ul>
 
   <h2>Cross-cutting</h2>
@@ -97,8 +136,9 @@
     <li class="unit-card">
       <span class="num">LIVE</span><br>
       <a href="versions.html">Versions &amp; support windows</a>
-      <p>Every release since Angular 14, with the dates each version leaves
-      active support and LTS. Find out whether you are already past EOL.</p>
+      <p>Every release line across the stack — Angular's active/LTS clock,
+      Spring Boot's OSS windows, PostgreSQL's five-year EOL dates. Find out
+      whether you are already past EOL.</p>
     </li>
     <li class="unit-card">
       <span class="num">LIVE</span><br>

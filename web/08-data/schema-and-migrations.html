@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schema &amp; migrations — Web Dev Reference</title>
+
+  <meta name="web:section" content="Data">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="postgres-features.html|uuidv7, MERGE, JSON_TABLE">
+  <meta name="web:next" content="jooq.html|jOOQ: the model">
+  <meta name="web:versions" content="Flyway 12.4.0 · Liquibase 5.0.3 (Boot 4.1 BOM) · PostgreSQL 18.4">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Data</p>
+  <h1>Schema &amp; migrations</h1>
+  <p class="lede">The schema is code: versioned SQL files, applied by Flyway on
+  startup, and — because this stack runs jOOQ — the same migrated schema is
+  what code generation compiles against. The pipeline's order is the whole
+  trick.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Flyway is the default here</strong> (Boot manages 12.4.0):
+      plain SQL files, V-prefixed versions, a schema history table. Liquibase
+      (5.0.3) is the alternative when you need changelog abstraction or
+      rollback tooling.</li>
+      <li><strong>The pipeline order:</strong> migrate a throwaway database →
+      run jOOQ codegen against it → compile. Schema drift becomes a compile
+      error, not a production incident.</li>
+      <li><strong>Migrations are append-only.</strong> Editing an applied
+      migration is how checksums break at 2am; fix forward with the next
+      V-file.</li>
+      <li><strong>Boot 4 note:</strong> the starter is explicit now — the
+      card below.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-sql">-- src/main/resources/db/migration/V014__order_totals.sql
+-- One concern per migration; expand-migrate-contract for anything hot.
+ALTER TABLE orders
+  ADD COLUMN total_cents bigint;             -- 1 expand: nullable first
+
+UPDATE orders SET total_cents = subtotal_cents + tax_cents
+  WHERE total_cents IS NULL;                 -- 2 backfill
+
+ALTER TABLE orders
+  ALTER COLUMN total_cents SET NOT NULL;     -- 3 contract (next release if hot)</code></pre>
+
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Convention</th><th>Rule</th></tr></thead>
+      <tbody>
+        <tr><td>Versioned files</td><td><code>V014__order_totals.sql</code> — zero-padded, double underscore, description that reads in history</td></tr>
+        <tr><td>Repeatable files</td><td><code>R__views.sql</code> for views/functions — re-applied when their checksum changes, always after V-files</td></tr>
+        <tr><td>Local reset</td><td>Drop the schema and re-migrate; never edit applied files</td></tr>
+        <tr><td>Concurrent indexes</td><td><code>CREATE INDEX CONCURRENTLY</code> can't run in a transaction — mark the migration non-transactional</td></tr>
+        <tr><td>Out-of-order</td><td>Leave <code>flyway.out-of-order=false</code> unless parallel branches force it — ordering is the audit trail</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What changed</h2>
+  <div class="change" data-change="sp.flyway-starter"></div>
+
+  <h2>Flyway or Liquibase?</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>Flyway</th><th>Liquibase</th></tr></thead>
+      <tbody>
+        <tr><td>Migration unit</td><td>Plain SQL files (the DB's own dialect)</td><td>Changesets in SQL, XML or YAML — abstracted</td></tr>
+        <tr><td>Mental model</td><td>Numbered scripts, forward-only</td><td>Changelog graph with preconditions and contexts</td></tr>
+        <tr><td>Rollback story</td><td>Write the inverse migration yourself</td><td>Tooling-assisted rollbacks (paid tiers do more)</td></tr>
+        <tr><td>Fits when</td><td>One database engine, SQL-literate team — this stack</td><td>Multi-engine products, heavier governance needs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: startup migrations and replicas</span>
+    Boot runs migrations on application startup — fine for one instance,
+    a race for many. In multi-replica deployments, run migrations as a
+    dedicated step (init container / CI job invoking the same Flyway config)
+    and let app instances verify rather than apply. Flyway's history-table
+    locking prevents corruption either way, but a deploy blocked behind a
+    long backfill helps nobody.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading Hibernate-managed schemas</summary>
+    <div class="layer-body">
+      <p><code>hibernate.hbm2ddl.auto=update</code> — the schema as a side
+      effect of entity annotations — still exists in old services. It has no
+      history, no review artifact and no answer for data migrations, which is
+      why every one of those services eventually adopts a migration tool and
+      baselines with <code>flyway.baseline-on-migrate=true</code>.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-boot/" data-doc="sp.docs">
+      <span class="kind">guide</span> Spring Boot reference (SQL migrations)</a></li>
+    <li><a class="doc-chip" href="https://www.postgresql.org/docs/current/" data-doc="pg.home">
+      <span class="kind">guide</span> PostgreSQL documentation</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>
