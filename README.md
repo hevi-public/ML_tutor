@@ -21,12 +21,13 @@ an everyday analogy before the jargon arrives.
   your browser** — a full git implementation (isomorphic-git) on a browser
   filesystem — so `rebase --onto` and `reset --hard` can be practised on a
   repository that doesn't matter.
-- **[Web Dev Reference](web/index.html)** (`web/`) — Angular, RxJS, Vitest and
-  pnpm, in a reference shape rather than a course one: what the current best
-  practice is, what it replaced, why it changed, and the official docs one click
-  away. Every versioned claim is a record in one ledger
-  (`web/data/changes.json`), so the pages, the deprecation list and the timeline
-  cannot drift apart.
+- **[Web Dev Reference](web/index.html)** (`web/`) — the full stack in a
+  reference shape rather than a course one: Angular, RxJS, Vitest and pnpm on
+  the front end; Kotlin, Spring Boot, Gradle, PostgreSQL, jOOQ and Jackson on
+  the back. What the current best practice is, what it replaced, why it
+  changed, and the official docs one click away. Every versioned claim is a
+  record in one ledger (`web/data/changes.json`), so the pages, the
+  deprecation list and the timeline cannot drift apart.
 
 ## Run it locally
 
@@ -111,21 +112,26 @@ syntax reference, concept map, search and flashcards.
 
 **Web Dev Reference** — a reference track, not a course, so the page shape is
 different: *at a glance → do it this way now → what it replaced and why →
-gotchas → live demo → legacy panel → official docs*. 38 pages across four
-sections — Angular (12), RxJS (7), Vitest (6), pnpm (5) — plus cross-cutting
-views generated from the change ledger: a deprecation list, a version timeline,
+gotchas → live demo → legacy panel → official docs*. 59 pages across eight
+sections — Angular (12), RxJS (7), Vitest (6), pnpm (5), Kotlin (4), Spring
+Boot (8), Gradle (4), Data/PostgreSQL+jOOQ (5) — plus cross-cutting views
+generated from the change ledger: a deprecation list, a version timeline,
 a migration-schematic index, and a searchable index of every official doc it
 links to. Search covers three kinds of result at once — pages, change records
-(so searching a retired API like `toPromise` finds its replacement), and the
-official docs — with aliases for how people actually phrase things ("view not
-updating" → change detection, "NG0203" → dependency injection).
+(so searching a retired API like `toPromise` or `WebSecurityConfigurerAdapter`
+finds its replacement), and the official docs — with aliases for how people
+actually phrase things ("view not updating" → change detection, "could not
+serialize access" → transaction isolation).
 
-Three live demos, each implementing the thing rather than animating a
+Four live demos, each implementing the thing rather than animating a
 recording: a working signal graph (real recompute counters, showing laziness
 and glitch-free propagation), a change-detection visualiser (one tree, one
-event, three strategies), and a marble player simulating the four flattening
-operators over an editable source. Plus a version filter — set which versions
-you're on and every badge site-wide tells you whether it applies to you yet.
+event, three strategies), a marble player simulating the four flattening
+operators over an editable source, and a transaction-isolation visualizer
+running two sessions against a miniature MVCC — the same interleaving produces
+a different anomaly per isolation level because the rules, not a script,
+decide. Plus a version filter — set which versions you're on and every badge
+site-wide tells you whether it applies to you yet.
 
 All four sites keep state in `localStorage` under separate namespaces
 (`ml-tutor:*` / `bass-tutor:*` / `git-tutor:*` / `web-ref:*`) — nothing leaves
