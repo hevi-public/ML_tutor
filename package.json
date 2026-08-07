@@ -1,11 +1,12 @@
 {
   "name": "ml-tutor",
   "version": "0.1.0",
-  "description": "Interactive novice-to-expert machine learning tutor \u2014 static HTML/JS, plain language first",
+  "description": "Interactive novice-to-expert machine learning tutor — static HTML/JS, plain language first",
   "private": true,
   "scripts": {
     "dev": "http-server -p 8010 -c-1 -o /index.html .",
     "dev:bass": "http-server -p 8010 -c-1 -o /bass/index.html .",
+    "predev:web": "node scripts/build-web-index.js",
     "dev:web": "http-server -p 8010 -c-1 -o /web/index.html .",
     "build:index": "node scripts/build-search-index.js",
     "build:bass": "node scripts/build-bass-index.js",
