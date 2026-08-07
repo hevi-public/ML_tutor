@@ -140,7 +140,9 @@ if (fs.existsSync(aliasPath)) {
 }
 
 const out = path.join(ROOT, "data", "search-index.json");
-fs.writeFileSync(out, JSON.stringify(entries));
+// One entry per few lines rather than one 270 KB line: parses identically,
+// and a regenerated index produces a reviewable diff instead of an opaque blob.
+fs.writeFileSync(out, JSON.stringify(entries, null, 1));
 
 const counts = entries.reduce((acc, e) => ((acc[e.k] = (acc[e.k] || 0) + 1), acc), {});
 console.log(
