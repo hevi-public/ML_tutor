@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kotlin DSL &amp; version catalogs — Web Dev Reference</title>
+
+  <meta name="web:section" content="Gradle">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="overview.html|Gradle overview">
+  <meta name="web:next" content="structure.html|Convention plugins &amp; structure">
+  <meta name="web:versions" content="Gradle 9.7.0 · Kotlin DSL on Kotlin 2.2">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Gradle</p>
+  <h1>Kotlin DSL &amp; version catalogs</h1>
+  <p class="lede">The two idioms that make a 2026 build recognisable: scripts
+  in Kotlin, versions in one TOML file. Both are old news individually — the
+  point of this page is the combined shape and its sharp edges.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>build.gradle.kts + libs.versions.toml</strong> is the
+      documented default; every snippet in current Gradle docs assumes
+      both.</li>
+      <li><strong>The catalog holds plugins too</strong> —
+      <code>alias(libs.plugins.spring.boot)</code> — so even plugin versions
+      live in the TOML.</li>
+      <li><strong>Let Boot's BOM version libraries it manages</strong>: catalog
+      entries for Spring/jOOQ/Jackson need no version — the platform decides.
+      Catalog versions are for what the BOM doesn't cover.</li>
+      <li><strong>Dashes become dots:</strong> <code>spring-boot</code> in the
+      TOML is <code>libs.spring.boot</code> in scripts.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">// build.gradle.kts — a service module, whole build definition
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.spring)     // allopen preset for Spring proxies
+    alias(libs.plugins.spring.boot)
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-jooq")
+    implementation(libs.kotlinx.coroutines)   // versioned by the catalog
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+}
+
+kotlin { jvmToolchain(25) }</code></pre>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="gr.version-catalogs"></div>
+
+  <div class="change" data-change="gr.kotlin-dsl-default"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: where <code>libs</code> doesn't reach</span>
+    The typed <code>libs.*</code> accessors are generated for project build
+    scripts. Inside <code>buildSrc</code>/<code>build-logic</code> plugin
+    <em>source code</em> they don't exist by magic — a convention plugin reads
+    the catalog through <code>versionCatalogs.named("libs")</code> instead.
+    Budget ten minutes for this the first time, not two hours.
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: two version authorities</span>
+    A version in the catalog <em>and</em> in Boot's BOM is a conflict waiting
+    to confuse someone. House rule that works: the BOM owns everything it
+    manages; the catalog owns the rest (kotlinx libraries, MapStruct, build
+    plugins). Overriding a BOM version deliberately? Do it visibly via
+    <code>extra["jooq.version"]</code>, not by a quiet catalog entry.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading pre-catalog builds</summary>
+    <div class="layer-body">
+      <p><code>ext { springBootVersion = '…' }</code> in the root script,
+      <code>"$springBootVersion"</code> string interpolation per dependency,
+      a <code>Versions.kt</code> object in buildSrc, or — the darkest
+      timeline — versions inline in every module and unequal between them.
+      The catalog migration is mostly regex work and immediately makes
+      Renovate/Dependabot useful.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/version_catalogs.html" data-doc="gr.catalogs">
+      <span class="kind">guide</span> Version catalogs</a></li>
+    <li><a class="doc-chip" href="https://blog.gradle.org/kotlin-dsl-is-now-the-default-for-new-gradle-builds" data-doc="gr.kotlin-dsl-default">
+      <span class="kind">release</span> Kotlin DSL is now the default</a></li>
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/userguide.html" data-doc="gr.userguide">
+      <span class="kind">guide</span> Gradle user manual</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

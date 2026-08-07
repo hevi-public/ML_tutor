@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jOOQ: the model — Web Dev Reference</title>
+
+  <meta name="web:section" content="Data">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="schema-and-migrations.html|Schema &amp; migrations">
+  <meta name="web:next" content="jooq-queries.html|MULTISET &amp; row mapping">
+  <meta name="web:versions" content="jOOQ 3.21.7 (Boot BOM: 3.21.5)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Data</p>
+  <h1>jOOQ: the model</h1>
+  <p class="lede">jOOQ's bet is the opposite of an ORM's: instead of hiding
+  SQL behind objects, it generates typed Kotlin from your <em>actual
+  schema</em> so SQL becomes compile-checked code. You write the queries; it
+  guarantees they reference real tables, real columns, right types.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Codegen is the foundation:</strong> migrated schema in,
+      <code>Tables.ORDERS</code> etc. out. A renamed column breaks the build,
+      not the dashboard at runtime.</li>
+      <li><strong>No entity lifecycle:</strong> no dirty checking, no lazy
+      proxies, no flush ordering. Rows in, DTOs out, SQL visible.</li>
+      <li><strong>Licensing is a fact to know:</strong> the OSS edition
+      (Apache-2.0) is licensed for open-source databases — fine on Postgres.
+      Commercial databases require a paid edition. OSS needs JDK 21 since
+      3.20.</li>
+      <li><strong>Boot's starter wires DSLContext</strong> into Spring
+      transactions — <code>@Transactional</code> just works (see
+      <a href="../06-spring/data-and-transactions.html">data &amp;
+      transactions</a>).</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">// A repository is a class with queries — not an interface a framework implements.
+@Repository
+class OrderRepository(private val dsl: DSLContext) {
+
+    fun findRecent(customer: CustomerId, limit: Int): List<OrderSummary> =
+        dsl.select(ORDERS.ID, ORDERS.PLACED_AT, ORDERS.TOTAL_CENTS)
+            .from(ORDERS)
+            .where(ORDERS.CUSTOMER_ID.eq(customer.value))
+            .orderBy(ORDERS.PLACED_AT.desc())
+            .limit(limit)
+            .fetch(mapping(::OrderSummary))     // constructor-ref mapping
+}</code></pre>
+
+  <h2>Generating the code</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Codegen source</th><th>How</th><th>Trade</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Testcontainers (recommended)</strong></td>
+          <td>Build spins up postgres:18, runs Flyway, points codegen at it</td>
+          <td>Exactly your production dialect and extensions; needs Docker in CI</td></tr>
+        <tr><td>DDLDatabase</td>
+          <td>jOOQ parses your .sql migration files into an in-memory model</td>
+          <td>No Docker; but the parser, not Postgres, defines what's valid — dialect corners get missed</td></tr>
+        <tr><td>Shared dev database</td>
+          <td>Codegen against a long-lived dev server</td>
+          <td>Simple until the schema drifts from migrations; avoid for teams</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What changed</h2>
+  <div class="change" data-change="jq.codegen-gradle"></div>
+  <div class="change" data-change="jq.kotlin-coroutines"></div>
+
+  <h2>jOOQ or JPA/Hibernate? One honest table</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>jOOQ</th><th>JPA/Hibernate</th></tr></thead>
+      <tbody>
+        <tr><td>You write</td><td>SQL, typed</td><td>Entity graphs; SQL is derived</td></tr>
+        <tr><td>Great at</td><td>Reads, reporting, window functions, CTEs, database features (MULTISET, MERGE)</td><td>CRUD-heavy domains with deep object graphs and cascades</td></tr>
+        <tr><td>Failure mode</td><td>Verbose inserts/updates for wide tables; you hand-roll patterns an ORM gives free</td><td>N+1s, LazyInitializationException, surprise flushes — implicit behaviour at a distance</td></tr>
+        <tr><td>Performance model</td><td>What you wrote is what runs</td><td>Depends on fetch strategy tuning and cache layers</td></tr>
+        <tr><td>Schema changes</td><td>Compile errors after codegen</td><td>Runtime mapping errors, or drift if DDL is entity-generated</td></tr>
+        <tr><td>Honest summary</td><td colspan="2">Query-shaped services (this stack) fit jOOQ; aggregate-root domains with heavy write graphs are where JPA still argues its case</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: don't fight the generated types</span>
+    The moment codegen output gets hand-edited or committed selectively, the
+    guarantee inverts — the types lie. Regenerate on every schema change (the
+    Gradle task dependency does it), commit the whole output, and treat a
+    dirty git diff under the generated package as the build telling you a
+    migration happened.
+  </div>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://www.jooq.org" data-doc="jq.home">
+      <span class="kind">guide</span> jOOQ</a></li>
+    <li><a class="doc-chip" href="https://www.jooq.org/doc/latest/manual/" data-doc="jq.manual">
+      <span class="kind">guide</span> jOOQ manual</a></li>
+    <li><a class="doc-chip" href="https://www.jooq.org/legal/licensing" data-doc="jq.licensing">
+      <span class="kind">reference</span> jOOQ licensing</a></li>
+    <li><a class="doc-chip" href="https://www.jooq.org/doc/latest/manual/code-generation/codegen-meta-sources/codegen-ddl/" data-doc="jq.codegen-ddl">
+      <span class="kind">guide</span> Codegen from DDL files</a></li>
+    <li><a class="doc-chip" href="https://blog.jooq.org/using-testcontainers-to-generate-jooq-code/" data-doc="jq.codegen-testcontainers">
+      <span class="kind">guide</span> Testcontainers-based codegen</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: the 15 → 18 arc — Web Dev Reference</title>
+
+  <meta name="web:section" content="Data">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="../07-gradle/performance.html|Configuration cache &amp; performance">
+  <meta name="web:next" content="postgres-features.html|uuidv7, MERGE, JSON_TABLE">
+  <meta name="web:versions" content="PostgreSQL 18.4 (19 beta 2) · pgJDBC 42.7.13">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+  <script defer src="../assets/js/viz/isolation.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Data</p>
+  <h1>PostgreSQL: the 15 → 18 arc</h1>
+  <p class="lede">Postgres is the quiet dependency: a major every September,
+  five years of fixes each, and one November a year when somebody's version
+  dies. This page is the arc, the clock, and the working model of transaction
+  isolation — with a demo that runs the anomalies instead of describing
+  them.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Current is 18</strong> (18.4 minor); <strong>19 is at beta
+      2</strong>, GA expected in the usual Sep–Oct window. Quarterly minors —
+      apply them; they are fixes, not features.</li>
+      <li><strong>The clock:</strong> 14 dies November 2026, 15 in 2027, and
+      so on — five years each, no LTS tiers. The
+      <a href="../versions.html">versions page</a> computes the pills.</li>
+      <li><strong>Isolation defaults to READ COMMITTED</strong> — and
+      REPEATABLE READ is snapshot isolation, which still permits write skew.
+      SERIALIZABLE (SSI) is the only level that doesn't; budget for 40001
+      retries.</li>
+      <li><strong>Driver: pgJDBC 42.7.x</strong> (Boot manages 42.7.11) —
+      virtual-thread-friendly since 42.6 swapped its internal
+      synchronized blocks for locks.</li>
+    </ul>
+  </div>
+
+  <h2>The arc</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th>Major</th><th>Released</th><th>EOL</th><th>What defined it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>14</strong></td><td>Sep 2021</td><td><strong>Nov 2026</strong></td>
+          <td>The oldest supported line — for three more months.</td></tr>
+        <tr><td><strong>15</strong></td><td>Oct 2022</td><td>Nov 2027</td>
+          <td>MERGE; zstd compression; much faster sorts.</td></tr>
+        <tr><td><strong>16</strong></td><td>Sep 2023</td><td>Nov 2028</td>
+          <td>pg_stat_io; logical replication from standbys; SQL/JSON constructors.</td></tr>
+        <tr><td><strong>17</strong></td><td>Sep 2024</td><td>Nov 2029</td>
+          <td>JSON_TABLE; incremental backup; vacuum memory cut ~20×; logical slots survive failover/upgrade.</td></tr>
+        <tr><td><strong>18</strong></td><td>Sep 2025</td><td>Nov 2030</td>
+          <td>Async I/O; uuidv7(); virtual generated columns; skip scan; OAuth auth; RETURNING old/new.</td></tr>
+        <tr><td><strong>19β</strong></td><td>beta 2</td><td>—</td>
+          <td>SQL/PGQ graph queries; ON CONFLICT DO SELECT; REPACK; parallel autovacuum.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What changed</h2>
+  <div class="change" data-change="pg.async-io"></div>
+  <div class="change" data-change="pg.upgrade-stats"></div>
+
+  <h2>Try it: which anomaly does your isolation level allow?</h2>
+  <p>This is a working miniature of Postgres MVCC — per-statement vs
+  per-transaction snapshots, first-updater-wins row locking, and the
+  SERIALIZABLE (SSI) pivot check are implemented, not scripted. Pick a
+  scenario and a level, step through, and watch the <em>same interleaving</em>
+  produce different outcomes. The one that surprises people:
+  <strong>write skew survives REPEATABLE READ.</strong></p>
+  <div class="demo" id="isolation-demo"></div>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: serialization failures are the contract</span>
+    At REPEATABLE READ and SERIALIZABLE, SQLSTATE 40001 is not an error to
+    log-and-drop — it is the database asking you to retry the transaction.
+    Wire retry into the transaction boundary (bounded attempts, jitter) or
+    stay at READ COMMITTED with explicit locking where it matters.
+  </div>
+
+  <details class="legacy">
+    <summary>Running 13 or older?</summary>
+    <div class="layer-body">
+      <p>13 left support in November 2025; anything older has been unpatched
+      for years. The upgrade itself got cheaper: pg_upgrade is fast, since 17
+      logical slots survive it, and since 18 planner statistics do too — the
+      classic reasons to procrastinate are gone.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://www.postgresql.org/docs/current/" data-doc="pg.home">
+      <span class="kind">guide</span> PostgreSQL documentation</a></li>
+    <li><a class="doc-chip" href="https://www.postgresql.org/support/versioning/" data-doc="pg.versioning">
+      <span class="kind">reference</span> Versioning policy</a></li>
+    <li><a class="doc-chip" href="https://www.postgresql.org/docs/current/transaction-iso.html" data-doc="pg.isolation">
+      <span class="kind">guide</span> Transaction isolation</a></li>
+    <li><a class="doc-chip" href="https://jdbc.postgresql.org/" data-doc="pg.jdbc">
+      <span class="kind">reference</span> pgJDBC driver</a></li>
+    <li><a class="doc-chip" href="https://www.postgresql.org/docs/release/" data-doc="pg.release-notes">
+      <span class="kind">release</span> Release notes index</a></li>
+  </ul>
+</main>
+</body>
+</html>

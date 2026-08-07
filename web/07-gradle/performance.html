@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gradle performance: the caches — Web Dev Reference</title>
+
+  <meta name="web:section" content="Gradle">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="structure.html|Convention plugins &amp; structure">
+  <meta name="web:next" content="../08-data/postgres-overview.html|PostgreSQL overview">
+  <meta name="web:versions" content="Gradle 9.7.0">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Gradle</p>
+  <h1>Performance: the two caches</h1>
+  <p class="lede">Gradle has two caches with confusingly similar names and
+  completely different jobs. Knowing which one saves what is most of the
+  performance conversation — the rest is turning them on and fixing what the
+  problems report names.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Configuration cache</strong> skips the <em>configuration
+      phase</em> — the "Configure project" seconds before any task runs.
+      Preferred mode in 9.x, default in Gradle 10 by plan.</li>
+      <li><strong>Build cache</strong> skips <em>task execution</em> by
+      reusing outputs (locally or from a remote node) when inputs match.</li>
+      <li><strong>They compose:</strong> warm dev loop = configuration cache;
+      CI across machines = remote build cache; both = the fast version of
+      your build.</li>
+      <li><strong>The blockers are plugins</strong>, not your code — and the
+      HTML problems report says exactly which ones.</li>
+    </ul>
+  </div>
+
+  <h2>The two caches, side by side</h2>
+  <div class="table-scroll">
+    <table class="cheat">
+      <thead><tr><th></th><th>Configuration cache</th><th>Build cache</th></tr></thead>
+      <tbody>
+        <tr><td>Caches</td><td>The configured task graph</td><td>Task outputs (compiled classes, test results…)</td></tr>
+        <tr><td>Saves time when</td><td>Running any task again with unchanged build logic</td><td>Inputs of a task match any previous run — including on another machine</td></tr>
+        <tr><td>Invalidated by</td><td>Editing build scripts / catalog / gradle.properties</td><td>Changing that task's inputs</td></tr>
+        <tr><td>Turn on</td><td><code>org.gradle.configuration-cache=true</code></td><td><code>org.gradle.caching=true</code> (+ remote node for CI)</td></tr>
+        <tr><td>Status</td><td>Stable 8.1 → preferred 9.x → default in 10 (planned)</td><td>Stable for years</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What it replaced</h2>
+  <div class="change" data-change="gr.config-cache">
+    <p class="change-note">For this stack the plugins to watch are the jOOQ
+    codegen plugin and anything Docker-adjacent — check their release notes
+    for configuration-cache support before blaming Gradle.</p>
+  </div>
+
+  <h2>Adopting the configuration cache without a bad week</h2>
+  <pre><code class="language-plaintext"># 1. Trial run — report problems, don't fail on them
+./gradlew build --configuration-cache --configuration-cache-problems=warn
+
+# 2. Read the report it prints (build/reports/configuration-cache/…)
+#    Each problem names the plugin or script line at fault.
+
+# 3. Fix/upgrade the named offenders, then make it the default:
+#    gradle.properties → org.gradle.configuration-cache=true</code></pre>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: environment reads poison the cache</span>
+    <code>System.getenv("CI")</code> at configuration time makes the cache
+    entry depend on that value — different environment, cold configuration.
+    Read environment state through <code>providers.environmentVariable("CI")</code>
+    (lazily, at execution time) and the entry stays reusable. The same
+    applies to <code>file().exists()</code> checks in scripts.
+  </div>
+
+  <details class="legacy">
+    <summary>Older performance folklore</summary>
+    <div class="layer-body">
+      <p><code>org.gradle.parallel=true</code> (still valid, long since safe
+      to enable), daemon tuning with giant heaps (rarely needed now),
+      <code>--offline</code> as a speed hack (it isn't; dependency resolution
+      is cached anyway). If a build is slow in 2026, the answer is almost
+      always "the caches aren't on" or "one plugin defeats them" — a build
+      scan will point at which.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/configuration_cache.html" data-doc="gr.config-cache">
+      <span class="kind">guide</span> Configuration cache</a></li>
+    <li><a class="doc-chip" href="https://docs.gradle.org/current/userguide/build_cache.html" data-doc="gr.build-cache">
+      <span class="kind">guide</span> Build cache</a></li>
+    <li><a class="doc-chip" href="https://blog.gradle.org/road-to-configuration-cache" data-doc="gr.road-config-cache">
+      <span class="kind">reference</span> The road to the configuration cache</a></li>
+    <li><a class="doc-chip" href="https://docs.gradle.org/9.0.0/release-notes.html" data-doc="gr.relnotes9">
+      <span class="kind">release</span> Gradle 9.0 release notes</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>

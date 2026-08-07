@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testing Spring services — Web Dev Reference</title>
+
+  <meta name="web:section" content="Spring Boot">
+  <meta name="web:root" content="../">
+  <meta name="web:prev" content="observability.html|Observability">
+  <meta name="web:next" content="../07-gradle/overview.html|Gradle overview">
+  <meta name="web:versions" content="Spring Boot 4.1.0 · JUnit 6.0.3 · Testcontainers 2.0.5 · Mockito 5.23.0 (all BOM-managed)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/data.js"></script>
+  <script defer src="../assets/js/changes.js"></script>
+  <script defer src="../assets/js/docs.js"></script>
+  <script defer src="../assets/js/version-filter.js"></script>
+</head>
+<body>
+<main class="ref">
+  <p class="unit-tag">Spring Boot</p>
+  <h1>Testing</h1>
+  <p class="lede">The 2026 shape: slices for the edges, one Testcontainers-backed
+  @SpringBootTest for the flows that matter, real Postgres via
+  @ServiceConnection, and the new one-client-everywhere RestTestClient. Boot 4
+  moved the furniture (JUnit 6, Testcontainers 2, @MockBean gone) — this page
+  is where things stand.</p>
+
+  <div data-version-filter></div>
+
+  <div class="at-glance">
+    <span class="label">At a glance</span>
+    <ul>
+      <li><strong>Boot 4 manages JUnit 6</strong> — for typical suites the
+      rename that matters is none: @Test is still @Test. Custom extensions and
+      version-pinned tooling are where to look.</li>
+      <li><strong>Testcontainers is on the 2.x line</strong> — and tests
+      against a real <code>postgres:18</code> beat any H2 approximation,
+      especially with jOOQ codegen in the loop.</li>
+      <li><strong>@MockBean no longer exists</strong> (removed 4.0) — it's
+      @MockitoBean now, with slightly different rules.</li>
+      <li><strong>Test slices went modular</strong> with the starters:
+      <code>spring-boot-starter-webmvc-test</code>,
+      <code>-jooq-test</code>, etc.</li>
+    </ul>
+  </div>
+
+  <h2>Do it this way now</h2>
+  <pre><code class="language-kotlin">// The one integration test that earns its runtime
+@Testcontainers
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+class OrderFlowTest {
+
+    companion object {
+        @Container @ServiceConnection
+        val pg = PostgreSQLContainer("postgres:18")   // migrations run against it
+    }
+
+    @Autowired lateinit var client: RestTestClient    // Boot 4 autowires it
+
+    @Test
+    fun `placing an order persists and returns it`() {
+        client.post().uri("/orders")
+            .body(PlaceOrderJson.valid())
+            .exchange()
+            .expectStatus().isCreated
+            .expectBody(OrderResponse::class.java)
+            .value { assertThat(it.status).isEqualTo("PLACED") }
+    }
+}</code></pre>
+
+  <h2>What it replaced</h2>
+
+  <div class="change" data-change="sp.test.mockitobean"></div>
+
+  <div class="change" data-change="sp.test.service-connection"></div>
+
+  <div class="change" data-change="sp.test.resttestclient"></div>
+
+  <h2>MockK or Mockito?</h2>
+  <p>Boot's integration annotations (@MockitoBean) are Mockito-specific. In
+  pure unit tests — no Spring context — <strong>MockK</strong> is the more
+  Kotlin-native choice: coroutine support (<code>coEvery</code>), final
+  classes without plugins, verification DSL. A workable team rule: MockK in
+  plain unit tests, @MockitoBean where a Spring slice needs a mocked
+  collaborator, and no mocking at all in the Testcontainers flow tests —
+  that's what the real database is for.</p>
+
+  <div class="gotcha">
+    <span class="label">Gotcha: container-per-test-class is a tax you configure away</span>
+    A static (companion-object) @Container is shared across a class; sharing
+    across the suite needs singleton containers or Boot's
+    @ServiceConnection with a @TestConfiguration you import everywhere.
+    If the suite got slow after adopting Testcontainers, it's almost always
+    one fresh Postgres per class — reuse it, and put migrations in a
+    @BeforeAll, not per-test.
+  </div>
+
+  <details class="legacy">
+    <summary>Reading older test suites</summary>
+    <div class="layer-body">
+      <p>@MockBean/@SpyBean (Boot ≤3.x), @DynamicPropertySource blocks copying
+      container URLs, MockMvc's <code>perform(get(…)).andExpect(…)</code>
+      hamcrest chains (still supported; MockMvcTester and RestTestClient are
+      the modern faces), JUnit 4 <code>@RunWith(SpringRunner::class)</code> in
+      the truly old layers. Each has a mechanical modern form; none needs a
+      big-bang rewrite.</p>
+    </div>
+  </details>
+
+  <h2>Official docs</h2>
+  <ul class="doc-links">
+    <li><a class="doc-chip" href="https://docs.spring.io/spring-boot/" data-doc="sp.docs">
+      <span class="kind">guide</span> Spring Boot reference (testing)</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Release-Notes" data-doc="sp.relnotes.boot40">
+      <span class="kind">release</span> Boot 4.0 release notes</a></li>
+    <li><a class="doc-chip" href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide" data-doc="sp.migration.boot4">
+      <span class="kind">migration</span> Boot 4.0 migration guide</a></li>
+  </ul>
+</main>
+<script>document.addEventListener("DOMContentLoaded", () => { if (window.hljs) hljs.highlightAll(); });</script>
+</body>
+</html>
