@@ -56,15 +56,15 @@ main.hub { max-width: 76rem; }
   .tool-tag.jackson { color: #cbd5e1; background: #252f3b; border-color: #3c4a5d; }
 }
 html[data-theme="dark"] .tool-tag.angular { color: #fca5a5; background: #3d1515; border-color: #5e2222; }
-html[data-theme="dark"] .tool-tag.rxjs { color: #f0abfc; background: #3b1040; border-color: #5c1a63; }
-html[data-theme="dark"] .tool-tag.vitest { color: #86efac; background: #123524; border-color: #1c5137; }
-html[data-theme="dark"] .tool-tag.pnpm { color: #fcd34d; background: #3a2a0c; border-color: #574011; }
+html[data-theme="dark"] .tool-tag.rxjs    { color: #f0abfc; background: #3b1040; border-color: #5c1a63; }
+html[data-theme="dark"] .tool-tag.vitest  { color: #86efac; background: #123524; border-color: #1c5137; }
+html[data-theme="dark"] .tool-tag.pnpm    { color: #fcd34d; background: #3a2a0c; border-color: #574011; }
 html[data-theme="dark"] .tool-tag.typescript { color: #93b4ff; background: #1d3358; border-color: #2a4a7d; }
-html[data-theme="dark"] .tool-tag.kotlin { color: #c4b5fd; background: #29184d; border-color: #422a80; }
-html[data-theme="dark"] .tool-tag.spring { color: #bef264; background: #22300d; border-color: #3a5314; }
-html[data-theme="dark"] .tool-tag.gradle { color: #5eead4; background: #0d2f2b; border-color: #155a51; }
+html[data-theme="dark"] .tool-tag.kotlin  { color: #c4b5fd; background: #29184d; border-color: #422a80; }
+html[data-theme="dark"] .tool-tag.spring  { color: #bef264; background: #22300d; border-color: #3a5314; }
+html[data-theme="dark"] .tool-tag.gradle  { color: #5eead4; background: #0d2f2b; border-color: #155a51; }
 html[data-theme="dark"] .tool-tag.postgres { color: #7dd3fc; background: #0c2c40; border-color: #155a86; }
-html[data-theme="dark"] .tool-tag.jooq { color: #f9a8d4; background: #43102a; border-color: #6d1b45; }
+html[data-theme="dark"] .tool-tag.jooq    { color: #f9a8d4; background: #43102a; border-color: #6d1b45; }
 html[data-theme="dark"] .tool-tag.jackson { color: #cbd5e1; background: #252f3b; border-color: #3c4a5d; }
 
 /* ---------- Version badges ---------- */
