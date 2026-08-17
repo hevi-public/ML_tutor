@@ -248,6 +248,41 @@
     return { dist, parent };
   }
 
+  /* ---------- Floyd-Warshall (all-pairs shortest paths) ---------- */
+
+  // The matrix-shaped one: n rounds, each asking "does going THROUGH k help
+  // any pair?". Events: {type:'round', k}, {type:'check', u, v, via},
+  // {type:'relax', u, v, dist} when a cell improves.
+  function* floydWarshall(graph) {
+    const ids = graph.nodes.map((n) => n.id);
+    const dist = {};
+    for (const i of ids) {
+      dist[i] = {};
+      for (const j of ids) dist[i][j] = i === j ? 0 : Infinity;
+    }
+    for (const e of graph.edges) {
+      const w = e.w ?? 1;
+      dist[e.u][e.v] = Math.min(dist[e.u][e.v], w);
+      if (!graph.directed) dist[e.v][e.u] = Math.min(dist[e.v][e.u], w);
+    }
+    for (const k of ids) {
+      yield { type: "round", k };
+      for (const i of ids) {
+        for (const j of ids) {
+          if (i === j || dist[i][k] === Infinity || dist[k][j] === Infinity) continue;
+          yield { type: "check", u: i, v: j, via: k };
+          const alt = dist[i][k] + dist[k][j];
+          if (alt < dist[i][j]) {
+            dist[i][j] = alt;
+            yield { type: "relax", u: i, v: j, dist: alt };
+          }
+        }
+      }
+    }
+    yield { type: "done" };
+    return dist;
+  }
+
   /* ---------- minimum spanning tree ---------- */
 
   // Kruskal: sort edges, take each unless it closes a cycle — union-find's
@@ -485,7 +520,7 @@
     adjacency,
     bfs, dfs, bfsPaths,
     topoSort, components, twoColor,
-    dijkstra, bellmanFord,
+    dijkstra, bellmanFord, floydWarshall,
     kruskal, prim,
     tarjanSCC, maxFlow,
     preset,
