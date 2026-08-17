@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amortized analysis — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Foundations">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="proving-correctness.html|Proving an algorithm correct">
+
+  <link rel="stylesheet" href="../../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Foundations</p>
+  <h1>Amortized analysis: usually cheap, occasionally terrible</h1>
+  <p class="lede">Some operations are almost always instant and occasionally
+  expensive by design. Worst-case-per-operation slanders them; amortized
+  analysis prices them honestly — and you've been relying on it every time you
+  call <code>push()</code>.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="big-o.html">Big-O</a>, and the geometric series from
+    <a href="math-toolkit.html">the math toolkit</a> — it does the heavy
+    lifting here.</div>
+
+  <h2>The idea</h2>
+  <p>A dynamic array (JavaScript's array, Python's list, Rust's Vec) keeps a
+  block of memory with some spare capacity. <code>push()</code> usually drops
+  a value into a free slot — one step. But when the block is full, it
+  allocates a block <em>twice the size</em> and copies everything — n steps in
+  one call. So what does push "cost"? One step? n steps?</p>
+  <p>The honest answer prices the <em>sequence</em>, not the operation:
+  <strong><dfn data-term="amortized">amortized cost</dfn></strong> is the
+  total cost of any run of k operations, divided by k. For doubling arrays the
+  answer is a constant — the expensive moments are rare in exactly the
+  proportion that keeps the average flat.</p>
+
+  <h2>Watch it run</h2>
+  <p>Push 64 values. Green ticks are 1-step pushes; the red spikes are the
+  copy-everything resizes. Watch the <em>average</em> line refuse to rise:</p>
+  <div class="demo">
+    <canvas id="amort-canvas" width="880" height="260"
+            aria-label="Per-operation cost of dynamic array pushes, with resizes as spikes"></canvas>
+    <div class="buttons">
+      <button type="button" class="action" id="push-btn">push()</button>
+      <button type="button" class="action secondary" id="push-16">push ×16</button>
+      <button type="button" class="action secondary" id="amort-reset">reset</button>
+    </div>
+    <div class="counters">
+      <span class="counter">size: <span class="n" id="a-size">0</span></span>
+      <span class="counter">capacity: <span class="n" id="a-cap">1</span></span>
+      <span class="counter">total steps: <span class="n" id="a-total">0</span></span>
+      <span class="counter">avg per push: <span class="n" id="a-avg">–</span></span>
+    </div>
+    <p class="hint" id="amort-note">The last spike copies more than all
+    previous spikes combined — and the average still stays under 3. That's the
+    doubling series from the math toolkit, wearing a work uniform.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Everywhere a system "pays rent occasionally": dynamic arrays and
+    string builders, hash tables rehashing at their load factor (unit 2), LSM
+    storage engines compacting (unit 9), garbage collectors, Kafka consumers
+    rebalancing. Amortized thinking also explains the pager reality: p99
+    latency can be ugly while the average is fine — amortized bounds promise
+    totals, not tail latencies. When a teammate says "it's O(1) amortized",
+    the sharp follow-up is "and is the occasional spike acceptable here?"</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The banker's version: charge 3 coins per push</summary>
+    <div class="layer-body">
+      <p>Charge every push 3 coins: 1 pays for its own write; 2 go into the
+      bank. When a resize copies n items, the bank holds enough — since the
+      last resize, n/2 new items each banked 2 coins = n coins, exactly the
+      copy bill. The bank never goes negative, so the total cost of k pushes
+      is ≤ 3k. Amortized cost: 3 = O(1). No probability anywhere — this is a
+      worst-case guarantee about totals.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — the aggregate method</summary>
+    <div class="layer-body">
+      <div class="math equation">\text{cost of } k \text{ pushes} \;=\; k + \underbrace{(1 + 2 + 4 + \cdots + 2^{\lfloor \log_2 k \rfloor})}_{\text{all the copies}} \;&lt;\; k + 2k \;=\; 3k</div>
+      <p><em>In plain English:</em> k for the writes themselves, plus the
+      copy bills — which double each time, so they sum to less than twice the
+      largest one. Divide by k: fewer than 3 steps per push, no matter how
+      long the sequence runs. The geometric series is the entire proof.</p>
+      <p>And why <em>double</em>, rather than grow by a fixed 100 slots? Fixed
+      growth means resizing every 100 pushes, each copy bigger than the last:
+      the copy bills become the staircase sum — Θ(k²) total, Θ(k) amortized
+      per push. Growing by a <em>factor</em> is what makes the bills a
+      geometric series. (Any factor works; 1.5× and 2× are the common
+      choices, trading memory slack against copy frequency.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Amortized vs average vs worst — the three-way distinction</summary>
+    <div class="layer-body">
+      <p><strong>Worst case per op:</strong> the most one operation can cost
+      (push: Θ(n), during a resize). <strong>Amortized:</strong> the worst
+      total for any sequence, divided by its length (push: O(1)) — an
+      adversary-proof guarantee, no randomness involved.
+      <strong>Average case:</strong> expected cost over <em>random</em> inputs
+      (quicksort's Θ(n log n) — unit 3) — a probabilistic statement. All
+      three are worth knowing; confusing them is how "O(1)" ends up on a
+      whiteboard meaning three different things.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">class DynamicArray {
+  constructor() { this.cap = 1; this.len = 0; this.data = new Array(1); }
+  push(x) {
+    if (this.len === this.cap) {           // full: pay the big bill
+      this.cap *= 2;                       // the factor is the whole trick
+      const bigger = new Array(this.cap);
+      for (let i = 0; i < this.len; i++) bigger[i] = this.data[i]; // n steps
+      this.data = bigger;
+    }
+    this.data[this.len++] = x;             // the usual 1-step case
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 1 complete: you can measure cost, name it, prove correctness, and
+  price the occasionally-terrible honestly. Unit 2 spends this toolkit on the
+  structures everything else is built from — starting with
+  <a href="../index.html">arrays and linked lists</a>, where the amortized
+  push you just met gets compared with its rivals.</p>
+
+  <script type="application/json" class="symbols">
+  { "k": { "name": "k — the number of operations", "pron": "say: kay",
+           "means": "how many pushes the sequence performs", "short": "operation count" },
+    "n": { "name": "n — the current size", "pron": "say: en",
+           "means": "how many items are stored when a resize happens", "short": "items stored" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "amortized-analysis",
+    "questions": [
+      { "q": "A single push() into a full dynamic array of a million items costs about a million steps. Is \"push is O(1) amortized\" now false?",
+        "choices": ["Yes — one slow call disproves it",
+                    "No — amortized bounds price sequences: those million steps were pre-paid by a million cheap pushes",
+                    "Only if it happens twice"],
+        "answer": 1,
+        "explain": "The claim was never \"every push is fast\"; it's \"k pushes cost ≤ 3k, always\". The spike is real (and can matter for tail latency!) but the total stays linear." },
+      { "q": "Change the growth rule from \"double\" to \"add 100 slots\". Amortized push cost?",
+        "choices": ["Still O(1) — resizes are still occasional",
+                    "Θ(n) — copies now happen every 100 pushes and each is bigger, a staircase not a geometric series",
+                    "O(log n)"],
+        "answer": 1,
+        "explain": "Growth by a FACTOR spaces resizes out in proportion to their cost; growth by a constant doesn't. This is a real bug pattern in hand-rolled buffers." },
+      { "q": "\"O(1) amortized\" and \"O(1) average case\" differ how?",
+        "choices": ["They're synonyms",
+                    "Amortized is an adversary-proof guarantee about any sequence's total; average-case is a probabilistic claim about random inputs",
+                    "Average case is the stronger claim"],
+        "answer": 1,
+        "explain": "No randomness anywhere in amortized analysis — the bank argument holds against a worst-case sequence. Average-case bounds can be broken by adversarial inputs; amortized ones can't." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const canvas = document.getElementById("amort-canvas");
+      const ctx = canvas.getContext("2d");
+      const cssVar = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+      let costs = [], cap = 1, size = 0, total = 0;
+
+      function push() {
+        let cost = 1;
+        if (size === cap) { cost += size; cap *= 2; }  // copy bill
+        size++; total += cost; costs.push(cost);
+        update();
+      }
+
+      function update() {
+        document.getElementById("a-size").textContent = size;
+        document.getElementById("a-cap").textContent = cap;
+        document.getElementById("a-total").textContent = total;
+        document.getElementById("a-avg").textContent = size ? (total / size).toFixed(2) : "–";
+        draw();
+      }
+
+      function draw() {
+        const W = canvas.width, H = canvas.height, padL = 40, padB = 24;
+        ctx.clearRect(0, 0, W, H);
+        ctx.strokeStyle = cssVar("--border") || "#ccc";
+        ctx.beginPath();
+        ctx.moveTo(padL, 8); ctx.lineTo(padL, H - padB); ctx.lineTo(W - 8, H - padB);
+        ctx.stroke();
+        ctx.fillStyle = cssVar("--text-soft") || "#888";
+        ctx.font = "12px system-ui, sans-serif";
+        ctx.fillText("steps per push", 4, 16);
+        const maxCost = Math.max(4, ...costs);
+        const barW = Math.max(2, Math.min(20, (W - padL - 16) / Math.max(costs.length, 32)));
+        const yTo = (c) => H - padB - (c / maxCost) * (H - padB - 20);
+        costs.forEach((c, i) => {
+          ctx.fillStyle = c > 1 ? (cssVar("--bad") || "#b91c1c") : (cssVar("--good") || "#15803d");
+          ctx.fillRect(padL + 4 + i * barW, yTo(c), barW - 1, H - padB - yTo(c));
+        });
+        // running average line
+        if (costs.length) {
+          ctx.strokeStyle = cssVar("--accent") || "#047857";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          let run = 0;
+          costs.forEach((c, i) => {
+            run += c;
+            const y = yTo(run / (i + 1));
+            if (i === 0) ctx.moveTo(padL + 4 + i * barW + barW / 2, y);
+            else ctx.lineTo(padL + 4 + i * barW + barW / 2, y);
+          });
+          ctx.stroke();
+          ctx.fillStyle = cssVar("--accent") || "#047857";
+          ctx.fillText("running average", W - 120, 16);
+        }
+      }
+
+      document.getElementById("push-btn").addEventListener("click", push);
+      document.getElementById("push-16").addEventListener("click", () => { for (let i = 0; i < 16; i++) push(); });
+      document.getElementById("amort-reset").addEventListener("click", () => {
+        costs = []; cap = 1; size = 0; total = 0; update();
+      });
+      // seed the picture so the first paint already tells the story
+      for (let i = 0; i < 64; i++) push();
+    });
+  </script>
+</main>
+</body>
+</html>
