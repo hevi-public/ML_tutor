@@ -133,9 +133,89 @@
     yield* quickSort(a, i + 1, hi);
   }
 
+  /* ---------- heapsort: unit 2's heap, aimed at sorting ---------- */
+
+  // In-place, max-heap variant: heapify the whole array (bottom-up, O(n)),
+  // then repeatedly swap the max to the end and sift the new root down.
+  function* heapSort(a) {
+    const n = a.length;
+    function* siftDown(i, size) {
+      for (;;) {
+        const l = 2 * i + 1, r = 2 * i + 2;
+        let largest = i;
+        if (l < size) {
+          yield { type: "compare", i: l, j: largest };
+          if (a[l] > a[largest]) largest = l;
+        }
+        if (r < size) {
+          yield { type: "compare", i: r, j: largest };
+          if (a[r] > a[largest]) largest = r;
+        }
+        if (largest === i) return;
+        [a[i], a[largest]] = [a[largest], a[i]];
+        yield { type: "swap", i, j: largest };
+        i = largest;
+      }
+    }
+    for (let i = (n >> 1) - 1; i >= 0; i--) yield* siftDown(i, n);  // heapify: O(n)
+    for (let end = n - 1; end > 0; end--) {
+      [a[0], a[end]] = [a[end], a[0]];       // max goes to its final slot
+      yield { type: "swap", i: 0, j: end };
+      yield { type: "sorted", i: end };
+      yield* siftDown(0, end);               // restore the rule on the rest
+    }
+    if (n) yield { type: "sorted", i: 0 };
+  }
+
+  /* ---------- counting sort: sorting without comparing ---------- */
+
+  // Requires keys in [0, maxKey]. Events: 'count' (tally a key),
+  // 'set' (write back in order). No 'compare' events — that's the point.
+  function* countingSort(a, maxKey) {
+    const counts = new Array(maxKey + 1).fill(0);
+    for (let i = 0; i < a.length; i++) {
+      counts[a[i]]++;
+      yield { type: "count", key: a[i], i, counts: counts.slice() };
+    }
+    let out = 0;
+    for (let key = 0; key <= maxKey; key++) {
+      for (let c = 0; c < counts[key]; c++) {
+        a[out] = key;
+        yield { type: "set", i: out, value: key };
+        out++;
+      }
+    }
+  }
+
+  /* ---------- quickselect: the k-th smallest without sorting ---------- */
+
+  function* quickSelect(a, k) {
+    let lo = 0, hi = a.length - 1;
+    while (lo <= hi) {
+      yield { type: "focus", lo, hi };
+      const pivot = a[hi];                   // same Lomuto partition as quickSort
+      let i = lo;
+      for (let j = lo; j < hi; j++) {
+        yield { type: "compare", i: j, j: hi };
+        if (a[j] < pivot) {
+          if (i !== j) { [a[i], a[j]] = [a[j], a[i]]; yield { type: "swap", i, j }; }
+          i++;
+        }
+      }
+      if (i !== hi) { [a[i], a[hi]] = [a[hi], a[i]]; yield { type: "swap", i, j: hi }; }
+      yield { type: "sorted", i };           // pivot is in its FINAL position
+      if (i === k) { yield { type: "found", i }; return a[i]; }
+      if (i < k) lo = i + 1;                 // recurse into ONE side only
+      else hi = i - 1;
+    }
+    yield { type: "not-found" };
+    return undefined;
+  }
+
   window.AlgoSorts = {
     linearSearch, binarySearch,
     bubbleSort, selectionSort, insertionSort,
     mergeSort, quickSort,
+    heapSort, countingSort, quickSelect,
   };
 })();
