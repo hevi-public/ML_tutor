@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sorting without comparing — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="heapsort.html|Heapsort">
+  <meta name="algo:next" content="sorting-lower-bound.html|Why n log n is the floor">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>Sorting without comparing</h1>
+  <p class="lede">The next page proves comparison sorts can't beat n log n.
+  This page is the loophole, visited first on purpose: when keys are small
+  integers, you don't have to compare at all — you can <em>address</em>.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hash tables</a> — the
+    "compute where it goes" move is about to sort things.
+  </div>
+
+  <h2>The idea</h2>
+  <p><strong>Counting sort:</strong> if every key is an integer in [0, k],
+  make an array of k+1 tallies, count each key's occurrences in one pass,
+  then walk the tallies in order writing keys back out. No key is ever
+  compared with another — each key IS its own address, the array-indexing
+  superpower yet again. Cost: Θ(n + k) time and Θ(k) space. For n = a
+  million grades in [0, 100]: two linear passes. For n keys in [0, 2⁶⁴]:
+  ruinous — <em>k in the cost is the entire catch.</em></p>
+  <p><strong>Radix sort</strong> lifts the k limit: sort by the last digit
+  with a stable counting sort, then the next digit, and so on — d passes for
+  d-digit keys, Θ(d·(n + base)). Stability is load-bearing: each pass must
+  preserve the order the previous passes earned (the elementary page's
+  "chained stable sorts" trick, industrialized).
+  <strong>Bucket sort</strong> is the continuous cousin: scatter uniformly
+  distributed values into n ranges, insertion-sort the (tiny) buckets,
+  concatenate — expected Θ(n) when the distribution cooperates.</p>
+
+  <h2>Watch it run</h2>
+  <p>Counting sort on 40 keys drawn from [0, 9]. First pass: tallies climb
+  (no bars move). Second pass: the array is rewritten in order — watch for
+  what's <em>missing</em>: not a single comparison event, and no counter for
+  one either:</p>
+  <div class="demo">
+    <canvas id="cs-canvas" width="880" height="140" aria-label="Counting sort tallying then rewriting"></canvas>
+    <p class="readout" id="cs-counts" style="font-family:var(--mono);font-size:0.85rem"></p>
+    <div id="cs-stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Radix sort runs where keys are machine words and n is huge: graphics
+    pipelines sorting draw calls, GPU sorting libraries, network gear binning
+    packets, suffix-array construction (unit 7), and columnar databases
+    sorting fixed-width encoded values. Counting sort's tally pass moonlights
+    everywhere as a histogram: percentile estimation, load reports,
+    "requests per status code" — half of observability is a counting sort
+    that never bothers with phase two.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>So is the next page's proof wrong?</summary>
+    <div class="layer-body">
+      <p>No — dodged, honestly. The lower bound governs sorts whose ONLY
+      window into the data is "is a &lt; b?" — sorts that must work for any
+      orderable type: strings, dates, custom comparators. Counting and radix
+      demand more: keys that are small integers (or fixed-width digit
+      strings), i.e. <em>extra structure beyond orderability</em>. The
+      recurring bargain, one more time: stronger assumptions buy lower
+      bounds' loopholes. When someone says "you can't sort faster than
+      n log n", the sharp reply is "…by comparisons; what do we know about
+      the keys?"</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why radix needs stability, precisely</summary>
+    <div class="layer-body">
+      <p>After sorting by the ones digit, 23 precedes 21? No — but 21 and 23
+      differ in the ones digit, fine. Consider 21 and 25 → ones pass orders
+      them 21, 25. Tens pass: both have tens digit 2 — if that pass scrambles
+      equal keys, the ones-pass work is destroyed. Stable passes preserve it,
+      so after the final (most significant) pass, ties on every higher digit
+      stand resolved by the lower digits — a full lexicographic sort, built
+      backwards. Least-significant-first + stable is the whole design.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact generator (assets/js/algo/sorts.js):
+function* countingSort(a, maxKey) {
+  const counts = new Array(maxKey + 1).fill(0);
+  for (let i = 0; i < a.length; i++) {
+    counts[a[i]]++;                      // the key IS the address
+    yield { type: "count", key: a[i], i, counts: counts.slice() };
+  }
+  let out = 0;
+  for (let key = 0; key <= maxKey; key++)      // walk keys in order
+    for (let c = 0; c < counts[key]; c++) {
+      a[out] = key;                      // write, don't compare
+      yield { type: "set", i: out, value: key };
+      out++;
+    }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Now that you've seen the loophole, the wall it goes around:
+  <a href="sorting-lower-bound.html">the proof that no comparison sort can
+  beat n log n</a> — this course's first impossibility result, and a
+  template for how such things are proved at all.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "counting-radix-bucket",
+    "questions": [
+      { "q": "Counting sort is Θ(n + k). When does it stop being a good idea?",
+        "choices": ["When n is large",
+                    "When the key range k dwarfs n — tallying 64-bit IDs means an array of 2⁶⁴ slots for a handful of keys",
+                    "When keys repeat"],
+        "answer": 1,
+        "explain": "The k term is the whole catch: grades in [0,100] are perfect, raw hashes are absurd. Radix sort exists precisely to tame k by processing digits." },
+      { "q": "Why must radix sort's per-digit passes be STABLE?",
+        "choices": ["Stability makes each pass faster",
+                    "Each pass must preserve the ordering earned by previous (lower-digit) passes among keys equal in the current digit — otherwise earlier work is scrambled",
+                    "Unstable sorts can't handle digits"],
+        "answer": 1,
+        "explain": "Least-significant-first only works because ties in the current digit fall back to the already-correct lower-digit order. It's the elementary page's chained-stable-sorts trick, made structural." },
+      { "q": "Does linear-time counting sort contradict the n log n lower bound (next page)?",
+        "choices": ["Yes — the bound is only a heuristic",
+                    "No — the bound covers algorithms restricted to comparisons; counting sort uses keys as addresses, a stronger assumption the bound doesn't govern",
+                    "No — counting sort is secretly n log n"],
+        "answer": 1,
+        "explain": "Lower bounds are contracts about a MODEL. Change the model (integer keys, array indexing) and the contract doesn't apply. Knowing which model you're in is the practical skill." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const arr = window.AlgoRandom.ints(40, 0, 10, 606); // keys 0..9
+      const viz = window.AlgoArrayViz.create(document.getElementById("cs-canvas"));
+      const countsOut = document.getElementById("cs-counts");
+      let lastCounts = new Array(10).fill(0);
+      function* tracked() {
+        lastCounts = new Array(10).fill(0);
+        for (const e of window.AlgoSorts.countingSort(arr, 9)) {
+          if (e.type === "count") lastCounts = e.counts;
+          yield e;
+        }
+      }
+      window.AlgoSteps.player(document.getElementById("cs-stepper"), {
+        make: tracked,
+        capture: () => ({ array: arr.slice(), max: 9, counts: lastCounts.slice() }),
+        render: (snap, event) => {
+          viz.draw(snap, event);
+          countsOut.textContent = "tallies [key 0…9]: [" + snap.counts.join(", ") + "]";
+        },
+        counters: { count: "tallies", set: "writes" },
+        describe: (e) =>
+          e.type === "count" ? `key ${e.key} → tally slot ${e.key} (no comparison!)` :
+          e.type === "set" ? `writing ${e.value} — keys emerge in order` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
