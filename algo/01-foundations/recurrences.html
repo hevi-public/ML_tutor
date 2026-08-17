@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recurrences and the Master theorem — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Foundations">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="recursion.html|Recursion">
+  <meta name="algo:next" content="math-toolkit.html|Logs, sums and friends">
+
+  <link rel="stylesheet" href="../../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Foundations</p>
+  <h1>Recurrences: reading cost off a function's shape</h1>
+  <p class="lede">A recursive function's cost is itself recursive — "the whole
+  costs what the pieces cost, plus assembly". Write that sentence as an
+  equation and the growth rate falls out. Often on sight.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="recursion.html">Recursion</a> (the call tree) and
+    <a href="big-o.html">Big-O</a> (the names we're solving for).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Merge sort splits an array in half, sorts each half by the same method,
+  and merges the results in about n steps. Its cost obeys:</p>
+  <div class="math equation">T(n) = 2\,T(n/2) + n</div>
+  <p><em>In plain English:</em> sorting n items costs two sorts of half the
+  size, plus n steps of merging. This kind of equation is a
+  <strong><dfn data-term="recurrence">recurrence</dfn></strong> — cost defined
+  in terms of itself on smaller inputs, exactly mirroring the code. Solving it
+  means finding the plain formula it hides.</p>
+  <ul class="symbol-legend" data-symbols="T(n),n,a,b,f(n)"></ul>
+
+  <h2>Watch it unfold</h2>
+  <p>The tool for <em>seeing</em> a solution is the recursion tree: draw the
+  calls level by level, write each call's own work (the non-recursive part)
+  inside it, then add up each level. Pick a recurrence:</p>
+  <div class="demo">
+    <div class="controls" id="rec-buttons" style="display:flex;flex-wrap:wrap;gap:0.5rem"></div>
+    <div id="tree-host" style="overflow-x:auto"></div>
+    <p class="readout" id="tree-verdict"></p>
+    <p class="hint">Each box is one call; the number inside is that call's own
+    work. The right margin sums each level — the three classic shapes are
+    <em>level sums constant</em> (total = work × depth),
+    <em>level sums shrinking</em> (the root dominates), and
+    <em>level sums growing</em> (the leaves dominate).</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Any time you split work and combine results, you're solving a
+    recurrence whether you write it down or not: parallel map-reduce jobs
+    (split, recurse, merge), a microservice fan-out that queries shards and
+    merges pages, tree-structured aggregations in an OLAP engine. The habit of
+    asking "how many levels, and what does each level cost in total?" is the
+    fastest back-of-envelope sizing tool a system designer has.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The three tree shapes, in words</summary>
+    <div class="layer-body">
+      <p><strong>Balanced</strong> — every level does about the same total
+      work. Merge sort: n per level, log n levels → n log n. This is the
+      commonest shape in divide &amp; conquer.</p>
+      <p><strong>Root-heavy</strong> — the top level's work dwarfs the rest,
+      so the answer is just the root's work. Example: split in half but only
+      recurse into one half doing n work first — the n at the top dominates.</p>
+      <p><strong>Leaf-heavy</strong> — the calls multiply faster than the work
+      shrinks, so the bottom layer of tiny calls dominates. Naive fib is the
+      extreme case: the tree has exponentially many leaves, and no cleverness
+      at the top can save it.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — the Master theorem</summary>
+    <div class="layer-body">
+      <p>For recurrences of the divide-&amp;-conquer form:</p>
+      <div class="math equation">T(n) = a\,T(n/b) + f(n)</div>
+      <p><em>In plain English:</em> a subproblems, each a b-th of the size,
+      plus f(n) of your own work. Compare f(n) against
+      <span class="math">n^{\log_b a}</span> — the "tree weight", how fast the
+      leaf count grows:</p>
+      <p><strong>Case 1 (leaves win):</strong> f(n) grows strictly slower →
+      <span class="math">T(n) = \Theta(n^{\log_b a})</span>.<br>
+      <strong>Case 2 (a tie):</strong> f(n) grows like
+      <span class="math">n^{\log_b a}</span> →
+      <span class="math">T(n) = \Theta(n^{\log_b a} \log n)</span> — every
+      level ties, so multiply by the level count.<br>
+      <strong>Case 3 (root wins):</strong> f(n) grows strictly faster (and is
+      "regular") → <span class="math">T(n) = \Theta(f(n))</span>.</p>
+      <p>Merge sort: a = 2, b = 2 → <span class="math">n^{\log_2 2} = n</span>,
+      and f(n) = n ties it → Case 2 → <span class="math">\Theta(n \log n)</span>.
+      Binary search: a = 1, b = 2 → <span class="math">n^0 = 1</span>, f = 1
+      ties → <span class="math">\Theta(\log n)</span>. You've now derived both
+      of unit 0's punchlines.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show a proof sketch — why the tree argument is sound</summary>
+    <div class="layer-body">
+      <p>The recursion tree is really a double sum: total cost =
+      <span class="math">\sum_{\text{levels } i} \; \sum_{\text{calls at } i} f(\text{size})</span>.
+      At level i there are <span class="math">a^i</span> calls of size
+      <span class="math">n/b^i</span>, and the tree is
+      <span class="math">\log_b n</span> levels deep. Substituting gives a
+      geometric series whose ratio is
+      <span class="math">a \cdot f(n/b)/f(n)</span>; the three Master cases are
+      exactly the three behaviours of a geometric series — decreasing
+      (first term dominates: the root), constant (all terms equal: multiply by
+      length), increasing (last term dominates: the leaves,
+      <span class="math">a^{\log_b n} = n^{\log_b a}</span> of them). The full
+      proof is careful bookkeeping around floors and ceilings, which the
+      <a href="math-toolkit.html">math toolkit</a> page licenses you to
+      ignore asymptotically.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <p>Recurrences aren't only pen-and-paper — you can check one empirically in
+  ten lines, the same doubling experiment as always:</p>
+  <pre><code class="language-javascript">function T(n) {                 // merge sort's cost, simulated directly
+  if (n <= 1) return 0;
+  return T(Math.floor(n / 2)) + T(Math.ceil(n / 2)) + n;   // 2T(n/2) + n
+}
+// T(1024) = 10240 = 1024 × 10 = n log2 n. Doubling n: T(2048) = 22528
+// — slightly MORE than double (×2.2), the signature of n log n growth.</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The Master theorem leaned on logarithms and geometric series; the
+  <a href="math-toolkit.html">math toolkit</a> page makes sure those are
+  tools you own rather than trivia you nod at. Then unit 1 closes with the two
+  reasoning techniques: proving correctness, and amortized analysis.</p>
+
+  <script type="application/json" class="symbols">
+  { "T(n)": { "name": "T(n) — the cost function", "pron": "say: tee of en",
+              "means": "the number of steps on an input of size n", "short": "cost at size n" },
+    "n":    { "name": "n — the input size", "pron": "say: en",
+              "means": "how many items the algorithm is given", "short": "input size" },
+    "a":    { "name": "a — the branching factor", "pron": "say: ay",
+              "means": "how many subproblems each call spawns", "short": "subproblems per call" },
+    "b":    { "name": "b — the shrink factor", "pron": "say: bee",
+              "means": "each subproblem is a b-th of the parent's size", "short": "size divisor" },
+    "f(n)": { "name": "f(n) — the local work", "pron": "say: eff of en",
+              "means": "the non-recursive work one call does itself (splitting, merging)", "short": "work per call" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "recurrences",
+    "questions": [
+      { "q": "A function splits its input in half but recurses into ONLY ONE half, doing constant work per call. Its recurrence is T(n) = T(n/2) + 1. What's the cost?",
+        "choices": ["Θ(log n) — one call per level, constant work, log n levels",
+                    "Θ(n) — you still touch everything eventually",
+                    "Θ(n log n) — halving always means n log n"],
+        "answer": 0,
+        "explain": "That's binary search's recurrence: a chain (not a tree) of log n calls, constant work each. Halving only costs n log n when BOTH halves are processed with linear assembly." },
+      { "q": "In a recursion tree, every level sums to about the same total work, and there are log n levels. Total cost?",
+        "choices": ["Θ(n)", "That level total × log n", "Impossible to say without the code"],
+        "answer": 1,
+        "explain": "Balanced tree = level total times level count. When the level total is n, that's the n log n signature of merge sort and friends." },
+      { "q": "T(n) = 2T(n/2) + n² — the split is cheap to recurse but expensive to combine. Who dominates?",
+        "choices": ["The leaves — small calls always outnumber the root",
+                    "The root — n² shrinks so fast down the tree that the top level is most of the bill (Master case 3)",
+                    "All levels tie, giving n² log n"],
+        "answer": 1,
+        "explain": "Next level total: 2·(n/2)² = n²/2 — each level HALVES. A shrinking geometric series is dominated by its first term, so T(n) = Θ(n²). The tree weight n^log₂2 = n grows slower than f(n) = n²: case 3." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Recursion-tree explorer: draws levels of one recurrence, sums each
+      // level, states the verdict. SVG, theme-aware via currentColor + CSS vars.
+      const PRESETS = [
+        { label: "T(n) = 2T(n/2) + n   (merge sort)", a: 2, b: 2,
+          f: (n) => n, fLabel: (n) => `${n}`,
+          verdict: "Every level sums to n; log₂n levels → Θ(n log n). Master case 2." },
+        { label: "T(n) = T(n/2) + 1   (binary search)", a: 1, b: 2,
+          f: () => 1, fLabel: () => "1",
+          verdict: "A chain, not a tree: 1 per level, log₂n levels → Θ(log n)." },
+        { label: "T(n) = 2T(n/2) + n²   (expensive combine)", a: 2, b: 2,
+          f: (n) => n * n, fLabel: (n) => `${n}²→${n * n}`,
+          verdict: "Level sums halve as you descend — the root dominates → Θ(n²). Master case 3." },
+        { label: "T(n) = 2T(n/2) + 1   (cheap combine)", a: 2, b: 2,
+          f: () => 1, fLabel: () => "1",
+          verdict: "Level sums DOUBLE as you descend — the n leaves dominate → Θ(n). Master case 1." },
+      ];
+      const N = 16;
+      const host = document.getElementById("tree-host");
+      const buttons = document.getElementById("rec-buttons");
+      const verdictEl = document.getElementById("tree-verdict");
+
+      function draw(preset) {
+        host.innerHTML = "";
+        const levels = [];
+        for (let size = N, count = 1; size >= 1; size = Math.floor(size / preset.b), count *= preset.a) {
+          levels.push({ size, count });
+          if (size === 1) break;
+        }
+        const W = 860, rowH = 56, pad = 10;
+        const H = levels.length * rowH + pad;
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        svg.setAttribute("width", "100%");
+        svg.style.minWidth = "640px";
+        let html = "";
+        levels.forEach((lv, li) => {
+          const y = pad + li * rowH;
+          const shown = Math.min(lv.count, 16);
+          const boxW = Math.min(120, (W - 180) / shown - 6);
+          for (let k = 0; k < shown; k++) {
+            const x = 10 + k * (boxW + 6);
+            html += `<rect x="${x}" y="${y}" width="${boxW}" height="34" rx="6"
+                       fill="var(--bg-inset)" stroke="var(--border)"/>
+                     <text x="${x + boxW / 2}" y="${y + 22}" text-anchor="middle"
+                       font-size="13" fill="var(--text)">${preset.fLabel(lv.size)}</text>`;
+          }
+          if (lv.count > shown) {
+            html += `<text x="${10 + shown * (boxW + 6) + 4}" y="${y + 22}"
+                       font-size="13" fill="var(--text-soft)">… ×${lv.count}</text>`;
+          }
+          const levelSum = lv.count * preset.f(lv.size);
+          html += `<text x="${W - 10}" y="${y + 22}" text-anchor="end" font-size="13"
+                     font-weight="700" fill="var(--accent)">Σ = ${levelSum}</text>`;
+        });
+        svg.innerHTML = html;
+        host.appendChild(svg);
+        verdictEl.innerHTML = `<strong>${preset.verdict}</strong>`;
+      }
+
+      PRESETS.forEach((preset, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "action" + (i ? " secondary" : "");
+        btn.textContent = preset.label;
+        btn.addEventListener("click", () => {
+          buttons.querySelectorAll("button").forEach((b) => b.classList.add("secondary"));
+          btn.classList.remove("secondary");
+          draw(preset);
+        });
+        buttons.appendChild(btn);
+      });
+      draw(PRESETS[0]);
+    });
+  </script>
+</main>
+</body>
+</html>

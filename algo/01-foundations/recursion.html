@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recursion — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Foundations">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="big-o.html|Big-O: naming how cost grows">
+  <meta name="algo:next" content="recurrences.html|Recurrences and the Master theorem">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/viz/callstack.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Foundations</p>
+  <h1>Recursion: the machine under the elegance</h1>
+  <p class="lede">You've written recursive functions; you may still not trust
+  them. The fix isn't more practice — it's <em>seeing the stack</em>. Once the
+  machine is visible, recursion stops being faith and starts being
+  bookkeeping.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="counting-steps.html">Counting steps</a> — we'll count calls the
+    way we counted comparisons.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A recursive function is an ordinary function that happens to call itself
+  on a smaller version of its problem. The machine doesn't treat it specially:
+  every call — recursive or not — pushes a <strong>frame</strong> (arguments,
+  locals, where to resume) onto the
+  <strong><dfn data-term="call-stack">call stack</dfn></strong>, and every
+  return pops one. "The function calls itself" really means "several frames of
+  the same function are stacked up, each with different arguments". That's the
+  entire trick.</p>
+  <p>Two things make a recursive function sound, and both are visible on the
+  stack: a <strong><dfn data-term="base-case">base case</dfn></strong> that
+  answers without another call (the stack's ceiling — without one, the stack
+  grows until it overflows), and progress toward it — every call must shrink
+  the problem.</p>
+
+  <h2>Watch it run</h2>
+  <p><code>sum(5)</code> — add the numbers 5 down to 1 recursively. Watch
+  frames pile up until the base case, then unwind carrying answers back.
+  Green flash = a call being pushed; red = a frame returning its answer:</p>
+  <div class="demo">
+    <canvas id="sum-canvas" width="880" height="230"
+            aria-label="Call stack growing and shrinking for recursive sum"></canvas>
+    <div id="sum-stepper"></div>
+  </div>
+  <p>Now the famous cautionary tale — naive <code>fib(7)</code>. Same
+  machinery, but each call spawns <em>two</em> more. Watch the call counter,
+  and notice the stack itself stays shallow (depth ≤ 7) while the number of
+  calls explodes — depth and total work are different things:</p>
+  <div class="demo">
+    <canvas id="fib-canvas" width="880" height="230"
+            aria-label="Call stack for naive Fibonacci, with an exploding call count"></canvas>
+    <div id="fib-stepper"></div>
+    <p class="hint">fib(7) makes 41 calls; fib(30) would make 2.7 million.
+    You'll see exactly why on the recurrences page, and you'll fix it for good
+    in unit 6 (dynamic programming turns this into 30 calls flat).</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Every stack trace you've ever read is this page — a printout of the
+    frames at the moment things went wrong. Recursion itself runs your world:
+    JSON serializers walking nested objects, filesystem walkers, React
+    reconciling a component tree, SQL engines executing recursive CTEs,
+    compilers parsing the code you wrote this morning. And
+    <code>RangeError: Maximum call stack size exceeded</code> is the base-case
+    rule, enforced.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>How to read a recursive function without simulating it</summary>
+    <div class="layer-body">
+      <p>The working programmer's technique is the <em>leap of faith</em>,
+      formally known as induction: to check <code>sum(n)</code>, verify the
+      base case by hand, then verify one step — <em>assuming</em>
+      <code>sum(n-1)</code> returns the right answer, does
+      <code>n + sum(n-1)</code> give the right answer for n? If both hold,
+      it's correct for every n, and you never traced a single stack frame.
+      That "assume the smaller call just works" is exactly what the machine
+      guarantees, and the proving-correctness page makes the induction
+      rigorous.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Recursion ↔ iteration, and when the stack is the point</summary>
+    <div class="layer-body">
+      <p>Anything recursive can be rewritten with a loop plus an explicit
+      stack — that's all the machine was doing anyway. When the recursion is
+      <em>linear</em> (one self-call, like <code>sum</code>), the explicit
+      stack often collapses into a single accumulator variable and the loop
+      wins on constant factors and stack safety. When the recursion
+      <em>branches</em> (trees, graphs, divide &amp; conquer), the stack is
+      genuinely load-bearing — you can move it from the call stack to your own
+      array, but you can't delete it. Unit 4's DFS page makes this concrete:
+      the recursive and explicit-stack versions sit side by side as the same
+      algorithm.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">function sum(n) {          // add n + (n-1) + … + 1
+  if (n <= 0) return 0;    // base case: answers WITHOUT another call
+  return n + sum(n - 1);   // progress: strictly smaller problem
+}
+
+function fib(n) {          // naive on purpose — the demo above
+  if (n <= 1) return n;    // two base cases
+  return fib(n - 1) + fib(n - 2);   // two calls: the tree branches
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You watched fib(7) cost 41 calls. The next page turns "watching" into
+  arithmetic: recurrences — equations that read a cost straight off a
+  recursive function's shape — and the Master theorem, which solves the
+  common ones on sight.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "recursion",
+    "questions": [
+      { "q": "In the fib(7) demo the stack never got deeper than 7 frames, yet 41 calls happened. What's the relationship between stack depth and total work?",
+        "choices": ["They're the same thing measured differently",
+                    "Depth is the longest chain alive at once; total work counts every call that ever ran",
+                    "Depth is always the square root of total calls"],
+        "answer": 1,
+        "explain": "Depth bounds memory; total calls bound time. Naive fib is shallow-but-exponential; a linked-list walk is deep-but-linear. Keeping the two separate is half of complexity analysis." },
+      { "q": "A recursive function has a correct base case but calls itself on the SAME size problem in one branch. What happens?",
+        "choices": ["It still terminates, just slowly",
+                    "That branch never makes progress, so the stack grows until it overflows",
+                    "The compiler rejects it"],
+        "answer": 1,
+        "explain": "Termination needs both ingredients: a base case AND guaranteed progress toward it on every path. Miss either and the ceiling is a RangeError, not an answer." },
+      { "q": "When is replacing recursion with a loop-plus-explicit-stack NOT a simplification?",
+        "choices": ["When the recursion branches — the stack is doing essential work either way",
+                    "Never; loops are always simpler",
+                    "When the function has a base case"],
+        "answer": 0,
+        "explain": "For branching traversals the stack (or a queue!) is the algorithm's memory of where to resume — you can relocate it but not remove it. Linear recursions, by contrast, often reduce to an accumulator." } ] }
+  </script>
+
+  <script>
+    // Page-local teaching generators. fib moves into the site library with
+    // unit 6 (dp.js), where it becomes the memoization flagship.
+    document.addEventListener("DOMContentLoaded", () => {
+      function wire(canvasId, hostId, makeGen) {
+        const frames = [];
+        const canvas = document.getElementById(canvasId);
+        const viz = window.AlgoCallstackViz.create(canvas);
+        window.AlgoSteps.player(document.getElementById(hostId), {
+          make: () => { frames.length = 0; return makeGen(frames); },
+          capture: () => ({ frames: frames.slice() }),
+          render: (snap, event) => viz.draw(snap, event),
+          counters: { call: "calls", return: "returns" },
+          describe: (e) =>
+            e.type === "call" ? `push: ${e.label}` :
+            e.type === "return" ? `pop: ${e.label} → ${e.value}` : "",
+        });
+      }
+
+      function* sumGen(frames, n = 5) {
+        frames.push(`sum(${n})`);
+        yield { type: "call", label: `sum(${n})` };
+        let result;
+        if (n <= 0) result = 0;
+        else { result = n + (yield* sumGen(frames, n - 1)); }
+        frames.pop();
+        yield { type: "return", label: `sum(${n})`, value: result };
+        return result;
+      }
+
+      function* fibGen(frames, n = 7) {
+        frames.push(`fib(${n})`);
+        yield { type: "call", label: `fib(${n})` };
+        let result;
+        if (n <= 1) result = n;
+        else {
+          const a = yield* fibGen(frames, n - 1);
+          const b = yield* fibGen(frames, n - 2);
+          result = a + b;
+        }
+        frames.pop();
+        yield { type: "return", label: `fib(${n})`, value: result };
+        return result;
+      }
+
+      wire("sum-canvas", "sum-stepper", (frames) => sumGen(frames));
+      wire("fib-canvas", "fib-stepper", (frames) => fibGen(frames));
+    });
+  </script>
+</main>
+</body>
+</html>
