@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Counting steps — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Foundations">
+  <meta name="algo:root" content="../">
+  <meta name="algo:next" content="big-o.html|Big-O: naming how cost grows">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+  <script defer src="../assets/js/viz/complexity-chart.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Foundations</p>
+  <h1>Counting steps</h1>
+  <p class="lede">Before any notation, a habit: an algorithm's cost is a number
+  you can count. This page gives you the site's stepper — every algorithm here
+  runs under it — and uses it to catch two searches doing wildly different
+  amounts of work on the same data.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing but code fluency. This is the first page of the course proper, and
+    it introduces the stepper controls you'll use everywhere else.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Here's the whole discipline of algorithm analysis in one move: <em>pick
+  what counts as a step, then count it.</em> Not milliseconds — those belong to
+  the machine. Steps. For searching, the natural step is a
+  <strong>comparison</strong>: "is this the value I'm looking for?" Every look
+  costs one.</p>
+  <p>Both demos below search the same sorted array of 64 numbers for the same
+  target. The first is the loop you've written a hundred times: check each item
+  in turn. The second exploits the fact that the array is sorted: check the
+  middle, throw away the half that can't contain the target, repeat. Same
+  input, same answer — watch the comparison counter.</p>
+
+  <h2>Watch it run</h2>
+  <p><strong>Linear search</strong> — one look per item, front to back. The
+  amber bar is the comparison being made; use ▶ or drag the scrubber (you can
+  scrub backwards — every demo on this site records its steps).</p>
+  <div class="demo">
+    <canvas id="linear-canvas" width="880" height="160"
+            aria-label="Linear search stepping through an array"></canvas>
+    <div id="linear-stepper"></div>
+  </div>
+
+  <p><strong>Binary search</strong> — same array, same target. The green band
+  is the region that can still contain the target; watch it halve on every
+  comparison.</p>
+  <div class="demo">
+    <canvas id="binary-canvas" width="880" height="160"
+            aria-label="Binary search halving the searchable region"></canvas>
+    <div id="binary-stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>This exact pair is the difference between a database query that scans a
+    table and one that hits an index; between <code>Array.includes()</code> and
+    a <code>Set</code> lookup; between grepping a log file and querying the
+    system that indexed it. Whenever a service "gets slow as the data grows",
+    someone is about to swap a linear look for a logarithmic one — the rest of
+    this course is largely a catalogue of moves like that.</p>
+  </div>
+
+  <h2>The measurement</h2>
+  <p>One run is an anecdote. Here's the experiment: run both searches at many
+  input sizes, always hunting the <em>worst-case</em> target (the last place
+  either would look), and plot the comparison counts. Dots are measurements;
+  dashed lines are the shapes the next page will teach you to name. The names
+  are the claim — the dots are the evidence.</p>
+  <div class="demo">
+    <div id="chart"></div>
+    <p class="hint">Linear's worst case grows in lock-step with n. Binary's
+    barely moves — doubling the array adds <em>one</em> comparison. At
+    n = 1,000,000 that's a million looks versus twenty.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why count worst case?</summary>
+    <div class="layer-body">
+      <p>Linear search sometimes gets lucky — target in the first slot, one
+      comparison, done. Counting the lucky run tells you nothing you can
+      promise anyone. This course counts the
+      <strong><dfn data-term="worst-case">worst case</dfn></strong> by default:
+      the most work the nastiest input of a given size can force. A guarantee
+      that survives an adversary survives production traffic. (Average and
+      amortized cost — other useful lenses — get their own pages.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why is binary search's count "the number of halvings"?</summary>
+    <div class="layer-body">
+      <p>Each comparison discards half of what's left. Starting from n
+      candidates: n → n/2 → n/4 → … → 1. The count of arrows is "how many times
+      can you halve n before reaching 1" — which is the definition of log₂ n
+      (the next page makes this symbol yours). 64 items: 6 halvings. A billion:
+      30. That is the entire magic trick, and it only works because sortedness
+      lets one comparison speak for half the array.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <p>This is the actual code the demos above ran — the generators from the
+  site's library (<code>assets/js/algo/sorts.js</code>). The
+  <code>yield</code> lines are the instrumentation: each one both reports a
+  step to the player and increments the counter you watched.</p>
+  <pre><code class="language-javascript">function* linearSearch(a, target) {
+  for (let i = 0; i &lt; a.length; i++) {
+    yield { type: "compare", i };            // one step, counted
+    if (a[i] === target) { yield { type: "found", i }; return i; }
+  }
+  yield { type: "not-found" };
+  return -1;
+}
+
+function* binarySearch(a, target) {          // requires: a is sorted
+  let lo = 0, hi = a.length - 1;
+  while (lo &lt;= hi) {
+    const mid = (lo + hi) &gt;&gt; 1;              // integer midpoint
+    yield { type: "focus", lo, hi, mid };    // the region still in play
+    yield { type: "compare", i: mid };       // one step, counted
+    if (a[mid] === target) { yield { type: "found", i: mid }; return mid; }
+    if (a[mid] &lt; target) lo = mid + 1;       // discard the left half
+    else hi = mid - 1;                       // discard the right half
+  }
+  yield { type: "not-found" };
+  return -1;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You've now measured a real difference in cost. The next page gives that
+  difference its name — Big-O — so "one grows in step with n, the other grows
+  with the number of halvings" becomes something you can say in four
+  characters and prove in a paragraph.</p>
+
+  <script type="application/json" class="symbols">
+  { "n": { "name": "n — the input size", "pron": "say: en",
+           "means": "how many items the algorithm is given", "short": "input size" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "counting-steps",
+    "questions": [
+      { "q": "Binary search finds a target in a sorted array of 1,024 items. Roughly how many comparisons does it need in the worst case?",
+        "choices": ["About 10", "About 512", "About 1,024"],
+        "answer": 0,
+        "explain": "Each comparison halves what's left: 1,024 → 512 → … → 1 is ten halvings. Linear search would need up to 1,024." },
+      { "q": "Why does this course count worst-case steps rather than the fastest run?",
+        "choices": ["Because the worst case is the most common case",
+                    "Because a bound that holds against the nastiest input is a promise you can actually make",
+                    "Because best-case analysis is mathematically impossible"],
+        "answer": 1,
+        "explain": "Lucky runs happen, but you can't ship a latency promise built on luck. (Worst case isn't necessarily common — that's why average-case analysis also exists.)" },
+      { "q": "Binary search needs the array to be sorted. What does one comparison actually buy there that it can't buy in an unsorted array?",
+        "choices": ["It checks two elements at once",
+                    "The verdict about the middle element rules out an entire half",
+                    "Sorted arrays are stored in faster memory"],
+        "answer": 1,
+        "explain": "In sorted data, \"the middle is too small\" condemns everything left of it too. In unsorted data a comparison only ever speaks for the one element it touched — no halving, no speed-up." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // One sorted array, one worst-ish target, both demos — deterministic
+      // seed so the prose numbers stay true.
+      const N = 64;
+      const sorted = window.AlgoRandom.ints(N, 5, 400, 20260817).sort((a, b) => a - b);
+      const target = sorted[N - 2]; // near the end: bad for linear, ordinary for binary
+
+      function wire(canvasId, hostId, makeGen) {
+        const canvas = document.getElementById(canvasId);
+        const viz = window.AlgoArrayViz.create(canvas);
+        const arr = sorted.slice();
+        const max = Math.max(...arr);
+        window.AlgoSteps.player(document.getElementById(hostId), {
+          make: () => makeGen(arr, target),
+          capture: () => ({ array: arr.slice(), max }),
+          render: (snap, event) => viz.draw(snap, event),
+          counters: { compare: "comparisons" },
+          describe: (e) =>
+            e.type === "compare" ? `comparing position ${e.i >= 0 ? e.i : e.mid}` :
+            e.type === "focus" ? `still possible: positions ${e.lo}–${e.hi}` :
+            e.type === "found" ? `found it at position ${e.i}` :
+            e.type === "not-found" ? "not in the array" : "",
+        });
+      }
+      wire("linear-canvas", "linear-stepper", window.AlgoSorts.linearSearch);
+      wire("binary-canvas", "binary-stepper", window.AlgoSorts.binarySearch);
+
+      // The experiment: worst-case comparisons across sizes.
+      window.AlgoComplexityChart.render(document.getElementById("chart"), {
+        sizes: [8, 16, 32, 64, 128, 256, 512],
+        series: [
+          { label: "linear search (worst case)", color: "#f97316",
+            make: (n) => {
+              const a = Array.from({ length: n }, (_, i) => i * 2);
+              return window.AlgoSorts.linearSearch(a, -1); // absent: checks all n
+            },
+            count: ["compare"],
+            claim: { label: "the straight-line shape", f: (n) => n } },
+          { label: "binary search (worst case)", color: "#0ea5e9",
+            make: (n) => {
+              const a = Array.from({ length: n }, (_, i) => i * 2);
+              return window.AlgoSorts.binarySearch(a, -1); // absent: full halving run
+            },
+            count: ["compare"],
+            claim: { label: "the halvings shape", f: (n) => Math.log2(n) } },
+        ],
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
