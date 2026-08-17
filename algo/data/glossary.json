@@ -78,6 +78,21 @@
     "see": ["big-o", "call-stack"],
     "taughtIn": { "href": "01-foundations/recurrences.html", "title": "Recurrences and the Master theorem" }
   },
+  "collision": {
+    "term": "Collision (hashing)",
+    "plain": "Two different keys landing on the same slot — not a bug, a certainty to be managed.",
+    "definition": "When a hash function maps distinct keys to the same bucket index. Inevitable whenever there are more possible keys than slots (pigeonhole principle); handled by chaining (a list per slot) or open addressing (probe to the next slot). Collision behaviour under load is what makes or breaks a hash table's O(1) promise.",
+    "see": ["load-factor", "data-structure"],
+    "taughtIn": { "href": "02-structures/hash-tables.html", "title": "Hash tables" }
+  },
+  "load-factor": {
+    "term": "Load factor",
+    "plain": "How crowded a hash table is: stored keys divided by slots — the dial that decides whether O(1) stays honest.",
+    "definition": "α = entries / buckets. Expected chain and probe lengths grow with α (sharply, for open addressing), so practical tables resize — double the buckets and rehash — around α ≈ 0.75, paying an occasional amortized-O(1) reorganization to keep lookups constant.",
+    "also": ["alpha", "occupancy"],
+    "see": ["collision", "amortized"],
+    "taughtIn": { "href": "02-structures/hash-tables.html", "title": "Hash tables" }
+  },
   "frontier": {
     "term": "Frontier",
     "plain": "The algorithm's to-do list of places to look next.",
