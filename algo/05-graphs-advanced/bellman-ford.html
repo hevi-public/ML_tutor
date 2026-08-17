@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bellman-Ford and negative weights — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dijkstra.html|Dijkstra's algorithm">
+  <meta name="algo:next" content="floyd-warshall.html|All pairs: Floyd-Warshall">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>Bellman-Ford: shortest paths that survive negative prices</h1>
+  <p class="lede">Sometimes an edge pays <em>you</em>: a currency conversion
+  with a favorable rate, a subsidized route, an action with a reward.
+  Dijkstra's greedy commitment is illegal here. Bellman-Ford trades the
+  cleverness for patience — relax <em>everything</em>, repeatedly — and gets
+  two things back: correctness under negative weights, and a detector for
+  the one situation where "shortest" stops meaning anything.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="dijkstra.html">Dijkstra</a>, especially the proof layer — this
+    page is what grows back after that proof loses non-negativity.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Keep the same tentative prices d(v). But make no commitments: in each
+  <strong>round</strong>, sweep the <em>entire edge list</em> and relax every
+  edge that offers an improvement. After one round, every shortest path of 1
+  edge is correct; after two rounds, every path of 2 edges; after
+  <span class="math">|V| - 1</span> rounds, every possible simple path length
+  is covered — done. Cost: O(|V|·|E|), the price of refusing to guess.</p>
+  <p>Then one extra round as a tripwire. A simple shortest path can't have
+  more than |V|−1 edges — so if a sweep <em>still</em> finds an improvement,
+  some price is being lowered by going in circles: a <strong>negative
+  cycle</strong> is reachable, a loop whose total weight is below zero. Walk
+  it forever, "cost" plummets without bound — the question "what's the
+  shortest path?" has no answer, and Bellman-Ford is the algorithm that can
+  say so honestly.</p>
+
+  <h2>Watch it run</h2>
+  <p>A directed graph where the edge <code>a → b</code> pays out (weight
+  −3). Dijkstra would settle b at 5 via the direct edge and never look back;
+  watch round 2 correct b's price to 1 through the negative edge. Labels
+  show tentative prices dropping round by round:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+  </div>
+  <p>Now the tripwire. Same graph plus a return edge <code>b → a</code> of
+  weight 1: the loop a→b→a totals −2, so prices can fall forever. The final
+  sweep catches an edge that still improves — the red pair is the proof:</p>
+  <div class="demo">
+    <div id="viz2"></div>
+    <div id="stepper2"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Currency arbitrage is the famous one: model conversion rates as edge
+    weights of −log(rate), and a negative cycle IS an arbitrage loop —
+    trading around it multiplies money. Bellman-Ford is literally an
+    arbitrage detector. Distance-vector routing protocols (RIP) are
+    distributed Bellman-Ford: each router repeatedly relaxes using
+    neighbors' advertised distances. And constraint systems — task
+    scheduling with "x must start ≥ 3 after y" difference constraints —
+    reduce to shortest paths where negative weights are the norm and a
+    negative cycle means the constraints contradict each other.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why exactly |V| − 1 rounds suffice</summary>
+    <div class="layer-body">
+      <p>Induction on path length: after round k, every node whose shortest
+      path uses ≤ k edges holds its true price. Round 1 fixes all one-edge
+      paths (the start's neighbors, via direct edges). If the claim holds
+      for k, take any node whose shortest path uses k+1 edges; its
+      predecessor on that path is correct after round k, and round k+1
+      relaxes the final edge — done. A simple path visits each node at most
+      once, so no shortest path (absent negative cycles) needs more than
+      |V|−1 edges. The early-exit in the code — stop when a full sweep
+      changes nothing — is why real inputs usually finish in far fewer
+      rounds than the worst case.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Dijkstra vs Bellman-Ford — the honest decision table</summary>
+    <div class="layer-body">
+      <p>All weights ≥ 0: Dijkstra, no contest — O((|V|+|E|) log |V|)
+      beats O(|V|·|E|) badly at scale. Any negative edge: Bellman-Ford
+      (or a reweighting trick — Johnson's algorithm runs one Bellman-Ford to
+      shift weights non-negative, then Dijkstra from every node; the
+      next page's alternative for all-pairs). Need to <em>detect</em>
+      negative cycles: Bellman-Ford is the tool, full stop. Distributed
+      setting where nodes only know their neighbors: Bellman-Ford's
+      relax-everything structure is the one that decomposes — which is why
+      routing history went through it.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function bellmanFord(graph, start) {
+  const dist = new Map(graph.nodes.map((n) => [n.id, Infinity]));
+  dist.set(start, 0);
+  for (let round = 1; round < graph.nodes.length; round++) {
+    let changed = false;
+    for (const { u, v, w } of edges) {          // ALL edges, every round
+      if (dist.get(u) === Infinity) continue;
+      const alt = dist.get(u) + w;
+      if (alt < dist.get(v)) { dist.set(v, alt); changed = true; }
+    }
+    if (!changed) break;                        // stable early — done
+  }
+  for (const { u, v, w } of edges) {            // the tripwire round
+    if (dist.get(u) !== Infinity && dist.get(u) + w < dist.get(v)) {
+      return { negativeCycle: true };           // "shortest" is undefined here
+    }
+  }
+  return { dist };
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Single-source is half the story. When every node needs distances to
+  every other — routing tables, all-pairs analytics — a beautifully tiny
+  triple loop does it in one shot:
+  <a href="floyd-warshall.html">Floyd-Warshall</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "bellman-ford",
+    "questions": [
+      { "q": "Precisely where does Dijkstra's correctness argument break under negative weights?",
+        "choices": ["The priority queue can't store negative numbers",
+                    "The settle step assumes any path leaving the settled set only gets costlier — a later negative edge can undercut an already-settled price, making the permanent commitment wrong",
+                    "Relaxation stops terminating"],
+        "answer": 1,
+        "explain": "One sentence of the proof — \"the rest of the path can only add cost\" — is the entire dependency on non-negativity. Bellman-Ford simply never commits, so it never needs that sentence." },
+      { "q": "A full extra sweep still finds an improvable edge after |V|−1 rounds. What does that prove?",
+        "choices": ["The graph is disconnected",
+                    "A negative-total cycle is reachable from the start — prices can be pushed down forever by looping, so no shortest path exists for nodes it touches",
+                    "More rounds are needed for large graphs"],
+        "answer": 1,
+        "explain": "Simple paths max out at |V|−1 edges, so any further improvement must reuse a node — a cycle — and improving means the loop's total is negative. The tripwire is a proof, not a heuristic." },
+      { "q": "Why does modeling currency conversion as −log(rate) edges turn arbitrage detection into negative-cycle detection?",
+        "choices": ["Logs make the numbers smaller and safer",
+                    "Multiplying rates around a loop > 1 (profit) becomes, under −log, summing weights < 0 — exactly a negative cycle, exactly what Bellman-Ford's tripwire certifies",
+                    "Currencies can't be negative"],
+        "answer": 1,
+        "explain": "log turns products into sums; the minus flips \"profit > 1\" into \"sum < 0\". A textbook reduction — reshape the question until an algorithm you own answers it (unit 11 makes this a discipline)." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const base = {
+        directed: true,
+        nodes: [
+          { id: "s", x: 0.07, y: 0.45 }, { id: "a", x: 0.38, y: 0.15 },
+          { id: "b", x: 0.45, y: 0.72 }, { id: "c", x: 0.70, y: 0.30 },
+          { id: "t", x: 0.93, y: 0.55 },
+        ],
+        edges: [
+          { u: "s", v: "a", w: 4 }, { u: "s", v: "b", w: 5 },
+          { u: "a", v: "b", w: -3 }, { u: "a", v: "c", w: 6 },
+          { u: "b", v: "t", w: 4 }, { u: "c", v: "t", w: 2 },
+        ],
+      };
+
+      function setup(graph, vizId, stepperId) {
+        const state = {};
+        function* tracked() {
+          state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+          for (const e of window.AlgoGraphs.bellmanFord(graph, "s")) {
+            window.AlgoGraphViz.applyEvent(state, e);
+            if (e.type === "cycle")
+              state.edgeState[window.AlgoGraphViz.edgeKey(e.nodes[0], e.nodes[1])] = "reject";
+            yield e;
+          }
+        }
+        const viz = window.AlgoGraphViz.create(document.getElementById(vizId),
+          { label: "Bellman-Ford animation", height: 300 });
+        window.AlgoSteps.player(document.getElementById(stepperId), {
+          make: tracked,
+          capture: () => JSON.parse(JSON.stringify({
+            nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+          render: (snap, event) => viz.draw(graph, snap, event),
+          counters: { round: "rounds", relax: "relaxations", check: "edge checks" },
+          describe: (e) =>
+            e.type === "round" ? `round ${e.k}: sweeping every edge` :
+            e.type === "relax" ? `improved: d(${e.v}) drops to ${e.dist} via ${e.u}` :
+            e.type === "check" ? `edge ${e.u} → ${e.v}: any improvement?` :
+            e.type === "cycle" ? `STILL improving after |V|−1 rounds — edge ${e.nodes[0]} → ${e.nodes[1]} sits on a negative cycle` :
+            e.type === "done" ? (e.negativeCycle
+              ? "negative cycle reachable: shortest paths are undefined"
+              : "stable — every price is final") : "",
+        });
+      }
+
+      setup(JSON.parse(JSON.stringify(base)), "viz", "stepper");
+
+      const cyclic = JSON.parse(JSON.stringify(base));
+      cyclic.edges.push({ u: "b", v: "a", w: 1 });   // a→b (−3) + b→a (1) = −2
+      setup(cyclic, "viz2", "stepper2");
+    });
+  </script>
+</main>
+</body>
+</html>
