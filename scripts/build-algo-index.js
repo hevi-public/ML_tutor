@@ -41,10 +41,10 @@ function textify(html) {
    sentence with a hole in it — invisible in the source, obvious on the page.
    Anything that isn't a tag we actually use gets flagged. */
 
-const HTML_TAGS = new Set(`a abbr b body br button canvas circle code dd details div dfn dl
+const HTML_TAGS = new Set(`a abbr b body br button canvas circle code dd details dialog div dfn dl
 dt em form g h1 h2 h3 h4 h5 head hr html i input kbd label li line link main meta nav ol
-p path polyline pre rect script section span strong style sub summary sup svg table tbody td
-text textarea th thead title tr tspan ul`.split(/\s+/).filter(Boolean));
+option output p path polyline pre rect script section select span strong style sub summary sup
+svg table tbody td text textarea th thead title tr tspan ul`.split(/\s+/).filter(Boolean));
 
 function checkPlaceholders(html, rel) {
   const prose = html.replace(/<script[\s\S]*?<\/script>/g, "");

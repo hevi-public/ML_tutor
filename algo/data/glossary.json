@@ -55,6 +55,29 @@
     "definition": "A property that holds before and after every iteration of a loop (or every recursive call). If the invariant holds at the start, is preserved by each step, and implies the goal when the loop exits, the algorithm is correct.",
     "also": ["loop invariant"]
   },
+  "call-stack": {
+    "term": "Call stack",
+    "plain": "The pile of \"where was I?\" notes the machine keeps — one frame per active function call.",
+    "definition": "The runtime structure holding one frame (arguments, locals, return address) per call that has started but not finished. Recursion is ordinary calls stacking frames of the same function; a stack trace is a printout of it; stack overflow is its size limit enforced.",
+    "also": ["execution stack", "the stack"],
+    "see": ["base-case"],
+    "taughtIn": { "href": "01-foundations/recursion.html", "title": "Recursion" }
+  },
+  "base-case": {
+    "term": "Base case",
+    "plain": "The input a recursive function answers directly, without calling itself — the stack's ceiling.",
+    "definition": "The condition under which recursion stops. A sound recursive function needs a base case plus guaranteed progress toward it on every path; missing either turns the call stack into a countdown to overflow.",
+    "see": ["call-stack", "invariant"],
+    "taughtIn": { "href": "01-foundations/recursion.html", "title": "Recursion" }
+  },
+  "recurrence": {
+    "term": "Recurrence",
+    "plain": "An equation that prices a recursive algorithm the way the code is shaped: the whole costs the parts plus assembly.",
+    "definition": "A definition of the cost function T(n) in terms of its own values at smaller inputs, e.g. T(n) = 2T(n/2) + n for merge sort. Solved by recursion trees, substitution, or — for the divide-and-conquer form — the Master theorem.",
+    "also": ["recurrence relation"],
+    "see": ["big-o", "call-stack"],
+    "taughtIn": { "href": "01-foundations/recurrences.html", "title": "Recurrences and the Master theorem" }
+  },
   "frontier": {
     "term": "Frontier",
     "plain": "The algorithm's to-do list of places to look next.",
