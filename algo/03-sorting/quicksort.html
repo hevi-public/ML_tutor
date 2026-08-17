@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quicksort — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="merge-sort.html|Merge sort and divide &amp; conquer">
+  <meta name="algo:next" content="heapsort.html|Heapsort">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>Quicksort: brilliant, fragile, fixed by a coin flip</h1>
+  <p class="lede">The fastest comparison sort in practice, in-place, and the
+  best story in the unit: a hidden worst case that ambushes exactly the
+  inputs production loves to produce — and a one-line randomized repair.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="merge-sort.html">Merge sort</a> (the divide-&amp;-conquer frame)
+    and the <a href="../02-structures/binary-search-trees.html">BST
+    degeneration demo</a> from unit 2 — you're about to see its twin.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Merge sort does its work on the way <em>up</em> (the merge). Quicksort
+  does it on the way <em>down</em>: pick a <strong>pivot</strong>, then
+  <strong>partition</strong> — one linear pass moving everything smaller to
+  the pivot's left and everything larger to its right. After the pass, the
+  pivot sits in its <em>final sorted position</em> (green in the demo), and
+  the two sides can be sorted independently. No merge needed, no scratch
+  array: the combine step is free because partitioning already put every
+  element on the correct side.</p>
+  <p>The cost hinges entirely on the split quality. Balanced splits: the
+  merge-sort recurrence, Θ(n log n). But this implementation picks the
+  <em>last element</em> as pivot — and on already-sorted input that's always
+  the maximum: one side gets everything, the other nothing, and the
+  "recursion tree" is unit 2's degenerate BST chain wearing a different hat.
+  n levels × n work = Θ(n²), triggered by the most common input shape in
+  production data.</p>
+
+  <h2>Watch it run — then poison it</h2>
+  <p><strong>Shuffled input</strong>, last-element pivot. Watch pivots settle
+  (green), and remember the final comparison count — you'll want it for the
+  next two runs:</p>
+  <div class="demo">
+    <canvas id="good-canvas" width="880" height="140" aria-label="Quicksort on shuffled input"></canvas>
+    <div id="good-stepper"></div>
+  </div>
+  <p><strong>Sorted input</strong>, same code. The focus band never splits —
+  it only shrinks by one. Scrub to the end and compare counters: this is the
+  quadratic ambush, live:</p>
+  <div class="demo">
+    <canvas id="bad-canvas" width="880" height="140" aria-label="Quicksort degenerating on sorted input"></canvas>
+    <div id="bad-stepper"></div>
+  </div>
+  <p><strong>The fix</strong> — same sorted input, but each round first swaps
+  a <em>random</em> element into the pivot slot. One line; watch the counter
+  return to earth:</p>
+  <div class="demo">
+    <canvas id="fix-canvas" width="880" height="140" aria-label="Randomized quicksort on sorted input"></canvas>
+    <div id="fix-stepper"></div>
+    <p class="hint">Randomization doesn't dodge this one input — it makes
+    <em>every</em> input equally safe: no fixed input is bad anymore, only
+    unlucky coin flips, and those wash out exponentially. This idea —
+    "make your own luck so the adversary can't choose your worst case" — is
+    a unit 11 headline, met here first.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>C++'s <code>std::sort</code> (introsort = quicksort + a heapsort
+    parachute), Go's and Rust's pdqsort variants, V8's Timsort predecessor —
+    quicksort's descendants sort most of the world's in-memory data. The
+    ambush is real history: sorted-input quadratic quicksorts have caused
+    production incidents, and crafted-input attacks on known pivots are a
+    documented DoS class (the hash-flooding page's sibling). Partitioning
+    alone — split by a predicate, order within sides unimportant — is
+    everywhere: quickselect (two pages on), Lomuto/Hoare passes inside
+    databases, even "move failed items to the front of the retry queue".</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why random pivots give n log n on average</summary>
+    <div class="layer-body">
+      <p>A random pivot lands in the middle half of the values with
+      probability ½ — and a middle-half pivot leaves both sides ≤ ¾n. So on
+      average every couple of rounds the problem shrinks geometrically:
+      expected depth O(log n), each level linear. (The precise constant:
+      expected comparisons ≈ 1.39 n log₂ n — the same 1.39 as the random-BST
+      height, because they are literally the same analysis.) The worst case
+      still exists — you can flip tails forever — but no <em>input</em>
+      causes it, and its probability vanishes exponentially.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Engineering the real thing: introsort's three safety nets</summary>
+    <div class="layer-body">
+      <p>Production quicksorts add: median-of-three pivots (cheap split
+      insurance), a depth limit that bails to heapsort if recursion exceeds
+      ~2 log n (capping the worst case at n log n — that's introsort), and
+      insertion sort below ~16–32 elements. Also worth knowing: Lomuto's
+      partition (taught here for its clarity) does more swaps than Hoare's
+      (used in practice), and plain quicksort is <em>not stable</em> — the
+      long-range swaps leapfrog equal keys, which is why stable-sort APIs
+      are merge-descended instead.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact partition (assets/js/algo/sorts.js) — Lomuto scheme:
+const pivot = a[hi];                    // ← the fragile line; randomized fix:
+let i = lo;                             //    swap a random index into hi first
+for (let j = lo; j < hi; j++) {
+  yield { type: "compare", i: j, j: hi };
+  if (a[j] < pivot) {                   // belongs on the left
+    if (i !== j) { [a[i], a[j]] = [a[j], a[i]]; yield { type: "swap", i, j }; }
+    i++;                                // left region grows
+  }
+}
+[a[i], a[hi]] = [a[hi], a[i]];          // pivot lands between the regions —
+yield { type: "sorted", i };            //   its FINAL sorted position</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Introsort's parachute deserves its own page: <a href="heapsort.html">
+  heapsort</a> — unit 2's heap, aimed at sorting, in place and guaranteed
+  n log n, and the reason the hybrid can promise what quicksort alone
+  can't.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "quicksort",
+    "questions": [
+      { "q": "After one partition pass, what is guaranteed about the pivot?",
+        "choices": ["It's somewhere in the left half",
+                    "It sits in its final sorted position — smaller values left, larger right — so the sides can be finished independently",
+                    "It's the median"],
+        "answer": 1,
+        "explain": "That's why quicksort needs no merge: partitioning IS the combine step, done in advance. (It's also quickselect's key, two pages on.)" },
+      { "q": "Why is sorted input catastrophic for last-element-pivot quicksort?",
+        "choices": ["Sorted input has too many duplicates",
+                    "The pivot is always the maximum: splits of (n−1, 0) recurse n deep with linear work each — the BST chain's twin, Θ(n²)",
+                    "Partitioning fails on sorted data"],
+        "answer": 1,
+        "explain": "Same lesson as unit 2: a fixed deterministic choice plus the most natural input shape in production equals the worst case. Nearly-sorted, reversed, and constant inputs all trigger it." },
+      { "q": "What exactly does pivot randomization change?",
+        "choices": ["It removes the worst case entirely",
+                    "It moves the worst case from \"a choosable input\" to \"an unlucky coin sequence\" — no adversary or natural data shape can trigger it, and bad luck decays exponentially",
+                    "It makes quicksort stable"],
+        "answer": 1,
+        "explain": "The n² worst case still exists on paper; what's gone is any INPUT that causes it. Guarantees against adversaries via your own randomness — unit 11 builds a whole toolkit on this move." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const N = 24;
+      const shuffled = window.AlgoRandom.ints(N, 10, 300, 1618);
+      const sorted = shuffled.slice().sort((a, b) => a - b);
+
+      // Randomized variant: same partition, pivot pre-swapped at random.
+      // Seeded here so the page's numbers are reproducible.
+      function* randomizedQuickSort(a, rand, lo = 0, hi = a.length - 1) {
+        if (lo >= hi) { if (lo === hi) yield { type: "sorted", i: lo }; return; }
+        const r = lo + Math.floor(rand() * (hi - lo + 1));
+        if (r !== hi) { [a[r], a[hi]] = [a[hi], a[r]]; yield { type: "swap", i: r, j: hi }; }
+        yield { type: "focus", lo, hi };
+        const pivot = a[hi];
+        let i = lo;
+        for (let j = lo; j < hi; j++) {
+          yield { type: "compare", i: j, j: hi };
+          if (a[j] < pivot) {
+            if (i !== j) { [a[i], a[j]] = [a[j], a[i]]; yield { type: "swap", i, j }; }
+            i++;
+          }
+        }
+        if (i !== hi) { [a[i], a[hi]] = [a[hi], a[i]]; yield { type: "swap", i, j: hi }; }
+        yield { type: "sorted", i };
+        yield* randomizedQuickSort(a, rand, lo, i - 1);
+        yield* randomizedQuickSort(a, rand, i + 1, hi);
+      }
+
+      function wire(canvasId, stepperId, source, makeGen) {
+        const arr = source.slice();
+        const viz = window.AlgoArrayViz.create(document.getElementById(canvasId));
+        const max = Math.max(...arr);
+        const done = new Set();
+        // Track settled pivots DURING recording, so every snapshot carries the
+        // set of green (finally-placed) positions and scrubbing stays honest.
+        function* tracked() {
+          done.clear();
+          for (const e of makeGen(arr)) {
+            if (e.type === "sorted") done.add(e.i);
+            yield e;
+          }
+        }
+        window.AlgoSteps.player(document.getElementById(stepperId), {
+          make: tracked,
+          capture: () => ({ array: arr.slice(), max, sorted: new Set(done) }),
+          render: (snap, event) => viz.draw(snap, event),
+          counters: { compare: "comparisons", swap: "swaps" },
+          describe: (e) =>
+            e.type === "focus" ? `partitioning [${e.lo}, ${e.hi}]` :
+            e.type === "sorted" ? `pivot settled at ${e.i} — final position` : "",
+        });
+      }
+      wire("good-canvas", "good-stepper", shuffled, (a) => window.AlgoSorts.quickSort(a));
+      wire("bad-canvas", "bad-stepper", sorted, (a) => window.AlgoSorts.quickSort(a));
+      wire("fix-canvas", "fix-stepper", sorted,
+        (a) => randomizedQuickSort(a, window.AlgoRandom.rng(5)));
+    });
+  </script>
+</main>
+</body>
+</html>

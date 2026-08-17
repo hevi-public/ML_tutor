@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Merge sort and divide &amp; conquer — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="elementary-sorts.html|Selection, insertion, bubble">
+  <meta name="algo:next" content="quicksort.html|Quicksort">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+  <script defer src="../assets/js/viz/complexity-chart.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>Merge sort: the first n log n</h1>
+  <p class="lede">Split in half, sort each half, zip the sorted halves
+  together. Nothing here is clever in isolation — the power is structural,
+  and it's the same structure behind big-data pipelines and your database's
+  spill-to-disk sorts.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-foundations/recurrences.html">Recurrences</a> — merge sort
+    is T(n) = 2T(n/2) + n, the balanced tree whose every level sums to n.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Two observations carry everything. First: <strong>merging two
+  already-sorted lists is easy and linear</strong> — look at the two front
+  items, take the smaller, repeat; each comparison permanently retires one
+  element. Second: <strong>a single element is already sorted.</strong>
+  Recursion connects them: split until trivially sorted, then merge your way
+  back up. Correctness is unit 1's induction verbatim — assume the halves
+  come back sorted, verify the merge preserves it.</p>
+  <p>The cost is the recurrence page's centerpiece: log n levels of splitting,
+  each level's merges touching all n elements once — Θ(n log n) with no
+  ifs. Not "usually", not "if the input cooperates": <em>always</em>,
+  worst case included. And the merge takes equal-from-the-left first, so
+  it's stable — the property the elementary page taught you to demand.
+  The price: the merge needs O(n) scratch space; sorting truly in place is
+  what the next two pages trade for.</p>
+
+  <h2>Watch it run</h2>
+  <p>The green band is the sub-array being worked; red writes are the merge
+  copying values back in sorted order. Notice the pattern: tiny merges first,
+  then wider and wider — the tree, walked bottom-up:</p>
+  <div class="demo">
+    <canvas id="ms-canvas" width="880" height="150" aria-label="Merge sort's split and merge pattern"></canvas>
+    <div id="ms-stepper"></div>
+  </div>
+
+  <h2>The measurement</h2>
+  <div class="demo">
+    <div id="chart"></div>
+    <p class="hint">Merge sort's dots ride the n log n curve while insertion's
+    head for the parabola — and unlike quicksort (next page), NO input can
+    push merge sort off its curve. Guaranteed bounds are a real engineering
+    property: they're why merge-descended sorts serve latency-sensitive and
+    adversarial-input settings.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Merging sorted streams is a load-bearing wall of infrastructure:
+    external sorting (data too big for RAM: sort chunks, then k-way merge —
+    every serious database does this for big ORDER BYs), LSM storage engines
+    compacting sorted runs (unit 9), log aggregators merging per-host
+    sorted-by-time streams, and merge joins. Timsort — the actual
+    <code>sort()</code> in Python, Java and V8 for objects — is merge sort
+    that finds naturally-sorted runs and merges them, with insertion sort in
+    the small cases: the last two pages, hybridized.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why the merge is the whole trick</summary>
+    <div class="layer-body">
+      <p>The elementary sorts move information one adjacent step at a time,
+      so they can't beat the inversion count. A merge moves an element
+      arbitrarily far in one write, guided by the sortedness already earned
+      in the halves. That's the divide-&amp;-conquer bargain everywhere: pay
+      to establish structure in the parts, then let the combine step exploit
+      it wholesale. (Same bargain as binary search exploiting sortedness —
+      unit 0's "structure converts to saved work", now purchasable at
+      runtime.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — the recurrence, retired</summary>
+    <div class="layer-body">
+      <p>T(n) = 2T(n/2) + cn. Recursion tree: level i has 2ⁱ merges of size
+      n/2ⁱ, summing to cn per level; ⌈log₂n⌉ levels; total cn·log₂n + n·T(1)
+      = Θ(n log n). Master theorem case 2 agrees on sight (a=2, b=2, f=n ties
+      n^{log₂2}). Space: the merge buffer is n/2 at the top level and can be
+      reused throughout — Θ(n) extra, and the recursion stack adds Θ(log n).
+      Both worth stating in an interview; only the first usually matters.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact generator (assets/js/algo/sorts.js), merge shown:
+const left = a.slice(lo, mid + 1), right = a.slice(mid + 1, hi + 1);
+let i = 0, j = 0, k = lo;
+while (i < left.length && j < right.length) {
+  yield { type: "compare", i: lo + i, j: mid + 1 + j };
+  const takeLeft = left[i] <= right[j];   // <= — equal takes LEFT: stability
+  a[k] = takeLeft ? left[i++] : right[j++];
+  yield { type: "set", i: k, value: a[k] };
+  k++;
+}
+// then copy whichever side has leftovers — they're already sorted</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Merge sort pays memory for its guarantee. <a href="quicksort.html">
+  Quicksort</a> flips the bargain: in-place and typically faster — with a
+  worst case you can be ambushed by, and a one-line randomized fix that's a
+  small masterpiece of algorithm design.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "merge-sort",
+    "questions": [
+      { "q": "Why is merging two sorted halves only O(n)?",
+        "choices": ["Because comparisons are cheap",
+                    "Each comparison permanently retires one element into the output — n elements, ≤ n comparisons-and-writes… done",
+                    "Because the halves are equal sizes"],
+        "answer": 1,
+        "explain": "Sortedness means the smallest remaining item is always at one of two fronts. No element is ever reconsidered — contrast insertion sort re-touching its prefix repeatedly." },
+      { "q": "Merge sort is Θ(n log n) \"with no asterisks\". What's the engineering value of a guaranteed bound over a typical-case one?",
+        "choices": ["None — typical is what happens",
+                    "Predictable worst-case latency and immunity to adversarial or unlucky inputs — no input shape can trigger a blowup",
+                    "It uses less memory"],
+        "answer": 1,
+        "explain": "Quicksort's n² tail (next page) is exactly the asterisk merge sort doesn't have. For SLAs and hostile inputs, the guarantee IS the feature — memory is what it costs." },
+      { "q": "A 200 GB table needs ORDER BY on a machine with 8 GB of RAM. What does the database actually do?",
+        "choices": ["Fails — you need more RAM",
+                    "Merge sort's big-data form: sort RAM-sized chunks, spill them, then k-way merge the sorted runs off disk",
+                    "Quicksort with swapping"],
+        "answer": 1,
+        "explain": "External sort = this page at warehouse scale: the merge step only ever needs the FRONTS of the runs in memory. The same shape runs LSM compaction and log aggregation." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const arr = window.AlgoRandom.ints(32, 10, 300, 2718);
+      const viz = window.AlgoArrayViz.create(document.getElementById("ms-canvas"));
+      const max = Math.max(...arr);
+      window.AlgoSteps.player(document.getElementById("ms-stepper"), {
+        make: () => window.AlgoSorts.mergeSort(arr),
+        capture: () => ({ array: arr.slice(), max }),
+        render: (snap, event) => viz.draw(snap, event),
+        counters: { compare: "comparisons", set: "writes" },
+        describe: (e) =>
+          e.type === "focus" ? `splitting [${e.lo}, ${e.hi}]` :
+          e.type === "compare" ? "merge: comparing the two fronts" :
+          e.type === "set" ? "merge: writing the smaller front back" : "",
+      });
+
+      const shuffled = (n) => window.AlgoRandom.ints(n, 0, 1000, n * 3 + 1);
+      window.AlgoComplexityChart.render(document.getElementById("chart"), {
+        sizes: [8, 16, 32, 64, 128, 256],
+        series: [
+          { label: "merge sort", color: "#0ea5e9",
+            make: (n) => window.AlgoSorts.mergeSort(shuffled(n)),
+            count: ["compare"], claim: { label: "the n log n shape", f: (n) => n * Math.log2(n) } },
+          { label: "insertion sort", color: "#f97316",
+            make: (n) => window.AlgoSorts.insertionSort(shuffled(n)),
+            count: ["compare"], claim: { label: "the n² shape", f: (n) => n * n } },
+        ],
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
