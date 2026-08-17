@@ -1,0 +1,70 @@
+{
+  "algorithm": {
+    "term": "Algorithm",
+    "plain": "A recipe precise enough that a machine can follow it — and that we can reason about.",
+    "definition": "A finite, unambiguous sequence of steps that transforms input to output. What makes it interesting is not that it works, but what it costs and how we know it's correct.",
+    "see": ["growth-rate", "worst-case"]
+  },
+  "growth-rate": {
+    "term": "Growth rate",
+    "plain": "How the work changes as the input gets bigger — the thing Big-O names.",
+    "definition": "The relationship between input size n and the resources (steps, memory) an algorithm uses, considered asymptotically: constant factors and lower-order terms are ignored because they stop mattering as n grows.",
+    "also": ["asymptotic complexity", "order of growth"],
+    "see": ["big-o", "theta"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "big-o": {
+    "term": "Big-O",
+    "plain": "A ceiling on growth: \"the work grows no faster than this shape\".",
+    "definition": "f(n) = O(g(n)) means there exist constants c and n₀ such that f(n) ≤ c·g(n) for all n ≥ n₀. An upper bound on growth rate, blind to constant factors and small inputs.",
+    "also": ["big oh", "O notation"],
+    "see": ["theta", "omega", "growth-rate"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "theta": {
+    "term": "Θ (big theta)",
+    "plain": "A tight bound: the work grows exactly like this shape, no faster and no slower.",
+    "definition": "f(n) = Θ(g(n)) means f is both O(g(n)) and Ω(g(n)): squeezed between two constant multiples of the same shape. The honest stamp for \"this is what the algorithm costs\".",
+    "also": ["big theta", "tight bound"],
+    "see": ["big-o", "omega"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "omega": {
+    "term": "Ω (big omega)",
+    "plain": "A floor on growth: \"the work grows at least this fast\".",
+    "definition": "f(n) = Ω(g(n)) means there exist constants c and n₀ such that f(n) ≥ c·g(n) for all n ≥ n₀. Lower bounds are how impossibility results are stated — like sorting's Ω(n log n).",
+    "also": ["big omega", "lower bound"],
+    "see": ["big-o", "theta"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "worst-case": {
+    "term": "Worst case",
+    "plain": "The most work the algorithm can be forced to do by the nastiest possible input of a given size.",
+    "definition": "The maximum cost over all inputs of size n. The default case this course analyses, because a guarantee that survives an adversary survives production traffic too. Average case and amortized cost are the other two lenses.",
+    "see": ["amortized", "growth-rate"]
+  },
+  "amortized": {
+    "term": "Amortized cost",
+    "plain": "The cost per operation averaged over a long run of operations — expensive moments paid off by many cheap ones.",
+    "definition": "A guarantee about the total cost of any sequence of k operations (total ≤ k · amortized bound), even though individual operations may occasionally cost far more. The dynamic array's occasional resize is the canonical example.",
+    "see": ["worst-case"]
+  },
+  "invariant": {
+    "term": "Invariant",
+    "plain": "Something that stays true every time around the loop — the skeleton of a correctness proof.",
+    "definition": "A property that holds before and after every iteration of a loop (or every recursive call). If the invariant holds at the start, is preserved by each step, and implies the goal when the loop exits, the algorithm is correct.",
+    "also": ["loop invariant"]
+  },
+  "frontier": {
+    "term": "Frontier",
+    "plain": "The algorithm's to-do list of places to look next.",
+    "definition": "In graph search, the set of discovered-but-not-yet-processed vertices. Its data structure is the algorithm: a queue gives breadth-first search, a stack depth-first, a priority queue Dijkstra.",
+    "see": ["algorithm"]
+  },
+  "data-structure": {
+    "term": "Data structure",
+    "plain": "A shape for storing data that makes some operations cheap — always at the price of others.",
+    "definition": "An organization of data in memory together with the operations it supports and their costs. Choosing one is choosing which operations you want to be fast; every structure in unit 2 is a different answer to that trade.",
+    "see": ["algorithm", "growth-rate"]
+  }
+}

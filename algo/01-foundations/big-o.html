@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Big-O, Θ and Ω — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Foundations">
+  <meta name="algo:root" content="../">
+
+  <link rel="stylesheet" href="../../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/viz/growth-racer.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Foundations</p>
+  <h1>Big-O: naming how cost grows</h1>
+  <p class="lede">You already know some code is "slow". Big-O is the precise
+  version of that hunch — a name for <em>how the cost grows</em> when the input
+  gets bigger, which is the only thing that matters once the input is big.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    You've shipped code and you've met a nested loop. That's it — every symbol
+    below is introduced before it's used, and the formal definitions are
+    optional layers.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Run a function on 10 items, then on 10,000. The question that predicts
+  whether it survives production isn't "how many milliseconds did it take" —
+  that depends on the machine, the language, the weather. The durable question
+  is: <strong>when the input gets 10× bigger, what happens to the work?</strong>
+  Does it stay flat? Grow 10×? Grow 100×? Double a few times and stop fitting
+  in the universe?</p>
+  <p>That growth pattern is the algorithm's
+  <strong><dfn data-term="growth-rate">growth rate</dfn></strong>, and Big-O
+  notation is nothing more than a compact name for it. When we write
+  <span class="math">O(n^2)</span> — say it "big oh of en squared" — we're
+  saying: as the input size (called
+  <span class="math" data-sym="n">n</span>) grows, the work grows like
+  <em>n² at worst</em>, ignoring constant factors and smaller terms. Not "it
+  takes n² milliseconds"; just "double the input, roughly quadruple the
+  work".</p>
+  <p>Why ignore the constants? Because they're the part the machine, the
+  compiler and the clever tricks can change. The growth rate is the part they
+  can't: an <span class="math">O(n^2)</span> algorithm on the fastest computer
+  ever built still loses to an <span class="math">O(n \log n)</span> one on a
+  laptop, once <span class="math" data-sym="n">n</span> is big enough. Big-O
+  is the study of "big enough".</p>
+
+  <h2>Watch it run</h2>
+  <p>These are the five growth rates you'll meet most. Drag
+  <span class="math" data-sym="n">n</span> and watch the race — the chart's
+  scale follows n², so anything that shoots off the top is growing faster than
+  polynomial dares.</p>
+  <div class="demo">
+    <div id="racer"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Everywhere, mostly in disguise. The database index that answers in
+    <span class="math">O(\log n)</span> versus the full table scan that's
+    <span class="math">O(n)</span>. The accidental <code>includes()</code>
+    inside a loop that turns a request handler quadratic — fine in staging,
+    on fire with real traffic. The vector index behind a RAG pipeline exists
+    precisely to turn "compare the query against every embedding"
+    (<span class="math">O(n)</span> per lookup) into roughly
+    <span class="math">O(\log n)</span>. When a code review says "this won't
+    scale", Big-O is the ten-second way to say exactly why.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body">
+      <p>Big-O is a <em>ceiling on growth</em>: "the work grows no faster than
+      this shape". Two habits make it useful:</p>
+      <p><strong>Drop the constants.</strong> 3n² steps and 900n² steps are both
+      "grows like n²" — written <span class="math">O(n^2)</span>. The 900 is
+      real money, but it's the same money at every size; growth rate is about
+      what changes with size.</p>
+      <p><strong>Keep only the biggest term.</strong> n² + 5n + 20 is
+      <span class="math">O(n^2)</span>, because once
+      <span class="math" data-sym="n">n</span> is large the n² term is
+      practically the whole bill. At n = 1,000 the "+ 5n + 20" is half a
+      percent of it.</p>
+      <p>Two siblings complete the family. Big-O is the ceiling; a
+      <em>floor</em> ("grows at least this fast") is written with
+      <span class="math" data-sym="\Omega">\Omega</span> — say it "big omega".
+      When floor and ceiling are the same shape — the usual case for the
+      algorithms in this course — we say the growth is <em>exactly</em> that
+      shape, written with <span class="math" data-sym="\Theta">\Theta</span> —
+      say it "big theta". People write O in conversation even when they mean Θ;
+      this site says Θ when it means Θ.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <p>Here is the sentence "the work grows no faster than g" with every word
+      pinned down. Let <span class="math">f(n)</span> be the actual cost and
+      <span class="math">g(n)</span> the shape we're claiming:</p>
+      <div class="math equation">f(n) = O(g(n)) \;\;\text{means:}\;\; \exists\, c &gt; 0,\; n_0 &gt; 0 \;\;\text{such that}\;\; f(n) \le c \cdot g(n) \;\;\text{for all}\;\; n \ge n_0</div>
+      <p><em>In plain English:</em> past some starting size
+      (<span class="math" data-sym="n_0">n_0</span>), the real cost never rises
+      above the claimed shape times some fixed multiplier
+      (<span class="math" data-sym="c">c</span>). The multiplier is where the
+      dropped constants went; the starting size is where "big enough" begins.</p>
+      <ul class="symbol-legend" data-symbols="f,g,n,c,n_0,O,\Omega,\Theta"></ul>
+      <p><span class="math" data-sym="\Omega">\Omega</span> is the same
+      definition with the inequality flipped
+      (<span class="math">f(n) \ge c \cdot g(n)</span>), and
+      <span class="math" data-sym="\Theta">\Theta</span> means both hold at
+      once — squeezed between two multiples of the same shape.</p>
+    </div>
+  </details>
+
+  <details class="layer">
+    <summary>Show a proof</summary>
+    <div class="layer-body">
+      <p>Claim: <span class="math">3n^2 + 5n + 20 = O(n^2)</span>. The
+      definition asks us to produce the pair
+      (<span class="math" data-sym="c">c</span>,
+      <span class="math" data-sym="n_0">n_0</span>) — that's all a Big-O proof
+      is, a working pair of constants.</p>
+      <p>Pick <span class="math">c = 4</span> and <span class="math">n_0 = 8</span>.
+      For every <span class="math">n \ge 8</span> we have
+      <span class="math">5n + 20 \le n^2</span> (at n = 8 that's 60 ≤ 64, and
+      the gap only widens — the left side grows linearly, the right side
+      quadratically). So
+      <span class="math">3n^2 + 5n + 20 \le 3n^2 + n^2 = 4n^2</span>, which is
+      exactly the definition's inequality. Done. Two things worth noticing:
+      a Big-O proof is nothing deeper than exhibiting one working pair of
+      constants, and the definition doesn't care <em>which</em> pair —
+      <span class="math">c = 100, n_0 = 1000</span> would have been just as
+      valid, only less tidy.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <p>Growth rates aren't abstract — you can count them. This is the shape of
+  the experiment the racer above runs, and the one you'll run for real when
+  the stepper engine lands: instrument the work, double the input, watch the
+  counter.</p>
+  <pre><code class="language-javascript">function countedSum(items) {
+  let steps = 0, total = 0;
+  for (const x of items) { steps++; total += x; }     // one touch per item
+  return { total, steps };                            // steps === n  → O(n)
+}
+
+function countedPairs(items) {
+  let steps = 0, pairs = 0;
+  for (const a of items)
+    for (const b of items) { steps++; if (a + b === 0) pairs++; }
+  return { pairs, steps };                            // steps === n·n → O(n²)
+}
+
+// countedSum([...])   on 1,000 then 2,000 items:   1,000 →   2,000 steps (×2)
+// countedPairs([...]) on 1,000 then 2,000 items: 1,000,000 → 4,000,000 steps (×4)
+// The ×2 vs ×4 under doubling IS the difference between O(n) and O(n²).</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Every page in this course stamps its algorithms with a Θ, and the stepper
+  engine will let you check the claim against a live counter. Next up in this
+  unit: recursion (where the cost hides in the call tree) and recurrences (how
+  to read the cost back out of it). And the first big payoff comes in the
+  sorting unit: a proof that <em>no</em> comparison sort can beat
+  <span class="math">\Theta(n \log n)</span> — a ceiling on cleverness itself.</p>
+
+  <script type="application/json" class="symbols">
+  { "n":   { "name": "n — the input size", "pron": "say: en",
+             "means": "how many items the algorithm is given",
+             "short": "input size" },
+    "f":   { "name": "f(n) — the actual cost", "pron": "say: eff of en",
+             "means": "the true number of steps as a function of input size",
+             "short": "actual cost" },
+    "g":   { "name": "g(n) — the claimed shape", "pron": "say: gee of en",
+             "means": "the growth shape we're comparing against (n, n², log n…)",
+             "short": "claimed shape" },
+    "c":   { "name": "c — the constant multiplier", "pron": "say: see",
+             "means": "the fixed factor that absorbs the constants Big-O ignores",
+             "short": "constant factor" },
+    "n_0": { "name": "n₀ — the starting size", "pron": "say: en nought",
+             "means": "where \"big enough\" begins; the bound only has to hold from here on",
+             "short": "starting size" },
+    "O":   { "name": "O — big O", "pron": "say: big oh",
+             "means": "an upper bound on growth: the cost grows no faster than this shape",
+             "short": "upper bound" },
+    "\\Omega": { "name": "Ω — big omega", "pron": "say: big oh-may-ga",
+             "means": "a lower bound on growth: the cost grows at least this fast",
+             "short": "lower bound" },
+    "\\Theta": { "name": "Θ — big theta", "pron": "say: big thay-ta",
+             "means": "a tight bound: upper and lower bounds of the same shape, so this is exactly how the cost grows",
+             "short": "tight bound" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "big-o",
+    "questions": [
+      { "q": "A function does 5n + 300 steps on n items. Which name fits best?",
+        "choices": ["O(1), because 300 dominates for small inputs",
+                    "O(n), because past some size the cost grows in step with n",
+                    "O(n²), to be safe"],
+        "answer": 1,
+        "explain": "Drop the constant 5 and the smaller term 300: what's left grows linearly. (O(n²) is technically true — Big-O is only a ceiling — but useless, like calling a bicycle \"a vehicle with at most 18 wheels\".)" },
+      { "q": "You double the input and the measured work roughly quadruples. What's the likely growth rate?",
+        "choices": ["O(log n)", "O(n)", "O(n²)"],
+        "answer": 2,
+        "explain": "Doubling n multiplies n² by four. This doubling experiment is the fastest practical way to guess a growth rate from measurements — ×2 suggests O(n), ×4 suggests O(n²), +1 step suggests O(log n)." },
+      { "q": "Team A's parser is O(n log n); team B's is O(n²) but currently 3× faster on your test file. Whose wins on inputs 100× bigger?",
+        "choices": ["Team B's — it's 3× faster and constants carry over",
+                    "Team A's — growth rate beats constant factors once inputs grow",
+                    "Impossible to say anything at all without benchmarks"],
+        "answer": 1,
+        "explain": "At 100× the size, the n² cost grows by ×10,000 while n log n grows by roughly ×700. B's 3× head start is gone many times over. (Benchmarks still matter — for the sizes you actually run at.)" },
+      { "q": "In this course's notation, what extra promise does Θ(n log n) make that O(n log n) doesn't?",
+        "choices": ["That the bound also holds in the worst case",
+                    "That the cost also grows at least that fast — the bound is tight, not just a ceiling",
+                    "That the constant factor is small"],
+        "answer": 1,
+        "explain": "O is only a ceiling; Θ is ceiling and floor of the same shape. (Worst vs average case is a separate axis entirely, and no asymptotic notation promises anything about constants.)" } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      window.GrowthRacer.init("racer");
+    });
+  </script>
+</main>
+</body>
+</html>
