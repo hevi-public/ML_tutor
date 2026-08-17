@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graphs and how to store them — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../03-sorting/quickselect.html|Quickselect">
+  <meta name="algo:next" content="bfs.html|Breadth-first search">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+  <script defer src="../assets/js/graph-editor.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Graphs</p>
+  <h1>Graphs: the data structure for relationships</h1>
+  <p class="lede">Arrays store things; graphs store <em>how things relate</em>.
+  Services calling services, packages depending on packages, pages linking to
+  pages, entities in a knowledge base — once you see the dots-and-lines shape,
+  you see it everywhere. This unit is the course's centerpiece, and it starts
+  with a drawing tool you'll keep using: every graph page runs its algorithm
+  on a graph <strong>you</strong> can edit.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hash tables</a> and
+    <a href="../02-structures/arrays-and-lists.html">arrays &amp; lists</a> —
+    the two ways we'll store a graph are built from exactly those.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A graph <span class="math" data-sym="G">G = (V, E)</span> is just two
+  sets: <strong>vertices</strong> (nodes — the things) and
+  <strong>edges</strong> (the relationships between pairs of things).
+  Everything else is qualifiers:</p>
+  <ul>
+    <li><strong>Directed vs undirected</strong> — does the relationship have
+    an arrow? "A follows B" is directed; "A and B are friends" is not.</li>
+    <li><strong>Weighted</strong> — does each edge carry a number? Distance,
+    cost, latency, capacity, similarity.</li>
+    <li><strong>Degree</strong> — <span class="math" data-sym="deg">\deg(v)</span>
+    counts the edges touching a vertex. In plain English: how connected is
+    this node?</li>
+  </ul>
+  <p>We write <span class="math" data-sym="V">|V|</span> for the number of
+  nodes and <span class="math" data-sym="E">|E|</span> for the number of
+  edges. Graph running times are quoted in both — O(|V| + |E|) means "touch
+  every node and every edge a constant number of times", and you'll be seeing
+  a lot of it.</p>
+
+  <h2>Draw one</h2>
+  <p>This is the course's graph editor. Click empty space to add a node, click
+  two nodes to connect them, drag things around. As you edit, the two storage
+  representations below update live — this page's real subject.</p>
+  <div class="demo">
+    <div id="editor"></div>
+  </div>
+
+  <h2>Two ways to store it</h2>
+  <p>The drawing is for humans. Code needs one of two representations, and
+  the choice is a classic space-vs-question trade-off:</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+    <div class="demo">
+      <h3 style="margin-top:0">Adjacency list</h3>
+      <p class="hint">For each node: a list of its neighbors. Space
+      O(|V| + |E|).</p>
+      <div id="adj-list" style="font-family:var(--mono);font-size:0.88rem;line-height:1.9"></div>
+    </div>
+    <div class="demo">
+      <h3 style="margin-top:0">Adjacency matrix</h3>
+      <p class="hint">A |V|×|V| grid: cell (u,v) = 1 if the edge exists.
+      Space O(|V|²).</p>
+      <div id="adj-matrix" style="font-family:var(--mono);font-size:0.88rem;overflow-x:auto"></div>
+    </div>
+  </div>
+  <p>The adjacency <strong>list</strong> answers "who are u's neighbors?" in
+  time proportional to the answer — perfect for the traversal algorithms this
+  unit runs, which is why every generator in this course uses it. The
+  adjacency <strong>matrix</strong> answers "is u connected to v?" in O(1) —
+  but eats |V|² space even when almost no edges exist. Real graphs are
+  usually <strong>sparse</strong> (|E| far below the |V|² maximum: your
+  service mesh has hundreds of services but each calls a handful), so the
+  list wins by default. Reach for the matrix when the graph is small and
+  dense, or when the algorithm itself is matrix-shaped
+  (<a href="../05-graphs-advanced/floyd-warshall.html">Floyd-Warshall</a>, unit 5).</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Package managers (npm's dependency graph), service meshes and call
+    graphs, social networks, web link graphs, database foreign keys, workflow
+    engines — and the LLM stack is graph-shaped end to end: knowledge graphs
+    relate entities for retrieval, agent frameworks wire tools into
+    orchestration DAGs, and vector indexes like HNSW are literally graphs
+    whose edges connect similar embeddings, searched with the exact
+    traversals you're about to learn. Unit 9 builds those; this unit builds
+    what they stand on.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>How many edges can there be?</summary>
+    <div class="layer-body">
+      <p>An undirected graph on n nodes has at most
+      <span class="math">\binom{n}{2} = n(n-1)/2</span> edges — every pair,
+      once. In plain English: edge count can grow with the <em>square</em> of
+      node count, which is why "sparse or dense?" is the first question to ask
+      of any graph and why O(|V| + |E|) and O(|V|²) can be worlds apart.
+      A directed graph doubles the bound (each pair, both arrows); allow
+      self-loops and multi-edges and you're in "multigraph" territory —
+      fine, but say so.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>A third representation: the edge list</summary>
+    <div class="layer-body">
+      <p>Sometimes the graph is just an array of (u, v, w) triples — no index
+      at all. Useless for "who are u's neighbors?", but exactly right when an
+      algorithm processes edges in bulk regardless of endpoints:
+      <a href="../05-graphs-advanced/mst.html">Kruskal</a> sorts all edges by
+      weight, <a href="../05-graphs-advanced/bellman-ford.html">Bellman-Ford</a>
+      sweeps all edges repeatedly. It's also the natural wire/storage format —
+      an edge table in a database IS an edge list. This course's graph model
+      stores edges as a list and builds the adjacency index on demand.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The course's shared graph model, and the index every algorithm builds first
+// (assets/js/algo/graphs.js):
+const graph = {
+  directed: false,
+  nodes: [{ id: "a", x: 0.2, y: 0.3 }, ...],   // x,y only for drawing
+  edges: [{ u: "a", v: "b", w: 4 }, ...],       // w optional
+};
+
+function adjacency(graph) {
+  const adj = new Map(graph.nodes.map((n) => [n.id, []]));
+  for (const e of graph.edges) {
+    adj.get(e.u).push({ to: e.v, w: e.w ?? 1 });
+    if (!graph.directed) adj.get(e.v).push({ to: e.u, w: e.w ?? 1 });
+  }
+  return adj;   // adj.get(u) → u's neighbors, in O(1)
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>You can now draw a graph and store one. The next page asks the first
+  algorithmic question — "what can I reach from here, and how far is it?" —
+  and answers it with the single most-used graph algorithm in production:
+  <a href="bfs.html">breadth-first search</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "G": { "name": "G = (V, E) — a graph", "pron": "say: gee equals vee, ee",
+           "means": "a set V of vertices (nodes) plus a set E of edges (the pairs that are connected)",
+           "short": "graph" },
+    "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" },
+    "deg": { "name": "deg(v) — the degree of v", "pron": "say: degree of vee",
+           "means": "how many edges touch node v", "short": "degree" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "what-is-a-graph",
+    "questions": [
+      { "q": "Your microservice mesh has 400 services; each calls about 5 others. Which storage fits, and why?",
+        "choices": ["Adjacency matrix — 400×400 is small",
+                    "Adjacency list — the graph is sparse (≈2,000 edges vs 160,000 possible), and traversals ask \"who does this service call?\", which the list answers in proportion to the answer",
+                    "Neither — graphs need a database"],
+        "answer": 1,
+        "explain": "Sparse graph + neighbor-iteration workload is the adjacency list's home turf. The matrix would spend 160,000 cells to store 2,000 facts." },
+      { "q": "When does the adjacency matrix earn its O(|V|²) space?",
+        "choices": ["Never — lists are always better",
+                    "When the graph is dense or the recurring question is \"does this specific edge exist?\", answered in O(1) — or the algorithm itself sweeps all pairs",
+                    "When the graph is directed"],
+        "answer": 1,
+        "explain": "Dense graphs waste little of the matrix, and edge-existence lookups or all-pairs algorithms (Floyd-Warshall) use its shape directly." },
+      { "q": "\"A imports B\" edges in a build graph are directed. What breaks if you store them undirected?",
+        "choices": ["Nothing — direction is cosmetic",
+                    "The distinction between \"depends on\" and \"is depended on by\" vanishes — build order, cycle detection, and impact analysis all give wrong answers",
+                    "The graph uses twice the memory"],
+        "answer": 1,
+        "explain": "Direction IS the data here. An undirected dependency graph can't tell you what to build first — the question topological sort (two pages ahead) exists to answer." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const start = window.AlgoGraphs.preset("islands");
+      const listHost = document.getElementById("adj-list");
+      const matrixHost = document.getElementById("adj-matrix");
+
+      function show(graph) {
+        const adj = window.AlgoGraphs.adjacency(graph);
+        const ids = graph.nodes.map((n) => n.id);
+        listHost.innerHTML = ids.length
+          ? ids.map((id) => {
+              const nbrs = adj.get(id).map((x) => x.to).join(", ");
+              return `<div><strong>${id}</strong> → [${nbrs}]</div>`;
+            }).join("")
+          : '<span class="hint">add some nodes…</span>';
+        if (ids.length && ids.length <= 12) {
+          const has = new Set(graph.edges.flatMap((e) =>
+            graph.directed ? [e.u + "|" + e.v] : [e.u + "|" + e.v, e.v + "|" + e.u]));
+          let html = "<table style='border-collapse:collapse'><tr><td></td>" +
+            ids.map((id) => `<td style="padding:0.1rem 0.45rem;color:var(--text-soft)">${id}</td>`).join("") + "</tr>";
+          for (const u of ids) {
+            html += `<tr><td style="padding:0.1rem 0.45rem;color:var(--text-soft)">${u}</td>` +
+              ids.map((v) => {
+                const on = has.has(u + "|" + v);
+                return `<td style="padding:0.1rem 0.45rem;text-align:center;${on ? "color:var(--accent);font-weight:700" : "opacity:0.35"}">${on ? 1 : 0}</td>`;
+              }).join("") + "</tr>";
+          }
+          matrixHost.innerHTML = html + "</table>";
+        } else {
+          matrixHost.innerHTML = ids.length
+            ? `<span class="hint">${ids.length}×${ids.length} — too big to show, which is rather the point</span>`
+            : '<span class="hint">add some nodes…</span>';
+        }
+      }
+
+      window.AlgoGraphEditor.create(document.getElementById("editor"), {
+        graph: start,
+        directedToggle: true,
+        onChange: show,
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
