@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Union-Find (disjoint sets) — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Data structures">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="heaps.html|Heaps and priority queues">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/structures.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Data structures</p>
+  <h1>Union-Find: who's connected to whom, instantly</h1>
+  <p class="lede">Two operations only — "merge these groups" and "are these
+  two in the same group?" — answered so fast that describing the speed
+  needed a function most engineers have never met. The trick: shameless
+  laziness plus opportunistic tidying.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing beyond <a href="arrays-and-lists.html">arrays</a>. This is the
+    unit's simplest code hiding its subtlest analysis.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Track n items partitioned into groups. The representation is one array:
+  <code>parent[i]</code> points at some other member of i's group; follow
+  parents until an item points at itself — that's the group's
+  <strong>root</strong>, its elected representative. Two items are in the
+  same group exactly when they share a root
+  (<strong>find</strong>). Merging groups (<strong>union</strong>) is one
+  write: point one root at the other.</p>
+  <p>Naively the parent chains can grow long. Two lazy optimizations flatten
+  them: <strong>path compression</strong> — after any find walks to a root,
+  re-point everything it passed directly at that root, so the walk never
+  happens twice; and <strong>union by size</strong> — hang the smaller tree
+  under the bigger. Neither costs meaningfully; together they flatten the
+  forest so aggressively that operations become, for every input that fits in
+  this universe, constant time.</p>
+
+  <h2>Watch it run</h2>
+  <p>Ten items, a sequence of unions, then a find on a deep item. Each row is
+  an item; the arrow is its parent pointer. Watch compression snap the walked
+  path flat — red re-pointing — so the next find is instant:</p>
+  <div class="demo">
+    <div id="dsu-view" style="font-family:var(--mono);font-size:0.9rem;line-height:2"></div>
+    <div id="dsu-stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Anywhere "connected?" must be answered under a stream of merges:
+    network reachability under link churn, social-graph friend clusters,
+    image segmentation (merging adjacent similar pixels), duplicate-entity
+    resolution in data pipelines ("are these two customer records the same
+    person?"), cycle detection while building spanning trees — which is
+    exactly its starring role in Kruskal's algorithm (unit 5), where
+    union-find IS the inner loop.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The two optimizations, in words</summary>
+    <div class="layer-body">
+      <p><strong>Path compression</strong> is memoization with pointers: the
+      walk you just did is knowledge, so cache it by re-pointing every visited
+      node straight at the root. The forest gets flatter every time anyone
+      merely <em>asks</em> a question. <strong>Union by size</strong> keeps
+      the damage bounded meanwhile: hanging small under big means a node's
+      depth only grows when its whole tree at least doubles — so depth ≤
+      log n even before compression helps. Both are two-line changes; the
+      combination is the magic.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — "inverse Ackermann", the slowest-growing function in practice</summary>
+    <div class="layer-body">
+      <p>With both optimizations, m operations on n items cost
+      O(m·α(n)), where α is the inverse of the Ackermann function — a
+      function that grows so explosively that its inverse crawls: α(n) ≤ 4
+      for every n smaller than a tower of exponentials that dwarfs the atom
+      count of the observable universe. So "amortized constant" is the honest
+      engineering summary, with the delicious footnote that it is <em>not</em>
+      constant in theory — and provably can't be (Fredman–Saks). The full
+      potential-function proof is genuinely hard; this course cites it rather
+      than pretends to teach it in a layer. What you should carry: laziness +
+      opportunistic caching can beat structures that work much harder.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/structures.js), events elided:
+function find(parent, x) {
+  let root = x;
+  while (parent[root] !== root) root = parent[root];   // walk to the root
+  while (parent[x] !== root) {                         // path compression:
+    const next = parent[x];                            //   re-point the whole
+    parent[x] = root;                                  //   walked path at it
+    x = next;
+  }
+  return root;
+}
+function union(parent, a, b) {
+  const ra = find(parent, a), rb = find(parent, b);
+  if (ra !== rb) parent[ra] = rb;      // (by-size refinement: hang smaller under bigger)
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 2 complete — the toolbox is stocked: arrays, restricted sequences,
+  hash tables, ordered trees, heaps, and group-tracking. Unit 3 puts the
+  toolbox to work on the classic proving ground:
+  <a href="../03-sorting/binary-search.html">sorting and searching</a>,
+  including the course's first impossibility proof.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "union-find",
+    "questions": [
+      { "q": "What does path compression actually do?",
+        "choices": ["Deletes long chains from memory",
+                    "After walking to a root, re-points every visited node directly at it — caching the answer in the structure itself",
+                    "Sorts the parent array"],
+        "answer": 1,
+        "explain": "It's memoization by mutation: asking a question flattens the forest, making every future question about those nodes O(1). Laziness that compounds." },
+      { "q": "Union-find answers \"same group?\" but CANNOT efficiently answer which of these?",
+        "choices": ["\"Merge group A into group B\"",
+                    "\"List every member of item 7's group\" — the trees point child→parent, so members can't be enumerated without a full scan",
+                    "\"Are items 3 and 9 connected?\""],
+        "answer": 1,
+        "explain": "One-directional pointers are the price of the speed. Same lesson as the heap: a structure this fast is answering exactly one question, and choosing it means agreeing to ask only that." },
+      { "q": "Your data pipeline merges duplicate customer records pairwise, millions of times, constantly asking \"already the same customer?\". Why is union-find the textbook fit?",
+        "choices": ["It stores customer data compactly",
+                    "The workload is exactly its two operations — union on merge, find on check — at amortized near-constant cost per operation",
+                    "It keeps records sorted by name"],
+        "answer": 1,
+        "explain": "Entity resolution is a stream of unions and finds. The α(n) bound means the connectivity bookkeeping will never be the pipeline's bottleneck." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const N = 10;
+      const state = { parent: Array.from({ length: N }, (_, i) => i) };
+      const view = document.getElementById("dsu-view");
+
+      function* run() {
+        const S = window.AlgoStructures;
+        yield* S.dsuUnion(state, 0, 1);
+        yield* S.dsuUnion(state, 2, 3);
+        yield* S.dsuUnion(state, 1, 3);   // {0,1,2,3}
+        yield* S.dsuUnion(state, 4, 5);
+        yield* S.dsuUnion(state, 6, 7);
+        yield* S.dsuUnion(state, 5, 7);   // {4,5,6,7}
+        yield* S.dsuUnion(state, 3, 7);   // one big set — chains now exist
+        yield* S.dsuUnion(state, 8, 9);
+        yield* S.dsuFind(state, 0);       // the deep walk + compression finale
+      }
+
+      window.AlgoSteps.player(document.getElementById("dsu-stepper"), {
+        make: run,
+        capture: () => ({ parent: state.parent.slice() }),
+        render: (snap, event) => {
+          view.innerHTML = snap.parent.map((p, i) => {
+            let mark = "";
+            if (event) {
+              if (event.type === "visit" && event.id === i) mark = "color:#d97706;font-weight:700";
+              if (event.type === "compress" && event.node === i) mark = "color:var(--bad);font-weight:700";
+              if (event.type === "union" && (event.a === i || event.b === i)) mark = "color:var(--accent);font-weight:700";
+            }
+            const label = p === i ? `${i} (root)` : `${i} → ${p}`;
+            return `<span style="display:inline-block;min-width:7.5rem;${mark}">${label}</span>`;
+          }).join("");
+        },
+        counters: { visit: "walk steps", compress: "compressions", union: "unions" },
+        describe: (e) =>
+          e.type === "visit" ? `following parent pointers from ${e.id}` :
+          e.type === "compress" ? `compression: ${e.node} now points straight at ${e.to}` :
+          e.type === "union" ? `merged: root ${e.a} now hangs under root ${e.b}` :
+          e.type === "same-set" ? "already the same group — nothing to do" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
