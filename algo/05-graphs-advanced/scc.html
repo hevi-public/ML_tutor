@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Strongly connected components — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="mst.html|Minimum spanning trees">
+  <meta name="algo:next" content="max-flow.html|Max flow, min cut">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>Strongly connected components: find the knots</h1>
+  <p class="lede">In a directed graph, "connected" is a one-way claim. The
+  two-way version — u reaches v <em>and</em> v reaches u — carves the graph
+  into its knots of mutual reachability. Collapse each knot to a dot and
+  something wonderful happens: what remains is always a DAG, and every
+  DAG-only tool from unit 4 suddenly applies to any directed graph.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/dfs.html">DFS</a> — specifically the layered
+    entry/exit-times material; Tarjan's algorithm is that idea sharpened
+    into a tool — and <a href="../04-graphs/connectivity.html">weak vs
+    strong connectivity</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Mutual reachability is an equivalence, so it partitions the nodes:
+  each class is a <strong>strongly connected component</strong>. Inside an
+  SCC, everyone reaches everyone (every node sits on a cycle with every
+  other); between SCCs, travel is one-way only — if you could get back,
+  the two components would have been one. That's why the
+  <strong>condensation</strong> (one meta-node per SCC) is always a DAG,
+  and it's the fact that makes SCCs an engineering tool: it splits any
+  messy directed system into "the cyclic knots" and "the acyclic skeleton
+  between them".</p>
+  <p><strong>Tarjan's algorithm</strong> finds all SCCs in one DFS pass.
+  Each node gets an <code>index</code> (DFS arrival order) and a
+  <code>lowlink</code> — the smallest index reachable from its subtree
+  using at most one back-edge onto the current stack. Nodes go onto a stack
+  as visited; when a node finishes with <code>lowlink === index</code>, it
+  learned it can't reach anything older than itself: it is the root of an
+  SCC, and everything above it on the stack — its whole knot — pops off
+  together.</p>
+
+  <h2>Watch it run</h2>
+  <p>A microservice call graph: gateway → user → order ⇄ payment, with
+  order → inventory → user closing a bigger loop. Watch lowlinks propagate
+  and components pop: the four-service knot {usr, ord, pay, inv} emerges as
+  one SCC, labeled S-numbers as they complete:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Architecture analysis is the daily one: run SCC on your service-call
+    or module-import graph, and every component bigger than one node is a
+    circular-dependency knot — the SCC is the exact set to refactor, and
+    the condensation is the clean layering you're refactoring toward
+    (compilers use it to order codegen; bundlers to break import cycles).
+    Beyond that: deadlock analysis (an SCC in the waits-for graph),
+    2-SAT solvers (satisfiable ⇔ no variable shares an SCC with its
+    negation), and the web's structure (the famous "bow-tie" giant SCC).
+    Model checkers hunt SCCs to find loops a system can get stuck in.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Lowlink, slowly</summary>
+    <div class="layer-body">
+      <p>Think of <code>index</code> as your arrival timestamp and
+      <code>lowlink</code> as "the oldest ancestor I can sneak back to".
+      Three update rules: exploring a fresh neighbor — inherit its lowlink
+      after it finishes (its escape routes are yours); meeting an
+      already-visited node still on the stack — take its index (a direct
+      back-door to an open ancestor); meeting a node no longer on the stack
+      — ignore it (its component already sealed; no route back). A node
+      finishing with lowlink = own index has no back-door at all: everything
+      above it on the stack could only escape <em>through</em> it, so they
+      form one complete knot. One DFS, O(|V| + |E|), every SCC in reverse
+      topological order — Tarjan's 1972 paper remains the standard.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Kosaraju's two-pass alternative</summary>
+    <div class="layer-body">
+      <p>Easier to prove, easier to remember: (1) DFS the graph, recording
+      finish order. (2) Reverse every edge. (3) DFS the reversed graph in
+      decreasing finish order; each launch's reach is exactly one SCC. Why:
+      reversing edges preserves SCCs (cycles survive reversal) but flips the
+      one-way travel between them, and the finish-order trick ensures each
+      launch starts in a "source" component of the reversed condensation, so
+      it can't leak into unfinished ones. Two full passes and a reversed
+      copy of the graph — more machinery at runtime, less in your head.
+      Both are linear; Tarjan's is what you ship, Kosaraju's is how you
+      explain SCCs to someone in an elevator.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function strongConnect(u) {
+  index.set(u, counter); low.set(u, counter); counter++;
+  stack.push(u); onStack.add(u);
+  for (const { to } of adj.get(u)) {
+    if (!index.has(to)) {
+      strongConnect(to);                             // fresh: recurse, then
+      low.set(u, Math.min(low.get(u), low.get(to))); // inherit its escape
+    } else if (onStack.has(to)) {
+      low.set(u, Math.min(low.get(u), index.get(to))); // back-door to ancestor
+    }                                                // off-stack: sealed, ignore
+  }
+  if (low.get(u) === index.get(u)) {                 // no escape above me:
+    const scc = [];                                  // I root a component
+    for (;;) {
+      const w = stack.pop(); onStack.delete(w);
+      scc.push(w);
+      if (w === u) break;                            // the whole knot pops
+    }
+    components.push(scc);
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>One classic left in the unit, and it thinks in a different currency
+  entirely: not distance or connection but <em>capacity</em> —
+  <a href="max-flow.html">max flow and min cut</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "low": { "name": "lowlink(v)", "pron": "say: low-link of vee",
+           "means": "the oldest DFS index v's subtree can reach using at most one back-edge onto the current stack — v roots an SCC exactly when lowlink(v) = index(v)", "short": "escape index" },
+    "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "scc",
+    "questions": [
+      { "q": "Why is the condensation (SCCs collapsed to single nodes) always a DAG?",
+        "choices": ["Because DFS visits nodes in acyclic order",
+                    "A cycle between two meta-nodes would mean their SCCs reach each other both ways — mutual reachability — so they'd have been ONE component, contradiction",
+                    "Collapsing removes all the edges"],
+        "answer": 1,
+        "explain": "The DAG-ness is definitional, not lucky. It's also the payoff: collapse the knots and every DAG tool (topological sort, DAG DP) applies to any directed graph." },
+      { "q": "SCC analysis of your codebase reports one component of 23 modules. What is that, operationally?",
+        "choices": ["Your 23 most important modules",
+                    "A circular-dependency knot: every one of the 23 imports every other, possibly indirectly — they can only be understood, tested, or deployed as a unit until an edge is cut",
+                    "Dead code"],
+        "answer": 1,
+        "explain": "The SCC is the exact refactoring worklist, and the condensation is the layered architecture you're aiming for. This is the single most actionable graph-theory query to run on a real codebase." },
+      { "q": "In Tarjan's, node u finishes with lowlink(u) = index(u). What has been proven at that instant?",
+        "choices": ["u has no outgoing edges",
+                    "Nothing explored above u could sneak back past u — u and everything still on the stack above it form exactly one complete SCC, and it pops as a unit",
+                    "u is the graph's topologically first node"],
+        "answer": 1,
+        "explain": "lowlink = index means \"no back-door older than me\". Everything above u escaped only through u, so the knot is sealed — the one-pass magic that made this algorithm famous." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("services");
+      const verdict = document.getElementById("verdict");
+
+      const state = {};
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+        const sizes = [];
+        for (const e of window.AlgoGraphs.tarjanSCC(graph)) {
+          window.AlgoGraphViz.applyEvent(state, e);
+          if (e.type === "component") {
+            sizes.push(e.n);
+            for (const id of e.nodes) {
+              state.nodeState[id] = "settled";
+              state.nodeLabel[id] = "S" + e.id;
+            }
+          }
+          if (e.type === "done")
+            verdict.textContent = `${e.components} components — sizes ${sizes.join(", ")}. ` +
+              `The size-4 knot {usr, ord, pay, inv} is the circular-call cluster an architect would flag.`;
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Tarjan SCC animation", height: 320 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { visit: "visited", component: "SCCs sealed", check: "edge checks" },
+        describe: (e) =>
+          e.type === "visit" ? `entering ${e.u} — indexed, pushed on the stack` :
+          e.type === "discover" ? `recursing into fresh node ${e.u}` :
+          e.type === "check" ? `edge ${e.u} → ${e.v}` :
+          e.type === "component" ? `SCC #${e.id} sealed: {${e.nodes.join(", ")}} — ${e.n} node${e.n === 1 ? "" : "s"} pop together` :
+          e.type === "done" ? `all ${e.components} components found in one DFS pass` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

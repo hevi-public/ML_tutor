@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minimum spanning trees — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="astar.html|A* and heuristic search">
+  <meta name="algo:next" content="scc.html|Strongly connected components">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>Minimum spanning trees: connect everything, cheapest</h1>
+  <p class="lede">Wire every node together — all connected, no waste — for
+  the least total cost. Two famous algorithms solve it, both greedy, both
+  provably perfect, and they don't even agree on tactics: one hoards cheap
+  edges globally, the other grows a single tree outward. Both are justified
+  by one lemma worth knowing by name.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/cycles-and-bipartite.html">Trees and cycles</a>
+    (a spanning tree has exactly |V|−1 edges) and
+    <a href="../02-structures/union-find.html">union-find</a> — its starring
+    role arrives on this page.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <strong>spanning tree</strong> keeps everything connected with the
+  fewest possible edges — |V|−1, zero cycles, remove any edge and it splits.
+  The <em>minimum</em> spanning tree minimizes total edge weight among all
+  spanning trees.</p>
+  <p><strong>Kruskal</strong>: sort all edges by weight; take each cheapest
+  edge unless it would close a cycle. "Would close a cycle" = "its endpoints
+  are already connected" — a union-find question, answered in near-constant
+  time. <strong>Prim</strong>: plant a seed node; repeatedly add the
+  cheapest edge crossing from the tree to a non-tree node — Dijkstra's
+  shape with the priority "cheapest crossing edge" instead of "cheapest
+  total path". Both are greedy with zero lookahead; the cut property below
+  is why neither ever regrets a choice.</p>
+
+  <h2>Watch them run</h2>
+  <p>Kruskal on the city map: edges considered globally, cheapest first —
+  green joins the tree, dashed red is rejected (it would close a cycle).
+  Notice the tree assembling as disconnected fragments that eventually
+  merge:</p>
+  <div class="demo">
+    <div id="viz-k"></div>
+    <div id="stepper-k"></div>
+  </div>
+  <p>Prim from node A on the same map: one blob, growing by its cheapest
+  outward edge. Different order, different intermediate shapes — same final
+  total:</p>
+  <div class="demo">
+    <div id="viz-p"></div>
+    <div id="stepper-p"></div>
+    <p class="hint" id="mst-verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>The literal one: physical network design — fiber, power grids,
+    pipelines — is where the problem was born (Borůvka, 1926, electrifying
+    Moravia). The structural ones: single-linkage hierarchical clustering IS
+    Kruskal stopped early (the fragments before the final merges are your
+    clusters — used on embedding spaces in ML pipelines); image
+    segmentation over pixel-similarity graphs; approximation algorithms
+    (unit 11's TSP 2-approximation walks an MST); and network protocols
+    computing loop-free topologies (spanning tree protocol in switches —
+    same tree, different objective).</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Show the proof — the cut property</summary>
+    <div class="layer-body">
+      <p><strong>Lemma:</strong> split the nodes into any two non-empty sides
+      (a <strong>cut</strong>). The cheapest edge crossing the cut belongs to
+      some MST. <strong>Exchange argument:</strong> take an MST T that skips
+      the cheapest crossing edge e. T is connected, so it crosses the cut
+      somewhere — say edge f, with w(f) ≥ w(e). Adding e to T closes a
+      cycle, and that cycle must cross the cut an even number of times, so
+      it contains f. Swap: T − f + e is still a spanning tree (same edge
+      count, still connected) and costs no more. So there's an MST
+      containing e. ∎</p>
+      <p>Both algorithms are machines for applying this lemma. Kruskal's
+      accepted edge is the cheapest crossing the cut "its fragment vs the
+      rest"; Prim's is the cheapest crossing "tree vs not-yet-tree". Every
+      greedy step is licensed by the same one-line exchange — which is the
+      template for greedy proofs generally, formalized in
+      <a href="../06-strategies/greedy.html">unit 6</a>.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Costs, and which to reach for</summary>
+    <div class="layer-body">
+      <p>Kruskal: sorting dominates — O(|E| log |E|), then near-free
+      union-find. Prim with a heap: O(|E| log |V|) — effectively the same
+      class. Practical tiebreakers: Kruskal wants the edge list and nothing
+      else (great for sparse graphs and streaming edges by weight); Prim
+      wants adjacency and shines dense or when you need a tree grown from a
+      specific seed. Uniqueness footnote: distinct edge weights ⇒ exactly
+      one MST; ties ⇒ possibly many MSTs, all with the same total — the
+      demos' agreement on 23 is guaranteed, their edge lists needn't be.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demos' exact code (assets/js/algo/graphs.js), events elided:
+function kruskal(graph) {
+  const edges = [...graph.edges].sort((a, b) => a.w - b.w);
+  const dsu = makeUnionFind(graph.nodes);        // unit 2, reporting for duty
+  const tree = [];
+  for (const e of edges) {
+    if (dsu.find(e.u) === dsu.find(e.v)) continue;  // would close a cycle
+    dsu.union(e.u, e.v);
+    tree.push(e);                                // cheapest crossing its cut
+    if (tree.length === graph.nodes.length - 1) break;
+  }
+  return tree;
+}
+
+function prim(graph, start) {
+  const inTree = new Set([start]);
+  const tree = [];
+  while (inTree.size < graph.nodes.length) {
+    const e = cheapestEdgeLeaving(inTree);       // heap-backed in production
+    inTree.add(e.v);
+    tree.push(e);                                // cheapest crossing THE cut
+  }
+  return tree;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Undirected connection, solved. Back to directed graphs for the unit's
+  structural finale: <a href="scc.html">strongly connected components</a> —
+  finding the cycles-of-mutual-reachability that make architecture diagrams
+  wince.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has; a spanning tree has exactly |V|−1 edges", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" },
+    "w": { "name": "w(u, v) — edge weight", "pron": "say: double-you of you, vee",
+           "means": "the cost of including this edge in the tree", "short": "edge cost" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "mst",
+    "questions": [
+      { "q": "Kruskal accepts the cheapest edge whose endpoints aren't yet connected. Which single fact makes this greed safe?",
+        "choices": ["Sorting guarantees edges arrive in a lucky order",
+                    "The cut property: that edge is the cheapest one crossing the cut between its fragment and everything else, so some MST contains it — the exchange argument says swapping it in never costs more",
+                    "Union-find prevents all mistakes"],
+        "answer": 1,
+        "explain": "Every accepted edge is licensed by the same one-line lemma. Greedy algorithms that work always have such a license; unit 6 teaches you to demand one before trusting any greedy idea." },
+      { "q": "Why is union-find exactly the right data structure inside Kruskal?",
+        "choices": ["It sorts the edges faster",
+                    "The inner-loop question is \"are these endpoints already connected?\" under a stream of merges — precisely union-find's two operations at amortized near-constant cost",
+                    "It stores the tree for free"],
+        "answer": 1,
+        "explain": "This is the payoff promised back in unit 2: |E| connectivity checks + |V|−1 merges in effectively O(|E| α) — invisible next to the O(|E| log |E|) sort." },
+      { "q": "Your clustering pipeline runs Kruskal but stops when 5 fragments remain instead of 1. What did you just implement?",
+        "choices": ["A broken MST",
+                    "Single-linkage clustering into 5 clusters — the fragments are groups whose internal links are all cheaper than any link between groups",
+                    "Prim's algorithm, accidentally"],
+        "answer": 1,
+        "explain": "MST construction and single-linkage clustering are the same computation with different stopping rules — one of the tidiest algorithm-reuse facts in ML engineering, and it runs on embedding distances daily." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("city");
+      const verdict = document.getElementById("mst-verdict");
+      const totals = {};
+
+      function setup(kind, vizId, stepperId, makeGen, counters) {
+        const state = {};
+        function* tracked() {
+          state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+          for (const e of makeGen()) {
+            window.AlgoGraphViz.applyEvent(state, e);
+            if (e.type === "done") {
+              totals[kind] = e.total;
+              if (totals.kruskal !== undefined && totals.prim !== undefined) {
+                verdict.textContent = `Kruskal total: ${totals.kruskal} · Prim total: ` +
+                  `${totals.prim} — different greeds, same optimum, as the cut property demands.`;
+              }
+            }
+            yield e;
+          }
+        }
+        const viz = window.AlgoGraphViz.create(document.getElementById(vizId),
+          { label: kind + " animation", height: 320 });
+        window.AlgoSteps.player(document.getElementById(stepperId), {
+          make: tracked,
+          capture: () => JSON.parse(JSON.stringify({
+            nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+          render: (snap, event) => viz.draw(graph, snap, event),
+          counters,
+          describe: (e) =>
+            e.type === "check" ? `considering edge ${e.u} – ${e.v}` :
+            e.type === "tree-edge" ? `accepted ${e.u} – ${e.v}: cheapest edge crossing its cut` :
+            e.type === "reject" ? `rejected ${e.u} – ${e.v}: endpoints already connected — it would close a cycle` :
+            e.type === "visit" ? `${e.u} joins the tree` :
+            e.type === "done" ? `spanning tree complete — ${e.edges} edges, total weight ${e.total}` : "",
+        });
+      }
+
+      setup("kruskal", "viz-k", "stepper-k",
+        () => window.AlgoGraphs.kruskal(graph),
+        { "tree-edge": "accepted", reject: "rejected (cycle)", check: "considered" });
+      setup("prim", "viz-p", "stepper-p",
+        () => window.AlgoGraphs.prim(graph, "A"),
+        { "tree-edge": "accepted", visit: "nodes in tree" });
+    });
+  </script>
+</main>
+</body>
+</html>
