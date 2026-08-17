@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!-- Algorithms Tutor page template. Copy into a unit folder (e.g. 01-foundations/)
+     and fill in. Every topic page follows the same flow:
+       The idea → Watch it run → Where you'll meet this → The details / the proof
+       (layered) → The code → Lab (where present) → Check your understanding →
+       Where this goes next.
+     House rules (algo/PLAN.md):
+       · The reader is a working developer. Skip "what is a variable"; build the
+         theory — Big-O, invariants, proofs — from scratch, in plain words first.
+       · Everyday words before jargon; no term or symbol used before the site
+         introduces it. Every displayed equation gets an "In plain English" line.
+       · Proofs are privileges, not prerequisites: they live in
+         <details class="layer"> and no quiz outside unit 11 requires one.
+       · "Where you'll meet this" is a standing element (.box.in-the-wild): name
+         the production and LLM-era systems the topic shows up in.
+       · Honesty rule: anything narrated rather than executed gets a
+         <div class="box sim-note"> saying so, by name. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAGE TITLE — Algorithms Tutor</title>
+
+  <!-- Page contract, read by site.js -->
+  <meta name="algo:unit" content="UNIT NAME">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="PREV.html|PREV TITLE">
+  <meta name="algo:next" content="NEXT.html|NEXT TITLE">
+
+  <!-- KaTeX + highlight.js: keep on pages that use math or code samples,
+       delete on pages that don't (they shouldn't pay for it). Unit pages sit
+       two levels below the repo root, hence ../../node_modules/. -->
+  <link rel="stylesheet" href="../../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <!-- Plus this page's demo module(s) from ../assets/js/viz/ -->
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit N · UNIT NAME</p>
+  <h1>PAGE TITLE</h1>
+  <p class="lede">One sentence saying what this page makes possible.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    What this page assumes, with links to the pages that cover it.
+  </div>
+
+  <h2>The idea</h2>
+  <p>What the mechanism is, in plain words, before any notation. Introduce the
+  term only after the idea, and make it a glossary term:
+  "…that to-do list is called the
+  <strong><dfn data-term="frontier">frontier</dfn></strong>."
+  (data-term slugs must exist in algo/data/glossary.json — add new entries there.)</p>
+
+  <h2>Watch it run</h2>
+  <p>What the demo shows, and what to watch while it runs.</p>
+  <div class="demo">
+    <!-- canvas / SVG / controls; wire up in the page script below -->
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    The production systems and LLM-era systems this topic lives in, with links
+    into unit 9 where a whole page exists.
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The idea in words</summary>
+    <div class="layer-body"><p>…</p></div>
+  </details>
+  <details class="layer">
+    <summary>Show the math</summary>
+    <div class="layer-body">
+      <div class="math equation">T(n) = …</div>
+      <p><em>In plain English:</em> the same statement as a sentence.</p>
+      <ul class="symbol-legend" data-symbols="COMMA,SEPARATED,SYMBOLS"></ul>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the proof</summary>
+    <div class="layer-body"><p>…</p></div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// the same implementation the demo runs
+</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>…</p>
+
+  <!-- Symbols used on this page: name, pronunciation, what each stands for here -->
+  <script type="application/json" class="symbols">
+  { "n": { "name": "n — the input size", "pron": "say: en",
+           "means": "how many items the algorithm is given", "short": "input size" } }
+  </script>
+
+  <!-- Quiz: understanding, not vocabulary; id = the page slug -->
+  <script type="application/json" class="quiz">
+  { "id": "PAGE-SLUG",
+    "questions": [
+      { "q": "…?", "choices": ["…", "…", "…"], "answer": 0, "explain": "…" } ] }
+  </script>
+
+  <script>
+    // Page-specific wiring (demo setup, extra widgets) goes here.
+  </script>
+</main>
+</body>
+</html>
