@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order statistics: quickselect — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="sorting-lower-bound.html|Why n log n is the floor">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>Quickselect: the k-th smallest, without the sort</h1>
+  <p class="lede">"What's the median?" doesn't require sorting — sorting
+  answers a thousand questions when you asked one. Ask for less, pay less:
+  expected linear time, from a one-line change to quicksort.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="quicksort.html">Quicksort</a> — specifically what a partition
+    guarantees about the pivot's final position.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Recall the partition's receipt: after one linear pass, the pivot sits at
+  its final sorted index i, smaller values left, larger right. Quicksort
+  recursed into <em>both</em> sides. But if you only want the k-th smallest,
+  the receipt tells you which single side holds it: i = k means the pivot
+  itself is the answer; i &lt; k means it's somewhere right; i &gt; k, left.
+  <strong>Recurse into one side and throw the other away unexamined.</strong></p>
+  <p>That one change collapses the cost. Quicksort's balanced recurrence
+  2T(n/2) + n gave n log n; quickselect's is T(n/2) + n — and the geometric
+  series n + n/2 + n/4 + … from the math toolkit sums below 2n.
+  <em>Expected linear</em>, with the same fine print as quicksort: bad
+  pivots on adversarial input give n², and the same coin-flip fix applies.</p>
+
+  <h2>Watch it run</h2>
+  <p>Finding the median (k = 16) of 32 shuffled values. Green bars are
+  settled pivots; notice how after each partition, one entire side is never
+  touched again — that abandonment is where the speed comes from:</p>
+  <div class="demo">
+    <canvas id="qs-canvas" width="880" height="140" aria-label="Quickselect discarding half the array each round"></canvas>
+    <div id="qs-stepper"></div>
+    <p class="hint">Sorting this array would cost roughly twice these
+    comparisons — and the gap widens with n, because sorting pays n log n
+    while selection pays a geometric series that stops under 2n.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Percentiles are the native language of operations: p50/p95/p99
+    latency dashboards, SLO burn alerts, trimmed means in metrics pipelines.
+    Exact percentiles over big batches are quickselect's job
+    (<code>numpy.partition</code> is literally introselect); streaming
+    approximations (t-digest, HDR histograms) exist because even linear
+    re-scans get expensive at telemetry scale — but they're calibrated
+    against this exact algorithm. Also here: "top k%" cutoffs in ranking and
+    the median-based robust statistics that survive outliers where averages
+    lie.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Show the math — why one side means linear</summary>
+    <div class="layer-body">
+      <p>Expected work: a random pivot leaves the surviving side ≤ ¾n with
+      probability ½, so the expected surviving size shrinks geometrically:
+      levels cost about n + (¾)n + (¾)²n + … ≤ 4n = O(n). The contrast with
+      quicksort is exactly "one child vs two" in the recursion tree — the
+      difference between the tree's total weight and one root-to-leaf
+      path's. Same partition, different tree shape, different complexity
+      class.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Guaranteed linear: median-of-medians, and why nobody ships it</summary>
+    <div class="layer-body">
+      <p>The 1973 median-of-medians algorithm picks the pivot by taking
+      medians of groups of five, recursively — guaranteeing a 30/70-or-better
+      split and <em>worst-case</em> O(n). It's a landmark proof that
+      selection is fundamentally linear… with constants so heavy that
+      practice uses randomized quickselect (or introselect: quickselect with
+      a median-of-medians parachute, mirroring introsort). The pattern to
+      keep: an elegant guarantee can lose to a coin flip plus a fallback —
+      and the hybrid gets both.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact loop (assets/js/algo/sorts.js) — quicksort's partition,
+// then ONE side survives:
+while (lo <= hi) {
+  const i = /* partition [lo,hi]; pivot lands at its final index i */;
+  if (i === k) return a[i];      // the k-th smallest, found without sorting
+  if (i < k) lo = i + 1;         // answer is right of i — left side abandoned
+  else       hi = i - 1;         // answer is left of i — right side abandoned
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 3 complete: searching proved optimal, three optimal sorts with
+  three personalities, the loophole, the floor, and selection under the
+  floor. Next, the course's centerpiece begins —
+  <a href="../04-graphs/what-is-a-graph.html">Unit 4: graphs</a>, where you
+  draw the data structure yourself and every algorithm you've met so far
+  reports for duty.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "quickselect",
+    "questions": [
+      { "q": "Quickselect and quicksort share the identical partition. Where does quickselect's speed advantage come from?",
+        "choices": ["A faster partition variant",
+                    "It recurses into only the side that can contain index k, abandoning the other unexamined — a path through the recursion tree instead of the whole tree",
+                    "It skips the base case"],
+        "answer": 1,
+        "explain": "n + n/2 + n/4 + … < 2n versus n at EVERY level for log n levels. The geometric series from unit 1, deciding a complexity class." },
+      { "q": "Why doesn't \"median in expected O(n)\" violate the sorting lower bound?",
+        "choices": ["It does — quickselect is a counterexample",
+                    "Selection distinguishes far fewer outcomes than sorting (n possible answers, not n! orderings) — the information floor is correspondingly lower",
+                    "The lower bound only applies to integers"],
+        "answer": 1,
+        "explain": "The decision-tree argument prices the question you ask. \"Which ordering?\" needs log(n!) ≈ n log n bits; \"which element is k-th?\" needs log(n). Cheaper question, cheaper floor." },
+      { "q": "Your p99 dashboard recomputes exact percentiles by fully sorting every batch. What's the algorithmically-informed fix?",
+        "choices": ["Sort with a faster comparator",
+                    "Quickselect (numpy.partition) the needed percentile indexes in expected linear time — or move to streaming sketches if even that's too hot",
+                    "Sample 1% and hope"],
+        "answer": 1,
+        "explain": "You asked one question per batch; stop paying for all n! of them. This swap is one of the most common easy wins in metrics pipelines." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const N = 32, K = 16;
+      const arr = window.AlgoRandom.ints(N, 10, 300, 8080);
+      const viz = window.AlgoArrayViz.create(document.getElementById("qs-canvas"));
+      const max = Math.max(...arr);
+      const done = new Set();
+      function* tracked() {
+        done.clear();
+        for (const e of window.AlgoSorts.quickSelect(arr, K)) {
+          if (e.type === "sorted") done.add(e.i);
+          yield e;
+        }
+      }
+      window.AlgoSteps.player(document.getElementById("qs-stepper"), {
+        make: tracked,
+        capture: () => ({ array: arr.slice(), max, sorted: new Set(done) }),
+        render: (snap, event) => viz.draw(snap, event),
+        counters: { compare: "comparisons", swap: "swaps" },
+        describe: (e) =>
+          e.type === "focus" ? `only [${e.lo}, ${e.hi}] can contain index ${K} — rest abandoned` :
+          e.type === "sorted" ? `pivot settled at ${e.i}` :
+          e.type === "found" ? `index ${e.i} IS the median — done, most of the array never touched` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
