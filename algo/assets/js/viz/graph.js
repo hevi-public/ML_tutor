@@ -95,5 +95,46 @@
     return { draw };
   }
 
-  window.AlgoGraphViz = { create, edgeKey };
+  /* Default event → viz-state mapping, shared by the unit 4–5 pages. A page
+     wraps its generator: apply each event to a state object, yield it on, and
+     let capture() snapshot the state. Pages with special needs override. */
+  function applyEvent(state, e) {
+    state.nodeState = state.nodeState || {};
+    state.nodeLabel = state.nodeLabel || {};
+    state.edgeState = state.edgeState || {};
+    switch (e.type) {
+      case "discover":
+        if (state.nodeState[e.u] !== "visited" && state.nodeState[e.u] !== "settled")
+          state.nodeState[e.u] = "frontier";
+        break;
+      case "visit":
+        state.nodeState[e.u] = "visited";
+        break;
+      case "settle":
+        state.nodeState[e.u] = "settled";
+        state.nodeLabel[e.u] = e.dist;
+        break;
+      case "relax":
+        state.nodeLabel[e.v] = e.dist;
+        break;
+      case "order":
+        state.nodeState[e.u] = "visited";
+        state.nodeLabel[e.u] = "#" + (e.k + 1);
+        break;
+      case "tree-edge":
+        state.edgeState[edgeKey(e.u, e.v)] = "tree";
+        break;
+      case "reject":
+        state.edgeState[edgeKey(e.u, e.v)] = "reject";
+        break;
+      case "cycle":
+        for (const id of e.nodes) state.nodeState[id] = "cycle";
+        break;
+      case "flow":
+        for (const [u, v] of e.path) state.edgeState[edgeKey(u, v)] = "path";
+        break;
+    }
+  }
+
+  window.AlgoGraphViz = { create, edgeKey, applyEvent };
 })();
