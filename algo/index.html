@@ -171,6 +171,7 @@
     ];
 
     const BUILT = new Set([
+      "01-foundations/counting-steps.html",
       "01-foundations/big-o.html",
     ]);
 
@@ -237,9 +238,9 @@
       } else if (next) {
         box.className = "box";
         box.innerHTML =
-          `<span class="label">Under construction — but the first page is live</span>` +
+          `<span class="label">Under construction — but the first pages are live</span>` +
           `<p>This course is being built in the open (the full plan is in ` +
-          `<code>algo/PLAN.md</code>). The sample page that proves the whole stack: ` +
+          `<code>algo/PLAN.md</code>). Start with ` +
           `<a href="${next[1]}"><strong>${next[2]} →</strong></a></p>`;
       } else {
         box.className = "box";
