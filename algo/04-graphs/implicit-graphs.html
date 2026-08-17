@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Implicit graphs: grids, mazes, puzzles — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="cycles-and-bipartite.html|Cycles and two-coloring">
+  <meta name="algo:next" content="../05-graphs-advanced/dijkstra.html|Dijkstra's algorithm">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/maze.js"></script>
+  <script defer src="../assets/js/viz/grid.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Graphs</p>
+  <h1>Implicit graphs: the graph that's never stored</h1>
+  <p class="lede">The biggest graphs software searches don't have node lists
+  or edge lists — they have a <em>rule</em>. "From this maze cell you can
+  step to these neighbors." "From this game position these moves are legal."
+  The graph exists only as a neighbor function, computed on demand — and
+  every algorithm from this unit runs on it unchanged.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="bfs.html">BFS</a> — this page reruns it on a graph made of
+    thin air.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Look back at BFS's code: the only thing it ever asked the graph was
+  <code>adj.get(u)</code> — "who are u's neighbors?". Nothing requires that
+  answer to come from a stored list. Replace it with a function
+  <code>neighbors(u)</code> that <em>computes</em> the answer, and the
+  algorithm neither knows nor cares. A maze is the cleanest example: a cell's
+  neighbors are "the adjacent cells that aren't walls" — four array lookups,
+  no edge list anywhere. The seen-set does quietly grow with territory
+  actually explored, but the graph itself costs nothing.</p>
+  <p>This is more than a memory trick — it's what makes enormous state
+  spaces searchable at all. A Rubik's cube has ~4.3×10<sup>19</sup>
+  positions; nobody stores that graph. Nodes are <em>states</em>, edges are
+  <em>legal moves</em>, and BFS from the solved state answers "how many moves
+  away am I?" while materializing only the sliver it touches. "States as
+  nodes, moves as edges" is the single most transferable modeling idea in
+  this unit.</p>
+
+  <h2>Watch it run</h2>
+  <p>A seeded maze. BFS explores from the dot to the star: amber cells are
+  the frontier, green are visited, and the accent trail at the end is the
+  shortest path, recovered by walking parent pointers backward. Note the
+  ripple — in a grid it's literally a diamond-shaped wave:</p>
+  <div class="demo">
+    <div class="buttons" style="margin-bottom:0.5rem">
+      <button type="button" class="action secondary" id="new-maze">new maze</button>
+    </div>
+    <canvas id="grid" width="860" height="460" style="width:100%;height:auto"></canvas>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Game pathfinding (every RTS click is a grid search); robot motion
+    planning; sliding-puzzle and word-ladder solvers; crawlers, whose "graph"
+    is discovered one fetched page at a time; model checkers exhaustively
+    searching a program's state space for a reachable bug. LLM-era search is
+    implicit-graph-shaped too: in beam search (unit 9) the nodes are partial
+    token sequences and the neighbor function is "append one token" — a graph
+    with more nodes than atoms, searched by materializing almost none of it.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Complexity when |V| is astronomical</summary>
+    <div class="layer-body">
+      <p>O(|V| + |E|) is honest but useless when |V| is 10<sup>19</sup>. The
+      working bound for implicit search is O(reached · b): states actually
+      dequeued, times the branching factor b (neighbors per state — 4 in this
+      maze, ~13 raw moves for a cube). The whole craft is shrinking
+      "reached": prune states that can't lead anywhere (walls), canonicalize
+      states that are secretly identical (board symmetries), or aim the
+      search so it reaches the goal before it reaches everything else —
+      that last idea is <a href="../05-graphs-advanced/astar.html">A*</a>,
+      one unit ahead, on this very maze. The frontier's memory is the other
+      constraint: BFS's ripple in a huge state space can outgrow RAM long
+      before time runs out — the reason depth-first variants (iterative
+      deepening) exist.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/maze.js), events elided.
+// THE implicit-graph move: neighbors are computed, never stored.
+function neighbors(maze, x, y) {
+  const out = [];
+  for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+    const nx = x + dx, ny = y + dy;
+    if (inBounds(nx, ny) && !maze.walls.has(key(nx, ny))) out.push([nx, ny]);
+  }
+  return out;
+}
+
+// BFS is UNCHANGED — it just calls the function instead of an index:
+while (queue.length) {
+  const [x, y] = queue.shift();
+  for (const [nx, ny] of neighbors(maze, x, y)) {
+    const k = key(nx, ny);
+    if (!parent.has(k)) { parent.set(k, key(x, y)); queue.push([nx, ny]); }
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 4 complete: you can model, store, traverse, order, and dissect
+  graphs — stored or imaginary. Unit 5 adds the missing ingredient,
+  <em>weights</em>, and opens with the most famous algorithm in the course:
+  <a href="../05-graphs-advanced/dijkstra.html">Dijkstra's shortest
+  paths</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has — possibly astronomical for implicit graphs", "short": "node count" },
+    "b": { "name": "b — the branching factor", "pron": "say: bee",
+           "means": "how many neighbors each state has, on average", "short": "branching factor" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "implicit-graphs",
+    "questions": [
+      { "q": "What's the minimum interface a graph must expose for BFS to run on it?",
+        "choices": ["A full adjacency list and a node count",
+                    "Just a neighbors(state) function (plus a way to compare/hash states for the seen-set) — the graph can otherwise not exist",
+                    "An adjacency matrix"],
+        "answer": 1,
+        "explain": "BFS only ever asks \"who's next to u?\". Any rule that answers it — array lookups, legal chess moves, appendable tokens — makes a searchable graph." },
+      { "q": "You're solving a sliding puzzle by search. What are the nodes and edges?",
+        "choices": ["Nodes are the tiles; edges are their adjacencies in the frame",
+                    "Nodes are entire board configurations; edges connect configurations one legal move apart — BFS depth from the start is then \"minimum moves to solve\"",
+                    "Nodes are moves; edges are tiles"],
+        "answer": 1,
+        "explain": "States-as-nodes is the leap. The puzzle's physical layout is irrelevant; the search space is the set of situations, wired by moves." },
+      { "q": "In huge implicit graphs, what usually kills a plain BFS first?",
+        "choices": ["Integer overflow in the distance counter",
+                    "Frontier memory — the ripple at depth d can hold on the order of bᵈ states, outgrowing RAM long before time runs out",
+                    "The neighbor function becomes incorrect at scale"],
+        "answer": 1,
+        "explain": "Exponential frontiers are a space problem before a time problem. Remedies: prune, canonicalize symmetric states, search from both ends, or guide the search (A*, next unit)." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const canvas = document.getElementById("grid");
+      let seed = 7;
+      let maze = window.AlgoMaze.generate(43, 23, seed);
+      let gridViz = window.AlgoGridViz.create(canvas, maze);
+
+      const state = {};
+      function* tracked() {
+        state.nodeState = {}; state.pathCells = [];
+        for (const e of window.AlgoMaze.gridBfs(maze)) {
+          if (e.type === "discover") state.nodeState[e.u] = "frontier";
+          if (e.type === "visit") state.nodeState[e.u] = "visited";
+          if (e.type === "path") state.pathCells = e.cells;
+          yield e;
+        }
+      }
+
+      const player = window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({
+          nodeState: { ...(state.nodeState || {}) },
+          pathCells: (state.pathCells || []).slice(),
+        }),
+        render: (snap, event) => gridViz.draw(snap, event),
+        counters: { visit: "cells visited", discover: "cells discovered" },
+        cap: 4000,
+        describe: (e) =>
+          e.type === "visit" ? `visiting cell (${e.u})` :
+          e.type === "discover" ? `discovered (${e.u})${e.from ? " from (" + e.from + ")" : " — the start"}` :
+          e.type === "path" ? `goal reached — walking parents backward to recover the path` :
+          e.type === "done" ? (e.length >= 0
+            ? `shortest path: ${e.length} steps`
+            : "the goal is unreachable in this maze") : "",
+      });
+
+      document.getElementById("new-maze").addEventListener("click", () => {
+        seed += 1;
+        maze = window.AlgoMaze.generate(43, 23, seed);
+        gridViz = window.AlgoGridViz.create(canvas, maze);
+        player.reset();
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
