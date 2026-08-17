@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DAGs and topological sort — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dfs.html|Depth-first search">
+  <meta name="algo:next" content="connectivity.html|Connected components">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Graphs</p>
+  <h1>Topological sort: what order do things go in?</h1>
+  <p class="lede">Given a pile of "X must happen before Y" constraints, find
+  an order that respects all of them — or prove no such order exists. This is
+  the algorithm inside every build system, package manager, migration runner
+  and workflow engine you have ever used. It only works on a special kind of
+  graph, and the failure case is as important as the success.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="what-is-a-graph.html">Directed graphs</a> and
+    <a href="dfs.html">DFS</a> (for the second, layered derivation).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Model each task as a node and each "must come before" as a directed
+  edge. If the constraints are satisfiable at all, the graph has no directed
+  cycle — it's a <strong>DAG</strong> (directed acyclic graph), the single
+  most important special case in this course. A <strong>topological
+  order</strong> lists the nodes so every edge points forward in the list.</p>
+  <p>Kahn's algorithm finds one with an observation your intuition already
+  uses: <em>something with no prerequisites can go first.</em> Count each
+  node's incoming edges (<strong>in-degree</strong>). Repeatedly emit any
+  node with in-degree 0, then delete its outgoing edges — which may free up
+  new zero-in-degree nodes. If everything gets emitted: that's your order.
+  If the loop stalls with nodes still un-emitted, every one of them is
+  waiting on another — you've <em>proven</em> a cycle, with the stuck set as
+  the witness. O(|V| + |E|), and the "ready set" is literally the work queue
+  a parallel build scheduler would use.</p>
+
+  <h2>Watch it run</h2>
+  <p>A small build graph: <code>util → log/db → auth → api/ui → app</code>.
+  Numbers show each module's position as it's emitted; amber-ringed nodes are
+  in the ready set (in-degree just hit zero). Then flip the checkbox to add a
+  cyclic edge <code>app → util</code> and run again — watch the algorithm
+  stall and name the culprits in red:</p>
+  <div class="demo">
+    <label class="hint" style="display:block;margin-bottom:0.5rem">
+      <input type="checkbox" id="cycle-toggle"> sabotage: add
+      <code>app → util</code> (a circular dependency)</label>
+    <div id="viz"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <h2>This course is a DAG</h2>
+  <p>True self-reference: the units of this course have prerequisites —
+  foundations before structures, structures before graphs — so the course
+  itself is a dependency graph, and a topological sort of it is a valid
+  study order. Here's the unit DAG, sorted by the exact code above:</p>
+  <div class="demo">
+    <p id="course-order" style="font-family:var(--mono);font-size:0.9rem"></p>
+    <p class="hint">Computed live by Kahn's algorithm on the unit-prerequisite
+    graph. The <a href="../map.html">concept map</a> shows the full
+    page-level version.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p><code>make</code>, Bazel, Gradle, webpack — every build tool
+    topologically sorts its target graph, and "cycle detected" in their error
+    output is Kahn's stall. Package managers order installs with it; database
+    migration runners order migrations; spreadsheets recompute cells in topo
+    order of the formula graph. And it's foundational to LLM orchestration:
+    agent frameworks (LangGraph-style pipelines, Airflow-style DAG runners)
+    are topological sorts executing live — each step runs when its
+    in-degree of unfinished dependencies hits zero, which is also exactly how
+    parallel schedulers decide what can run concurrently.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why the stall proves a cycle</summary>
+    <div class="layer-body">
+      <p>Suppose the loop stalls with a non-empty stuck set S. Every node in
+      S has in-degree ≥ 1 <em>counting only edges from S</em> — anything it
+      awaited outside S was already emitted and deleted. So walk backward
+      from any stuck node: each step stays inside S, and since S is finite
+      you must eventually revisit a node — that's a directed cycle. In plain
+      English: if everyone left is waiting for someone else who's also left,
+      the waiting is circular. This is precisely how deadlock detectors
+      reason about "who holds what lock".</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The DFS derivation, and how many orders exist</summary>
+    <div class="layer-body">
+      <p>The previous page's exit times give a second algorithm: run DFS over
+      the whole graph and emit nodes in <em>reverse</em> order of
+      finishing. A node only finishes after everything reachable from it has
+      finished, so all its dependents land later in the output — a valid
+      topological order, also O(|V| + |E|). Kahn's is taught here because
+      its intermediate state (the ready set) is visible and means something
+      operationally; the DFS version shines when you're already doing DFS
+      for other reasons.</p>
+      <p>Topological orders are almost never unique — any moment the ready
+      set holds k nodes, k different valid continuations exist. That freedom
+      is the parallelism a build scheduler exploits: the whole ready set can
+      run <em>simultaneously</em>. The number of valid orders can be
+      exponential; asking for "the" order is asking the wrong question.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function topoSort(graph) {
+  const adj = adjacency(graph);
+  const indeg = new Map(graph.nodes.map((n) => [n.id, 0]));
+  for (const e of graph.edges) indeg.set(e.v, indeg.get(e.v) + 1);
+
+  const ready = [...indeg.keys()].filter((id) => indeg.get(id) === 0);
+  const order = [];
+  while (ready.length) {
+    const u = ready.shift();                 // any ready node works
+    order.push(u);
+    for (const { to } of adj.get(u)) {       // "delete" u's out-edges
+      indeg.set(to, indeg.get(to) - 1);
+      if (indeg.get(to) === 0) ready.push(to);
+    }
+  }
+  if (order.length < graph.nodes.length) return null;  // cycle! the rest are stuck
+  return order;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Topological sort assumed the graph was connected enough to care about
+  order. The next two pages ask blunter structural questions: which nodes can
+  reach each other at all (<a href="connectivity.html">connected
+  components</a>), and what cycles and two-colorings reveal
+  (<a href="cycles-and-bipartite.html">after that</a>). The DAG story
+  continues in unit 9's <a href="../09-systems/dependency-graphs.html">
+  dependency graphs</a> page, where it meets real build systems and agent
+  pipelines at scale.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "topological-sort",
+    "questions": [
+      { "q": "Kahn's algorithm ends with 3 of your 12 migration files never emitted. What do you know?",
+        "choices": ["The 3 files are unreachable from the first migration",
+                    "Those 3 form (or feed) at least one circular dependency among themselves — no valid run order exists until an edge among them is broken",
+                    "The algorithm needs a better starting node"],
+        "answer": 1,
+        "explain": "The stall IS the cycle proof: everyone left is waiting on someone else who's left. The stuck set is your debugging shortlist — the answer to \"which of my migrations are circular?\"." },
+      { "q": "Your build tool sees the ready set contains {parser, lexer, docs}. What does that mean operationally?",
+        "choices": ["They must be built in alphabetical order",
+                    "All three have zero unbuilt dependencies right now — they can be built in any order, including all three in parallel",
+                    "They are the least important targets"],
+        "answer": 1,
+        "explain": "Multiple ready nodes = scheduling freedom = parallelism. This is exactly how -j8 builds and DAG-based agent pipelines decide what to launch concurrently." },
+      { "q": "Why can't topological sort be run on an undirected graph?",
+        "choices": ["It can, it's just slower",
+                    "An undirected edge says \"related\", not \"before\" — with no direction there is no ordering constraint to satisfy, and every edge would be its own 2-cycle",
+                    "Undirected graphs are always cyclic"],
+        "answer": 1,
+        "explain": "The algorithm's input is precedence. Undirected edges carry none — a reminder that choosing directedness (last page's quiz) is choosing what questions the graph can answer." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const base = window.AlgoGraphs.preset("build");
+      const toggle = document.getElementById("cycle-toggle");
+
+      const current = () => {
+        const g = JSON.parse(JSON.stringify(base));
+        if (toggle.checked) g.edges.push({ u: "app", v: "util" });
+        return g;
+      };
+
+      let graph = current();
+      const state = {};
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+        for (const e of window.AlgoGraphs.topoSort(graph)) {
+          window.AlgoGraphViz.applyEvent(state, e);
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Topological sort animation", height: 340 });
+
+      const player = window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { order: "emitted", discover: "became ready", check: "edges deleted" },
+        describe: (e) =>
+          e.type === "order" ? `${e.u} emitted at position ${e.k + 1} — its prerequisites are all done` :
+          e.type === "discover" ? `${e.u} is ready: in-degree reached zero` :
+          e.type === "check" ? `deleting edge ${e.u} → ${e.v}` :
+          e.type === "cycle" ? `STUCK — {${e.nodes.join(", ")}} all wait on each other: circular dependency` :
+          e.type === "done" ? `valid order found: ${e.order.join(" → ")}` : "",
+      });
+
+      toggle.addEventListener("change", () => { graph = current(); player.reset(); });
+
+      // The course's own unit DAG, sorted by the same generator.
+      const course = {
+        directed: true,
+        nodes: ["start", "foundations", "structures", "sorting", "graphs",
+                "graphs-adv", "strategies", "strings", "systems"].map((id) => ({ id, x: 0, y: 0 })),
+        edges: [
+          { u: "start", v: "foundations" }, { u: "foundations", v: "structures" },
+          { u: "structures", v: "sorting" }, { u: "structures", v: "graphs" },
+          { u: "graphs", v: "graphs-adv" }, { u: "sorting", v: "strategies" },
+          { u: "sorting", v: "strings" }, { u: "graphs-adv", v: "systems" },
+          { u: "strategies", v: "systems" }, { u: "strings", v: "systems" },
+        ],
+      };
+      let order = null;
+      for (const e of window.AlgoGraphs.topoSort(course)) {
+        if (e.type === "done") order = e.order;
+      }
+      document.getElementById("course-order").textContent =
+        order ? order.join("  →  ") : "cycle?! (file a bug against reality)";
+    });
+  </script>
+</main>
+</body>
+</html>
