@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proving an algorithm correct — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Foundations">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="math-toolkit.html|Logs, sums and friends">
+  <meta name="algo:next" content="amortized-analysis.html|Amortized analysis">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Foundations</p>
+  <h1>Proving an algorithm correct</h1>
+  <p class="lede">Tests check the inputs you thought of. A correctness
+  argument covers the ones you didn't — and the working engineer's version is
+  one sentence long: find the thing that stays true.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="counting-steps.html">Counting steps</a> (you've seen binary
+    search run) and <a href="recursion.html">recursion</a> (the leap of
+    faith, which this page makes rigorous).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Every loop you trust, you trust because of a sentence you could say about
+  it — usually without knowing you're saying it. "By the end of iteration i,
+  the first i items are processed." "The running total always equals the sum
+  of what we've seen." That sentence is a
+  <strong><dfn data-term="invariant">loop invariant</dfn></strong>: a claim
+  that's true before the loop starts and stays true after every iteration.</p>
+  <p>An invariant proves a loop correct with three small checks — the same
+  shape as climbing a ladder:</p>
+  <p><strong>1. It starts true</strong> (you can reach the first rung).<br>
+  <strong>2. Each iteration keeps it true</strong> (from any rung you can
+  reach the next).<br>
+  <strong>3. True + loop finished ⇒ the goal</strong> (the top rung is where
+  you wanted to be).</p>
+  <p>That's induction — the recursion page's "leap of faith" formalized. The
+  power move: the invariant is chosen by <em>you</em>, and a well-chosen one
+  makes tricky code obvious.</p>
+
+  <h2>Watch it hold</h2>
+  <p>Binary search, but this time ignore the bars and read the sentence under
+  the controls: it states the invariant at every step —
+  <em>"if the target is anywhere, it's between lo and hi"</em>. Step through
+  and try to catch the sentence being false. You can't; that's the proof
+  working:</p>
+  <div class="demo">
+    <canvas id="inv-canvas" width="880" height="150"
+            aria-label="Binary search with its invariant stated at every step"></canvas>
+    <div id="inv-stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Invariant-speak is all over serious engineering, wearing different
+    badges: database constraints and transactional invariants ("balances sum
+    to zero across a transfer"), the safety properties model checkers like TLA+
+    verify, class invariants in an aggregate root, "this queue never contains
+    a message twice". Code review is where it pays off daily: asking "what's
+    the invariant of this loop?" finds more bugs than reading line by line —
+    an off-by-one is precisely a broken step 1 or step 3.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The three checks, run on binary search</summary>
+    <div class="layer-body">
+      <p><strong>Invariant:</strong> if the target is in the array, its index
+      is in [lo, hi].</p>
+      <p><strong>Starts true:</strong> lo = 0, hi = n−1 covers the whole array
+      — the target (if present) is certainly in there.</p>
+      <p><strong>Kept true:</strong> we compare the middle element. If it's
+      too small, the target (being larger) can't be at mid or left of mid —
+      everything we discard is legitimately condemned, so [mid+1, hi] still
+      satisfies the sentence. Symmetrically for too-large.</p>
+      <p><strong>Implies the goal:</strong> we stop either at a[mid] ===
+      target (found — correct) or when lo &gt; hi, i.e. the "must be here"
+      region is empty — so the target isn't in the array, and reporting
+      not-found is correct. Also required: <em>termination</em> — hi − lo
+      shrinks every iteration, so the loop can't run forever. Correct answers,
+      always, in finite time. ∎</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>A second example: why insertion sort is correct</summary>
+    <div class="layer-body">
+      <p><strong>Invariant:</strong> before handling item i, the first i items
+      are a sorted arrangement of the original first i items. Starts true
+      (one item is trivially sorted); each iteration inserts the next item
+      into its place among the already-sorted prefix, preserving both
+      sortedness and the "same items" clause; at exit i = n, so the whole
+      array is sorted. Notice the clause "arrangement of the original items" —
+      without it, <code>a.fill(0)</code> would satisfy "sorted". Choosing the
+      invariant IS the thinking; the checks are then mechanical.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the connection to induction, properly</summary>
+    <div class="layer-body">
+      <p>Let P(k) = "the invariant holds after k iterations". Check 1 is the
+      base case P(0); check 2 is the inductive step P(k) ⇒ P(k+1); together
+      they give P(k) for all k by mathematical induction. Check 3 converts
+      P(final) into the specification. Recursive algorithms run the same
+      argument on input size instead of iteration count — which is exactly the
+      recursion page's "assume the smaller call works". One idea, two
+      costumes.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <p>Invariants belong <em>in</em> code, not just about it — as asserts in
+  debug builds and as comments that outlive their authors:</p>
+  <pre><code class="language-javascript">function binarySearch(a, target) {
+  let lo = 0, hi = a.length - 1;
+  // INVARIANT: if target is in a, its index lies in [lo, hi]
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (a[mid] === target) return mid;
+    if (a[mid] < target) lo = mid + 1;   // discards only impossible slots
+    else hi = mid - 1;                   // ditto — invariant preserved
+  }
+  return -1;  // [lo, hi] is empty: invariant says target is nowhere
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Correctness: handled. Unit 1 closes with the last costing tool —
+  <a href="amortized-analysis.html">amortized analysis</a>, for operations
+  that are usually cheap and occasionally terrible. After that, unit 2 puts
+  the whole toolkit to work on real structures.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "proving-correctness",
+    "questions": [
+      { "q": "A loop invariant must be checked at three moments. Which trio is right?",
+        "choices": ["Before the loop · after every iteration · at loop exit",
+                    "At compile time · at runtime · in review",
+                    "Best case · average case · worst case"],
+        "answer": 0,
+        "explain": "Initialization, maintenance, and what truth-at-exit buys you. Ladder: first rung, rung-to-rung, top rung." },
+      { "q": "For insertion sort, why is \"the first i items are sorted\" too WEAK as an invariant?",
+        "choices": ["It isn't — that's the standard one",
+                    "It doesn't say the items are the ORIGINAL items, so overwriting everything with zeros would satisfy it",
+                    "It mentions i, which changes"],
+        "answer": 1,
+        "explain": "An invariant must be strong enough that check 3 delivers the actual goal: sorted AND a permutation of the input. Writing invariants is a specification exercise, which is why it catches specification bugs." },
+      { "q": "Your teammate's loop passes all tests, but you can't state any invariant for it. What does that most likely signal?",
+        "choices": ["Nothing — invariants are optional paperwork",
+                    "The loop may be correct by accident: its logic doesn't preserve any clean property, so edge inputs are where it'll break",
+                    "The tests are too strict"],
+        "answer": 1,
+        "explain": "Code without a statable invariant is code whose correctness has no reason. It might still be right — but the ones that break at 3am are disproportionately from this pile." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const N = 64;
+      const arr = window.AlgoRandom.ints(N, 5, 400, 7331).sort((a, b) => a - b);
+      const target = arr[47];
+      const canvas = document.getElementById("inv-canvas");
+      const viz = window.AlgoArrayViz.create(canvas);
+      const max = Math.max(...arr);
+      window.AlgoSteps.player(document.getElementById("inv-stepper"), {
+        make: () => window.AlgoSorts.binarySearch(arr, target),
+        capture: () => ({ array: arr.slice(), max }),
+        render: (snap, event) => viz.draw(snap, event),
+        counters: { compare: "comparisons" },
+        describe: (e) =>
+          e.type === "focus" ? `INVARIANT: if the target is anywhere, it's in [${e.lo}, ${e.hi}] — still true` :
+          e.type === "compare" ? `comparing the middle (index ${e.i}) — about to discard a provably-empty half` :
+          e.type === "found" ? `found at ${e.i} — the invariant never lied` :
+          e.type === "not-found" ? "region empty ⇒ target provably absent" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
