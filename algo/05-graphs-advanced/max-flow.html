@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Max flow, min cut — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="scc.html|Strongly connected components">
+  <meta name="algo:next" content="matching.html|Bipartite matching">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>Max flow, min cut: how much can the network carry?</h1>
+  <p class="lede">Edges get capacities — liters per second, requests per
+  minute — and the question flips from "cheapest path" to "maximum
+  throughput from source to sink". The algorithm is almost naive: find a
+  path with spare capacity, push what fits, repeat. One idea rescues it
+  from wrong answers, and the stopping condition turns out to be a theorem
+  about bottlenecks.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/bfs.html">BFS</a> — it's the path-finder inside —
+    and directed graphs generally. This is the unit's most different-feeling
+    page; give it its own sitting.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <strong>flow</strong> assigns each edge a throughput ≤ its capacity,
+  with everything entering a middle node also leaving it (conservation —
+  no node hoards). The obvious loop — find a source-to-sink path with
+  spare capacity (an <strong>augmenting path</strong>), push its bottleneck
+  amount, subtract — can paint itself into a corner: an early path may use
+  an edge the optimal solution needs differently, and greedily-placed flow
+  never moves.</p>
+  <p>The fix is the <strong>residual graph</strong>: after pushing f units
+  along edge u→v, add a <em>reverse</em> edge v→u with capacity f. Pushing
+  along a reverse edge means <em>canceling</em> earlier flow — rerouting
+  it — so no decision is ever final. Search for augmenting paths in the
+  residual graph and the corner disappears. <strong>Edmonds-Karp</strong>
+  pins the path search to BFS (fewest edges), which caps the rounds at
+  O(|V|·|E|) and makes the whole thing O(|V|·|E|²) — comfortably enough
+  for graphs that fit on a screen.</p>
+
+  <h2>Watch it run</h2>
+  <p>A pipe network, source <code>s</code> to sink <code>t</code>. Each
+  round: BFS finds an augmenting path (amber discoveries), then the path
+  flashes green as its bottleneck amount is pushed. Watch the running total
+  — and notice a later path exploiting the <code>b → a</code> edge to route
+  around an earlier commitment:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Capacity questions wear many masks: traffic engineering and
+    bandwidth allocation; airline and crew scheduling; supply chains;
+    image segmentation (graph cuts — the min cut IS the object boundary,
+    a workhorse of classical vision); organ-donor exchange matching;
+    project selection with prerequisites. The min-cut side answers
+    reliability: "which set of links, if severed, disconnects us, and how
+    small can it be?" — network robustness in one number. And the next
+    page runs assignment problems through this exact algorithm via a
+    two-line reduction.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Show the proof idea — max-flow = min-cut</summary>
+    <div class="layer-body">
+      <p>A <strong>cut</strong> here: any split of the nodes with s on one
+      side, t on the other; its capacity is the total of forward edges
+      crossing it. Every flow ≤ every cut (all throughput must cross the
+      line, and the line only carries its capacity) — so max-flow ≤
+      min-cut. Now run the algorithm to its stop: no augmenting path
+      exists. Let S = everything BFS can still reach from s in the residual
+      graph. Every original edge leaving S must be <em>saturated</em>
+      (else its target would be reachable) and every edge into S carries
+      zero (else its reverse-residual would open a way out). So the flow
+      crossing the (S, rest) cut equals that cut's full capacity — the
+      inequality is tight. The flow is maximum, that cut is minimum, and
+      the algorithm's stopping state hands you both. ∎</p>
+      <p>In plain English: when you can't push any more, the network shows
+      you exactly where its bottleneck line is. The theorem (Ford-Fulkerson,
+      1956) is one of the great duality results — the same pattern as
+      "sorting's lower bound": an algorithm and an impossibility meeting at
+      the same number.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Beyond Edmonds-Karp — honestly</summary>
+    <div class="layer-body">
+      <p class="sim-note" style="margin:0">This course runs Edmonds-Karp
+      because every step fits on screen. Production flow solvers are
+      cleverer: <strong>Dinic's algorithm</strong> batches BFS layers and
+      pushes blocking flows for O(|V|²|E|), much faster in practice;
+      <strong>push-relabel</strong> methods drop the path metaphor entirely,
+      letting nodes hold temporary excess and shove it downhill —
+      O(|V|²√|E|) variants dominate benchmarks. Neither is animated here;
+      both are described faithfully in CLRS ch. 24/26 territory (see
+      <a href="../11-expert/further-reading.html">further reading</a>). The
+      residual-graph idea is the part they all share and the part worth
+      owning.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function maxFlow(graph, source, sink) {
+  // cap[u][v] = residual capacity; reverse edges start at 0
+  let flow = 0;
+  for (;;) {
+    const parent = bfsPath(cap, source, sink);   // shortest augmenting path
+    if (!parent) break;                          // none left: DONE (min cut found)
+    let bottleneck = Infinity;                   // tightest pipe on the path
+    for (let v = sink; v !== source; v = parent.get(v))
+      bottleneck = Math.min(bottleneck, cap[parent.get(v)][v]);
+    for (let v = sink; v !== source; v = parent.get(v)) {
+      const u = parent.get(v);
+      cap[u][v] -= bottleneck;                   // consume forward capacity
+      cap[v][u] += bottleneck;                   // open the undo edge
+    }
+    flow += bottleneck;
+  }
+  return flow;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The unit's finale is max flow in disguise:
+  <a href="matching.html">bipartite matching</a> — assignment problems
+  solved by a reduction so short it feels like cheating.</p>
+
+  <script type="application/json" class="symbols">
+  { "c": { "name": "c(u, v) — capacity", "pron": "say: cee of you, vee",
+           "means": "the most throughput edge u→v can carry", "short": "capacity" },
+    "f": { "name": "f(u, v) — flow", "pron": "say: eff of you, vee",
+           "means": "the throughput currently assigned to edge u→v; always ≤ its capacity", "short": "flow" },
+    "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "max-flow",
+    "questions": [
+      { "q": "What problem do residual reverse edges solve?",
+        "choices": ["They double the network's capacity",
+                    "They make early flow placements revocable: pushing along v→u cancels/reroutes flow already on u→v, so a greedy early path can't permanently block the optimum",
+                    "They let flow travel backward to the source"],
+        "answer": 1,
+        "explain": "Without undo edges, plain greedy path-pushing gets stuck below the true max on textbook-simple networks. The residual graph turns \"committed\" into \"revisable\" — the page's one essential idea." },
+      { "q": "The algorithm stops when BFS can't reach the sink in the residual graph. Why is that a PROOF of optimality rather than just giving up?",
+        "choices": ["BFS is exhaustive, so stopping means trying harder won't help",
+                    "The still-reachable set S defines a cut whose forward edges are all saturated and reverse edges all empty — the current flow equals that cut's capacity, and no flow can ever exceed any cut",
+                    "The flow value stops changing, which implies convergence"],
+        "answer": 1,
+        "explain": "Max-flow = min-cut: the stopping state constructs a certificate (the cut) that matches the achieved value. Algorithm and upper bound meet — you're provably done, not just tired." },
+      { "q": "Your platform team asks: \"what's the smallest set of network links whose failure disconnects region A from region B?\" What are they asking for?",
+        "choices": ["A shortest path between the regions",
+                    "The min cut between A and B — computable by running max flow (capacity 1 per link, or real bandwidths) and reading off the saturated bottleneck edges",
+                    "The spanning tree of the network"],
+        "answer": 1,
+        "explain": "Min cut IS the vulnerability set, and max-flow computes it as a by-product. Same tool also answers \"how much traffic survives if X fails?\" — duality doing operations work." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("pipes");
+      const verdict = document.getElementById("verdict");
+
+      const state = {};
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+        for (const e of window.AlgoGraphs.maxFlow(graph, "s", "t")) {
+          if (e.type === "flow") {
+            state.edgeState = {};                       // clear old path highlight
+            state.nodeState = {};
+          }
+          window.AlgoGraphViz.applyEvent(state, e);
+          if (e.type === "flow") state.nodeLabel["t"] = "Σ " + e.total;
+          if (e.type === "done")
+            verdict.textContent = `Max flow: ${e.flow}. The saturated edges crossing ` +
+              `from s's residual-reachable side form the matching min cut — the network's bottleneck line.`;
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Edmonds-Karp animation", height: 320 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { flow: "augmenting paths", discover: "BFS discoveries" },
+        describe: (e) =>
+          e.type === "discover" ? `BFS: ${e.u} reachable with spare capacity via ${e.from}` :
+          e.type === "flow" ? `pushing ${e.value} along ${e.path.map(([u]) => u).join("→")}→t — total now ${e.total}` :
+          e.type === "done" ? `no augmenting path remains: max flow = ${e.flow}, min cut certified` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
