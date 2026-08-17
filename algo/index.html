@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Algorithms Tutor — the CS degree you skipped</title>
+
+  <meta name="algo:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/progress.js"></script>
+</head>
+<body>
+<main class="wide">
+  <section class="hero">
+    <h1>Algorithms Tutor</h1>
+    <p class="lede">The CS degree you skipped, taught through the systems you
+    already ship. Data structures, sorting, graph theory front and centre,
+    dynamic programming, NP-completeness — built for the working developer who
+    codes fluently but never got the theory years.</p>
+    <p>Every algorithm here is <strong>one steppable implementation</strong>:
+    the code you read is the code that draws the animation is the code the labs
+    grade you against. Watch it run, scrub it backwards, count its steps — and
+    check every Big-O claim against a live counter.</p>
+    <div id="resume-box"></div>
+  </section>
+
+  <section id="units"></section>
+
+  <div class="box">
+    <span class="label">Also on this site</span>
+    <p>📈 <a href="../index.html"><strong>ML Tutor</strong></a> — machine
+    learning from arithmetic to transformers, in plain language.</p>
+    <p>⑂ <a href="../git/index.html"><strong>Git Tutor</strong></a> — the
+    advanced half of git, practised against a real repository in your
+    browser.</p>
+    <p>🎸 <a href="../bass/index.html"><strong>Bass Tutor</strong></a> — bass
+    guitar and the theory behind it, bass in hand from minute one.</p>
+    <p>⚙️ <a href="../web/index.html"><strong>Web Dev Reference</strong></a> —
+    Angular, RxJS, Vitest, Kotlin and friends: current best practice and what
+    it replaced.</p>
+  </div>
+
+  <script>
+    // The curriculum, in order (algo/PLAN.md §2). Pages not yet in BUILT are
+    // listed but gated, so a half-finished unit can ship without dead links —
+    // same trick as git/index.html, except membership is a set rather than a
+    // prefix, because this course builds its sample pages out of order.
+    const UNITS = [
+      { n: 0, name: "Start here",
+        blurb: "What this course is, how the stepper works, and an honest guide to where a working developer should begin." },
+      { n: 1, name: "Foundations",
+        blurb: "Big-O you can measure, recursion, recurrences, proofs on tap — the reasoning toolkit the rest of the course leans on." },
+      { n: 2, name: "Data structures",
+        blurb: "Arrays to union-find: what each structure costs, what it buys, and which production system it's hiding inside." },
+      { n: 3, name: "Sorting & searching",
+        blurb: "Binary search done right, the classic sorts, and the proof that n log n is a wall no comparison sort gets past." },
+      { n: 4, name: "Graphs I: fundamentals",
+        blurb: "The centerpiece begins: draw your own graphs, then BFS, DFS, topological sort and friends run on them." },
+      { n: 5, name: "Graphs II: the classics",
+        blurb: "Dijkstra, A*, spanning trees, strongly connected components, max flow — the algorithms half of computing runs on." },
+      { n: 6, name: "Design strategies",
+        blurb: "Greedy, dynamic programming, backtracking — and how to tell which one a new problem is asking for." },
+      { n: 7, name: "Strings",
+        blurb: "Substring search from naive to KMP, rolling hashes, tries and suffix arrays." },
+      { n: 8, name: "Visualisation",
+        blurb: "Drawing data is algorithms too: tidy trees, force-directed layouts, DAG layering — the site teaches its own renderers." },
+      { n: 9, name: "Production & LLM systems",
+        blurb: "Where you've been using all this already: orchestration DAGs, vector search, knowledge graphs, tokenizers, caches, storage engines." },
+      { n: 10, name: "Practice labs",
+        blurb: "Implement it yourself; the harness grades correctness and tells you what complexity your code actually exhibited." },
+      { n: 11, name: "Expert track",
+        blurb: "P vs NP, reductions, approximation, randomization — and where to go when this course runs out." },
+    ];
+
+    const PAGES = [
+      [0, "00-start/how-this-works.html", "How this tutor works"],
+      [0, "00-start/what-is-an-algorithm.html", "What is an algorithm?"],
+      [0, "00-start/self-assessment.html", "Where should you start?"],
+
+      [1, "01-foundations/counting-steps.html", "Counting steps"],
+      [1, "01-foundations/big-o.html", "Big-O: naming how cost grows"],
+      [1, "01-foundations/recursion.html", "Recursion"],
+      [1, "01-foundations/recurrences.html", "Recurrences and the Master theorem"],
+      [1, "01-foundations/math-toolkit.html", "Logs, sums and friends"],
+      [1, "01-foundations/proving-correctness.html", "Proving an algorithm correct"],
+      [1, "01-foundations/amortized-analysis.html", "Amortized analysis"],
+
+      [2, "02-structures/arrays-and-lists.html", "Arrays and linked lists"],
+      [2, "02-structures/stacks-and-queues.html", "Stacks, queues and deques"],
+      [2, "02-structures/hash-tables.html", "Hash tables"],
+      [2, "02-structures/binary-search-trees.html", "Binary search trees"],
+      [2, "02-structures/balanced-trees.html", "Balanced trees: AVL and red-black"],
+      [2, "02-structures/heaps.html", "Heaps and priority queues"],
+      [2, "02-structures/union-find.html", "Union-Find (disjoint sets)"],
+
+      [3, "03-sorting/binary-search.html", "Binary search, done right"],
+      [3, "03-sorting/elementary-sorts.html", "Selection, insertion, bubble"],
+      [3, "03-sorting/merge-sort.html", "Merge sort and divide & conquer"],
+      [3, "03-sorting/quicksort.html", "Quicksort"],
+      [3, "03-sorting/heapsort.html", "Heapsort"],
+      [3, "03-sorting/counting-radix-bucket.html", "Sorting without comparing"],
+      [3, "03-sorting/sorting-lower-bound.html", "Why n log n is the floor"],
+      [3, "03-sorting/quickselect.html", "Order statistics: quickselect"],
+
+      [4, "04-graphs/what-is-a-graph.html", "Graphs and how to store them"],
+      [4, "04-graphs/bfs.html", "Breadth-first search"],
+      [4, "04-graphs/dfs.html", "Depth-first search"],
+      [4, "04-graphs/topological-sort.html", "DAGs and topological sort"],
+      [4, "04-graphs/connectivity.html", "Connected components"],
+      [4, "04-graphs/cycles-and-bipartite.html", "Cycles and two-coloring"],
+      [4, "04-graphs/implicit-graphs.html", "Implicit graphs: grids, mazes, puzzles"],
+
+      [5, "05-graphs-advanced/dijkstra.html", "Dijkstra's algorithm"],
+      [5, "05-graphs-advanced/bellman-ford.html", "Bellman-Ford and negative weights"],
+      [5, "05-graphs-advanced/floyd-warshall.html", "All pairs: Floyd-Warshall"],
+      [5, "05-graphs-advanced/astar.html", "A* and heuristic search"],
+      [5, "05-graphs-advanced/mst.html", "Minimum spanning trees"],
+      [5, "05-graphs-advanced/scc.html", "Strongly connected components"],
+      [5, "05-graphs-advanced/max-flow.html", "Max flow, min cut"],
+      [5, "05-graphs-advanced/matching.html", "Bipartite matching"],
+
+      [6, "06-strategies/choosing-a-strategy.html", "Choosing a strategy"],
+      [6, "06-strategies/greedy.html", "Greedy algorithms"],
+      [6, "06-strategies/huffman.html", "Huffman coding"],
+      [6, "06-strategies/dp-foundations.html", "Dynamic programming"],
+      [6, "06-strategies/dp-sequences.html", "DP on sequences"],
+      [6, "06-strategies/dp-knapsack.html", "Knapsack and friends"],
+      [6, "06-strategies/dp-trees-and-bitmasks.html", "DP on trees and bitmasks"],
+      [6, "06-strategies/backtracking.html", "Backtracking and pruning"],
+
+      [7, "07-strings/string-search.html", "Substring search, naively"],
+      [7, "07-strings/kmp.html", "Knuth-Morris-Pratt"],
+      [7, "07-strings/rabin-karp.html", "Rabin-Karp and rolling hashes"],
+      [7, "07-strings/tries.html", "Tries"],
+      [7, "07-strings/suffix-arrays.html", "Suffix arrays"],
+
+      [8, "08-visualisation/why-visualise.html", "Why visualise?"],
+      [8, "08-visualisation/drawing-trees.html", "Drawing trees (Reingold–Tilford)"],
+      [8, "08-visualisation/drawing-graphs.html", "Drawing graphs: force-directed layout"],
+      [8, "08-visualisation/drawing-dags.html", "Drawing DAGs (Sugiyama's layers)"],
+      [8, "08-visualisation/matrices-and-maps.html", "Matrices, treemaps and bundling"],
+      [8, "08-visualisation/projections.html", "Projections: seeing high dimensions"],
+
+      [9, "09-systems/dependency-graphs.html", "Dependency graphs and orchestration"],
+      [9, "09-systems/vector-search.html", "Vector search and HNSW"],
+      [9, "09-systems/knowledge-graphs.html", "Knowledge graphs and graph RAG"],
+      [9, "09-systems/tokenizers.html", "Tokenizers: tries meet BPE"],
+      [9, "09-systems/beam-search.html", "Beam search"],
+      [9, "09-systems/caching.html", "Caching and eviction"],
+      [9, "09-systems/probabilistic.html", "Probabilistic structures"],
+      [9, "09-systems/hashing-in-the-wild.html", "Consistent hashing and rate limiters"],
+      [9, "09-systems/storage-engines.html", "Storage engines: B-trees vs LSM"],
+
+      [10, "10-labs/sorting-lab.html", "Lab: write your own sorts"],
+      [10, "10-labs/hash-table-lab.html", "Lab: build a hash table"],
+      [10, "10-labs/graph-playground.html", "Graph playground"],
+      [10, "10-labs/pathfinder-lab.html", "Lab: pathfinding race"],
+      [10, "10-labs/dp-lab.html", "Lab: dynamic programming"],
+      [10, "10-labs/algorithm-gym.html", "The gym"],
+
+      [11, "11-expert/p-and-np.html", "P, NP and NP-completeness"],
+      [11, "11-expert/reductions.html", "Reductions in practice"],
+      [11, "11-expert/approximation.html", "Approximation algorithms"],
+      [11, "11-expert/randomized.html", "Randomized algorithms"],
+      [11, "11-expert/cache-and-memory.html", "When theory meets the clock"],
+      [11, "11-expert/bit-tricks.html", "Bit tricks"],
+      [11, "11-expert/external-and-parallel.html", "Very big and very parallel"],
+      [11, "11-expert/further-reading.html", "Where this goes next"],
+    ];
+
+    const BUILT = new Set([
+      "01-foundations/big-o.html",
+    ]);
+
+    const slugOf = (href) => href.split("/").pop().replace(/\.html$/, "");
+
+    function render() {
+      const done = window.AlgoProgress ? window.AlgoProgress.all() : {};
+      const labs = window.AlgoProgress ? window.AlgoProgress.labs() : {};
+      const host = document.getElementById("units");
+
+      UNITS.forEach((unit) => {
+        const pages = PAGES.filter(([u]) => u === unit.n);
+        if (!pages.length) return;
+
+        const section = document.createElement("section");
+        section.className = "unit-block";
+        const h2 = document.createElement("h2");
+        h2.textContent = `Unit ${unit.n} · ${unit.name}`;
+        section.appendChild(h2);
+        const blurb = document.createElement("p");
+        blurb.className = "lede";
+        blurb.textContent = unit.blurb;
+        section.appendChild(blurb);
+
+        const list = document.createElement("ol");
+        list.className = "page-list";
+        for (const [, href, title] of pages) {
+          const li = document.createElement("li");
+          if (!BUILT.has(href)) {
+            li.className = "soon";
+            li.innerHTML = `${title} <span class="badge">coming soon</span>`;
+          } else {
+            const slug = slugOf(href);
+            const complete = Boolean(done[slug]?.completedAt);
+            const a = document.createElement("a");
+            a.href = href;
+            a.textContent = title;
+            li.appendChild(a);
+            if (complete) {
+              const tick = document.createElement("span");
+              tick.className = "tick";
+              tick.title = "quiz finished";
+              tick.textContent = " ✓";
+              li.appendChild(tick);
+            }
+          }
+          list.appendChild(li);
+        }
+        section.appendChild(list);
+        host.appendChild(section);
+      });
+
+      // Continue where you left off: the first built page whose quiz isn't done.
+      const next = PAGES.find(([, href]) => BUILT.has(href) && !done[slugOf(href)]?.completedAt);
+      const box = document.getElementById("resume-box");
+      const labCount = Object.keys(labs).length;
+      if (next && Object.keys(done).length) {
+        box.className = "box";
+        box.innerHTML =
+          `<span class="label">Where you left off</span>` +
+          `<p>${Object.keys(done).length} page(s) finished` +
+          (labCount ? `, ${labCount} lab(s) solved` : "") +
+          `. <a href="${next[1]}"><strong>Continue → ${next[2]}</strong></a></p>`;
+      } else if (next) {
+        box.className = "box";
+        box.innerHTML =
+          `<span class="label">Under construction — but the first page is live</span>` +
+          `<p>This course is being built in the open (the full plan is in ` +
+          `<code>algo/PLAN.md</code>). The sample page that proves the whole stack: ` +
+          `<a href="${next[1]}"><strong>${next[2]} →</strong></a></p>`;
+      } else {
+        box.className = "box";
+        box.innerHTML = `<span class="label">All caught up</span><p>You've finished ` +
+          `every page that's been built so far. More are on the way.</p>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", render);
+  </script>
+
+  <style>
+    .unit-block { margin: 2rem 0; }
+    .unit-block h2 { margin-bottom: 0.2rem; }
+    .unit-block .lede { font-size: 0.95rem; margin-top: 0; }
+    .page-list { margin: 0.6rem 0 0; padding-left: 1.6rem; }
+    .page-list li { margin: 0.25rem 0; }
+    .page-list li.soon { color: var(--text-soft); }
+    .page-list .badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.05rem 0.45rem;
+    }
+    .page-list .tick { color: var(--good); }
+  </style>
+</main>
+</body>
+</html>
