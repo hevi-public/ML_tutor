@@ -41,6 +41,10 @@
       states.push(capture());
       if (steps.length >= cap) { truncated = true; break; }
     }
+    // A generator may still mutate state after its final yield (e.g. an AVL
+    // insert re-pointing ancestors on the way out of the recursion), so the
+    // end-of-scrub snapshot is re-captured once the generator has finished.
+    if (!truncated) states[states.length - 1] = capture();
     return { steps, states, counts, truncated };
   }
 

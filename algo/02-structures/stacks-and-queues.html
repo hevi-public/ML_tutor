@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stacks, queues and deques — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Data structures">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="arrays-and-lists.html|Arrays and linked lists">
+  <meta name="algo:next" content="hash-tables.html|Hash tables">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Data structures</p>
+  <h1>Stacks, queues and deques: restrictions as guarantees</h1>
+  <p class="lede">Take a sequence and forbid yourself from touching the
+  middle. What's left is barely a data structure — and that's why these two
+  show up inside more algorithms than everything else in this unit
+  combined.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="arrays-and-lists.html">Arrays and linked lists</a>, plus the
+    call stack from <a href="../01-foundations/recursion.html">recursion</a> —
+    which was a stack all along.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <strong>stack</strong> allows two moves: put a thing on top
+  (<code>push</code>), take the top thing off (<code>pop</code>). Last in,
+  first out. A <strong>queue</strong> allows two moves: join at the back
+  (<code>enqueue</code>), leave from the front (<code>dequeue</code>). First
+  in, first out. A <strong>deque</strong> (say "deck") allows both ends and
+  is the Swiss-army version.</p>
+  <p>Why celebrate structures this restricted? Because the restriction is a
+  <em>promise other code can lean on</em>. A stack promises: whatever you're
+  handling now, you'll finish before returning to what you interrupted —
+  which is why interrupt-and-resume problems (nested brackets, undo, function
+  calls) are stack problems. A queue promises fairness: things are handled in
+  arrival order — which is why spreading-outward problems (task scheduling,
+  breadth-first anything) are queue problems.</p>
+  <p>Here's the sentence this page exists for, and it's one of the prettiest
+  in computer science: <strong>take the same graph-exploration loop and swap
+  its to-do container — a stack explores depth-first, a queue explores
+  breadth-first.</strong> The data structure <em>is</em> the algorithm. Unit 4
+  stages this as a live side-by-side.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Stacks: your undo history, the call stack in every stack trace, the
+    back button, parser states in every compiler and JSON.parse. Queues run
+    the async world: message brokers (SQS, RabbitMQ, Kafka partitions are
+    queues with a ledger), your event loop's task queue, print spoolers,
+    request buffers — and "unbounded queue" is the classic way a healthy
+    service dies politely during an outage, which is why real queues are
+    bounded and shed load. Deques: your browser history (bounded at both
+    ends), work-stealing schedulers (own work popped stack-style, stolen work
+    taken queue-style).</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Implementations: both are arrays wearing costumes</summary>
+    <div class="layer-body">
+      <p>A stack is a dynamic array plus discipline: <code>push</code>/<code>pop</code>
+      at the end are the array's cheap end — O(1) amortized. A queue on a
+      plain array has a trap: <code>shift()</code> from the front is O(n)
+      (everything slides down). The fix is the <strong>ring buffer</strong>:
+      keep head and tail indexes that wrap around with
+      <code>mod</code> — both ends O(1), one fixed block of memory, zero
+      allocation in steady state. That's why ring buffers live inside network
+      cards, audio pipelines and channel implementations.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The bounded-queue question every system design asks</summary>
+    <div class="layer-body">
+      <p>Producers faster than consumers ⇒ the queue grows. Unbounded, it
+      grows until memory dies — turning one slow dependency into a full
+      outage, minutes later, far from the cause. Bounded, you must choose a
+      policy at the full mark: block the producer (backpressure), drop new
+      work (shed load), or drop old work (freshness wins). There is no fourth
+      option, only unchosen defaults. This one paragraph is a startling
+      fraction of real incident postmortems.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Ring buffer: a queue with O(1) at both ends and no allocation.
+class RingQueue {
+  constructor(capacity) {
+    this.buf = new Array(capacity); this.head = 0; this.size = 0;
+  }
+  enqueue(x) {
+    if (this.size === this.buf.length) throw new Error("full — pick a policy!");
+    this.buf[(this.head + this.size) % this.buf.length] = x;   // wrap with mod
+    this.size++;
+  }
+  dequeue() {
+    if (!this.size) return undefined;
+    const x = this.buf[this.head];
+    this.head = (this.head + 1) % this.buf.length;             // wrap with mod
+    this.size--;
+    return x;
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next comes the unit's flagship and the most-used structure in all of
+  software: <a href="hash-tables.html">the hash table</a>, which buys O(1)
+  lookup with a trick that looks like it shouldn't be allowed.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "stacks-and-queues",
+    "questions": [
+      { "q": "One exploration loop, two containers for the to-do list. What changes when you swap a stack for a queue?",
+        "choices": ["Nothing observable — order of work is an implementation detail",
+                    "The exploration order flips: stack digs deep before backing up, queue spreads wide level by level",
+                    "The queue version stops terminating"],
+        "answer": 1,
+        "explain": "Same loop, different promise: LIFO finishes the newest discovery first (depth-first), FIFO honors arrival order (breadth-first). Unit 4 runs them side by side on the same graph." },
+      { "q": "Why does a naive array-backed queue degrade, and how does the ring buffer fix it?",
+        "choices": ["Arrays can't remove from the front at all",
+                    "Front-removal shifts every element (O(n)); the ring keeps head/tail indexes that wrap with mod, so both ends are O(1)",
+                    "The ring buffer uses a linked list internally"],
+        "answer": 1,
+        "explain": "Instead of moving n elements, move one index. The mod-wrap is the same remainder arithmetic the notation page flagged as hashing's workhorse — it recycles slots forever." },
+      { "q": "A service's work queue is unbounded \"so we never drop requests\". What actually happens when consumers fall behind for long enough?",
+        "choices": ["Requests wait a bit longer; the system self-heals",
+                    "The queue absorbs the backlog until memory is exhausted — the outage arrives late, large, and far from its cause",
+                    "The runtime automatically applies backpressure"],
+        "answer": 1,
+        "explain": "Unbounded means \"the failure policy is chosen by the OOM killer\". Bounded queues force the real choice: backpressure, shed new, or drop old." } ] }
+  </script>
+</main>
+</body>
+</html>
