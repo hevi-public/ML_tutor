@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All pairs: Floyd-Warshall — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="bellman-ford.html|Bellman-Ford and negative weights">
+  <meta name="algo:next" content="astar.html|A* and heuristic search">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>Floyd-Warshall: every pair at once</h1>
+  <p class="lede">Three nested loops, one line of logic, and every node knows
+  its distance to every other. No frontier, no priority queue, no cleverness
+  you can point at — the intelligence is entirely in <em>which loop is on
+  the outside</em>, and that choice is this course's first real taste of
+  dynamic programming.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="dijkstra.html">Dijkstra</a> and
+    <a href="bellman-ford.html">Bellman-Ford</a>, so "all pairs" has
+    something to be compared against. The
+    <a href="../04-graphs/what-is-a-graph.html">adjacency matrix</a> finally
+    gets its algorithm.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Number the nodes 1…n. Define the subproblem by <em>which stopovers are
+  allowed</em>: let d<sub>k</sub>(i, j) be the shortest i→j distance using
+  only nodes 1…k as intermediate stops. Base case d₀: direct edges only.
+  Then admit stopover k, one at a time. A best path either ignores k —
+  distance unchanged — or routes through it exactly once:
+  <code>d(i,k) + d(k,j)</code>, both halves already optimal over stops
+  1…k−1. So:</p>
+  <p><span class="math">d_k(i,j) = \min\big(d_{k-1}(i,j),\; d_{k-1}(i,k) + d_{k-1}(k,j)\big)</span></p>
+  <p class="hint">In plain English: "is it cheaper to go through k?" — asked
+  for every pair, once per possible stopover.</p>
+  <p>Three loops, k outermost — that ordering IS the algorithm: every pair
+  must finish absorbing stopover k before anyone reasons about k+1.
+  O(|V|³) time, O(|V|²) space, negative edges welcome (a negative diagonal
+  entry appearing is the negative-cycle alarm). For the 30-node graphs where
+  all-pairs answers are actually wanted, n³ = 27,000 steps is nothing.</p>
+
+  <h2>Watch it run</h2>
+  <p>The city graph's distance matrix. Each round names a stopover k; cells
+  flash when a pair discovers a cheaper route through it. ∞ means "no route
+  found yet using the stopovers admitted so far":</p>
+  <div class="demo">
+    <div id="matrix" style="font-family:var(--mono);font-size:0.85rem;overflow-x:auto;margin-bottom:0.6rem"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Anywhere the full distance table is the product: network capacity
+    planning ("latency between every pair of regions"), transit-network
+    analysis, precomputed lookup tables in games, graph metrics like
+    betweenness that consume all-pairs distances. Its transitive-closure
+    twin (same loops, OR instead of min) computes reachability matrices —
+    "can role X ever escalate to permission Y?" in one sweep. For large
+    sparse graphs, though, run Dijkstra from every node instead (or
+    Johnson's algorithm if weights go negative) — n³ loses to n·(n log n)
+    badly when the matrix wouldn't even fit in memory.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why this is dynamic programming</summary>
+    <div class="layer-body">
+      <p>The unreasonable-looking move — solving n² shortest-path problems
+      simultaneously in n³ steps — works because the problems overlap
+      massively, and Floyd-Warshall organizes the overlap instead of
+      recomputing it. The recipe: define a subproblem family with a
+      dimension you can grow (allowed stopovers), solve in an order where
+      each answer needs only already-finished answers, store everything.
+      That recipe has a name and a whole unit
+      (<a href="../06-strategies/dp-foundations.html">unit 6</a>) — when you
+      get there, remember this page: you've already done DP on a real
+      problem.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The k-loop must be outermost — see it fail</summary>
+    <div class="layer-body">
+      <p>Put k innermost and the recurrence reads from the wrong version of
+      the table: pair (i, j) would consider routing through k using
+      d(i, k)-values that haven't yet absorbed stopovers below k. Concretely,
+      a path i → 3 → 1 → j gets missed if the (i, j) cell asks about
+      stopover 3 before d(3→j) has learned to route through 1. With k
+      outermost, by the time anyone asks "through k?", every path into and
+      out of k is already optimal over 1…k−1. Loop order as correctness —
+      not style — is a hallmark of DP code, and a classic source of
+      subtly-wrong reimplementations.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function floydWarshall(graph) {
+  const dist = {};                       // dist[i][j], seeded with edges
+  for (const i of ids) for (const j of ids)
+    dist[i][j] = i === j ? 0 : edgeWeight(i, j) ?? Infinity;
+
+  for (const k of ids)                   // admit stopover k  (MUST be outer)
+    for (const i of ids)
+      for (const j of ids)
+        if (dist[i][k] + dist[k][j] < dist[i][j])
+          dist[i][j] = dist[i][k] + dist[k][j];   // cheaper through k
+
+  return dist;                           // the complete distance table
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>All-pairs is exhaustive by design. The opposite instinct — you know the
+  destination, so <em>aim</em> — is <a href="astar.html">A*</a>, where a
+  well-chosen guess provably loses nothing.</p>
+
+  <script type="application/json" class="symbols">
+  { "dk": { "name": "d_k(i, j) — stopover-limited distance", "pron": "say: dee sub kay of eye, jay",
+           "means": "the shortest i→j distance allowed to pass through only the first k nodes as stopovers", "short": "restricted distance" },
+    "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "floyd-warshall",
+    "questions": [
+      { "q": "What is Floyd-Warshall's subproblem — the thing that grows from 0 to n?",
+        "choices": ["The number of edges a path may use",
+                    "The set of nodes allowed as intermediate stopovers: d_k(i,j) is the best i→j route using only nodes 1…k in the middle",
+                    "The number of pairs computed so far"],
+        "answer": 1,
+        "explain": "Not path length (that's Bellman-Ford's induction) — allowed stopovers. Choosing WHAT to induct on is the creative act; the code afterward is three loops." },
+      { "q": "Why must the k-loop be outermost?",
+        "choices": ["Cache locality — the order is a performance detail",
+                    "Correctness: pair (i,j) may only consider routing through k once every d(·,k) and d(k,·) value has fully absorbed stopovers 1…k−1 — inner-k reads half-updated answers",
+                    "It prevents integer overflow"],
+        "answer": 1,
+        "explain": "Swap the loops and multi-stopover routes get silently missed. In DP, iteration order encodes the dependency structure of the subproblems — it's load-bearing." },
+      { "q": "600,000 users, sparse follow graph, you need distances from ONE user to all others. Floyd-Warshall?",
+        "choices": ["Yes — all-pairs includes your answer",
+                    "No — n³ ≈ 2×10¹⁷ steps and an n² matrix that doesn't fit in RAM, to answer a single-source question BFS/Dijkstra handles in near-linear time",
+                    "No — Floyd-Warshall doesn't work on social graphs"],
+        "answer": 1,
+        "explain": "Match the algorithm to the question's shape: single-source → BFS/Dijkstra; all pairs on a SMALL graph → Floyd-Warshall; all pairs on a big sparse graph → n × Dijkstra (Johnson's if negative)." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("city");
+      const ids = graph.nodes.map((n) => n.id);
+      const host = document.getElementById("matrix");
+
+      const state = { dist: null, k: null };
+      function* tracked() {
+        state.dist = null; state.k = null;
+        const live = {};
+        for (const i of ids) { live[i] = {}; for (const j of ids) live[i][j] = i === j ? 0 : Infinity; }
+        for (const e of graph.edges) {
+          live[e.u][e.v] = Math.min(live[e.u][e.v], e.w ?? 1);
+          live[e.v][e.u] = Math.min(live[e.v][e.u], e.w ?? 1);
+        }
+        state.dist = live;
+        for (const e of window.AlgoGraphs.floydWarshall(graph)) {
+          if (e.type === "round") state.k = e.k;
+          if (e.type === "relax") state.dist[e.u][e.v] = e.dist;
+          yield e;
+        }
+      }
+
+      function render(snap, event) {
+        const d = snap.dist || {};
+        let html = `<p class="hint" style="margin:0 0 0.4rem">stopovers admitted so far: ` +
+          (snap.k ? `up to <strong>${snap.k}</strong>` : "none — direct edges only") + `</p>`;
+        html += "<table style='border-collapse:collapse'><tr><td></td>" +
+          ids.map((j) => `<td style="padding:0.15rem 0.5rem;color:var(--text-soft);font-weight:700">${j}</td>`).join("") + "</tr>";
+        for (const i of ids) {
+          html += `<tr><td style="padding:0.15rem 0.5rem;color:var(--text-soft);font-weight:700">${i}</td>`;
+          for (const j of ids) {
+            const v = d[i] ? d[i][j] : Infinity;
+            const hot = event && event.type === "relax" && event.u === i && event.v === j;
+            const checking = event && event.type === "check" && event.u === i && event.v === j;
+            html += `<td style="padding:0.15rem 0.5rem;text-align:center;border:1px solid var(--border);` +
+              (hot ? "background:var(--accent-soft);color:var(--accent);font-weight:700" :
+               checking ? "outline:2px solid #d97706" :
+               v === Infinity ? "opacity:0.35" : "") +
+              `">${v === Infinity ? "∞" : v}</td>`;
+          }
+          html += "</tr>";
+        }
+        host.innerHTML = html + "</table>";
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({ dist: state.dist, k: state.k })),
+        render,
+        counters: { check: "pairs examined", relax: "improvements" },
+        describe: (e) =>
+          e.type === "round" ? `admitting stopover ${e.k}: every pair re-asks "cheaper through ${e.k}?"` :
+          e.type === "check" ? `pair (${e.u}, ${e.v}): through ${e.via}?` :
+          e.type === "relax" ? `yes — d(${e.u}, ${e.v}) drops to ${e.dist}` :
+          e.type === "done" ? "the matrix is the complete answer: every pair, shortest distance" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
