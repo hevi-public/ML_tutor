@@ -174,7 +174,8 @@ for (const group of Object.values(notation)) {
 }
 
 const outSearch = path.join(ROOT, "data", "search-index.json");
-fs.writeFileSync(outSearch, JSON.stringify(entries));
+// one entry per line: reviewable diffs, and identical output from any build
+fs.writeFileSync(outSearch, "[\n" + entries.map((e) => JSON.stringify(e)).join(",\n") + "\n]\n");
 console.log(`wrote ${outSearch}: ${entries.length} entries, ${(fs.statSync(outSearch).size / 1024).toFixed(0)} KB`);
 
 const outLabs = path.join(ROOT, "data", "lab-index.json");
