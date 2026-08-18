@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Substring search, naively — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Strings">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../06-strategies/backtracking.html|Backtracking and pruning">
+  <meta name="algo:next" content="kmp.html|Knuth-Morris-Pratt">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/strings.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Strings</p>
+  <h1>Substring search: the honest baseline</h1>
+  <p class="lede">Find every occurrence of a pattern in a text — the query
+  under Ctrl-F, grep, log scanning, and DNA matching. The obvious
+  algorithm slides the pattern one position at a time and compares. It's
+  fine, mostly. This short unit is about the word "mostly" — and about the
+  beautiful machinery invented for the cases where it isn't.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing beyond <a href="../01-foundations/big-o.html">Big-O</a>. This
+    unit is self-contained; its ideas feed unit 9's
+    <a href="../09-systems/tokenizers.html">tokenizers</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Text of length n, pattern of length m. At each of the n−m+1
+  alignments, compare left to right; mismatch → slide the pattern one
+  step right and start comparing <em>from scratch</em>. Worst case
+  O(n·m): text <code>aaaaaaaab</code>, pattern <code>aaab</code> — every
+  alignment marches almost to the end of the pattern before failing.</p>
+  <p>But note what the worst case needs: long stretches where text and
+  pattern almost-match repeatedly. On typical text with a typical
+  alphabet, mismatches arrive within a character or two and the naive
+  method averages out near O(n) — which is why it's genuinely what many
+  standard libraries use for short patterns, sometimes with a
+  first-character skip loop. Baseline first, cleverness when measured
+  necessary: the whole course's engineering stance, in miniature.</p>
+
+  <h2>Watch it run</h2>
+  <p>Searching <code>abracadabra</code> for <code>abra</code>. Green =
+  matching character, red = the mismatch that aborts an alignment. Watch
+  how much re-comparison happens after each slide — KMP's target:</p>
+  <div class="demo">
+    <div id="grid" style="font-family:var(--mono);font-size:1.05rem;line-height:1.8;margin-bottom:0.5rem"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>grep on a log file, <code>String.includes</code>, editor find,
+    intrusion-detection systems scanning packets for signatures,
+    plagiarism and duplicate detection, read-alignment in genomics
+    (where n is three billion and m is a few hundred — the O(n·m)
+    question stops being academic). Real engines mix strategies:
+    memchr-style vectorized first-byte scans, Boyer-Moore-family skips
+    for long patterns, automata for multi-pattern sets. Knowing the
+    naive baseline's actual (good!) average case is what lets you read
+    those engines' trade-offs instead of cargo-culting them.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Average vs worst — where the n·m actually hides</summary>
+    <div class="layer-body">
+      <p>For random text over alphabet size σ, the expected comparisons
+      per alignment form a geometric series: 1 + 1/σ + 1/σ² + … ≤
+      σ/(σ−1) — barely more than one. Total: O(n), for free. The
+      pathologies need <em>self-similar</em> data: long runs, repeated
+      motifs — precisely what DNA (σ = 4, highly repetitive), binary
+      protocol dumps, and adversarial inputs look like. The security
+      note is real: quadratic blowup on attacker-chosen strings is a
+      denial-of-service primitive (the same family as ReDoS from the
+      backtracking page), which is why "worst case doesn't matter" needs
+      the follow-up question "who chooses the input?".</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/strings.js), events elided:
+function naiveSearch(text, pat) {
+  const hits = [];
+  for (let s = 0; s + pat.length <= text.length; s++) {  // each alignment
+    let ok = true;
+    for (let i = 0; i < pat.length; i++) {
+      if (text[s + i] !== pat[i]) { ok = false; break; } // abort, slide by 1
+    }
+    if (ok) hits.push(s);
+  }
+  return hits;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The waste in the demo — re-scanning characters the algorithm already
+  saw — is a memory problem: the pattern <em>knows</em> what just matched
+  and forgets it every slide. The next page never forgets:
+  <a href="kmp.html">Knuth-Morris-Pratt</a>, guaranteed O(n + m), zero
+  backtracking in the text.</p>
+
+  <script type="application/json" class="symbols">
+  { "n": { "name": "n — the text length", "pron": "say: en",
+           "means": "how many characters are being searched", "short": "text length" },
+    "m": { "name": "m — the pattern length", "pron": "say: em",
+           "means": "how many characters the pattern has; naive worst case is their product", "short": "pattern length" },
+    "sigma": { "name": "σ — the alphabet size", "pron": "say: sigma",
+           "means": "how many distinct characters are possible; big σ makes naive search fast on average", "short": "alphabet size" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "string-search",
+    "questions": [
+      { "q": "What input shape triggers naive search's O(n·m) worst case?",
+        "choices": ["Very long patterns",
+                    "Self-similar text where many alignments almost-match before failing — long runs and repeats, like aaaa…b vs aaab; random text with a decent alphabet averages ~O(n)",
+                    "Unicode characters"],
+        "answer": 1,
+        "explain": "The quadratic case needs sustained near-misses. That's rare organically — and constructible on demand, which is what turns a performance footnote into a DoS vector." },
+      { "q": "Why do standard libraries often USE naive search (with a fast first-char scan) for short patterns?",
+        "choices": ["Library authors don't know KMP",
+                    "Average case is already ~O(n) with tiny constants and zero preprocessing; clever algorithms pay setup and per-step overhead that short, ordinary searches never earn back",
+                    "KMP is patented"],
+        "answer": 1,
+        "explain": "Baseline-first is professional practice, not laziness. The clever machinery earns its keep on long patterns, repetitive data, adversarial inputs, or multi-pattern scanning — measured, not assumed." },
+      { "q": "A service accepts user-supplied search strings and scans user-supplied documents. What's the algorithmic security concern?",
+        "choices": ["Search results might leak",
+                    "Both sides of the worst case are attacker-chosen: crafted pattern+text pairs force O(n·m) work per request — quadratic CPU as a denial-of-service, the same family as ReDoS",
+                    "The alphabet could be too large"],
+        "answer": 1,
+        "explain": "\"Whose input is it?\" belongs in every complexity discussion. Guaranteed-linear algorithms (next page) are a security control here, not a micro-optimization." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const TEXT = "abracadabra", PAT = "abra";
+      const grid = document.getElementById("grid");
+
+      const state = {};
+      function* tracked() {
+        state.s = 0; state.compared = {}; state.hits = [];
+        for (const e of window.AlgoStrings.naiveSearch(TEXT, PAT)) {
+          if (e.type === "align") { state.s = e.s; state.compared = {}; }
+          if (e.type === "compare") state.compared[e.pi] = e.ok;
+          if (e.type === "found") state.hits.push(e.at);
+          yield e;
+        }
+      }
+
+      function render(snap) {
+        const cell = (ch, style) =>
+          `<span style="display:inline-block;width:1.5rem;text-align:center;${style}">${ch}</span>`;
+        let top = "", bottom = "";
+        for (let i = 0; i < TEXT.length; i++) {
+          const inHit = snap.hits.some((h) => i >= h && i < h + PAT.length);
+          top += cell(TEXT[i], inHit ? "color:var(--accent);font-weight:700;" : "");
+        }
+        for (let i = 0; i < TEXT.length; i++) {
+          const pi = i - snap.s;
+          if (pi < 0 || pi >= PAT.length) { bottom += cell("", ""); continue; }
+          const st = snap.compared[pi];
+          let style = "border:1px solid var(--border);border-radius:4px;";
+          if (st === true) style += "background:var(--accent-soft);color:var(--accent);font-weight:700;";
+          if (st === false) style += "background:var(--bad-soft, #fdd);color:var(--bad);font-weight:700;";
+          bottom += cell(PAT[pi], style);
+        }
+        grid.innerHTML = top + "<br>" + bottom +
+          `<span class="hint" style="margin-left:1rem">alignment s = ${snap.s}</span>`;
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ s: state.s || 0, compared: { ...(state.compared || {}) }, hits: (state.hits || []).slice() }),
+        render,
+        counters: { compare: "comparisons", align: "alignments", found: "matches" },
+        describe: (e) =>
+          e.type === "align" ? `slide to alignment ${e.s} — comparisons restart from the pattern's first character` :
+          e.type === "compare" ? (e.ok ? `text[${e.ti}] matches pattern[${e.pi}]` : `mismatch at text[${e.ti}] — abort this alignment`) :
+          e.type === "found" ? `full match at position ${e.at}` :
+          e.type === "done" ? `done — matches at ${e.hits.join(", ")}` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
