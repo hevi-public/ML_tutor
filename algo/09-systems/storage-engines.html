@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Storage engines: B-trees vs LSM — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="hashing-in-the-wild.html|Consistent hashing and rate limiters">
+  <meta name="algo:next" content="../10-labs/sorting-lab.html|Lab: write your own sorts">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Storage engines: where the data finally lives</h1>
+  <p class="lede">Under every database sits one of two families. One keeps
+  data sorted <em>in place</em> and edits pages on disk — the B-tree,
+  ordered-tree thinking scaled to storage. The other never edits
+  anything: it appends, sorts in memory, flushes immutable files, and
+  cleans up later — the LSM tree, whose secret engine is merge sort. The
+  choice is a bargain about reads, writes, and space — and this page
+  closes unit 9 by pricing it.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/balanced-trees.html">Balanced trees</a>,
+    <a href="../03-sorting/merge-sort.html">merge sort</a>, and
+    <a href="probabilistic.html">Bloom filters</a> — all three report for
+    duty here.
+  </div>
+
+  <h2>The idea</h2>
+  <p><strong>B-trees</strong> (Postgres, MySQL/InnoDB, SQLite): unit 2's
+  balanced tree with a disk-shaped constant — nodes are 4–16 KB
+  <em>pages</em> holding hundreds of keys each, so the tree is fat and
+  shallow: a billion rows in 3–4 levels, and a point read costs 3–4 page
+  fetches (fewer with the top levels cached). Writes edit pages in place;
+  a full page <em>splits</em> — the self-balancing act, now with disk
+  I/O. Reads and range scans are superb; every small write pays
+  read-modify-write on whole pages.</p>
+  <p><strong>LSM trees</strong> (RocksDB, Cassandra, LevelDB, and the
+  engines under many analytics/streaming stores): writes go to an
+  in-memory sorted buffer (<em>memtable</em>) — O(log n), no disk read.
+  When full, it flushes as an immutable sorted file (<em>SSTable</em>) —
+  sequential I/O, the kind disks love. Reads must now consult memtable +
+  several files (newest wins) — kept sane by per-file Bloom filters —
+  and background <strong>compaction</strong> merge-sorts overlapping
+  files into fewer, bigger ones, discarding overwritten versions. The
+  bargain in one line: <em>B-trees pay at write time to keep one sorted
+  place; LSMs pay after write time (compaction) to have made writes
+  sequential.</em></p>
+
+  <h2>Watch it run</h2>
+  <p>An LSM engine absorbing 26 writes (memtable capacity 6). Watch
+  flushes create sorted runs, reads fan across files, and a compaction
+  merge-sort them back to one — counting the write amplification as it
+  goes:</p>
+  <div class="demo">
+    <div id="lsm-view" style="font-family:var(--mono);font-size:0.88rem;line-height:1.9"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Choosing a database IS choosing this bargain: OLTP with hot
+    updates and range queries → B-tree engines; write-heavy event
+    streams, time series, message queues, and anything ingest-bound →
+    LSM. The vocabulary decodes ops dashboards: "write stall" =
+    compaction fell behind; "space amp" = old versions awaiting
+    compaction; "read amp" = files consulted per lookup. LLM-era
+    systems sit on both: vector databases store their HNSW graphs and
+    payloads over these engines (several are literally RocksDB inside),
+    conversation/memory stores for agents are LSM-shaped ingest, and
+    checkpoint/artifact stores care about exactly the
+    sequential-write-throughput property LSMs optimize. The whole unit
+    in one object: hashing (Bloom), sorting (merge), trees (B/memtable),
+    amortization (compaction), all load-bearing at once.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The three amplifications — the bargain, quantified</summary>
+    <div class="layer-body">
+      <p><strong>Write amplification</strong>: bytes physically written ÷
+      bytes logically written. B-trees: a 100-byte update rewrites a
+      16 KB page (and maybe splits). LSMs: each byte is rewritten once
+      per compaction level — typically 10–30× lifetime, but
+      <em>sequential</em>, which disks (and SSD lifetimes) vastly
+      prefer over random page edits. <strong>Read amplification</strong>:
+      structures consulted per lookup — B-tree: tree depth; LSM:
+      memtable + files, minus everything Bloom filters exclude.
+      <strong>Space amplification</strong>: LSMs carry dead versions
+      until compaction reclaims them. No engine wins all three —
+      the RUM conjecture (read/update/memory) says you pick two, which
+      is why compaction strategies (leveled vs tiered) are themselves a
+      read-vs-write dial inside the LSM family. Amortized analysis from
+      unit 1 is the honest lens: LSM writes are cheap <em>on average</em>
+      because compaction debt is paid later — and "write stalls" are
+      what the debt collector looks like.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact LSM core, events elided:
+function write(key, value) {
+  memtable.set(key, value);                     // sorted in memory, no disk read
+  if (memtable.size >= CAP) {
+    sstables.push([...memtable.entries()].sort());   // flush: sequential write
+    memtable.clear();
+  }
+}
+function read(key) {
+  if (memtable.has(key)) return memtable.get(key);   // newest first
+  for (const file of newestFirst(sstables)) {
+    if (!file.bloom.mightContain(key)) continue;     // certain-no: skip file
+    const hit = binarySearch(file, key);             // unit 3, on disk
+    if (hit) return hit;
+  }
+}
+function compact() {                            // merge sort, unit 3, as a daemon
+  sstables = [kWayMerge(sstables)];             // newest version wins; dead
+}                                               // versions dropped — space reclaimed</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p><strong>Unit 9 complete</strong> — the production tour is done, and
+  every stop ran on machinery from units 1–8. Two roads remain:
+  <a href="../10-labs/sorting-lab.html">the labs</a>, where you implement
+  the classics and the harness measures what your code really does — and
+  <a href="../11-expert/p-and-np.html">the expert track</a>, where the
+  course's honest limits live.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "storage-engines",
+    "questions": [
+      { "q": "Why are LSM writes fast even though the data must end up sorted?",
+        "choices": ["They skip sorting entirely",
+                    "Sorting happens in RAM (memtable) and reaches disk only as sequential flushes; the expensive global ordering is deferred to background compaction — merge sort run as a daemon, paid off-peak",
+                    "SSDs make random writes free"],
+        "answer": 1,
+        "explain": "The write path touches no disk pages in place. It's amortized analysis as architecture: cheap now, compaction debt later — and 'write stall' is that debt coming due." },
+      { "q": "A key lookup in an LSM might touch many files. What keeps read cost civilized?",
+        "choices": ["Files are kept under ten at all times",
+                    "Per-file Bloom filters answer 'certainly not here' and skip most files outright; the survivors get unit-3 binary search; compaction keeps the file count itself bounded",
+                    "Reads wait for compaction to finish"],
+        "answer": 1,
+        "explain": "The one-sided-error filter from two pages ago is THE enabling trick — without it, LSM reads fan across every file and the design doesn't fly." },
+      { "q": "Your service ingests high-volume telemetry, rarely updates old rows, and dashboards read recent ranges. Which engine family, and on what grounds?",
+        "choices": ["B-tree — databases default to it",
+                    "LSM: the workload is append-heavy sequential ingest (LSM's best case), tolerates background compaction, and recent-range reads hit the newest files/memtable — the amplification bargain lands exactly its way",
+                    "Neither — flat files"],
+        "answer": 1,
+        "explain": "Time-series and event stores are LSM's home turf for precisely these reasons. Flip the workload to hot in-place updates + broad range scans and the same reasoning picks the B-tree." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const CAP = 6;
+      const WRITES = "kgqbxealwnrdpjvchmzsfouity".split("").map((c, i) => c + (i % 10));
+      const view = document.getElementById("lsm-view");
+      const verdict = document.getElementById("verdict");
+
+      const state = {};
+      function* tracked() {
+        state.mem = []; state.files = []; state.physical = 0; state.logical = 0;
+        for (const k of WRITES) {
+          state.mem.push(k); state.mem.sort();
+          state.logical++;
+          yield { type: "place", k };
+          if (state.mem.length >= CAP) {
+            state.files.push(state.mem.slice());
+            state.physical += state.mem.length;
+            state.mem = [];
+            yield { type: "count", files: state.files.length };
+          }
+        }
+        // one read fanning across structures
+        const target = WRITES[3];
+        yield { type: "probe", k: target, where: "memtable", hit: state.mem.includes(target) };
+        for (let i = state.files.length - 1; i >= 0; i--) {
+          const hit = state.files[i].includes(target);
+          yield { type: "probe", k: target, where: "SSTable " + (i + 1), hit };
+          if (hit) break;
+        }
+        // compaction: k-way merge
+        const merged = state.files.flat().sort();
+        state.physical += merged.length;
+        state.files = [merged];
+        yield { type: "round", merged: merged.length };
+        verdict.textContent = `Write amplification so far: ${state.physical} physical writes for ` +
+          `${state.logical} logical ones (~${(state.physical / state.logical).toFixed(1)}×) — every byte ` +
+          `rewritten at flush and again at compaction, but always sequentially. That multiplier × ` +
+          `sequential speed vs a B-tree's in-place page edits is the entire bargain.`;
+        yield { type: "done" };
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({
+          mem: (state.mem || []).slice(),
+          files: (state.files || []).map((f) => f.slice()),
+          physical: state.physical || 0,
+        }),
+        render: (snap) => {
+          const chip = (k, hot) =>
+            `<span style="display:inline-block;padding:0 0.35rem;margin:0 0.15rem 0.15rem 0;` +
+            `border:1px solid var(--border);border-radius:5px;` +
+            (hot ? "background:var(--accent-soft);color:var(--accent);font-weight:700;" : "") +
+            `">${k}</span>`;
+          view.innerHTML =
+            `<div><span style="color:var(--text-soft);display:inline-block;min-width:7.5rem">memtable (RAM)</span>` +
+            (snap.mem.length ? snap.mem.map((k) => chip(k, true)).join("") : "<span class='hint'>empty</span>") + `</div>` +
+            snap.files.map((f, i) =>
+              `<div><span style="color:var(--text-soft);display:inline-block;min-width:7.5rem">SSTable ${i + 1}</span>` +
+              f.map((k) => chip(k, false)).join("") + `</div>`).join("");
+        },
+        counters: { place: "logical writes", count: "flushes", probe: "read probes", round: "compactions" },
+        speed: 4,
+        describe: (e) =>
+          e.type === "place" ? `write "${e.k}" → memtable (sorted in RAM, zero disk reads)` :
+          e.type === "count" ? `memtable full → flushed as immutable sorted SSTable #${e.files} (sequential I/O)` :
+          e.type === "probe" ? `read "${e.k}": probe ${e.where} → ${e.hit ? "HIT (newest version wins)" : "not there (a Bloom filter would have skipped this probe)"}` :
+          e.type === "round" ? `compaction: k-way MERGE of all runs into one ${e.merged}-key file — merge sort as a background daemon` :
+          e.type === "done" ? "the amplification arithmetic is in the verdict below" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
