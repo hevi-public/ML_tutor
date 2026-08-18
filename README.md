@@ -27,8 +27,8 @@ an everyday analogy before the jargon arrives.
   strings, NP-completeness — plus a visualisation unit (the site teaches its own
   renderers) and a production/LLM-systems unit (vector search, knowledge graphs,
   orchestration DAGs, tokenizers). Every algorithm is one steppable
-  implementation with live operation counters. *Under construction: the plan
-  (`algo/PLAN.md`) and the first sample page are live.*
+  implementation with live operation counters, and the labs grade your own
+  code in a sandboxed worker — reporting the complexity it actually exhibits.
 - **[Web Dev Reference](web/index.html)** (`web/`) — the full stack in a
   reference shape rather than a course one: Angular, RxJS, Vitest and pnpm on
   the front end; Kotlin, Spring Boot, Gradle, PostgreSQL, jOOQ and Jackson on
@@ -142,15 +142,17 @@ a different anomaly per isolation level because the rules, not a script,
 decide. Plus a version filter — set which versions you're on and every badge
 site-wide tells you whether it applies to you yet.
 
-**Algorithms Tutor** — under construction, being built milestone by milestone
-against `algo/PLAN.md`: Units 0–11 (foundations → data structures → sorting →
-two units of graphs → design strategies → strings → visualisation →
-production & LLM systems → labs → expert track), 82 pages planned. Landed so
-far: the shared engines (adapted from the family, `algo:` meta prefix), the
-landing page with the full gated curriculum, glossary and notation references,
-and the sample page `01-foundations/big-o.html` — a growth-rate racer, layered
-formal definitions with clickable symbols, and a quiz — proving the stack the
-remaining pages build on.
+**Algorithms Tutor** — complete: units 0–11 (foundations → data structures →
+sorting → two units of graphs → design strategies → strings → visualisation →
+production & LLM systems → labs → expert track), 82 pages. Every algorithm is
+one steppable ES-generator implementation feeding play/pause/scrub players,
+with live operation counters plotted against the claimed Big-O. A graph editor
+lets you draw your own graphs and run any unit 4–5 algorithm on them; six
+graded labs execute your code in a sandboxed Web Worker against adversarial
+tests (the DP lab's timeout doubles as an exponential-blowup detector); and
+the concept map lays out all 82 pages with the course's own force-directed
+layout generator. Glossary (72 terms), notation reference, full-text search
+and spaced-repetition flashcards fed by missed quiz questions round it out.
 
 All five sites keep state in `localStorage` under separate namespaces
 (`ml-tutor:*` / `bass-tutor:*` / `git-tutor:*` / `algo-tutor:*` / `web-ref:*`)

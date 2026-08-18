@@ -76,10 +76,12 @@
       : `<a href="${ROOT}${HOME}">Home</a> › ${title}`;
     header.appendChild(crumb);
 
-    // Map and Search join this list when those pages land (milestone 8).
     for (const [href, label] of [
+      ["map.html", "Map"],
+      ["search.html", "Search"],
       ["glossary.html", "Glossary"],
       ["notation.html", "Notation"],
+      ["flashcards.html", "Cards"],
     ]) {
       const a = document.createElement("a");
       a.className = "header-link";
