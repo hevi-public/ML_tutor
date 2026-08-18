@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Huffman coding — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="greedy.html|Greedy algorithms">
+  <meta name="algo:next" content="dp-foundations.html|Dynamic programming">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/dp.js"></script>
+  <script defer src="../assets/js/viz/layout.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>Huffman coding: greed's masterpiece</h1>
+  <p class="lede">Give frequent symbols short codes and rare symbols long
+  ones, and text shrinks. In 1951 David Huffman, dodging a final exam by
+  solving the term problem instead, found the optimal way — a greedy
+  algorithm of almost insulting simplicity: <em>merge the two rarest
+  things; repeat</em>. It's been inside essentially every compressor
+  since.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="greedy.html">The exchange argument</a> and unit 2's
+    <a href="../02-structures/heaps.html">heap</a> — "give me the two
+    smallest, repeatedly" is a priority queue's job description.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <strong>prefix code</strong> assigns each symbol a bit string such
+  that no code is a prefix of another — which is exactly the property that
+  makes decoding unambiguous, and exactly what "symbols live at the
+  <em>leaves</em> of a binary tree" guarantees: left = 0, right = 1, the
+  path is the code. The cost of a tree is
+  <span class="math">\sum_c f(c) \cdot \text{depth}(c)</span> — in plain
+  English: total bits used = each symbol's frequency times the length of
+  its code. Optimal compression = the cheapest tree.</p>
+  <p>Huffman's move: the two <em>lowest-frequency</em> symbols should be
+  the deepest nodes — so make them siblings at the bottom, merge them into
+  a pseudo-symbol carrying their combined frequency, and recurse on the
+  smaller alphabet. A heap makes each merge O(log n); n−1 merges build the
+  whole tree.</p>
+
+  <h2>Watch it run</h2>
+  <p>The CLRS classic — six symbols, frequencies a:45 b:13 c:12 d:16 e:9
+  f:5 (percent). Watch rare symbols sink to the bottom as merges stack
+  above them, and the codes fall out of the paths:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="codes" style="font-family:var(--mono);font-size:0.85rem;margin:0.4rem 0"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>DEFLATE — the compressor inside gzip, zlib, PNG, and ZIP — is
+    LZ77 + Huffman; JPEG and MP3 entropy-code with it; HTTP/2 compresses
+    headers with a standardized static Huffman table (HPACK). When you
+    enable gzip on an API response, this tree gets built for your bytes.
+    The deeper lineage: "frequent things should be cheap to say" is the
+    same force that shapes LLM tokenizers — BPE (unit 9) is a greedy
+    merge-the-most-frequent-pair loop, Huffman's mirror image, trading
+    optimality for streamability. And arithmetic/ANS coding (zstd's
+    entropy stage) is Huffman's fractional-bit successor.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Show the proof — the sibling exchange</summary>
+    <div class="layer-body">
+      <p><strong>Lemma:</strong> some optimal tree has the two rarest
+      symbols x, y as sibling leaves at maximum depth.
+      <strong>Exchange:</strong> take any optimal tree; let a, b be
+      siblings at its deepest level. If x isn't already there, swap x with
+      a: cost changes by (f(a) − f(x)) · (depth(x) − depth(a)) ≤ 0, since
+      f(x) ≤ f(a) and a was at least as deep. Swap y with b likewise.
+      Still optimal, now with x, y as bottom siblings. <strong>Then
+      induction:</strong> merging x, y into one pseudo-symbol of frequency
+      f(x)+f(y) turns any tree for the smaller alphabet into one for the
+      original with extra cost exactly f(x)+f(y) — a constant — so
+      optimizing the smaller problem optimizes the original. Greedy merge
+      = optimal, all the way up. ∎</p>
+      <p>Note the two-part shape: an exchange establishing the greedy
+      choice is safe, then induction on the reduced problem. That's the
+      full greedy-proof template, reusable verbatim.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>How good is it? Entropy, and the fractional-bit gap</summary>
+    <div class="layer-body">
+      <p>Shannon's source coding theorem sets the floor: no prefix code
+      beats the entropy <span class="math">H = -\sum_c p(c) \log_2 p(c)</span>
+      bits per symbol — in plain English, the true information content of
+      the distribution. Huffman is optimal among <em>whole-bit-per-symbol</em>
+      codes and lands within 1 bit of H. The gap bites when one symbol
+      dominates (p = 0.99 still costs a full bit per occurrence);
+      arithmetic coding and ANS close it by spreading symbols across
+      fractional bits — that's why zstd's entropy stage outperforms plain
+      Huffman on skewed data. Engineering summary: Huffman when simplicity
+      and speed rule; fractional coders when the distribution is
+      lopsided and percentage points matter.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/dp.js), events elided:
+function huffman(freqs) {
+  let forest = freqs.map((x) => ({ ch: x.ch, f: x.f }));
+  while (forest.length > 1) {
+    forest.sort((a, b) => a.f - b.f);        // a heap in production: O(log n)
+    const a = forest.shift(), b = forest.shift();   // two rarest
+    forest.push({ f: a.f + b.f, left: a, right: b }); // merge, re-enter pool
+  }
+  return forest[0];                          // the tree; paths are the codes
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Greedy's limits are real: most optimization problems punish
+  commitment. The cure is a strategy that remembers everything it has ever
+  computed — <a href="dp-foundations.html">dynamic programming</a>, the
+  unit's main event.</p>
+
+  <script type="application/json" class="symbols">
+  { "H": { "name": "H — entropy", "pron": "say: aitch",
+           "means": "the theoretical minimum average bits per symbol for a distribution — the compression floor", "short": "entropy" },
+    "f": { "name": "f(c) — frequency of symbol c", "pron": "say: eff of cee",
+           "means": "how often symbol c occurs; Huffman gives frequent symbols short codes", "short": "frequency" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "huffman",
+    "questions": [
+      { "q": "Why must symbols sit at LEAVES of the code tree?",
+        "choices": ["Internal nodes are reserved for metadata",
+                    "Leaves ⇔ no code is a prefix of another — the prefix-free property that lets a decoder split a bit stream unambiguously without separators",
+                    "It makes the tree balanced"],
+        "answer": 1,
+        "explain": "If 'e' were an ancestor of 'x', e's code would prefix x's, and the decoder couldn't tell where one symbol ends. Tree shape IS the decoding guarantee." },
+      { "q": "Why merge the two RAREST nodes at each step?",
+        "choices": ["It's the fastest option with a heap",
+                    "The rarest symbols can best afford long codes — the sibling-exchange lemma proves some optimal tree has them as deepest siblings, so committing to that costs nothing",
+                    "Frequent symbols must be processed last for cache locality"],
+        "answer": 1,
+        "explain": "Every merge pushes its participants one level deeper in the final tree. Depth is expensive in proportion to frequency — so spend depth on the symbols that occur least." },
+      { "q": "Your logs are 99% the single line 'OK'. Why does plain Huffman disappoint, and what's the fix?",
+        "choices": ["Huffman can't handle repeated symbols",
+                    "Huffman charges a minimum of one whole bit per symbol; entropy here is ~0.08 bits. Fractional-bit coders (arithmetic/ANS, as in zstd) — or run-length preprocessing — close the gap",
+                    "The tree becomes too deep to store"],
+        "answer": 1,
+        "explain": "Optimal-among-integer-codes is not optimal, full stop. Skewed distributions are exactly where the 1-bit granularity bites, and exactly why modern compressors moved past pure Huffman." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const freqs = [
+        { ch: "a", f: 45 }, { ch: "b", f: 13 }, { ch: "c", f: 12 },
+        { ch: "d", f: 16 }, { ch: "e", f: 9 }, { ch: "f", f: 5 },
+      ];
+      const codesHost = document.getElementById("codes");
+
+      let vid = 0;
+      function cloneTree(node) {   // clone + tag with viz ids, children[]
+        const copy = { ch: node.ch, f: node.f, _vid: "v" + (vid++) };
+        const kids = [];
+        if (node.left) kids.push(cloneTree(node.left));
+        if (node.right) kids.push(cloneTree(node.right));
+        if (kids.length) copy.children = kids;
+        return copy;
+      }
+
+      const state = { forest: [] };
+      function* tracked() {
+        // Mirror the generator's forest using its own event objects: e.a and
+        // e.b are either leaves (have .ch) or previously-merged e.node refs.
+        const leafChs = new Set(freqs.map((x) => x.ch));
+        const merged = [];                            // generator node refs
+        const currentForest = () =>
+          freqs.filter((x) => leafChs.has(x.ch)).map((x) => ({ ch: x.ch, f: x.f }))
+            .concat(merged);
+        state.forest = currentForest().map(cloneTree);
+        state.codes = null;
+        for (const e of window.AlgoDP.huffman(freqs)) {
+          if (e.type === "merge") {
+            for (const x of [e.a, e.b]) {
+              if (x.ch !== undefined) leafChs.delete(x.ch);
+              else {
+                const i = merged.indexOf(x);
+                if (i >= 0) merged.splice(i, 1);
+              }
+            }
+            merged.push(e.node);
+            state.forest = currentForest().map(cloneTree);
+          }
+          if (e.type === "done") {
+            state.codes = window.AlgoDP.huffmanCodes(e.root);
+          }
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Huffman forest", height: 300, r: 20 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ forest: state.forest, codes: state.codes }),
+        render: (snap) => {
+          const roots = snap.forest || [];
+          if (roots.length) viz.draw(forestToGraphFrom(roots), {}, null);
+          codesHost.innerHTML = snap.codes
+            ? "codes: " + Object.entries(snap.codes).sort()
+                .map(([ch, code]) => `<strong>${ch}</strong>=${code}`).join("  ") +
+              ` — weighted length ${Object.entries(snap.codes).reduce((s, [ch, code]) =>
+                s + code.length * freqs.find((x) => x.ch === ch).f, 0) / 100} bits/symbol (fixed-width: 3)`
+            : "";
+        },
+        counters: { merge: "merges" },
+        describe: (e) =>
+          e.type === "merge" ? `merge the two rarest: ${label(e.a)} + ${label(e.b)} → ${e.node.f}` +
+            ` (${e.remaining} trees remain)` :
+          e.type === "done" ? "one tree left — read each symbol's code off its path (left=0, right=1)" : "",
+      });
+
+      function label(n) { return n.ch !== undefined ? `${n.ch}:${n.f}` : String(n.f); }
+      function forestToGraphFrom(clonedRoots) {
+        const nodes = [], edges = [];
+        const width = 1 / clonedRoots.length;
+        clonedRoots.forEach((root, i) => {
+          const t = window.AlgoLayout.tidyTree(root);
+          for (const n of t.nodes) {
+            nodes.push({
+              id: n._vid, label: n.ch !== undefined ? `${n.ch}:${n.f}` : String(n.f),
+              x: i * width + Math.min(0.1, width * 0.2) + n.x * (width - Math.min(0.2, width * 0.4)),
+              y: 0.06 + n.y * 0.86,
+            });
+          }
+          for (const l of t.links) edges.push({ u: l.from._vid, v: l.to._vid });
+        });
+        return { directed: false, nodes, edges };
+      }
+    });
+  </script>
+</main>
+</body>
+</html>
