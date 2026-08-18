@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Choosing a strategy — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../05-graphs-advanced/matching.html|Bipartite matching">
+  <meta name="algo:next" content="greedy.html|Greedy algorithms">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>Choosing a strategy: what kind of problem is this?</h1>
+  <p class="lede">Units 2–5 handed you algorithms. This unit hands you the
+  thing above algorithms: the four or five recurring <em>shapes of
+  attack</em> that generate them, and — the actually hard skill — how to
+  read a fresh problem and guess which shape it wants. Senior engineers
+  usually know the algorithms; what the missed CS years mostly cost is this
+  taxonomy.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Units 1–5 in spirit — this page names patterns you've already met and
+    tells you where each one is headed.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Nearly every algorithm in this course is an instance of one of these
+  strategies, distinguished by <strong>how much of the decision space they
+  explore</strong>:</p>
+  <ul>
+    <li><strong>Divide &amp; conquer</strong> — split into independent
+    subproblems, solve, recombine. You've done it: merge sort, quicksort,
+    binary search. Signature: subproblems <em>don't overlap</em>.</li>
+    <li><strong>Greedy</strong> — one pass, best local choice each step,
+    never look back. Dijkstra's settle, Kruskal's cheapest edge, Huffman.
+    Explores exactly <em>one</em> path through decision space — only legal
+    when a proof says the local best can't lock you out of the global
+    best.</li>
+    <li><strong>Dynamic programming</strong> — the subproblems overlap, so
+    solve each once, store it, reuse it. Floyd-Warshall was your first;
+    this unit builds the discipline. Explores the whole space, but pays
+    only once per <em>distinct</em> subproblem.</li>
+    <li><strong>Backtracking / exhaustive search</strong> — walk the tree of
+    partial solutions, abandon branches the moment they're provably doomed.
+    The honest strategy when nothing smarter is known — and for the
+    NP-complete crowd (unit 11), often nothing smarter is.</li>
+    <li><strong>Reduce to a solved problem</strong> — reshape yours into
+    one with a known algorithm: matching became max flow, arbitrage became
+    negative cycles. Always the first thing to try.</li>
+  </ul>
+
+  <h2>The decision questions</h2>
+  <p>Interrogate the problem in this order — each yes narrows the field:</p>
+  <div class="demo">
+    <ol style="line-height:1.9">
+      <li><strong>Does it smell like something solved?</strong> Shortest
+      path, matching, connectivity, sorting-shaped? → <em>reduce</em> and
+      stop. (Most production "algorithm problems" end here.)</li>
+      <li><strong>Do subproblems overlap?</strong> Would naive recursion
+      re-solve the same smaller instance many times? → <em>DP</em>. If they
+      don't overlap → <em>divide &amp; conquer</em>.</li>
+      <li><strong>Is there an ordering that makes commitments safe?</strong>
+      Sort by some key so that taking the best-now provably never hurts? →
+      <em>greedy</em>, but demand the exchange argument before you trust
+      it.</li>
+      <li><strong>Is the answer a combinatorial needle?</strong> Constraints
+      to satisfy, exponential haystack, no structure above? →
+      <em>backtracking</em> with aggressive pruning — and check unit 11 for
+      whether the problem is NP-hard before promising a deadline.</li>
+    </ol>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>This taxonomy is a code-review instrument. "This retry logic
+    recomputes the same subresult exponentially" → memoize (DP). "This
+    scheduler commits to the biggest job first with no proof" → greedy
+    without a license, the classic production bug. "This search has no
+    pruning" → backtracking done naive. And in the LLM stack: beam search
+    is greedy-with-a-budget over generation; agent planners that re-derive
+    identical sub-plans need exactly the memoization instinct; and knowing
+    a subtask is NP-hard is what stops a team from promising an exact
+    optimizer by Friday.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The same problem, four ways — coin change</summary>
+    <div class="layer-body">
+      <p>Make 63¢ with the fewest coins. <strong>Greedy</strong> (largest
+      first): works for US denominations {25, 10, 5, 1} — 25+25+10+1+1+1 —
+      and this is provable. Change the coins to {25, 21, 10, 5, 1} and
+      greedy gives six coins for 63 while 21+21+21 uses three: greed's
+      license depends on the <em>data</em>, not just the problem.
+      <strong>DP</strong>: best[n] = 1 + min over coins c of best[n−c] —
+      always correct, O(amount·coins). <strong>Backtracking</strong>: try
+      every combination, prune when over — correct, exponential.
+      <strong>Reduction</strong>: it's shortest path on a graph where
+      states are amounts and coins are edges — BFS if you squint. One
+      problem, four costs, one lesson: strategy choice is a claim about
+      structure, and wrong claims produce wrong answers or wrong
+      bills.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The unit takes the strategies one at a time, each with its proof
+  obligations and its failure modes:
+  <a href="greedy.html">greedy</a> → <a href="huffman.html">Huffman</a> (greed's
+  masterpiece) → <a href="dp-foundations.html">dynamic programming</a> (three
+  pages deep) → <a href="backtracking.html">backtracking</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "choosing-a-strategy",
+    "questions": [
+      { "q": "What single question separates divide & conquer from dynamic programming?",
+        "choices": ["Which one uses recursion",
+                    "Whether subproblems overlap: independent subproblems → divide & conquer; the same subproblems recurring → DP, which stores each answer to pay only once",
+                    "Whether the input is sorted"],
+        "answer": 1,
+        "explain": "Both recurse on smaller instances. Merge sort's halves share nothing; fib(n)'s calls share almost everything. Overlap is the whole distinction — and the reason memoization exists." },
+      { "q": "A teammate's scheduler greedily assigns the largest job first and 'seems to work'. What's the principled objection?",
+        "choices": ["Greedy algorithms are always wrong",
+                    "Greed is only valid with a proof (typically an exchange argument) that the local choice can't exclude the optimum — 'seems to work' means untested inputs where it quietly won't",
+                    "Largest-first is slower than smallest-first"],
+        "answer": 1,
+        "explain": "Some greedy algorithms are optimal (Dijkstra, Kruskal, Huffman) — each carries a license. Unlicensed greed is the most common wrong-answer bug in scheduling and allocation code." },
+      { "q": "Greedy coin change is optimal for {25,10,5,1} but not for {25,21,10,5,1}. What's the takeaway?",
+        "choices": ["Greedy is broken and should never be used",
+                    "A strategy's validity can depend on the specific data/structure, not just the problem statement — the proof has to cover YOUR instance family, not a similar-sounding one",
+                    "DP would also fail on the second coin set"],
+        "answer": 1,
+        "explain": "Same problem statement, different denominations, different truth. This is why 'we do it like the textbook' needs the textbook's assumptions checked against your actual system." } ] }
+  </script>
+</main>
+</body>
+</html>

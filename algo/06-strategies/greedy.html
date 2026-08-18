@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Greedy algorithms — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="choosing-a-strategy.html|Choosing a strategy">
+  <meta name="algo:next" content="huffman.html|Huffman coding">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/dp.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>Greedy: commit early, never look back — with a license</h1>
+  <p class="lede">Take the best-looking option, lock it in, repeat. It's the
+  cheapest strategy there is — one pass, no memory of roads not taken — and
+  it's usually wrong. The craft is recognizing the problems where it's
+  provably right, and the proof pattern is always the same trick:
+  <em>the exchange argument</em>.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="choosing-a-strategy.html">The strategy map</a>. You've already
+    seen licensed greed win three times:
+    <a href="../05-graphs-advanced/dijkstra.html">Dijkstra</a>,
+    <a href="../05-graphs-advanced/mst.html">Kruskal/Prim</a> — this page
+    extracts what those proofs shared.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The showcase problem: <strong>interval scheduling</strong>. One meeting
+  room, many requested meetings with start/end times; accept the most
+  meetings possible. Plausible greeds disagree — shortest first? fewest
+  conflicts first? earliest start? The right answer:
+  <strong>earliest finish time first</strong>. Sort by end time; accept
+  whatever doesn't overlap the last accepted meeting.</p>
+  <p>Why that key and not the others? Finishing early is the choice that
+  <em>constrains the future least</em> — it leaves the room free soonest.
+  That intuition becomes a proof below, and its shape — "any optimal
+  solution can be exchanged, one step at a time, into the greedy one
+  without getting worse" — is the license every correct greedy algorithm
+  carries.</p>
+
+  <h2>Watch it run</h2>
+  <p>Eight meeting requests. After the sort, each is checked in
+  finish-time order: green bars are accepted, faded red ones conflicted
+  with an already-accepted meeting. Note the algorithm never reconsiders —
+  and still no schedule beats its count:</p>
+  <div class="demo">
+    <div id="timeline" style="position:relative;height:230px;font-family:var(--mono);font-size:0.8rem"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Licensed greed runs infrastructure: earliest-deadline-first in
+    real-time schedulers, Huffman in every compressor (next page),
+    Dijkstra in every router, Kruskal in network design. Unlicensed greed
+    runs incidents: bin-packing VMs largest-first, rate limiters admitting
+    whoever asks first, cache eviction by gut feeling — all greedy
+    heuristics that are fine until the workload finds the case where local
+    best ≠ global best. The professional move isn't avoiding greed; it's
+    knowing which of your greeds hold a proof and which hold a hope.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Show the proof — the exchange argument</summary>
+    <div class="layer-body">
+      <p><strong>Claim:</strong> earliest-finish-first accepts a maximum
+      number of intervals. Let G = g₁, g₂, … be greedy's picks in order and
+      OPT = o₁, o₂, … any optimal schedule, both sorted by finish time.
+      <strong>Step 1 (greedy stays ahead):</strong> by induction,
+      finish(gᵢ) ≤ finish(oᵢ) for every i. Base: g₁ has the earliest finish
+      of all intervals. Step: if finish(gᵢ₋₁) ≤ finish(oᵢ₋₁), then oᵢ —
+      which starts after finish(oᵢ₋₁) — was also compatible after gᵢ₋₁, so
+      greedy had it available and chose something finishing no later.
+      <strong>Step 2:</strong> if OPT had more intervals than G, the next
+      one o|G|+1 starts after finish(o|G|) ≥ … wait — by step 1,
+      finish(g|G|) ≤ finish(o|G|), so o|G|+1 would also have been
+      compatible with greedy's last pick, and greedy would have taken
+      something. Contradiction: greedy only stops when nothing fits. ∎</p>
+      <p>"Greedy stays ahead" and "exchange" are the two standard license
+      forms. If you can't sketch one for your greedy idea, treat the idea
+      as a heuristic and say so in the design doc.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The counterexample gallery — plausible greeds that fail</summary>
+    <div class="layer-body">
+      <p><strong>Shortest interval first</strong>: a short meeting bridging
+      two long compatible ones kills both — greedy 1, optimal 2.
+      <strong>Earliest start first</strong>: one all-day meeting starting at
+      9:00 blocks five short ones — greedy 1, optimal 5.
+      <strong>Fewest conflicts first</strong>: constructible failure with a
+      diamond of conflicts (greedy 3, optimal 4 — CLRS exercise).
+      The moral: intuitions about "obviously best" keys are cheap; small
+      counterexamples are cheaper. Hunt for a counterexample <em>before</em>
+      hunting for a proof — five minutes of adversarial doodling settles
+      most greedy proposals.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/dp.js), events elided:
+function intervalScheduling(intervals) {
+  const sorted = intervals.slice().sort((a, b) => a.end - b.end);  // THE key
+  const accepted = [];
+  let lastEnd = -Infinity;
+  for (const iv of sorted) {
+    if (iv.start >= lastEnd) {     // fits after everything accepted so far
+      accepted.push(iv);
+      lastEnd = iv.end;            // commit — never reconsidered
+    }
+  }
+  return accepted;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next, greed's masterpiece: an optimal compression code built by
+  repeatedly merging the two rarest symbols —
+  <a href="huffman.html">Huffman coding</a>, whose exchange argument is a
+  thing of beauty and whose output is inside every PNG you've ever
+  shipped.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "greedy",
+    "questions": [
+      { "q": "Why is earliest FINISH time the right greedy key for interval scheduling?",
+        "choices": ["It's the easiest to sort by",
+                    "Finishing soonest constrains the future least — and the 'greedy stays ahead' induction turns that intuition into a proof that no schedule beats it",
+                    "Short meetings are more important"],
+        "answer": 1,
+        "explain": "Three other plausible keys (shortest, earliest start, fewest conflicts) all have small counterexamples. The right key + the proof is the whole algorithm." },
+      { "q": "What does an exchange argument actually show?",
+        "choices": ["That the greedy algorithm terminates",
+                    "That any optimal solution can be transformed, swap by swap, into the greedy solution without ever getting worse — so greedy's answer is itself optimal",
+                    "That sorting is necessary"],
+        "answer": 1,
+        "explain": "It's the license template: Kruskal's cut property, Huffman's sibling lemma, and this page's stays-ahead are all instances. No exchange sketch → no trusted greed." },
+      { "q": "Your team proposes 'evict the cache entry with the largest size' as a greedy policy. What's the right next step?",
+        "choices": ["Ship it — greedy policies are self-evidently fine",
+                    "Spend five minutes hunting a counterexample workload, then decide whether it's a licensed optimum or an acknowledged heuristic — and document which",
+                    "Replace the cache with a bigger one"],
+        "answer": 1,
+        "explain": "Most production greeds are heuristics, and that's OK — the failure mode is believing a heuristic is a theorem. The counterexample hunt is cheap due diligence." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const intervals = [
+        { id: "standup", start: 0, end: 2 }, { id: "1:1", start: 1, end: 4 },
+        { id: "design", start: 3, end: 6 }, { id: "retro", start: 5, end: 8 },
+        { id: "allhands", start: 2, end: 9 }, { id: "review", start: 7, end: 10 },
+        { id: "sync", start: 9, end: 12 }, { id: "demo", start: 10, end: 13 },
+      ];
+      const host = document.getElementById("timeline");
+      const MAXT = 13;
+
+      const state = {};
+      function* tracked() {
+        state.status = {};
+        for (const e of window.AlgoDP.intervalScheduling(intervals)) {
+          if (e.type === "take") state.status[e.id] = "take";
+          if (e.type === "skip") state.status[e.id] = "skip";
+          yield e;
+        }
+      }
+
+      function render(snap, event) {
+        host.innerHTML = intervals.map((iv, row) => {
+          const st = (snap.status || {})[iv.id];
+          const hot = event && event.id === iv.id;
+          let bg = "var(--bg-inset)", border = "var(--border)", opacity = 1;
+          if (st === "take") { bg = "var(--accent-soft)"; border = "var(--accent)"; }
+          if (st === "skip") { bg = "var(--bad-soft, #fee)"; border = "var(--bad)"; opacity = 0.55; }
+          return `<div style="position:absolute;top:${row * 27}px;` +
+            `left:${(iv.start / MAXT) * 100}%;width:${((iv.end - iv.start) / MAXT) * 100}%;` +
+            `height:22px;background:${bg};border:1.5px solid ${border};border-radius:6px;` +
+            `opacity:${opacity};${hot ? "outline:2.5px solid #d97706;" : ""}` +
+            `padding:0 0.4rem;line-height:20px;overflow:hidden">${iv.id} (${iv.start}–${iv.end})</div>`;
+        }).join("");
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ status: { ...(state.status || {}) } }),
+        render,
+        counters: { take: "accepted", skip: "conflicted" },
+        describe: (e) =>
+          e.type === "sorted" ? `sorted by finish time: ${e.order.join(" → ")}` :
+          e.type === "check" ? `${e.id} (${e.start}–${e.end}): does it start after the last accepted end?` :
+          e.type === "take" ? `${e.id} accepted — the room frees up as early as possible` :
+          e.type === "skip" ? `${e.id} overlaps an accepted meeting — skipped, never revisited` :
+          e.type === "done" ? `${e.count} meetings scheduled — provably the maximum` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
