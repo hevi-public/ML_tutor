@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vector search and HNSW — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dependency-graphs.html|Dependency graphs and orchestration">
+  <meta name="algo:next" content="knowledge-graphs.html|Knowledge graphs and graph RAG">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Vector search: nearest neighbors at RAG scale</h1>
+  <p class="lede">Embeddings turn meaning into geometry: similar texts
+  become nearby points in a high-dimensional space, and "find relevant
+  documents" becomes <em>k-nearest-neighbor search</em>. At a million
+  vectors, comparing the query against everything is too slow — so
+  production retrieval runs on a graph whose edges connect similar
+  vectors, searched greedily. That structure, HNSW, is this unit's
+  flagship — and you already know every idea inside it.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/bfs.html">Graph search</a>,
+    <a href="../05-graphs-advanced/astar.html">best-first frontiers</a>,
+    and <a href="../08-visualisation/projections.html">what embeddings
+    are</a>. This page assembles them.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Exact kNN is a linear scan: distance to every vector, keep the k
+  best — O(n·d) per query, unbeatable in the worst case (and genuinely
+  the right answer below ~100k vectors; libraries call it "flat").
+  Beyond that, everyone trades a sliver of accuracy for orders of
+  magnitude of speed: <strong>approximate</strong> nearest neighbors.</p>
+  <p><strong>HNSW</strong> (Hierarchical Navigable Small World) is the
+  dominant ANN index, and it is graph search from unit 4 wearing
+  production clothes. Build: insert vectors one at a time, connecting
+  each to its M nearest existing neighbors — a "small-world" graph where
+  similar things link. Search: start anywhere, repeatedly <em>move to
+  the neighbor closest to the query</em> — greedy descent through
+  similarity space — keeping a best-first frontier of candidates
+  (a beam, size <code>ef</code>) rather than a single position, which is
+  exactly A*'s frontier discipline with h = distance-to-query. The
+  "hierarchical" part: upper layers hold sparse long-range links (an
+  express network) so the search crosses the space in a few hops before
+  descending to the dense ground layer for precision — binary search's
+  instinct, rebuilt inside a graph.</p>
+
+  <h2>Watch it run</h2>
+  <p>200 toy 2-D embeddings (real ones have hundreds of dimensions; the
+  algorithm is identical — <span class="sim-note" style="padding:0.1rem 0.3rem">
+  honest scale-down, per this course's rules</span>). The star is the
+  query. First: the flat scan touches everything. Then: greedy graph
+  search on the kNN graph — watch it beeline. Counters tell the story:</p>
+  <div class="demo">
+    <canvas id="canvas" width="860" height="380" style="width:100%;height:auto"></canvas>
+    <div class="buttons" style="margin:0.4rem 0">
+      <button type="button" class="action secondary" id="new-query">new random query</button>
+    </div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>This IS the retrieval in retrieval-augmented generation: your
+    documents are chunked, embedded, and indexed (pgvector, Pinecone,
+    Qdrant, FAISS, Elasticsearch/OpenSearch kNN — HNSW under almost all
+    of them); each user question becomes a query vector; the index
+    returns the k nearest chunks for the prompt. Same machinery drives
+    semantic code search, recommendation ("users near you in taste
+    space"), image/audio similarity, deduplication, and memory systems
+    for agents. The engineering surface you'll actually tune: M (graph
+    degree), efSearch (beam width — recall vs latency dial), and the
+    metric (cosine vs dot vs L2 — must match how the embedding model
+    was trained).</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why greedy graph search works here — and when it doesn't</summary>
+    <div class="layer-body">
+      <p>Greedy descent can strand in a local minimum: a node whose
+      neighbors are all farther from the query than it is, while the
+      true nearest sits elsewhere. Three mitigations stack: the
+      <strong>beam</strong> (ef &gt; 1 candidates explored, not a single
+      walker — misses need to escape the whole beam); <strong>long-range
+      links</strong> from the layer hierarchy (escape routes past local
+      clutter); and the small-world build discipline (each insertion
+      wires to <em>diverse</em> near neighbors, keeping the graph
+      navigable — the property, from network science, that greedy
+      routing finds short paths, as in Milgram's six-degrees
+      experiment). Recall isn't guaranteed — it's measured: real
+      deployments benchmark recall@k against a flat scan on a sample,
+      then set ef to the cheapest value that clears the bar. That
+      measure-don't-assume loop is unit 1's counters, grown up.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The ANN menagerie, honestly</summary>
+    <div class="layer-body">
+      <p>HNSW: best recall/latency at moderate memory; the default.
+      <strong>IVF</strong> (inverted file): k-means the space into cells,
+      search only the query's few nearest cells — cheaper memory, a
+      recall dial (nprobe), loved at billion scale, often combined with
+      <strong>PQ</strong> (product quantization: compress vectors to
+      bytes; distances computed on codes — accepts more error for 10–30×
+      memory savings). <strong>ScaNN/DiskANN</strong>: engineering
+      refinements of the same ideas for TPU/disk. Trees (KD, ball) —
+      unit 2's instincts — win at low dimension but collapse in high
+      dimension (the "curse": everything becomes almost equidistant),
+      which is precisely why the field moved to graphs. Rule of thumb:
+      flat &lt; 100k; HNSW to ~100M in RAM; IVF-PQ/DiskANN beyond.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact search loop — greedy best-first over the kNN graph:
+function graphSearch(query, entry, ef) {
+  const visited = new Set([entry]);
+  const frontier = [entry];                  // best-first, sorted by dist
+  let best = [entry];                        // running top-ef candidates
+  while (frontier.length) {
+    const cur = popNearest(frontier, query); // A*'s move, h = dist to query
+    if (dist(cur, query) > worstOf(best) && best.length >= ef) break;  // beam done
+    for (const nb of knnGraph[cur]) {
+      if (visited.has(nb)) continue;
+      visited.add(nb);
+      frontier.push(nb);
+      best = topEf([...best, nb], query, ef); // keep the ef closest seen
+    }
+  }
+  return best;                               // top-k ⊆ best, almost always
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Vector search retrieves by <em>similarity</em>; sometimes you need
+  retrieval by <em>relationship</em> — "what does this entity connect
+  to?" — which is a different index entirely:
+  <a href="knowledge-graphs.html">knowledge graphs and graph RAG</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "k": { "name": "k — neighbors requested", "pron": "say: kay",
+           "means": "how many nearest vectors the query wants back (top-k retrieval)", "short": "result count" },
+    "ef": { "name": "ef — the beam width", "pron": "say: ee-eff",
+           "means": "how many candidates the search keeps alive; HNSW's recall-vs-latency dial", "short": "beam width" },
+    "M": { "name": "M — graph degree", "pron": "say: em",
+           "means": "how many neighbors each vector links to at build time; memory and navigability both scale with it", "short": "degree" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "vector-search",
+    "questions": [
+      { "q": "Which two course algorithms is HNSW's search phase assembled from?",
+        "choices": ["Quicksort and hashing",
+                    "Greedy descent through a similarity graph (unit 4's traversal with a chosen next-hop) plus A*'s best-first frontier — a beam of ef candidates ordered by distance to the query",
+                    "Dijkstra and Kruskal"],
+        "answer": 1,
+        "explain": "Nothing in HNSW is new machinery: navigable graph + best-first beam + layered express links. The novelty is realizing similarity space could be made graph-searchable at all." },
+      { "q": "Raising efSearch improves recall and worsens latency. Why, mechanically?",
+        "choices": ["It adds more layers to the index",
+                    "It widens the beam: more candidates stay alive, so the search explores more of the graph before concluding — harder for the true neighbor to be missed, more distance computations paid",
+                    "It re-ranks results with a second model"],
+        "answer": 1,
+        "explain": "ef is the explore/commit dial, and it's runtime-only (no rebuild). Real deployments tune it against a measured recall@k target — never assumed, always benchmarked vs a flat scan." },
+      { "q": "Your RAG quality drops after switching embedding models, though the index 'works'. First algorithmic suspect?",
+        "choices": ["The chunk size",
+                    "Metric mismatch or a stale index: the graph was BUILT from the old model's geometry — old neighbors aren't new neighbors, and cosine-trained embeddings searched with L2 (or unnormalized) quietly misrank. Re-embed, re-index, re-measure recall",
+                    "The vector database vendor"],
+        "answer": 1,
+        "explain": "The index is a frozen snapshot of one model's similarity structure. Swapping the model without rebuilding — or mixing metrics — is the most common silent retrieval bug in production RAG." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const verdict = document.getElementById("verdict");
+
+      // 200 clustered toy embeddings, seeded.
+      const N = 200, K_LINKS = 5;
+      const rng = window.AlgoRandom.rng(60601);
+      const gauss = () => (rng() + rng() + rng() - 1.5) * 0.6;
+      const centers = [[0.22, 0.3], [0.5, 0.72], [0.78, 0.28], [0.65, 0.5], [0.3, 0.75]];
+      const pts = Array.from({ length: N }, (_, i) => {
+        const c = centers[i % centers.length];
+        return { x: Math.min(0.97, Math.max(0.03, c[0] + gauss() * 0.18)),
+                 y: Math.min(0.95, Math.max(0.05, c[1] + gauss() * 0.18)) };
+      });
+      const d2 = (a, b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+
+      // kNN graph (the "ground layer" of a toy HNSW)
+      const links = pts.map((p, i) =>
+        pts.map((q, j) => ({ j, d: d2(p, q) }))
+          .filter((x) => x.j !== i)
+          .sort((a, b) => a.d - b.d)
+          .slice(0, K_LINKS).map((x) => x.j));
+
+      let query = { x: 0.42, y: 0.42 };
+      let qseed = 1;
+
+      const state = {};
+      function* tracked() {
+        state.phase = "scan"; state.touched = []; state.path = []; state.best = null;
+        // Phase 1: flat scan
+        let best = 0;
+        for (let i = 0; i < N; i++) {
+          state.touched.push(i);
+          if (d2(pts[i], query) < d2(pts[best], query)) best = i;
+          if (i % 5 === 4) yield { type: "check", u: i, phase: "scan" };
+        }
+        state.best = best;
+        yield { type: "found", at: best, phase: "scan", cost: N };
+        // Phase 2: greedy graph search from a fixed entry point
+        state.phase = "graph"; state.touched = []; state.path = [];
+        let cur = 0, visits = 0;
+        const visited = new Set([0]);
+        state.path.push(0);
+        yield { type: "visit", u: 0, phase: "graph" };
+        for (;;) {
+          visits++;
+          let bestNb = null;
+          for (const nb of links[cur]) {
+            if (!visited.has(nb)) { visited.add(nb); state.touched.push(nb); }
+            if (d2(pts[nb], query) < d2(pts[bestNb ?? cur], query)) bestNb = nb;
+          }
+          if (bestNb === null || d2(pts[bestNb], query) >= d2(pts[cur], query)) break;
+          cur = bestNb;
+          state.path.push(cur);
+          yield { type: "visit", u: cur, phase: "graph" };
+        }
+        const exact = state.best;
+        const gotExact = cur === exact;
+        verdict.textContent = `Flat scan: ${N} distance computations, exact answer. ` +
+          `Graph search: ${visited.size} distances along ${state.path.length} hops — ` +
+          (gotExact ? "same answer, ~" + Math.round(N / visited.size) + "× cheaper."
+            : "a near-neighbor (greedy's local-minimum risk — real HNSW's beam + layers make misses rare, and measured).");
+        yield { type: "done", visits: visited.size, gotExact };
+      }
+
+      function render(snap) {
+        ctx.clearRect(0, 0, 860, 380);
+        const px = (p) => [20 + p.x * 820, 14 + p.y * 352];
+        // edges of the path
+        if (snap.phase === "graph" && snap.path.length > 1) {
+          ctx.strokeStyle = cssVar("--accent") || "#047857";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          snap.path.forEach((i, k) => {
+            const [x, y] = px(pts[i]);
+            k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          });
+          ctx.stroke();
+        }
+        const touched = new Set(snap.touched || []);
+        pts.forEach((p, i) => {
+          const [x, y] = px(p);
+          ctx.fillStyle = touched.has(i)
+            ? (snap.phase === "scan" ? "#d97706" : cssVar("--accent") || "#047857")
+            : (cssVar("--text-soft") || "#889") + "";
+          ctx.globalAlpha = touched.has(i) ? 0.95 : 0.35;
+          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+        });
+        if (snap.best !== null && snap.best !== undefined) {
+          const [x, y] = px(pts[snap.best]);
+          ctx.strokeStyle = cssVar("--bad") || "#b91c1c";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
+        }
+        const [qx, qy] = px(query);
+        ctx.fillStyle = cssVar("--text") || "#123";
+        ctx.font = "bold 18px system-ui";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("★", qx, qy);
+      }
+
+      const player = window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ phase: state.phase, touched: (state.touched || []).slice(),
+          path: (state.path || []).slice(), best: state.best }),
+        render,
+        counters: { check: "scan batches", visit: "graph hops" },
+        speed: 8,
+        describe: (e) =>
+          e.type === "check" ? "flat scan: measuring distance to every vector…" :
+          e.type === "found" ? `flat scan done — exact nearest found after ${e.cost} distances` :
+          e.type === "visit" ? (e.u === 0 ? "graph search: entering at a fixed entry node" :
+            "hop to the neighbor closest to the query — greedy descent") :
+          e.type === "done" ? `graph search touched ${e.visits} vectors` : "",
+      });
+
+      document.getElementById("new-query").addEventListener("click", () => {
+        const r = window.AlgoRandom.rng(7000 + qseed++);
+        query = { x: 0.08 + r() * 0.84, y: 0.08 + r() * 0.8 };
+        player.reset();
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dependency graphs and orchestration — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../08-visualisation/projections.html|Projections">
+  <meta name="algo:next" content="vector-search.html|Vector search and HNSW">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Dependency graphs: the DAG that runs your stack</h1>
+  <p class="lede">Unit 9 begins where the theory units end: each page takes
+  algorithms you now own and shows them running, load-bearing, inside
+  systems you ship with. First up, the most ubiquitous: the dependency
+  DAG — in build tools, data pipelines, and every LLM agent framework —
+  and the two questions asked of it a billion times a day: <em>what can
+  run now?</em> and <em>what's making everything late?</em></p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/topological-sort.html">Topological sort</a> is
+    the engine; this page is its production deployment.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Everything orchestrated is the same object: nodes = tasks, edges =
+  "needs the output of". <code>make</code> and Bazel over build targets;
+  Airflow/Dagster/dbt over data jobs; Terraform over resources; and
+  LangGraph-style agent pipelines over tool calls and LLM steps. The
+  scheduler inside all of them is Kahn's algorithm run <em>live</em>:
+  a task becomes <strong>ready</strong> when its unfinished-dependency
+  count hits zero, and everything ready runs concurrently — the ready set
+  is the worker pool's feed.</p>
+  <p>The second question is scheduling's oldest: with parallelism
+  unlimited, how fast can the whole graph finish? Answer: the
+  <strong>critical path</strong> — the longest chain of dependent tasks,
+  weighted by duration. Nothing can beat it; everything off it has
+  <em>slack</em>. Computing it is longest-path-on-a-DAG, which is
+  shortest-path with max instead of min — a two-line DP over the
+  topological order (negative-weight fears don't apply: no cycles).</p>
+
+  <h2>Watch it run</h2>
+  <p>A build graph with per-task durations. The stepper runs the
+  scheduler: each round, everything ready executes in parallel (green
+  wave); labels show each task's <em>earliest possible finish</em>. The
+  red-edged chain at the end is the critical path — the tasks where an
+  optimization actually shortens the build:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Every <code>-j8</code> build, every CI fan-out, every dbt run.
+    Agent orchestration is the newest tenant: frameworks like LangGraph
+    literally hold a graph of LLM/tool nodes and execute exactly this
+    ready-set loop — parallel tool calls are "in-degree hit zero"
+    wearing a trenchcoat, and a slow chain of dependent LLM calls is a
+    critical path measured in seconds and dollars. Terraform plans,
+    Kubernetes operators reconciling resource dependencies, Excel
+    recalculation, package installs — the DAG scheduler may be the
+    single most-executed algorithm pattern in software operations.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Critical path, precisely</summary>
+    <div class="layer-body">
+      <p>In topological order: <code>finish(v) = duration(v) +
+      max(finish(u))</code> over v's dependencies (0 for sources). The
+      overall makespan is the max finish; walking the argmaxes backward
+      names the critical chain. Everything else has slack =
+      (latest start that wouldn't delay anyone) − (earliest start) — the
+      formal version of "this task can be slow for free". Ops
+      translation: profiling a pipeline without computing the critical
+      path invites optimizing a task with hours of slack; the honest
+      target list is the critical chain, and it can CHANGE after each
+      improvement — re-run the DP, don't trust last quarter's
+      bottleneck. (Same math as PERT charts, 1958 — the DAG outlived
+      the acronym.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>What real orchestrators add on top</summary>
+    <div class="layer-body">
+      <p>The classroom loop assumes tasks succeed and workers are
+      infinite. Production adds: bounded workers (choosing WHICH ready
+      tasks run first is NP-hard scheduling → list-scheduling
+      heuristics, usually critical-path-first); failure semantics
+      (retry, skip-downstream, or halt — Airflow's trigger rules);
+      caching (Bazel skips tasks whose input hashes match — memoization
+      over the DAG, unit 6 again); dynamic graphs (agent frameworks add
+      nodes mid-run as the model decides on tools — Kahn's handles this
+      fine as long as new edges never point backward in time); and
+      backpressure/rate limits for API-calling nodes. Each is an
+      engineering layer over the same two primitives you now own.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The live scheduler (this page's exact demo code, events elided):
+let ready = tasks.filter((t) => indegree(t) === 0);
+let clock = 0;
+while (ready.length) {
+  for (const t of ready) {                      // the whole set, in parallel
+    finish[t] = clock + duration[t];
+  }
+  clock = Math.min(...ready.map((t) => finish[t]));   // next completion
+  // decrement dependents of everything finished; newly-zero → ready
+}
+
+// Critical path — longest path over topological order:
+for (const v of topoOrder)
+  finish[v] = duration[v] + Math.max(0, ...deps[v].map((u) => finish[u]));</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Orchestration moves work; the next pages move <em>meaning</em>:
+  <a href="vector-search.html">vector search</a> — the unit's flagship —
+  where the graphs get built out of similarity itself.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "dependency-graphs",
+    "questions": [
+      { "q": "In a DAG scheduler, what exactly makes a task 'ready'?",
+        "choices": ["Its priority is highest",
+                    "Its count of UNFINISHED dependencies reaches zero — Kahn's in-degree bookkeeping run live, which is also why everything ready can run in parallel safely",
+                    "All tasks before it in the file are done"],
+        "answer": 1,
+        "explain": "The ready set IS the parallelism: its members provably conflict with nothing pending. Airflow, Bazel and agent frameworks are this counter plus an executor." },
+      { "q": "Your 40-minute pipeline has a task taking 12 minutes, and you spend a sprint halving it. The pipeline still takes 40 minutes. What did you skip?",
+        "choices": ["Cache invalidation",
+                    "The critical path: that task had slack — it never determined the makespan. Longest-path-on-the-DAG names the chain where optimization actually pays",
+                    "The task needed more workers"],
+        "answer": 1,
+        "explain": "Slack means 'can be slow for free'. The critical-path DP is minutes of work and prevents exactly this sprint-shaped waste — and the path can move after each fix, so re-run it." },
+      { "q": "An LLM agent framework lets the model add new tool-call nodes mid-run. What keeps the scheduler sound?",
+        "choices": ["Locking the whole graph per step",
+                    "New nodes/edges must only depend on tasks not yet finished-and-consumed in a cycle-forming way — as long as additions keep the graph acyclic, the ready-set loop absorbs them naturally",
+                    "Dynamic graphs require restarting the run"],
+        "answer": 1,
+        "explain": "Kahn's loop never needed the whole graph upfront — only accurate in-degree counts. Dynamic DAG growth is routine; a cycle (tool A waiting on B waiting on A) is the deadlock case to guard." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // build preset + durations (minutes)
+      const graph = window.AlgoGraphs.preset("build");
+      const dur = { util: 2, log: 3, db: 8, auth: 4, api: 6, ui: 3, app: 2 };
+      graph.nodes.forEach((n) => { n.label = `${n.id} ${dur[n.id]}m`; });
+      const verdict = document.getElementById("verdict");
+
+      const deps = {};
+      graph.nodes.forEach((n) => { deps[n.id] = []; });
+      graph.edges.forEach((e) => deps[e.v].push(e.u));
+
+      const state = {};
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+        // schedule: rounds of parallel execution
+        const finish = {};
+        const done = new Set();
+        let wave = 0;
+        while (done.size < graph.nodes.length) {
+          const ready = graph.nodes.map((n) => n.id)
+            .filter((id) => !done.has(id) && deps[id].every((d) => done.has(d)));
+          wave++;
+          for (const id of ready) {
+            finish[id] = dur[id] + Math.max(0, ...deps[id].map((d) => finish[d]));
+            state.nodeState[id] = "frontier";
+            yield { type: "discover", u: id, wave };
+          }
+          for (const id of ready) {
+            state.nodeState[id] = "settled";
+            state.nodeLabel[id] = "≤" + finish[id] + "m";
+            done.add(id);
+            yield { type: "settle", u: id, dist: finish[id] };
+          }
+        }
+        // critical path: walk argmax back from the latest finisher
+        let cur = Object.keys(finish).reduce((a, b) => finish[a] > finish[b] ? a : b);
+        const chain = [cur];
+        while (deps[cur].length) {
+          const prev = deps[cur].reduce((a, b) => finish[a] > finish[b] ? a : b);
+          state.edgeState[window.AlgoGraphViz.edgeKey(prev, cur)] = "reject";  // red = critical
+          chain.unshift(prev);
+          cur = prev;
+        }
+        verdict.textContent = `Makespan ${Math.max(...Object.values(finish))}m with unlimited workers. ` +
+          `Critical path: ${chain.join(" → ")} — only speeding THESE up shortens the build.`;
+        yield { type: "done", chain };
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "DAG scheduling animation", height: 320 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { settle: "tasks finished", discover: "became ready" },
+        describe: (e) =>
+          e.type === "discover" ? `${e.u} is ready (wave ${e.wave}) — all dependencies done, dispatched in parallel` :
+          e.type === "settle" ? `${e.u} finishes by minute ${e.dist} at the earliest` :
+          e.type === "done" ? `critical path found: ${e.chain.join(" → ")} (red edges)` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
