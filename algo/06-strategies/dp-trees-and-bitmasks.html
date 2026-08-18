@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DP on trees and bitmasks — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dp-knapsack.html|Knapsack and friends">
+  <meta name="algo:next" content="backtracking.html|Backtracking and pruning">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/viz/layout.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>DP beyond tables: subtrees and subsets</h1>
+  <p class="lede">The recipe never said "table". A subproblem can be
+  anything with a well-founded ordering: prefixes, budgets — or
+  <em>subtrees</em> of a tree, or <em>subsets</em> encoded as bits. Two
+  short case studies stretch the DP muscle onto the shapes production
+  data actually has.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="dp-foundations.html">The recipe</a>,
+    <a href="../04-graphs/dfs.html">DFS</a> (tree DP rides on it), and
+    <a href="../11-expert/bit-tricks.html">bits as sets</a> (that page can
+    be read later; the idea is one sentence here).
+  </div>
+
+  <h2>The idea: DP on trees</h2>
+  <p>The showcase: <strong>maximum independent set on a tree</strong> —
+  pick nodes of maximum total value such that no two picked nodes are
+  adjacent. (Folklore version: invite employees to a party, nobody with
+  their direct manager, maximize fun.) On general graphs this is
+  NP-hard; on trees, DP kills it in linear time, because subtrees only
+  talk to each other through one node — their root.</p>
+  <p>The sentence — two per node this time:
+  <em>incl(v) = best for v's subtree if v IS picked; excl(v) = best if v
+  is NOT picked.</em> Recurrence, computed by DFS on the way back up:
+  incl(v) = value(v) + Σ excl(child) — picking v bans its children;
+  excl(v) = Σ max(incl(child), excl(child)) — a free choice per child.
+  Answer: max at the root. Post-order position IS the dependency order,
+  so "fill order" comes free from unit 4's DFS.</p>
+
+  <h2>Watch it run</h2>
+  <p>An org tree with "fun scores". DFS returns carry each subtree's
+  (incl, excl) pair upward; when a node settles, its label shows both
+  numbers, and at the end the winning invitees light up:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <h2>The idea: DP on bitmask subsets</h2>
+  <p>When subproblems are "which <em>subset</em> of these k things have I
+  already handled", encode the subset as k bits of an integer: subset
+  {0, 2} = binary 101 = 5. Now an array indexed 0…2ᵏ−1 memoizes every
+  subset. The famous instance is <strong>Held-Karp</strong> for the
+  traveling salesman: best[S][j] = shortest route that visits exactly the
+  cities in S, ending at j. Recurrence: arrive at j from some i ∈ S:
+  best[S][j] = min over i of best[S∖{j}][i] + dist(i, j).
+  O(2ᵏ·k²) — exponential, but a <em>disciplined</em> exponential:
+  2²⁰·400 ≈ 4×10⁸ beats brute-force 20! ≈ 2×10¹⁸ by ten orders of
+  magnitude. Bitmask DP is how "impossible" problems get exact answers
+  at k ≤ ~22.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Tree DP runs on real trees: file-system quota rollups, org-chart
+    aggregations, AST cost analysis in compilers and query optimizers
+    (join-order planning is tree/bitmask DP inside every serious
+    database — PostgreSQL literally switches from DP to a genetic
+    heuristic above a join-count threshold). Bitmask DP ships in route
+    optimization for small fleets, register allocation, and feature-flag
+    interaction testing. The meta-lesson for architects: the same
+    problem can be NP-hard in general and linear on your data's shape —
+    "our dependency graph is a tree" is a performance fact worth
+    protecting.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why trees make hard problems easy — separators</summary>
+    <div class="layer-body">
+      <p>The independent-set recurrence worked because removing one node
+      (the subtree root) fully disconnects a subtree from the rest — the
+      root is a <strong>separator</strong> of size 1, so the DP state
+      needs only "is the root in or out": two numbers per subtree. General
+      graphs have no small separators, so a subproblem would need to
+      remember the pick-status of a whole frontier — exponentially many
+      states. This is the actual boundary between "DP applies" and
+      "NP-hard": not problem names, but how much boundary information
+      subproblems must carry. (The generalization — treewidth, DP on
+      "almost-tree" graphs — is the parameterized-complexity rabbit hole,
+      flagged in <a href="../11-expert/further-reading.html">further
+      reading</a>.)</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Tree DP — the demo's exact code (inline on this page), events elided:
+function solve(v) {                    // returns [incl, excl] for v's subtree
+  let incl = v.value, excl = 0;
+  for (const child of v.children) {
+    const [ci, ce] = solve(child);     // post-order: children settle first
+    incl += ce;                        // picking v bans each child
+    excl += Math.max(ci, ce);          // not picking v: best of both per child
+  }
+  return [incl, excl];
+}
+
+// Bitmask DP skeleton (Held-Karp inner loop):
+for (let S = 1; S < (1 << k); S++)            // subsets in increasing order
+  for (let j = 0; j < k; j++) if (S & (1 << j))
+    for (let i = 0; i < k; i++) if (i !== j && (S & (1 << i)))
+      best[S][j] = Math.min(best[S][j],
+        best[S ^ (1 << j)][i] + dist[i][j]);  // S∖{j}: one bit flipped off</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>When even bitmask DP can't hold the state — or no recurrence exists —
+  the last resort is organized brute force:
+  <a href="backtracking.html">backtracking</a>, where the craft is in what
+  you <em>refuse</em> to explore.</p>
+
+  <script type="application/json" class="symbols">
+  { "S": { "name": "S — a subset, as bits", "pron": "say: ess",
+           "means": "an integer whose binary 1-bits name the elements included; subset DP indexes its memo by S", "short": "bitmask subset" },
+    "incl": { "name": "incl(v) / excl(v)", "pron": "say: include, exclude",
+           "means": "the subtree's best score with v forced in / forced out — the two-state tree-DP pattern", "short": "in/out states" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "dp-trees-and-bitmasks",
+    "questions": [
+      { "q": "Why does tree DP need TWO values (incl, excl) per subtree instead of one?",
+        "choices": ["To detect cycles",
+                    "A subtree's best answer depends on whether its root gets picked — the parent needs both options to enforce the no-adjacent rule when making its own choice",
+                    "One for each child"],
+        "answer": 1,
+        "explain": "The state must carry exactly the boundary information the parent needs — here, one bit about the root. Choosing minimal-but-sufficient state is tree DP's entire craft." },
+      { "q": "Independent set is NP-hard on graphs, linear on trees. What structural fact flips it?",
+        "choices": ["Trees have fewer nodes",
+                    "A subtree meets the rest of the graph only at its root — a size-1 separator — so subproblems need constant boundary state; general graphs force exponentially large frontiers",
+                    "Trees are always bipartite"],
+        "answer": 1,
+        "explain": "Hardness isn't a property of the problem name; it's about how much subproblems must remember. This is why 'keep the dependency graph a tree' is a real architectural guideline." },
+      { "q": "Held-Karp solves 20-city TSP in ~4×10⁸ operations. What made 2ᵏ tolerable where k! wasn't?",
+        "choices": ["Bit operations are faster than array lookups",
+                    "Routes visiting the same city-set and ending at the same city are interchangeable — the bitmask memo collapses all their orderings into one subproblem, k!→2ᵏ·k",
+                    "It approximates the answer"],
+        "answer": 1,
+        "explain": "Classic DP collapse: what matters for the future is (cities covered, current position), not the order they were covered in. Identifying which history details DON'T matter is where the exponent drops." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // The org tree with fun scores.
+      const tree = {
+        id: "ceo", value: 6, children: [
+          { id: "eng", value: 5, children: [
+            { id: "be", value: 4, children: [] },
+            { id: "fe", value: 3, children: [] },
+          ] },
+          { id: "ops", value: 2, children: [
+            { id: "sre", value: 7, children: [] },
+          ] },
+        ],
+      };
+      const verdict = document.getElementById("verdict");
+
+      // Layout once with tidyTree, build a static graph model.
+      const layout = window.AlgoLayout.tidyTree(JSON.parse(JSON.stringify(tree)));
+      const nodesById = {};
+      const graph = { directed: false, nodes: [], edges: [] };
+      for (const n of layout.nodes) {
+        nodesById[n.id] = n;
+        graph.nodes.push({ id: n.id, label: n.id, x: 0.08 + n.x * 0.84, y: 0.1 + n.y * 0.8 });
+      }
+      for (const l of layout.links) graph.edges.push({ u: l.from.id, v: l.to.id });
+
+      const values = {};
+      (function collect(n) { values[n.id] = n.value; (n.children || []).forEach(collect); })(tree);
+
+      const state = {};
+      function* solve(v) {
+        state.nodeState[v.id] = "frontier";
+        yield { type: "visit", u: v.id };
+        let incl = v.value, excl = 0;
+        for (const child of v.children) {
+          const [ci, ce] = yield* solve(child);
+          incl += ce;
+          excl += Math.max(ci, ce);
+        }
+        state.nodeState[v.id] = "settled";
+        state.nodeLabel[v.id] = `${incl}/${excl}`;
+        yield { type: "settle", u: v.id, incl, excl };
+        return [incl, excl];
+      }
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {};
+        const [incl, excl] = yield* solve(tree);
+        // recover the winning set by re-walking with the decisions
+        const picked = [];
+        (function walk(v, mayPick) {
+          const sub = compute(v);
+          const pickV = mayPick && sub[0] >= sub[1];
+          if (pickV) picked.push(v.id);
+          for (const c of v.children) walk(c, !pickV);
+        })(tree, true);
+        function compute(v) {
+          let i = v.value, e = 0;
+          for (const c of v.children) {
+            const s = compute(c);
+            i += s[1]; e += Math.max(s[0], s[1]);
+          }
+          return [i, e];
+        }
+        for (const id of picked) state.nodeState[id] = "visited";
+        verdict.textContent = `Best score: ${Math.max(incl, excl)} — invite {${picked.join(", ")}}. ` +
+          `Note sre (7) forced ops (2) out, and ceo made it anyway.`;
+        yield { type: "done", best: Math.max(incl, excl), picked };
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Tree DP animation", height: 300 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { settle: "subtrees solved" },
+        describe: (e) =>
+          e.type === "visit" ? `DFS enters ${e.u} (value ${values[e.u]})` :
+          e.type === "settle" ? `${e.u} settles: incl=${e.incl}, excl=${e.excl} — its parent now has all it needs` :
+          e.type === "done" ? `root settled — answer ${e.best}; the picked set lights up green` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
