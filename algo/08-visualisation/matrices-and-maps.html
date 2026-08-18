@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matrices, treemaps and bundling — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Visualisation">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="drawing-dags.html|Drawing DAGs (Sugiyama's layers)">
+  <meta name="algo:next" content="projections.html|Projections: seeing high dimensions">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Visualisation</p>
+  <h1>When node-link fails: matrices, treemaps, bundling</h1>
+  <p class="lede">Dots-and-lines drawings degrade with density — past a
+  few hundred edges they're hairballs, and no layout algorithm can save
+  an encoding that has run out of room. The fixes change the encoding
+  itself: draw the <em>adjacency matrix</em>, draw <em>areas</em> instead
+  of nodes, or route edges in <em>bundles</em> like cable ties.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/what-is-a-graph.html">Adjacency matrices</a> —
+    the storage format is about to become a picture — and
+    <a href="drawing-trees.html">tree layouts</a>.
+  </div>
+
+  <h2>The idea: the matrix as image</h2>
+  <p>Unit 4 stored a graph as a |V|×|V| grid; render each cell as a
+  pixel and the storage <em>is</em> the visualization. No crossings —
+  ever, by construction — and density becomes a feature: a 500-node
+  near-complete graph is an unreadable hairball as node-link but a
+  perfectly legible dark square as a matrix. The price: <em>paths become
+  invisible</em> (following a→b→c means jumping between cells), and
+  everything depends on <strong>row order</strong> — the same matrix
+  looks like noise or like block-diagonal structure depending on how rows
+  are permuted. Seriation (finding the revealing order) is its own
+  algorithmic field; a cheap, good trick is ordering rows by cluster or
+  by BFS discovery order.</p>
+
+  <h2>See it</h2>
+  <p>A seeded 3-community graph, drawn as a matrix twice: rows in random
+  order, then reordered by community. Same data — the structure only
+  <em>exists visually</em> in the second:</p>
+  <div class="demo">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+      <div>
+        <p class="hint" style="margin:0">random row order</p>
+        <canvas id="mat-shuffled" width="380" height="380" style="width:100%;max-width:380px"></canvas>
+      </div>
+      <div>
+        <p class="hint" style="margin:0">rows grouped by community</p>
+        <canvas id="mat-ordered" width="380" height="380" style="width:100%;max-width:380px"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <h2>The idea: treemaps</h2>
+  <p>For hierarchies where <em>size</em> is the question — disk usage,
+  budgets, market caps — the treemap nests rectangles: each node's area
+  is proportional to its value, children tile their parent. The layout
+  algorithm decides the tiling: <strong>slice-and-dice</strong>
+  (alternate horizontal/vertical cuts — simple, but thin slivers) versus
+  <strong>squarified</strong> (greedily pack rows keeping aspect ratios
+  near 1 — the industry default, and another licensed-enough greedy).
+  Below, this course's own on-disk sizes, squarified:</p>
+  <div class="demo">
+    <canvas id="treemap" width="860" height="300" style="width:100%;height:auto"></canvas>
+    <p class="hint">Area = size. Squarified tiling keeps rectangles
+    chunky enough to label and click.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Matrix views: correlation heatmaps in every notebook, sparsity
+    plots of large systems, service-to-service traffic grids, and —
+    centrally for the LLM era — <strong>attention heatmaps</strong>,
+    which are exactly token-to-token adjacency matrices, read for block
+    and diagonal structure. Treemaps: WinDirStat/ncdu-style disk
+    explorers, bundle-size analyzers (webpack-bundle-analyzer),
+    finance heat-tiles. Edge bundling (below) powers legible airline
+    maps and software-dependency wheels. Choosing among them is the
+    previous page's decision table in action.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Edge bundling, honestly</summary>
+    <div class="layer-body">
+      <p class="sim-note" style="margin:0">Not simulated on this page —
+      described. When a node-link view must survive thousands of edges,
+      <strong>bundling</strong> routes edges with similar start/end
+      regions along shared curved highways (hierarchical bundling routes
+      along the hierarchy; force-directed bundling lets edges attract
+      each other). The gain: flows between regions become visible as
+      thick cables. The loss — say it out loud in reviews: individual
+      edges become untraceable, and bundles can imply connections that
+      don't exist (two edges sharing a highway look related). Bundling
+      is an aggregation, and like all aggregations it trades item-level
+      truth for population-level legibility.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Squarified treemap core (this page's exact demo code): lay a row of
+// children along the short side while it improves the worst aspect ratio.
+function squarify(children, rect) {
+  const row = [];
+  while (children.length) {
+    const next = children[0];
+    if (!row.length || worstRatio([...row, next], rect) <= worstRatio(row, rect)) {
+      row.push(children.shift());        // adding improves (or starts) the row
+    } else {
+      layoutRow(row, rect);              // row is as square as it gets — fix it
+      rect = remaining(rect, row);       // recurse into the leftover space
+      row.length = 0;
+    }
+  }
+  layoutRow(row, rect);
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>One frontier left: data with hundreds of dimensions — embeddings —
+  where nothing has a natural x or y at all.
+  <a href="projections.html">Projections</a> close the unit, and open the
+  door to unit 9's vector search.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "matrices-and-maps",
+    "questions": [
+      { "q": "The same adjacency matrix looked like noise, then like three blocks. What changed, and what's the lesson?",
+        "choices": ["The second render used better colors",
+                    "Only the ROW ORDER changed — matrix views have no layout freedom except permutation, so seriation (choosing a revealing order) carries the entire analytical load",
+                    "The second matrix dropped weak edges"],
+        "answer": 1,
+        "explain": "Node-link's hard problem is position; the matrix's is order. Cluster-grouped ordering turns communities into visible blocks — unordered, the identical data is static." },
+      { "q": "When does a matrix view beat node-link outright?",
+        "choices": ["Whenever the graph is directed",
+                    "Dense graphs and edge-existence tasks: no crossings can occur, every pair gets a dedicated cell, and density reads as texture — while path-following tasks get WORSE",
+                    "Never — it's a fallback"],
+        "answer": 1,
+        "explain": "Encoding choice is task choice: 'is A connected to B?' and 'which groups talk?' → matrix; 'how does a request travel?' → node-link. Same graph, different questions, different pictures." },
+      { "q": "Why does the squarified treemap fight for aspect ratios near 1?",
+        "choices": ["Squares compress better as PNGs",
+                    "Human area comparison degrades badly for long thin slivers, and chunky rectangles remain labelable/clickable — the greedy row-packing optimizes for perception, not geometry for its own sake",
+                    "It minimizes total border length"],
+        "answer": 1,
+        "explain": "Area is already a weak channel (rank 4); sliver-shaped areas make it worse. Squarified's greedy 'add to the row while the worst ratio improves' is perceptual engineering in four lines." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+      const accent = cssVar("--accent") || "#047857";
+
+      // --- community matrix ---
+      const N = 30, COMM = 3;
+      const rng = window.AlgoRandom.rng(2026);
+      const comm = Array.from({ length: N }, (_, i) => i % COMM);
+      const adj = Array.from({ length: N }, () => new Array(N).fill(0));
+      for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+        const p = comm[i] === comm[j] ? 0.55 : 0.04;
+        if (rng() < p) adj[i][j] = adj[j][i] = 1;
+      }
+      const shuffled = window.AlgoRandom.shuffle(Array.from({ length: N }, (_, i) => i), 777);
+      const grouped = Array.from({ length: N }, (_, i) => i).sort((a, b) => comm[a] - comm[b]);
+
+      function drawMatrix(canvasId, order) {
+        const ctx = document.getElementById(canvasId).getContext("2d");
+        const cell = 380 / N;
+        ctx.clearRect(0, 0, 380, 380);
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+          ctx.fillStyle = adj[order[r]][order[c]] ? accent : (cssVar("--bg-inset") || "#eee");
+          ctx.fillRect(c * cell, r * cell, cell - 0.5, cell - 0.5);
+        }
+      }
+      drawMatrix("mat-shuffled", shuffled);
+      drawMatrix("mat-ordered", grouped);
+
+      // --- squarified treemap of the course's own footprint ---
+      const data = [
+        { name: "content pages", v: 380 }, { name: "algo engines", v: 96 },
+        { name: "viz renderers", v: 72 }, { name: "site chrome", v: 60 },
+        { name: "data (json)", v: 48 }, { name: "labs", v: 40 },
+        { name: "css", v: 28 }, { name: "docs", v: 22 },
+      ];
+      const ctx = document.getElementById("treemap").getContext("2d");
+      const total = data.reduce((s, d) => s + d.v, 0);
+      const items = data.map((d) => ({ ...d, area: (d.v / total) * 860 * 300 }))
+        .sort((a, b) => b.area - a.area);
+      const palette = ["#047857", "#0e9f6e", "#31c48d", "#84e1bc", "#0694a2", "#3f83f8", "#8da2fb", "#b4c6fc"];
+
+      let rect = { x: 0, y: 0, w: 860, h: 300 };
+      let row = [], ci = 0;
+      const queue = items.slice();
+      function layoutRow(row, rect) {
+        const sum = row.reduce((s, r) => s + r.area, 0);
+        const horizontal = rect.w >= rect.h;                 // lay along short side
+        const side = horizontal ? rect.h : rect.w;
+        const thick = sum / side;
+        let off = 0;
+        for (const r of row) {
+          const len = r.area / thick;
+          const [x, y, w, h] = horizontal
+            ? [rect.x, rect.y + off, thick, len]
+            : [rect.x + off, rect.y, len, thick];
+          ctx.fillStyle = palette[ci++ % palette.length];
+          ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+          ctx.fillStyle = "#fff";
+          ctx.font = "12px system-ui, sans-serif";
+          if (w > 68 && h > 18) ctx.fillText(`${r.name}`, x + 6, y + 15);
+          if (w > 68 && h > 32) ctx.fillText(`${r.v} KB`, x + 6, y + 29);
+          off += len;
+        }
+        return horizontal
+          ? { x: rect.x + thick, y: rect.y, w: rect.w - thick, h: rect.h }
+          : { x: rect.x, y: rect.y + thick, w: rect.w, h: rect.h - thick };
+      }
+      function ratio(row, rect) {
+        const sum = row.reduce((s, r) => s + r.area, 0);
+        const side = Math.min(rect.w, rect.h);
+        const thick = sum / side;
+        return Math.max(...row.map((r) => {
+          const len = r.area / thick;
+          return Math.max(len / thick, thick / len);
+        }));
+      }
+      while (queue.length) {
+        const next = queue[0];
+        if (!row.length || ratio([...row, next], rect) <= ratio(row, rect)) {
+          row.push(queue.shift());
+        } else {
+          rect = layoutRow(row, rect);
+          row = [];
+        }
+      }
+      if (row.length) layoutRow(row, rect);
+    });
+  </script>
+</main>
+</body>
+</html>
