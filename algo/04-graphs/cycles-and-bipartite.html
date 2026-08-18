@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cycles and two-coloring — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="connectivity.html|Connected components">
+  <meta name="algo:next" content="implicit-graphs.html|Implicit graphs: grids, mazes, puzzles">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+  <script defer src="../assets/js/graph-editor.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Graphs</p>
+  <h1>Cycles and two-coloring: can the graph take sides?</h1>
+  <p class="lede">Try to paint every node one of two colors so no edge
+  connects same-colored nodes. Either you succeed — the graph is
+  <strong>bipartite</strong>, it splits into two clean camps — or the attempt
+  fails in a very specific, very informative way: it hands you an odd-length
+  cycle as a certificate. Win or lose, you learn something structural.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="bfs.html">BFS</a> — two-coloring is BFS carrying one extra bit
+    per node — and <a href="dfs.html">DFS's back-edge idea</a> for the cycle
+    half.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Traverse from any start, painting as you go: the start gets color A,
+  everything it discovers gets color B, everything <em>they</em> discover
+  gets A — always the opposite of your discoverer. Along the way, check
+  every edge. If an edge ever connects two same-colored nodes, the paint job
+  is impossible — and not just for your traversal:
+  <em>no</em> two-coloring can exist, because that same-color edge closes a
+  cycle of odd length, and around an odd cycle the colors must alternate
+  A,B,A,B,…,A — leaving the last edge connecting A to A no matter what.</p>
+  <p>So one linear-time traversal delivers a perfect dichotomy:
+  <strong>bipartite ⇔ no odd cycle</strong>, and whichever side is true, you
+  hold the evidence — either the completed coloring or the offending edge.
+  Answers-with-certificates is a theme that peaks in unit 11's
+  <a href="../11-expert/p-and-np.html">P vs NP</a>.</p>
+
+  <h2>Watch it run</h2>
+  <p>A hexagonal ring — even cycle, happily bipartite. Nodes get labeled
+  A/B as the ripple paints them. Now <strong>edit it</strong>: add one chord
+  edge creating an odd cycle (connect two nodes an even number of steps
+  apart, say two neighbors-of-neighbors) and run again — the check that
+  fails flashes the culprit pair red:</p>
+  <div class="demo">
+    <div id="editor"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Bipartite structure is the shape of <em>assignment</em>: workers/jobs,
+    students/projects, ads/slots, GPUs/training jobs — unit 5's
+    <a href="../05-graphs-advanced/matching.html">matching page</a> runs on
+    it. Two-coloring is conflict scheduling in miniature ("can these tasks
+    split across two machines with no conflicting pair together?"). Cycle
+    detection is the load-bearing half elsewhere: deadlock detectors on
+    waits-for graphs, "circular import" errors, circular foreign keys,
+    dependency cycles in agent pipelines — all the same back-edge test, and
+    the reason your bundler can warn you before production does.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Show the proof — odd cycle ⇔ not two-colorable</summary>
+    <div class="layer-body">
+      <p><strong>(⇒)</strong> Suppose the graph contains a cycle of odd
+      length k and, for contradiction, a valid two-coloring. Walk the cycle:
+      colors must alternate, so nodes at even positions match the start's
+      color and odd positions the other. After k steps you return to the
+      start — but k is odd, so the walk assigns the start the opposite of its
+      own color. Contradiction. <strong>(⇐)</strong> Suppose the traversal's
+      paint job fails: an edge {u, v} with u, v the same color. Both got
+      their colors along discovery paths from the same traversal root, and
+      same color means those path lengths have the same parity. The
+      root-to-u path, the edge {u, v}, and the v-to-root path close a walk of
+      odd total length — and any odd closed walk contains an odd simple
+      cycle inside it. So failure certifies an odd cycle. ∎</p>
+      <p>In plain English: even loops let two colors chase each other around
+      cleanly; odd loops force a color to bite its own tail.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Cycle detection per graph flavor — the practical cheat sheet</summary>
+    <div class="layer-body">
+      <p><strong>Undirected:</strong> any edge to an already-seen node that
+      isn't your direct discoverer closes a cycle — BFS or DFS both spot it.
+      A connected undirected graph with no cycle has exactly |V|−1 edges:
+      that's a <strong>tree</strong>, the boundary case
+      (<a href="../05-graphs-advanced/mst.html">MSTs</a> live there).
+      <strong>Directed:</strong> seen-before isn't enough — a diamond
+      a→b→d, a→c→d revisits d with no cycle. You need DFS's "still on my
+      current path" test (the back edge), or
+      <a href="topological-sort.html">Kahn's stall</a>. Using the undirected
+      test on a directed graph is a classic false-positive bug in homemade
+      dependency checkers.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function twoColor(graph) {
+  const adj = adjacency(graph);
+  const color = new Map();
+  for (const { id } of graph.nodes) {          // every component gets painted
+    if (color.has(id)) continue;
+    color.set(id, 0);
+    const queue = [id];
+    while (queue.length) {
+      const u = queue.shift();
+      for (const { to } of adj.get(u)) {
+        if (!color.has(to)) {
+          color.set(to, 1 - color.get(u));     // opposite of discoverer
+          queue.push(to);
+        } else if (color.get(to) === color.get(u)) {
+          return { bipartite: false, witness: [u, to] };  // odd cycle found
+        }
+      }
+    }
+  }
+  return { bipartite: true, color };
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Every graph so far arrived as an explicit node-and-edge list. The unit's
+  last page pulls the rug:
+  <a href="implicit-graphs.html">the most-searched graphs in software are
+  never stored at all</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "cycles-and-bipartite",
+    "questions": [
+      { "q": "The two-coloring attempt fails. What exactly has been proven?",
+        "choices": ["This particular traversal order was unlucky",
+                    "The graph contains an odd-length cycle, so NO two-coloring exists — the failing edge is a certificate, not bad luck",
+                    "The graph is disconnected"],
+        "answer": 1,
+        "explain": "The proof shows failure is order-independent: same-color conflict ⇒ odd closed walk ⇒ odd cycle ⇒ impossible for every algorithm, not just this run." },
+      { "q": "Why does the undirected cycle test (\"edge to an already-seen node that isn't my discoverer\") give false positives on directed graphs?",
+        "choices": ["Directed graphs have no cycles",
+                    "Two paths can converge on the same node (a→b→d, a→c→d) — seen twice, yet no way to loop back; directed cycles need the \"still on my current path\" back-edge test",
+                    "The seen-set doesn't work with arrows"],
+        "answer": 1,
+        "explain": "Diamonds are everywhere in dependency graphs (two modules importing the same util). A checker using the undirected test would cry \"circular import!\" at perfectly good code." },
+      { "q": "You must split a set of jobs across two machines, where certain pairs of jobs can't share a machine. What's the graph formulation?",
+        "choices": ["Find the shortest path between the two machines",
+                    "Nodes = jobs, edges = conflicting pairs; a valid split exists exactly when the conflict graph is bipartite — run two-coloring, and the colors ARE the machine assignment",
+                    "Count the connected components"],
+        "answer": 1,
+        "explain": "And if two-coloring fails, the odd cycle it hands you is the minimal knot of jobs making the split impossible — evidence you can show whoever wrote the constraints." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const hex = {
+        directed: false,
+        nodes: [
+          { id: "a", x: 0.30, y: 0.10 }, { id: "b", x: 0.70, y: 0.10 },
+          { id: "c", x: 0.90, y: 0.50 }, { id: "d", x: 0.70, y: 0.90 },
+          { id: "e", x: 0.30, y: 0.90 }, { id: "f", x: 0.10, y: 0.50 },
+        ],
+        edges: [
+          { u: "a", v: "b" }, { u: "b", v: "c" }, { u: "c", v: "d" },
+          { u: "d", v: "e" }, { u: "e", v: "f" }, { u: "f", v: "a" },
+        ],
+      };
+      const verdict = document.getElementById("verdict");
+
+      const state = {};
+      let editor, player = null;
+      function makeTracked() {
+        const g = editor ? editor.getGraph() : hex;
+        return function* tracked() {
+          state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+          for (const e of window.AlgoGraphs.twoColor(g)) {
+            window.AlgoGraphViz.applyEvent(state, e);
+            if (e.type === "visit") state.nodeLabel[e.u] = e.color === 0 ? "A" : "B";
+            if (e.type === "discover" && e.from !== null)
+              state.edgeState[window.AlgoGraphViz.edgeKey(e.from, e.u)] = "tree";
+            if (e.type === "cycle")
+              state.edgeState[window.AlgoGraphViz.edgeKey(e.nodes[0], e.nodes[1])] = "reject";
+            if (e.type === "done")
+              verdict.textContent = e.bipartite
+                ? "Bipartite — the two camps are the A-labels and the B-labels."
+                : "NOT bipartite — the red edge closes an odd cycle.";
+            yield e;
+          }
+        };
+      }
+
+      editor = window.AlgoGraphEditor.create(document.getElementById("editor"), {
+        graph: hex,
+        onChange: () => { if (player) player.reset(makeTracked()); },
+      });
+
+      const vizHost = document.createElement("div");
+      const stepperHost = document.getElementById("stepper");
+      stepperHost.parentNode.insertBefore(vizHost, stepperHost);
+      const viz = window.AlgoGraphViz.create(vizHost, { label: "Two-coloring animation", height: 340 });
+
+      player = window.AlgoSteps.player(stepperHost, {
+        make: makeTracked(),
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(editor.getGraph(), snap, event),
+        counters: { visit: "painted", check: "edge checks", cycle: "conflicts" },
+        describe: (e) =>
+          e.type === "visit" ? `${e.u} painted ${e.color === 0 ? "A" : "B"}` :
+          e.type === "discover" ? (e.from === null
+            ? `${e.u} starts a component — painted A by fiat`
+            : `${e.u} discovered by ${e.from} — gets the opposite color`) :
+          e.type === "check" ? `checking edge ${e.u} – ${e.v}` :
+          e.type === "cycle" ? `CONFLICT: ${e.nodes[0]} and ${e.nodes[1]} share a color — odd cycle certified` :
+          e.type === "done" ? (e.bipartite ? "success: a valid two-coloring" : "impossible — and we can prove it") : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P, NP and NP-completeness — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Expert track">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../10-labs/algorithm-gym.html|The gym">
+  <meta name="algo:next" content="reductions.html|Reductions in practice">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 11 · Expert track</p>
+  <h1>P, NP and NP-completeness</h1>
+  <p class="lede">Some problems in your backlog have no fast exact algorithm —
+  not because nobody clever has looked, but because they are provably as hard
+  as thousands of other problems that fifty years of clever people haven't
+  cracked. This page gives you the vocabulary to recognize them, and the
+  single most misunderstood definition in computer science: NP is about
+  <em>checking</em> answers, not finding them.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-sorting/sorting-lower-bound.html">The sorting lower
+    bound</a> (your first impossibility proof) and
+    <a href="../06-strategies/choosing-a-strategy.html">choosing a
+    strategy</a> (where "this smells NP-hard" was foreshadowed).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Everything here is about <strong>decision problems</strong> — questions
+  with yes/no answers ("is there a schedule meeting all constraints?") — and
+  cost measured as a function of input size, exactly as in unit 1.</p>
+  <p><strong>P</strong> is the class of decision problems <em>solvable</em>
+  in polynomial time — O(n), O(n²), O(n³)… Sorting-related questions,
+  shortest paths, max flow, 2-coloring: everything this course has solved
+  with an efficient algorithm lives here.</p>
+  <p><strong>NP</strong> is the class of problems whose yes-answers are
+  <em>verifiable</em> in polynomial time: if the answer is yes, there exists
+  a short <strong>certificate</strong> (a witness — the schedule itself, the
+  subset itself) that a polynomial-time checker can confirm. The name means
+  <em>nondeterministic polynomial</em> — <strong>not</strong> "not
+  polynomial". Every problem in P is also in NP (solving is one way of
+  verifying), so the real question is whether the containment is strict.</p>
+  <p><strong>NP-complete</strong> problems are the hardest in NP: every NP
+  problem reduces to each of them (next page's subject). Find a polynomial
+  algorithm for <em>any one</em> — SAT, traveling salesman, subset-sum, graph
+  coloring, thousands more — and every problem in NP collapses into P.
+  Nobody has. Nobody has proved it impossible either. That is the
+  P&nbsp;vs&nbsp;NP question, and there is literally a million-dollar prize
+  on it.</p>
+
+  <h2>Watch it run</h2>
+  <p>Subset-sum, the cleanest gap between solving and checking: 18 numbers,
+  does some subset add up to a target? The solver enumerates subsets — all
+  262,144 of them in the worst case. The verifier adds up one certificate.
+  Same instance, same question, wildly different work:</p>
+  <div class="demo">
+    <p style="font-family:var(--mono);font-size:0.9rem" id="instance"></p>
+    <div class="buttons">
+      <button type="button" class="action" id="solve-good">solve: target 900</button>
+      <button type="button" class="action" id="solve-bad">solve: target 904</button>
+      <button type="button" class="action secondary" id="verify">verify a certificate for 900</button>
+    </div>
+    <p class="readout" id="out">Pick a button. The counter is real — it counts subset checks actually performed.</p>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+  <p>Target 900 happens to be reachable — brute force finds it after
+  <strong>196,606</strong> subset checks. Target 904 is not reachable, and
+  the solver can only learn that by exhausting all
+  <strong>262,143</strong> non-empty subsets: brute force proves absence
+  only by exhaustion. The verifier, handed the 16 numbers of a valid
+  certificate, needs <strong>16 additions</strong>. That asymmetry —
+  exponential to find, polynomial to check — is NP's whole shape.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>More often than you'd think. Package managers solve dependency
+    resolution as SAT (Conda and Cargo's resolvers are literal SAT/CDCL
+    solvers). Compilers hit NP-hard register allocation (graph coloring) and
+    ship heuristics. Schedulers, timetablers, load balancers, chip placers,
+    route optimizers — all NP-hard in their exact forms. The engineering tell:
+    when a PM asks for "the optimal assignment" and the honest answer is "we
+    can have optimal-for-small-inputs, or good-enough-fast, pick one," you
+    are usually standing on an NP-hard problem. Naming it changes the
+    conversation from "work harder" to "choose a trade-off" — and the next
+    two pages are exactly those trade-offs.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer">
+    <summary>Why "nondeterministic", and the formal picture</summary>
+    <div class="layer-body">
+      <p>The original definition imagines a machine that can guess: a
+      <em>nondeterministic</em> machine solves a problem in polynomial time
+      if some sequence of lucky guesses reaches a yes-answer in polynomially
+      many steps. Guess the certificate, then verify it — which is why
+      "verifiable in polynomial time given a certificate" and "solvable in
+      nondeterministic polynomial time" are the same class. The verifier
+      view is the one to keep: it needs no imaginary hardware.</p>
+      <p>Formally: a language L is in NP if there's a polynomial-time
+      verifier V and a polynomial p such that x ∈ L exactly when there
+      exists a certificate c, with |c| ≤ p(|x|), making V(x, c) accept.
+      Note the one-sidedness: certificates witness <em>yes</em>. The class
+      of problems with short <em>no</em>-certificates is co-NP ("this
+      number is composite" has a yes-certificate: a factor; "this formula
+      is unsatisfiable" has no known short witness).</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Cook–Levin: why SAT is the first domino</summary>
+    <div class="layer-body">
+      <p>NP-completeness needs one problem proved hard from scratch, and
+      that's the Cook–Levin theorem (1971): <strong>SAT</strong> — is there
+      a true/false assignment satisfying a Boolean formula? — is NP-complete.
+      The proof idea is mechanical rather than mysterious: any polynomial-time
+      verifier is a machine; a machine's step-by-step execution on a given
+      input can be written out as a (large but polynomial) Boolean formula
+      whose variables are "bit b of the machine's state at step t"; the
+      formula is satisfiable exactly when some certificate makes the
+      verifier accept. So <em>every</em> NP problem's solving reduces to
+      SAT-solving. After that first domino, nobody proves hardness from
+      scratch again — you reduce SAT (or any fallen domino) to your problem,
+      which is the next page.</p>
+      <p>Terminology worth keeping straight: <strong>NP-hard</strong> = at
+      least as hard as everything in NP (may not itself be in NP — e.g.
+      optimization versions, or halting-type problems);
+      <strong>NP-complete</strong> = NP-hard <em>and</em> in NP.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>What would P = NP actually mean?</summary>
+    <div class="layer-body">
+      <p>Less "faster apps", more "different civilization": public-key
+      cryptography as deployed assumes certain NP problems (factoring-like)
+      have no polynomial algorithm; mathematical proof search becomes
+      feasible (a proof is a certificate — checking one is easy, finding one
+      is the hard part); most of operations research collapses into exact
+      optimization. The expert consensus leans strongly toward P ≠ NP —
+      partly because half a century of independent attacks from logic,
+      combinatorics and geometry all bounced — but a proof of either
+      direction would be one of the results of the century. Meanwhile,
+      engineering proceeds as if P ≠ NP, which is what units 6 and this one
+      train you to do well.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's two halves — the entire point of this page is their gap.
+function solve(values, target) {              // O(2^n · n): try every subset
+  let checks = 0;
+  for (let mask = 1; mask &lt; 1 &lt;&lt; values.length; mask++) {
+    checks++;
+    let sum = 0;
+    for (let i = 0; i &lt; values.length; i++)
+      if (mask &amp; (1 &lt;&lt; i)) sum += values[i];
+    if (sum === target) return { found: true, checks };
+  }
+  return { found: false, checks };            // "no" costs the full 2^n − 1
+}
+
+function verify(certificate, target) {        // O(n): NP's defining move
+  return certificate.reduce((a, b) =&gt; a + b, 0) === target;
+}</code></pre>
+  <p class="hint">Unit 6's dynamic programming gives subset-sum an
+  O(n·target) algorithm — pseudo-polynomial, exponential in the <em>bit
+  length</em> of the target, exactly as the
+  <a href="../06-strategies/dp-knapsack.html">knapsack page</a> warned. It
+  doesn't put subset-sum in P, but it's why "NP-hard" never means "give
+  up"; it means "know which lever you're pulling".</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>How do we know thousands of problems are all NP-complete without
+  proving each from scratch? By translation:
+  <a href="reductions.html">reductions</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "p-and-np",
+    "questions": [
+      { "q": "What does NP stand for, and what does membership in NP actually promise?",
+        "choices": ["Not Polynomial — the problem cannot be solved in polynomial time",
+                    "Nondeterministic Polynomial — a yes-answer has a certificate checkable in polynomial time; nothing is claimed about how hard FINDING one is",
+                    "Nearly Polynomial — solvable in slightly-worse-than-polynomial time"],
+        "answer": 1,
+        "explain": "The most-repeated error in the field. P ⊆ NP: easy problems are also easy to check. NP is a verification class, not a difficulty rating." },
+      { "q": "The demo's solver reported 'no subset sums to 904' only after 262,143 checks. Why couldn't it stop sooner?",
+        "choices": ["A bug — it should binary-search the targets",
+                    "Brute force has no certificate for 'no': absence is proved only by exhausting every candidate. Short no-certificates are exactly what co-NP asks about, and subset-sum isn't known to have them",
+                    "It could have stopped at half by symmetry"],
+        "answer": 1,
+        "explain": "The yes/no asymmetry is structural. A found subset ends the search instantly; 'no such subset' is a claim about all 2^n of them." },
+      { "q": "Your team's constraint-scheduling feature is exactly weighted job-shop scheduling, which is NP-hard. The professional response?",
+        "choices": ["Keep optimizing the exact search — a clever enough engineer will find the polynomial algorithm",
+                    "Recognize the complexity class, then choose deliberately: exact search for small n, approximation or heuristics beyond, or hand it to a SAT/ILP solver — and set the 'optimal' expectation with stakeholders",
+                    "The feature is impossible; cut it"],
+        "answer": 1,
+        "explain": "NP-hard forbids none of: small-instance exactness, provable approximations, or excellent-in-practice solvers. It forbids promising fast exact optimality at scale — knowing that IS the seniority." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Seed 11 via AlgoRandom's mulberry32 — quoted counts in prose depend on it.
+      const VALUES = [56, 57, 64, 63, 86, 58, 17, 57, 64, 50, 53, 85, 47, 70, 71, 24, 26, 34];
+      const CERT_900 = [57, 64, 63, 86, 58, 17, 57, 64, 50, 53, 85, 47, 70, 71, 24, 34];
+      const out = document.getElementById("out");
+      const verdict = document.getElementById("verdict");
+      document.getElementById("instance").textContent =
+        "values = [" + VALUES.join(", ") + "]   (18 numbers → 262,143 non-empty subsets)";
+
+      function solve(target) {
+        const t0 = performance.now();
+        let checks = 0;
+        for (let mask = 1; mask < (1 << VALUES.length); mask++) {
+          checks++;
+          let sum = 0;
+          for (let i = 0; i < VALUES.length; i++) if (mask & (1 << i)) sum += VALUES[i];
+          if (sum === target) return { found: true, mask, checks, ms: performance.now() - t0 };
+        }
+        return { found: false, mask: 0, checks, ms: performance.now() - t0 };
+      }
+
+      document.getElementById("solve-good").addEventListener("click", () => {
+        const r = solve(900);
+        const subset = VALUES.filter((_, i) => r.mask & (1 << i));
+        out.textContent = `SOLVER: found [${subset.join(" + ")}] = 900 after ` +
+          `${r.checks.toLocaleString()} subset checks (${r.ms.toFixed(1)} ms).`;
+        verdict.textContent = "Finding took ~200k checks. Now try verifying.";
+      });
+      document.getElementById("solve-bad").addEventListener("click", () => {
+        const r = solve(904);
+        out.textContent = `SOLVER: no subset sums to 904 — and it took all ` +
+          `${r.checks.toLocaleString()} subset checks (${r.ms.toFixed(1)} ms) to be sure.`;
+        verdict.textContent = "Brute force proves 'no' only by exhaustion.";
+      });
+      document.getElementById("verify").addEventListener("click", () => {
+        const t0 = performance.now();
+        let sum = 0, adds = 0;
+        for (const v of CERT_900) { sum += v; adds++; }
+        out.textContent = `VERIFIER: certificate [${CERT_900.join(" + ")}] sums to ${sum} — ` +
+          `${sum === 900 ? "accepted" : "rejected"} after ${adds} additions ` +
+          `(${(performance.now() - t0).toFixed(3)} ms).`;
+        verdict.textContent =
+          "196,606 checks to find vs 16 additions to check — the P-vs-NP gap, measured.";
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

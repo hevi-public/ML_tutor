@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beam search — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="tokenizers.html|Tokenizers: tries meet BPE">
+  <meta name="algo:next" content="caching.html|Caching and eviction">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Beam search: exploring an exponential tree on a budget</h1>
+  <p class="lede">Generating a sentence is walking an implicit tree where
+  every node is a partial text and every edge appends one token — a
+  branching factor of fifty thousand, a depth of hundreds. Exhaustive
+  search is off by dozens of orders of magnitude; pure greed takes the
+  best next token and gets trapped by it. Beam search is the standing
+  compromise: keep the k best partial paths, extend them all, keep the k
+  best again.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/implicit-graphs.html">States-as-nodes</a> (this
+    is that page's biggest graph), <a href="../05-graphs-advanced/astar.html">
+    best-first search</a>, and <a href="tokenizers.html">tokens</a> as the
+    edges.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Score a partial sequence by its total log-probability (sums, not
+  products — unit 1's log toolkit keeping numbers sane). Greedy decoding
+  (k = 1) commits to the single best token each step; the classic failure
+  is a locally-great token leading somewhere globally poor — the garden
+  path. Beam search widens the commitment: at each step, extend all k
+  survivors by every candidate token, score the extensions, keep the top
+  k <em>sequences</em>. It's A*'s frontier with a hard size cap and no
+  admissible heuristic — which surrenders the optimality guarantee (the
+  best full sequence can fall off the beam early) in exchange for a fixed
+  compute budget: k× the cost of greedy, tunable.</p>
+
+  <h2>Watch it run</h2>
+  <p>A toy bigram "language model" (transition probabilities over a tiny
+  vocabulary — <span class="sim-note" style="padding:0.1rem 0.3rem">a real
+  LLM scores with a transformer; the search around it is identical</span>).
+  Greedy runs first and garden-paths itself. Then beam k=3: watch a
+  sequence that started weaker overtake and win:</p>
+  <div class="demo">
+    <div id="beams" style="font-family:var(--mono);font-size:0.9rem;line-height:2"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Machine translation and speech recognition shipped on beam search
+    for a decade (it still runs Whisper's decoder and most production
+    MT). Chat LLMs mostly use <em>sampling</em> instead (temperature,
+    top-p) — beams optimize for the single most probable text, which
+    reads repetitive and "safe" in open-ended generation; sampling trades
+    probability mass for diversity. But the beam mindset — k survivors
+    under a budget — reappears wherever LLM systems search: self-
+    consistency (sample k reasoning chains, vote), tree-of-thought
+    agents (k plans kept alive, weakest pruned), and code generators
+    keeping k candidates for the test suite to judge. Constrained
+    decoding composes directly: intersect each step's candidates with a
+    trie of grammatically legal tokens (unit 7) and the beam only ever
+    holds valid JSON.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Beam search in the strategy taxonomy</summary>
+    <div class="layer-body">
+      <p>Place it on unit 6's map: greedy explores one path; A* explores
+      best-first with a completeness guarantee (admissible h, unbounded
+      frontier); exhaustive search explores everything; beam search is
+      best-first with a <em>fixed-size frontier</em> — a heuristic
+      without guarantees, chosen because the state space is 50,000-ary
+      and guarantees are unaffordable. Known limitations are part of the
+      craft: beams collapse (all k survivors sharing a prefix — diversity
+      penalties exist), and raw log-prob sums favor short sequences
+      (fixed by length normalization — dividing by lengthᵅ, a knob every
+      MT system exposes). The professional stance the whole course has
+      rehearsed: know which guarantee you gave up, and measure what it
+      costs on your workload.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact loop, events elided:
+function beamSearch(model, k, steps) {
+  let beams = [{ seq: ["&lt;s&gt;"], score: 0 }];
+  for (let t = 0; t < steps; t++) {
+    const candidates = [];
+    for (const b of beams) {
+      for (const [tok, logp] of model.next(b.seq)) {   // every continuation
+        candidates.push({ seq: [...b.seq, tok], score: b.score + logp });
+      }
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    beams = candidates.slice(0, k);      // survival of the k fittest SEQUENCES
+  }
+  return beams[0];                       // best complete path that survived
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Search costs compute; the next page is about not paying twice —
+  <a href="caching.html">caching and eviction</a>, from LRU to the
+  KV-cache that makes generation affordable at all.</p>
+
+  <script type="application/json" class="symbols">
+  { "k": { "name": "k — the beam width", "pron": "say: kay",
+           "means": "how many partial sequences survive each step; k=1 is greedy, k=∞ is exhaustive", "short": "beam width" },
+    "logp": { "name": "log P — sequence score", "pron": "say: log pee",
+           "means": "the sum of per-token log-probabilities; sums replace products so tiny numbers stay computable", "short": "log-probability" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "beam-search",
+    "questions": [
+      { "q": "What exactly does beam search give up relative to A*, and why?",
+        "choices": ["It cannot use scores",
+                    "Completeness/optimality: the hard cap of k survivors can evict the prefix of the true best sequence before its quality shows — accepted because a 50,000-way branching factor makes an unbounded frontier unaffordable",
+                    "It only works on text"],
+        "answer": 1,
+        "explain": "A*'s guarantee rested on an unbounded frontier plus admissible optimism. Beam search keeps the best-first discipline, caps the memory, and converts the guarantee into a measured risk." },
+      { "q": "Why do chat assistants mostly SAMPLE instead of beam-searching, when beams find more probable text?",
+        "choices": ["Beam search is too slow for chat",
+                    "Most-probable is not most-useful in open-ended generation: beams concentrate on safe, repetitive high-probability text, while sampling (temperature/top-p) trades probability for the diversity conversation actually needs",
+                    "Sampling is deterministic and cacheable"],
+        "answer": 1,
+        "explain": "The objective differs by task: translation has a near-unique right answer (beams shine); conversation doesn't. Choosing the decoder IS choosing what 'good output' means." },
+      { "q": "How does constrained decoding guarantee an LLM emits valid JSON?",
+        "choices": ["A regex repairs the output afterwards",
+                    "At every step, the candidate set is intersected with the tokens a grammar/trie of legal continuations allows — invalid branches never enter the beam, so every surviving sequence is valid by construction",
+                    "The model is fine-tuned on JSON only"],
+        "answer": 1,
+        "explain": "Unit 7's trie meets this page's search: legality as a walk through allowed continuations. Guarantee-by-construction beats repair-by-postprocessing — the same instinct as prefix-free codes." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Toy bigram model. Designed so greedy garden-paths:
+      // from <s>, "the" (0.6) beats "a" (0.4); but "the"'s continuations are
+      // mediocre while "a" leads to a strong finish.
+      const MODEL = {
+        "<s>": { the: 0.6, a: 0.4 },
+        the: { cat: 0.4, dog: 0.35, end: 0.25 },
+        a: { swift: 0.75, cat: 0.25 },
+        cat: { sat: 0.5, end: 0.5 },
+        dog: { sat: 0.45, end: 0.55 },
+        swift: { fox: 0.9, end: 0.1 },
+        sat: { end: 1.0 },
+        fox: { leaps: 0.85, end: 0.15 },
+        leaps: { end: 1.0 },
+        end: {},
+      };
+      const STEPS = 4, K = 3;
+      const beamsHost = document.getElementById("beams");
+      const verdict = document.getElementById("verdict");
+      const lp = (p) => Math.log(p);
+      const fmt = (b) => `${b.seq.slice(1).join(" ")}  (${b.score.toFixed(2)})`;
+
+      const state = {};
+      function* tracked() {
+        state.rows = []; state.phase = "greedy";
+        // Greedy
+        let g = { seq: ["<s>"], score: 0 };
+        for (let t = 0; t < STEPS; t++) {
+          const opts = Object.entries(MODEL[g.seq[g.seq.length - 1]] || {});
+          if (!opts.length) break;
+          const [tok, p] = opts.sort((a, b) => b[1] - a[1])[0];
+          g = { seq: [...g.seq, tok], score: g.score + lp(p) };
+          state.rows = [{ label: "greedy", text: fmt(g), hot: true }];
+          yield { type: "visit", phase: "greedy", tok, p, t };
+        }
+        const greedyResult = g;
+        // Beam
+        state.phase = "beam";
+        let beams = [{ seq: ["<s>"], score: 0 }];
+        for (let t = 0; t < STEPS; t++) {
+          const candidates = [];
+          for (const b of beams) {
+            const opts = Object.entries(MODEL[b.seq[b.seq.length - 1]] || {});
+            if (!opts.length) { candidates.push(b); continue; }
+            for (const [tok, p] of opts)
+              candidates.push({ seq: [...b.seq, tok], score: b.score + lp(p) });
+          }
+          candidates.sort((a, b) => b.score - a.score);
+          const survivors = candidates.slice(0, K);
+          const cut = candidates.slice(K);
+          beams = survivors;
+          state.rows = [
+            { label: "greedy", text: fmt(greedyResult), hot: false },
+            ...survivors.map((b, i) => ({ label: "beam#" + (i + 1), text: fmt(b), hot: true })),
+            ...cut.slice(0, 2).map((b) => ({ label: "cut", text: fmt(b), cut: true })),
+          ];
+          yield { type: "round", t: t + 1, kept: survivors.length, cut: cut.length };
+        }
+        const best = beams[0];
+        verdict.textContent = `Greedy: "${greedyResult.seq.slice(1).join(" ")}" (${greedyResult.score.toFixed(2)}). ` +
+          `Beam k=${K}: "${best.seq.slice(1).join(" ")}" (${best.score.toFixed(2)}) — ` +
+          `the path through the initially-weaker "a" overtook. Higher score = more probable overall.`;
+        yield { type: "done" };
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ rows: (state.rows || []).map((r) => ({ ...r })) }),
+        render: (snap) => {
+          beamsHost.innerHTML = snap.rows.map((r) =>
+            `<div style="${r.cut ? "opacity:0.45;text-decoration:line-through;" : ""}` +
+            `${r.hot ? "color:var(--accent);" : ""}">` +
+            `<span style="display:inline-block;min-width:5.5rem;color:var(--text-soft)">${r.label}</span>` +
+            `${r.text}</div>`).join("");
+        },
+        counters: { round: "beam rounds", visit: "greedy steps" },
+        speed: 1.5,
+        describe: (e) =>
+          e.type === "visit" ? `greedy commits to "${e.tok}" (p=${e.p}) — best NOW, no lookahead` :
+          e.type === "round" ? `beam round ${e.t}: all continuations scored, top ${e.kept} sequences survive, ${e.cut} cut` :
+          e.type === "done" ? "done — compare the totals above" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

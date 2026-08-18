@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tries — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Strings">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="rabin-karp.html|Rabin-Karp and rolling hashes">
+  <meta name="algo:next" content="suffix-arrays.html|Suffix arrays">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/strings.js"></script>
+  <script defer src="../assets/js/viz/layout.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Strings</p>
+  <h1>Tries: the dictionary that shares its prefixes</h1>
+  <p class="lede">Store words as <em>paths</em> in a tree — one character
+  per edge — and words sharing a prefix share a path. Lookup costs the
+  word's length, independent of how many words are stored, and the
+  structure answers a question hash tables can't touch: "what starts with
+  <code>car</code>?" — the query behind every autocomplete box.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hash tables</a> — the
+    rival to beat on the prefix question — and
+    <a href="../02-structures/binary-search-trees.html">trees</a>
+    generally.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The root is the empty string; each edge adds a character; a node is
+  marked when the path spelling it is a stored word. Insert = walk the
+  word's characters, creating nodes as needed; lookup = the same walk
+  without creating. Both O(word length) — <em>not</em> O(dictionary
+  size). The prefix superpower falls out structurally: everything
+  starting with <code>car</code> lives in the subtree under the
+  c-a-r path, so autocomplete is "walk the prefix, then enumerate the
+  subtree" — impossible for a hash table, whose scattering of keys is
+  the exact opposite of prefix locality.</p>
+  <p>The cost is per-node child pointers — naive arrays of alphabet size
+  burn memory, so real tries use child maps, or compress single-child
+  chains into multi-character edges (<strong>radix/Patricia trees</strong>),
+  the variant production systems actually run.</p>
+
+  <h2>Watch it run</h2>
+  <p>Insert <code>car, cart, care, dog, dot</code> — watch shared
+  prefixes reuse the existing path (only the new suffix builds nodes).
+  Then a lookup for the prefix <code>car</code> walks green and collects
+  the subtree — the autocomplete answer:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Autocomplete and typeahead everywhere; IP routing tables — longest-
+    prefix match over bit-tries is how routers pick next hops (Patricia
+    tries were born for this); spell-checkers and word games; the
+    inverted-index term dictionaries inside search engines (often as
+    FSTs — tries with shared suffixes too). In the LLM stack:
+    <strong>tokenizer vocabularies are trie-shaped</strong> — encoding
+    walks the trie for the longest known token at each position
+    (unit 9's tokenizer page runs on this idea), and constrained/guided
+    decoding walks a trie of allowed continuations to force valid JSON
+    or grammar. Aho-Corasick (KMP's failure links grafted onto a trie)
+    scans for thousands of patterns at once in moderation pipelines.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Trie vs hash table — the honest matchup</summary>
+    <div class="layer-body">
+      <p>Exact lookup: both O(word length) in practice (the hash also
+      reads every character to hash it) — the hash table usually wins on
+      constants and memory locality. Prefix queries, ordered iteration,
+      longest-prefix match: trie only. Memory: naive tries lose badly
+      (a node per character, pointer-heavy); radix compression, alphabet
+      reduction (bit-tries), and array-packed layouts (double-array
+      tries, FSTs) close the gap and then some — a production FST can be
+      smaller than the sorted word list itself. Rule of thumb: hash for
+      "is this exact key present", trie family the moment the word
+      "prefix" appears in the requirements.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/strings.js), events elided:
+const trieNode = () => ({ children: {}, word: false });
+
+function insert(root, word) {
+  let node = root;
+  for (const ch of word) {
+    if (!node.children[ch]) node.children[ch] = trieNode();  // extend path
+    node = node.children[ch];              // shared prefixes walk, not build
+  }
+  node.word = true;                        // mark "a word ends here"
+}
+
+function completions(root, prefix) {
+  let node = root;
+  for (const ch of prefix) {
+    if (!node.children[ch]) return [];     // nothing starts with this
+    node = node.children[ch];
+  }
+  return collect(node, prefix);            // everything below = the answers
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Tries index a <em>set of words</em> by prefix. The unit's finale
+  indexes <em>one long text</em> for arbitrary substring queries —
+  <a href="suffix-arrays.html">suffix arrays</a>, the structure under
+  full-text search and genome browsers.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "tries",
+    "questions": [
+      { "q": "Why is trie lookup O(word length) rather than O(number of stored words)?",
+        "choices": ["Tries keep words sorted",
+                    "The walk touches one node per character of the QUERY — the rest of the dictionary, however huge, is simply never visited",
+                    "Hashing accelerates each step"],
+        "answer": 1,
+        "explain": "Cost scales with the question, not the collection — the same property that made adjacency lists and BSTs efficient. A billion-word trie answers 'cart?' in 4 steps." },
+      { "q": "Why can't a hash table serve autocomplete?",
+        "choices": ["Hash tables are too slow",
+                    "Hashing deliberately scatters similar keys — 'car' and 'cart' land nowhere near each other, so 'everything starting with car' requires scanning every key. The trie stores that answer as a subtree",
+                    "Hash tables can't store strings"],
+        "answer": 1,
+        "explain": "The scattering that makes hash lookups O(1) is precisely what destroys prefix locality. Choosing structures = choosing which queries are cheap — unit 2's lesson, sharpened." },
+      { "q": "A router must match 203.0.113.7 against 500k CIDR prefixes, taking the LONGEST match. Why is a bit-trie the classic answer?",
+        "choices": ["Routers can't run hash functions",
+                    "Walking the address's bits descends through every stored prefix of it in one pass — remember the deepest marked node and you have longest-prefix match in ≤32 steps, no per-prefix scan",
+                    "Bit-tries compress better than lists"],
+        "answer": 1,
+        "explain": "Longest-prefix match IS a root-to-leaf trie walk. The same shape serves tokenizers finding the longest known token at a position — one structure, packets to prompts." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const WORDS = ["car", "cart", "care", "dog", "dot"];
+      const verdict = document.getElementById("verdict");
+
+      // Convert the live trie into a laid-out graph model each step.
+      function trieToGraph(root) {
+        let uid = 0;
+        const tree = { id: "ε", label: "ε", children: [] };
+        (function build(node, vizNode, path) {
+          for (const ch of Object.keys(node.children).sort()) {
+            const child = node.children[ch];
+            const v = { id: path + ch, label: ch + (child.word ? "·" : ""), children: [] };
+            vizNode.children.push(v);
+            build(child, v, path + ch);
+          }
+        })(root, tree, "");
+        const layout = window.AlgoLayout.tidyTree(tree);
+        const nodes = layout.nodes.map((n) => ({
+          id: n.id, label: n.label || n.id,
+          x: 0.06 + n.x * 0.88, y: 0.08 + n.y * 0.84,
+        }));
+        const edges = layout.links.map((l) => ({ u: l.from.id, v: l.to.id }));
+        return { directed: false, nodes, edges };
+      }
+
+      const state = {};
+      function* tracked() {
+        const root = window.AlgoStrings.trieNode();
+        state.graph = trieToGraph(root);
+        state.nodeState = {}; state.completions = null;
+        for (const w of WORDS) {
+          for (const e of window.AlgoStrings.trieInsert(root, w)) {
+            if (e.type === "node") {
+              state.graph = trieToGraph(root);
+              state.nodeState = { [e.path]: e.made ? "frontier" : "visited" };
+            }
+            yield { ...e, word: w };
+          }
+        }
+        state.nodeState = {};
+        for (const e of window.AlgoStrings.trieLookup(root, "car")) {
+          if (e.type === "node") state.nodeState[e.path] = "settled";
+          if (e.type === "done") {
+            state.completions = e.completions;
+            for (const c of e.completions) state.nodeState[c] = "visited";
+            verdict.textContent = `completions("car") → ${e.completions.join(", ")} — the subtree under c-a-r, read off directly.`;
+          }
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Trie", height: 320, r: 15 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          graph: state.graph, nodeState: state.nodeState || {} })),
+        render: (snap, event) => {
+          if (snap.graph) viz.draw(snap.graph, { nodeState: snap.nodeState }, event);
+        },
+        counters: { node: "steps walked", word: "words stored" },
+        describe: (e) =>
+          e.type === "node" && e.miss ? `no '${e.ch}' child — nothing starts with this prefix` :
+          e.type === "node" ? (e.made
+            ? `'${e.ch}' node created — "${e.word ?? e.path}" is breaking new ground`
+            : `'${e.ch}' already exists — shared prefix, walk on`) :
+          e.type === "word" ? `"${e.word}" marked complete at its node (· in the label)` :
+          e.type === "done" ? (e.found
+            ? `prefix walk done — collect the subtree: ${e.completions.join(", ")}`
+            : "prefix not present") : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Why visualise? — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Visualisation">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../07-strings/suffix-arrays.html|Suffix arrays">
+  <meta name="algo:next" content="drawing-trees.html|Drawing trees">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Visualisation</p>
+  <h1>Why visualise? Because eyes run O(1) queries</h1>
+  <p class="lede">This course has been drawing at you for seven units —
+  bars, trees, graphs, grids, tables. This unit opens the hood: drawing
+  data well is itself algorithms (layout is optimization), and choosing
+  <em>what kind</em> of picture is a design decision with rules. First,
+  the case for pictures at all — and for when to refuse them.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing formal. This unit explains machinery you've already used:
+    every renderer in <code>assets/js/viz/</code> becomes a lesson.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Human vision is a massively parallel preattentive processor: outliers,
+  clusters, trends, and gaps in a good picture are perceived in
+  milliseconds, before conscious attention — a query engine that runs
+  O(1) on questions that cost code O(n log n). A visualization is an
+  <em>encoding</em>: data values mapped onto visual channels. The
+  channels are not equal, and their accuracy ranking (Cleveland &amp;
+  McGill's experiments, 1984) is the field's core result:</p>
+  <ol>
+    <li><strong>Position</strong> along a common scale (scatter, dot plots) — best;</li>
+    <li><strong>Length</strong> (bars) — nearly as good;</li>
+    <li><strong>Angle / slope</strong> (pie charts, line slopes);</li>
+    <li><strong>Area</strong> (bubbles, treemaps);</li>
+    <li><strong>Color hue / saturation</strong> (heatmaps) — worst for
+    reading <em>values</em>, still superb for spotting <em>categories
+    and anomalies</em>.</li>
+  </ol>
+  <p>Design rule one: spend the best channels on the most important
+  quantities. Rule two: a picture that <em>can't</em> mislead beats a
+  prettier one that can — axis truncation, area-for-value, and rainbow
+  colormaps are the classic lies. Rule three: sometimes the answer is a
+  table; if the task is "look up exact values", drawing is overhead.</p>
+
+  <h2>See it</h2>
+  <p>The same 40 response-time samples, three encodings. Find the anomaly
+  in each — and notice your own latency doing it:</p>
+  <div class="demo">
+    <p class="hint" style="margin-top:0">As numbers:</p>
+    <div id="as-numbers" style="font-family:var(--mono);font-size:0.82rem;line-height:1.7"></div>
+    <p class="hint">As color (a heat strip — the anomaly pops, its value stays vague):</p>
+    <canvas id="as-heat" width="860" height="34" style="width:100%;height:auto"></canvas>
+    <p class="hint">As position/length (bars — pop AND readable value):</p>
+    <canvas id="as-bars" width="860" height="120" style="width:100%;height:auto"></canvas>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Dashboards live or die by channel choice: p99 latency as position
+    (line chart) versus as a color badge is the difference between seeing
+    a regression trend and missing it. Distributed-trace waterfalls are
+    Gantt encodings of span trees; flame graphs encode call stacks as
+    nested lengths — both are unit-8 layout algorithms in daily ops use.
+    And in ML work, embedding projections (this unit's last page),
+    attention heatmaps, and training-curve dashboards are how anyone
+    debugs what a model is doing. The skill of "which picture answers
+    this question" is as transferable as any algorithm in the
+    course.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>This course's own choices, annotated</summary>
+    <div class="layer-body">
+      <p>Every demo you've used was a channel decision. Arrays → bars
+      (length: values readable, swaps visible). Sorting's settled
+      elements → color (category "done", not a value). Graph distances →
+      <em>text labels</em> above nodes — numbers beat any channel when
+      exact values matter and n is small. The DP tables → literal tables,
+      because the recurrence reads cell values and you should too. The
+      complexity chart → position on a shared scale, measured dots versus
+      claimed curve, because comparing two growth shapes is exactly what
+      position does best. Maze search → a color grid, because the
+      question is regional (where has the frontier reached?), not
+      numeric. When you build an internal tool, run this audit: what's
+      the user's question, which channel answers it at a glance, what
+      could the encoding accidentally claim?</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Encodings chosen, the hard part remains: <em>where do things go?</em>
+  Layout is algorithms — <a href="drawing-trees.html">trees</a> first
+  (the course's own tidy-tree code), then
+  <a href="drawing-graphs.html">force-directed graphs</a>,
+  <a href="drawing-dags.html">layered DAGs</a>,
+  <a href="matrices-and-maps.html">matrices and treemaps</a>, and
+  <a href="projections.html">projections of high-dimensional data</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "why-visualise",
+    "questions": [
+      { "q": "Per the channel-accuracy ranking, why do bars beat pie charts for comparing quantities?",
+        "choices": ["Bars are more traditional",
+                    "Bars encode values as lengths on a common scale (rank 2); pies encode them as angles/areas (ranks 3–4) — human judgments of length are simply measurably more accurate",
+                    "Pies can't show more than 5 values"],
+        "answer": 1,
+        "explain": "This isn't taste — it's Cleveland & McGill's measured perception error. Same data, different channel, different reading accuracy. Spend good channels on important numbers." },
+      { "q": "The heat strip made the anomaly pop but its value vague. When is color the RIGHT channel anyway?",
+        "choices": ["When printing in black and white",
+                    "When the task is detection or categorization over many items — anomaly in a sea of normal, category membership, regions in a maze — rather than reading magnitudes",
+                    "Color is never right"],
+        "answer": 1,
+        "explain": "Channels are task-relative: color is a superb 'where should I look?' channel and a poor 'how much exactly?' channel. Heatmaps + a way to drill into numbers is the classic combo." },
+      { "q": "A teammate's dashboard shows revenue as circle AREAS, and doubling revenue looks like far more than double. What went wrong?",
+        "choices": ["The circles are too small",
+                    "Area encoding with radius scaled to value: doubling the radius quadruples the area, visually exaggerating growth — a textbook misleading encoding; use length/position, or scale area (not radius) to value",
+                    "Nothing — bigger is bigger"],
+        "answer": 1,
+        "explain": "The radius-vs-area bug is the most common honest-mistake lie in business graphics. Encodings make implicit quantitative claims; auditing them is part of reviewing a dashboard PR." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 40 latency samples, one anomaly, seeded.
+      const vals = window.AlgoRandom.ints(40, 18, 42, 4242);
+      vals[27] = 96;                                   // the incident
+
+      document.getElementById("as-numbers").textContent = vals.join("  ");
+
+      const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+      const heat = document.getElementById("as-heat").getContext("2d");
+      const W = 860, cw = W / vals.length;
+      const max = Math.max(...vals);
+      vals.forEach((v, i) => {
+        const t = v / max;
+        heat.fillStyle = `hsl(${140 - t * 140}, 65%, ${62 - t * 22}%)`;
+        heat.fillRect(i * cw, 0, cw - 1, 34);
+      });
+
+      const bars = document.getElementById("as-bars").getContext("2d");
+      vals.forEach((v, i) => {
+        const h = (v / max) * 112;
+        bars.fillStyle = v > 80 ? (cssVar("--bad") || "#b91c1c") : (cssVar("--accent") || "#047857");
+        bars.fillRect(i * cw, 120 - h, cw - 2, h);
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

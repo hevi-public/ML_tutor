@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concept map — Algorithms Tutor</title>
+
+  <meta name="algo:root" content="./">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/progress.js"></script>
+  <script defer src="assets/js/algo/random.js"></script>
+  <script defer src="assets/js/viz/layout.js"></script>
+</head>
+<body>
+<main class="wide">
+  <h1>The concept map</h1>
+  <p class="lede">Every page of the course as one graph: solid edges are the
+  reading order, dashed edges are ideas paying off in later units. And true
+  to <a href="08-visualisation/drawing-graphs.html">unit 8's promise</a>,
+  the layout you're watching is computed live by the course's own
+  force-directed generator — the exact code from the drawing-graphs demo,
+  eating its own dog food. Click any node to go there; green means you've
+  finished its quiz.</p>
+
+  <div class="buttons" style="margin-bottom:0.4rem">
+    <button type="button" class="action secondary" id="relayout">re-run the layout (new seed)</button>
+    <span class="hint" id="map-status" style="margin:0"></span>
+  </div>
+  <div style="overflow-x:auto">
+    <svg id="concept-map" viewBox="0 0 1240 820" width="100%" role="img"
+         aria-label="Concept map of the whole course" style="min-width:1100px"></svg>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+    // [unit, path] — label is the slug; unit index colors the node.
+    const PAGES = [
+      [0, "00-start/how-this-works.html"], [0, "00-start/what-is-an-algorithm.html"], [0, "00-start/self-assessment.html"],
+      [1, "01-foundations/counting-steps.html"], [1, "01-foundations/big-o.html"], [1, "01-foundations/recursion.html"],
+      [1, "01-foundations/recurrences.html"], [1, "01-foundations/math-toolkit.html"], [1, "01-foundations/proving-correctness.html"],
+      [1, "01-foundations/amortized-analysis.html"],
+      [2, "02-structures/arrays-and-lists.html"], [2, "02-structures/stacks-and-queues.html"], [2, "02-structures/hash-tables.html"],
+      [2, "02-structures/binary-search-trees.html"], [2, "02-structures/balanced-trees.html"], [2, "02-structures/heaps.html"],
+      [2, "02-structures/union-find.html"],
+      [3, "03-sorting/binary-search.html"], [3, "03-sorting/elementary-sorts.html"], [3, "03-sorting/merge-sort.html"],
+      [3, "03-sorting/quicksort.html"], [3, "03-sorting/heapsort.html"], [3, "03-sorting/counting-radix-bucket.html"],
+      [3, "03-sorting/sorting-lower-bound.html"], [3, "03-sorting/quickselect.html"],
+      [4, "04-graphs/what-is-a-graph.html"], [4, "04-graphs/bfs.html"], [4, "04-graphs/dfs.html"],
+      [4, "04-graphs/topological-sort.html"], [4, "04-graphs/connectivity.html"], [4, "04-graphs/cycles-and-bipartite.html"],
+      [4, "04-graphs/implicit-graphs.html"],
+      [5, "05-graphs-advanced/dijkstra.html"], [5, "05-graphs-advanced/bellman-ford.html"], [5, "05-graphs-advanced/floyd-warshall.html"],
+      [5, "05-graphs-advanced/astar.html"], [5, "05-graphs-advanced/mst.html"], [5, "05-graphs-advanced/scc.html"],
+      [5, "05-graphs-advanced/max-flow.html"], [5, "05-graphs-advanced/matching.html"],
+      [6, "06-strategies/choosing-a-strategy.html"], [6, "06-strategies/greedy.html"], [6, "06-strategies/huffman.html"],
+      [6, "06-strategies/dp-foundations.html"], [6, "06-strategies/dp-sequences.html"], [6, "06-strategies/dp-knapsack.html"],
+      [6, "06-strategies/dp-trees-and-bitmasks.html"], [6, "06-strategies/backtracking.html"],
+      [7, "07-strings/string-search.html"], [7, "07-strings/kmp.html"], [7, "07-strings/rabin-karp.html"],
+      [7, "07-strings/tries.html"], [7, "07-strings/suffix-arrays.html"],
+      [8, "08-visualisation/why-visualise.html"], [8, "08-visualisation/drawing-trees.html"], [8, "08-visualisation/drawing-graphs.html"],
+      [8, "08-visualisation/drawing-dags.html"], [8, "08-visualisation/matrices-and-maps.html"], [8, "08-visualisation/projections.html"],
+      [9, "09-systems/dependency-graphs.html"], [9, "09-systems/vector-search.html"], [9, "09-systems/knowledge-graphs.html"],
+      [9, "09-systems/tokenizers.html"], [9, "09-systems/beam-search.html"], [9, "09-systems/caching.html"],
+      [9, "09-systems/probabilistic.html"], [9, "09-systems/hashing-in-the-wild.html"], [9, "09-systems/storage-engines.html"],
+      [10, "10-labs/sorting-lab.html"], [10, "10-labs/hash-table-lab.html"], [10, "10-labs/graph-playground.html"],
+      [10, "10-labs/pathfinder-lab.html"], [10, "10-labs/dp-lab.html"], [10, "10-labs/algorithm-gym.html"],
+      [11, "11-expert/p-and-np.html"], [11, "11-expert/reductions.html"], [11, "11-expert/approximation.html"],
+      [11, "11-expert/randomized.html"], [11, "11-expert/cache-and-memory.html"], [11, "11-expert/bit-tricks.html"],
+      [11, "11-expert/external-and-parallel.html"], [11, "11-expert/further-reading.html"],
+    ];
+    const UNIT_COLORS = ["#64748b", "#0ea5e9", "#8b5cf6", "#f59e0b", "#059669", "#047857",
+                         "#dc2626", "#db2777", "#7c3aed", "#0891b2", "#ca8a04", "#334155"];
+    const slug = (p) => p.split("/").pop().replace(/\.html$/, "");
+
+    // dashed: ideas paying off across units
+    const CROSS = [
+      ["recursion", "dp-foundations"], ["big-o", "sorting-lower-bound"],
+      ["hash-tables", "rabin-karp"], ["hash-tables", "hashing-in-the-wild"], ["hash-tables", "probabilistic"],
+      ["heaps", "dijkstra"], ["heaps", "heapsort"], ["heaps", "external-and-parallel"],
+      ["union-find", "mst"], ["stacks-and-queues", "bfs"], ["stacks-and-queues", "dfs"],
+      ["merge-sort", "external-and-parallel"], ["merge-sort", "storage-engines"],
+      ["quicksort", "randomized"], ["quicksort", "quickselect"],
+      ["binary-search-trees", "storage-engines"], ["sorting-lower-bound", "p-and-np"],
+      ["bfs", "beam-search"], ["bfs", "vector-search"], ["bfs", "pathfinder-lab"],
+      ["dfs", "scc"], ["topological-sort", "dependency-graphs"], ["topological-sort", "drawing-dags"],
+      ["implicit-graphs", "astar"], ["what-is-a-graph", "drawing-graphs"], ["what-is-a-graph", "knowledge-graphs"],
+      ["dijkstra", "astar"], ["max-flow", "matching"],
+      ["greedy", "huffman"], ["greedy", "approximation"], ["huffman", "tokenizers"],
+      ["dp-foundations", "caching"], ["dp-foundations", "dp-lab"], ["dp-trees-and-bitmasks", "bit-tricks"],
+      ["tries", "tokenizers"], ["kmp", "tries"],
+      ["drawing-trees", "why-visualise"], ["projections", "vector-search"],
+      ["choosing-a-strategy", "p-and-np"], ["backtracking", "reductions"],
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const svg = document.getElementById("concept-map");
+      const NS = "http://www.w3.org/2000/svg";
+      const status = document.getElementById("map-status");
+      const done = window.AlgoProgress ? window.AlgoProgress.all() : {};
+
+      const graph = {
+        nodes: PAGES.map(([u, p]) => ({ id: slug(p), unit: u, href: p })),
+        edges: [],
+      };
+      for (let i = 1; i < PAGES.length; i++)          // the reading order, one long chain
+        graph.edges.push({ u: slug(PAGES[i - 1][1]), v: slug(PAGES[i][1]), solid: true });
+      for (const [u, v] of CROSS) graph.edges.push({ u, v, solid: false });
+
+      const X = (x) => 40 + x * 1160, Y = (y) => 30 + y * 750;
+      const byId = Object.fromEntries(graph.nodes.map((n) => [n.id, n]));
+
+      function draw(tickInfo) {
+        svg.innerHTML = "";
+        for (const e of graph.edges) {
+          const a = byId[e.u], b = byId[e.v];
+          if (!a || !b) continue;
+          const line = document.createElementNS(NS, "line");
+          line.setAttribute("x1", X(a.x)); line.setAttribute("y1", Y(a.y));
+          line.setAttribute("x2", X(b.x)); line.setAttribute("y2", Y(b.y));
+          line.setAttribute("stroke", "var(--border)");
+          line.setAttribute("stroke-width", e.solid ? 1.6 : 1);
+          if (!e.solid) line.setAttribute("stroke-dasharray", "4 4");
+          svg.appendChild(line);
+        }
+        for (const n of graph.nodes) {
+          const g = document.createElementNS(NS, "g");
+          g.style.cursor = "pointer";
+          g.addEventListener("click", () => { location.href = n.href; });
+          const isDone = Boolean(done[n.id]?.completedAt);
+          const c = document.createElementNS(NS, "circle");
+          c.setAttribute("cx", X(n.x)); c.setAttribute("cy", Y(n.y));
+          c.setAttribute("r", 7);
+          c.setAttribute("fill", isDone ? "var(--good)" : "var(--bg)");
+          c.setAttribute("stroke", UNIT_COLORS[n.unit]);
+          c.setAttribute("stroke-width", 2.5);
+          g.appendChild(c);
+          const t = document.createElementNS(NS, "text");
+          t.setAttribute("x", X(n.x)); t.setAttribute("y", Y(n.y) + 17);
+          t.setAttribute("text-anchor", "middle");
+          t.setAttribute("fill", "var(--text-soft)");
+          t.setAttribute("font-size", "8.5");
+          t.textContent = n.id;
+          g.appendChild(t);
+          const title = document.createElementNS(NS, "title");
+          title.textContent = `unit ${n.unit} · ${n.id}${isDone ? " ✓" : ""}`;
+          g.appendChild(title);
+          svg.appendChild(g);
+        }
+        if (tickInfo) status.textContent = tickInfo;
+      }
+
+      let running = 0;
+      function layout(seed) {
+        const runId = ++running;
+        const gen = window.AlgoLayout.forceLayout(graph, { seed, iterations: 260, k: 0.055, temp: 0.08 });
+        (function step() {
+          if (runId !== running) return;            // superseded by a re-run
+          let e = null;
+          for (let i = 0; i < 4 && !(e && e.type === "done"); i++) e = gen.next().value || e;
+          if (e && e.type === "tick") {
+            draw(`force layout settling — tick ${e.k}, average movement ${e.movement.toFixed(4)}`);
+            requestAnimationFrame(step);
+          } else {
+            const doneCount = graph.nodes.filter((n) => done[n.id]?.completedAt).length;
+            draw(`settled. ${doneCount} of ${graph.nodes.length} pages completed.`);
+          }
+        })();
+      }
+
+      layout(42);
+      document.getElementById("relayout").addEventListener("click", () =>
+        layout(Math.floor(Math.random() * 1e6)));
+    });
+  })();
+  </script>
+</main>
+</body>
+</html>

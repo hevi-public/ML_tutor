@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What is an algorithm? — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Start here">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="how-this-works.html|How this tutor works">
+  <meta name="algo:next" content="self-assessment.html|Where should you start?">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start here</p>
+  <h1>What is an algorithm?</h1>
+  <p class="lede">A recipe precise enough for a machine — that's the easy half
+  of the definition. The interesting half is that two correct recipes for the
+  same job can differ so much that one is fine at a hundred names and hopeless
+  at a billion.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing. This page is the course's thesis statement, played out on a phone
+    book.
+  </div>
+
+  <h2>The idea</h2>
+  <p>You already write algorithms every day — every function that transforms
+  input to output is one. So this course isn't going to teach you what an
+  <strong><dfn data-term="algorithm">algorithm</dfn></strong> is. It's going to
+  teach you the two questions computer science asks about them, questions that
+  working code alone never answers:</p>
+  <p><strong>How do we know it's right?</strong> Not "the tests pass" —
+  <em>certain</em>, for every input, including the ones nobody wrote a test
+  for. That's what invariants and proofs are for, and they're lighter than
+  their reputation.</p>
+  <p><strong>What does it cost?</strong> Not on your laptop, on this dataset —
+  as a law: what happens to the work as the input grows? That's the theory of
+  the next unit, and it decides which systems survive contact with production
+  traffic.</p>
+  <p>Here's the whole story in one artifact your grandparents owned: the phone
+  book. Ten thousand names, alphabetical. Two correct ways to find "Marlowe,
+  Ada": start at page one and read every entry — or open the middle, decide
+  which half holds M, and repeat. Both work. Watch what "both work" hides.</p>
+
+  <h2>Watch it run</h2>
+  <p><strong>Page-one-onward</strong> (linear search) — 80 names stand in for
+  the phone book, sorted left to right; the amber bar is the entry being read.
+  Our target is deliberately deep in the book:</p>
+  <div class="demo">
+    <canvas id="lin-canvas" width="880" height="150"
+            aria-label="Linear search reading every entry in turn"></canvas>
+    <div id="lin-stepper"></div>
+  </div>
+  <p><strong>Split-the-book</strong> (binary search) — same names, same
+  target. The green band is where the name can still be; watch it halve:</p>
+  <div class="demo">
+    <canvas id="bin-canvas" width="880" height="150"
+            aria-label="Binary search halving the remaining region"></canvas>
+    <div id="bin-stepper"></div>
+    <p class="hint">Run both to the end and compare the comparison chips. Now
+    imagine the phone book for a country — 60 million entries. Page-one-onward
+    does 60,000,000 reads worst case. Split-the-book does 26. That ratio is
+    what this course is about, and no amount of faster hardware changes it.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Every "why is this endpoint slow?" ticket you've ever triaged. The
+    same job — find the record — is a table scan or an index lookup, a
+    <code>list.find()</code> or a <code>Map.get()</code>, a grep through logs
+    or a query against the system that indexed them. The vocabulary you're
+    about to learn (unit 1) is how engineers say "the second one, obviously,
+    and here's the proof" in one line of a design review.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>So what will this course actually make you able to do?</summary>
+    <div class="layer-body">
+      <p>Three things, compounding: <strong>name costs precisely</strong>
+      (unit 1's notation, measured live on every page after it);
+      <strong>choose structures and algorithms deliberately</strong> (units
+      2–7 — the catalogue, with graphs as the centerpiece); and
+      <strong>recognise all of it in the systems you ship</strong> (units 8–9,
+      from force-directed layouts to vector search). The labs (unit 10) make
+      you implement the load-bearing ones; the expert track (unit 11) teaches
+      the limits — problems where no fast algorithm is known, and what to do
+      about it.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The definition, done properly</summary>
+    <div class="layer-body">
+      <p>An algorithm is a finite, unambiguous procedure that transforms input
+      to output. Each word earns its place: <em>finite</em> — it must halt
+      (unit 11 meets problems where even that is undecidable);
+      <em>unambiguous</em> — every step fully determined (randomized
+      algorithms, also unit 11, relax this on purpose and win by it);
+      <em>procedure</em> — independent of any programming language, which is
+      why a 1945 description of merge sort and your JavaScript are the same
+      algorithm.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p><a href="self-assessment.html">Where should you start?</a> gives you a
+  placement suggestion in six questions. Or head straight into
+  <a href="../01-foundations/counting-steps.html">unit 1</a>, where the
+  comparison chips you just watched become the whole subject.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "what-is-an-algorithm",
+    "questions": [
+      { "q": "The phone book doubles in size. What happens to the worst-case work of each search?",
+        "choices": ["Both double",
+                    "Page-one-onward doubles; split-the-book gains just one extra step",
+                    "Both gain one step"],
+        "answer": 1,
+        "explain": "Linear work tracks the input; halving work tracks the number of doublings. This asymmetry — not hardware, not language — is why the two \"correct\" recipes end up worlds apart." },
+      { "q": "Split-the-book only works because the phone book is alphabetized. What general lesson hides in that?",
+        "choices": ["Sorting is always worth doing first",
+                    "Structure in the data is what algorithms convert into saved work",
+                    "Unsorted data can't be searched"],
+        "answer": 1,
+        "explain": "Order is invested structure, and binary search spends it: one look rules out half. Most of unit 2 is about structures that pre-pay work so later operations are cheap — and sorting first is NOT always worth it; that's a cost question you'll soon be able to settle precisely." },
+      { "q": "\"My tests pass\" and \"my algorithm is correct\" differ how?",
+        "choices": ["They don't — passing tests is what correct means",
+                    "Tests check the inputs you thought of; correctness is a claim about all inputs, which is why proofs exist",
+                    "Correctness only matters in academia"],
+        "answer": 1,
+        "explain": "Unit 1's proving-correctness page shows the working engineer's version: loop invariants — a technique you can apply in a code review, not just a lecture hall." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 80 "phone book" entries: sorted values stand in for alphabetized names.
+      const N = 80;
+      const book = window.AlgoRandom.ints(N, 10, 400, 1893).sort((a, b) => a - b);
+      const target = book[Math.floor(N * 0.82)]; // deep in the book
+      function wire(canvasId, hostId, makeGen) {
+        const canvas = document.getElementById(canvasId);
+        const viz = window.AlgoArrayViz.create(canvas);
+        const arr = book.slice();
+        const max = Math.max(...arr);
+        window.AlgoSteps.player(document.getElementById(hostId), {
+          make: () => makeGen(arr, target),
+          capture: () => ({ array: arr.slice(), max }),
+          render: (snap, event) => viz.draw(snap, event),
+          counters: { compare: "comparisons" },
+          describe: (e) =>
+            e.type === "compare" ? `reading entry ${e.i}` :
+            e.type === "focus" ? `the name must be between entries ${e.lo} and ${e.hi}` :
+            e.type === "found" ? `found — entry ${e.i}` : "",
+        });
+      }
+      wire("lin-canvas", "lin-stepper", window.AlgoSorts.linearSearch);
+      wire("bin-canvas", "bin-stepper", window.AlgoSorts.binarySearch);
+    });
+  </script>
+</main>
+</body>
+</html>

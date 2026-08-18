@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dynamic programming — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="huffman.html|Huffman coding">
+  <meta name="algo:next" content="dp-sequences.html|DP on sequences">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/dp.js"></script>
+  <script defer src="../assets/js/viz/callstack.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>Dynamic programming: stop solving the same problem twice</h1>
+  <p class="lede">The most feared name in algorithms, for what is
+  ultimately a caching discipline. When a recursion keeps re-deriving the
+  same subanswers, store them — and an exponential computation collapses to
+  the count of <em>distinct</em> subproblems. The two demos on this page
+  are the entire argument.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-foundations/recursion.html">Recursion</a> and its call
+    stack. You've already run one industrial-strength DP:
+    <a href="../05-graphs-advanced/floyd-warshall.html">Floyd-Warshall</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Fibonacci, the drosophila of DP: fib(n) = fib(n−1) + fib(n−2). Code
+  the definition directly and fib(7) spawns a tree of 41 calls — fib(3)
+  alone is computed five times, each recomputation spawning its own
+  subtree. Run time: exponential, ~φⁿ.</p>
+  <p>But there are only <em>eight distinct questions</em> being asked:
+  fib(0) through fib(7). Cache each answer the first time
+  (<strong>memoization</strong>) and every later request is a lookup — 13
+  calls and 5 instant hits, against the naive 41. Same code plus a Map:
+  exponential → linear. DP in one sentence: <strong>cost collapses from "number of calls
+  in the naive tree" to "number of distinct subproblems", provided answers
+  are reusable</strong>.</p>
+  <p>Two prerequisites make a problem DP-able. <strong>Overlapping
+  subproblems</strong> — the naive tree repeats itself (merge sort's
+  doesn't; fib's does). <strong>Optimal substructure</strong> — the best
+  answer to the whole is assembled from best answers to parts (shortest
+  paths have it; longest <em>simple</em> paths famously don't, because
+  parts interact through the no-repeats rule).</p>
+
+  <h2>Watch it run</h2>
+  <p>Naive fib(7): watch the same small calls repeat — the counter is the
+  indictment:</p>
+  <div class="demo">
+    <canvas id="stack-naive" width="860" height="170" style="width:100%;height:auto"></canvas>
+    <div id="stepper-naive"></div>
+  </div>
+  <p>Memoized fib(7): first descent fills the cache (green cells); every
+  repeat is answered by a <em>hit</em> without spawning a subtree. Compare
+  the call counters:</p>
+  <div class="demo">
+    <div id="memo-table" style="font-family:var(--mono);font-size:0.9rem;margin-bottom:0.5rem"></div>
+    <canvas id="stack-memo" width="860" height="170" style="width:100%;height:auto"></canvas>
+    <div id="stepper-memo"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Every place a computation graph has shared nodes: build systems
+    caching artifacts (Bazel's action cache is memoization with a content
+    hash), React/Vue memoized renders, spreadsheet recalculation,
+    <code>functools.lru_cache</code> on that one slow function.
+    Diff algorithms (git, React reconciliation) are edit-distance DP —
+    next page. In the LLM stack, the KV-cache is memoization verbatim:
+    attention keys/values for a prefix are computed once and reused for
+    every subsequent token — without it, generation would be quadratic
+    per token. Prompt caching: same idea, one level up.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Memoization (top-down) vs tabulation (bottom-up)</summary>
+    <div class="layer-body">
+      <p>Two dialects, one discipline. <strong>Top-down</strong>: write the
+      recursion, add a cache — the demo above. Pros: only reachable
+      subproblems get computed; the code mirrors the math. Cons: recursion
+      depth, per-call overhead. <strong>Bottom-up</strong>: figure out
+      dependency order and fill a table with a loop —
+      <code>for i: f[i] = f[i-1] + f[i-2]</code>. Pros: no stack, often
+      cache-friendly, enables space tricks (fib needs only the last two
+      cells — O(1) space). Cons: you must know the fill order (it's a
+      topological sort of the subproblem DAG — unit 4 pays rent again).
+      Floyd-Warshall's "k must be outermost" was exactly a fill-order
+      constraint. Interviews prefer bottom-up tables; production code
+      usually starts top-down because it's harder to get wrong.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The 4-step recipe (used on every DP page that follows)</summary>
+    <div class="layer-body">
+      <p><strong>1. Define the subproblem in words</strong> — "best[i] =
+      the best answer using only the first i items". The sentence is the
+      hard part; everything else is transcription. <strong>2. Write the
+      recurrence</strong> — best[i] in terms of strictly smaller
+      subproblems, with base cases. <strong>3. Count</strong> — distinct
+      subproblems × work per subproblem = the complexity, before writing
+      code. <strong>4. Order or memoize</strong> — fill bottom-up in
+      dependency order, or recurse with a cache. A useful check on step 1:
+      if you can't say what table cell (i, j) <em>means</em> in one
+      sentence, the design isn't done — a rule that catches most wrong DP
+      attempts before any code exists.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demos' exact code (assets/js/algo/dp.js), events elided:
+function fibNaive(n) {
+  if (n <= 1) return n;
+  return fibNaive(n - 1) + fibNaive(n - 2);   // recomputes everything, ~φⁿ
+}
+
+function fibMemo(n, memo = new Map()) {
+  if (memo.has(n)) return memo.get(n);        // the hit — O(1), no subtree
+  const result = n <= 1 ? n
+    : fibMemo(n - 1, memo) + fibMemo(n - 2, memo);
+  memo.set(n, result);                        // pay once per DISTINCT n
+  return result;                              // exponential → O(n)
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Fib is one-dimensional. The classic workloads are 2-D tables over
+  sequences — <a href="dp-sequences.html">longest increasing subsequence
+  and edit distance</a>, the algorithm inside <code>git diff</code>.</p>
+
+  <script type="application/json" class="symbols">
+  { "phi": { "name": "φ — the golden ratio, ≈1.618", "pron": "say: fye",
+           "means": "naive fib's branching makes its call count grow as φⁿ — exponential", "short": "golden ratio" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "dp-foundations",
+    "questions": [
+      { "q": "Exactly what does memoization change about the fib computation?",
+        "choices": ["It makes each addition faster",
+                    "Cost drops from the size of the naive call tree (exponential) to the number of DISTINCT subproblems (n of them) — each repeat becomes an O(1) lookup",
+                    "It removes the recursion entirely"],
+        "answer": 1,
+        "explain": "The recursion is unchanged; the accounting is transformed. Count distinct subproblems × work per subproblem — that product is every DP's complexity, decided before code is written." },
+      { "q": "Why doesn't merge sort benefit from memoization?",
+        "choices": ["Sorting can't be cached",
+                    "Its subproblems don't overlap — every recursive call sorts a different slice, so there are no repeated questions for a cache to answer",
+                    "Merge sort is already O(n)"],
+        "answer": 1,
+        "explain": "Divide & conquer with disjoint subproblems gains nothing from a cache. Overlap is DP's precondition — no repetition, no savings." },
+      { "q": "The LLM KV-cache stores attention keys/values for the prompt prefix. What is this, in this unit's vocabulary?",
+        "choices": ["A greedy heuristic",
+                    "Memoization: each token's K/V is a subproblem answer computed once and reused by every later generation step — removing it makes per-token cost grow with context length",
+                    "Backtracking with pruning"],
+        "answer": 1,
+        "explain": "Same shape as fibMemo: shared subcomputations, cached at first computation, looked up thereafter. One of the clearest cases of a classic strategy running at the center of modern infrastructure." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const N = 7;
+
+      // --- naive ---
+      const stackN = window.AlgoCallstackViz.create(document.getElementById("stack-naive"));
+      const st1 = { frames: [] };
+      function* trackedNaive() {
+        st1.frames = [];
+        for (const e of window.AlgoDP.fibNaive(N)) {
+          if (e.type === "call") st1.frames.push(e.frame);
+          if (e.type === "return") st1.frames.pop();
+          yield e;
+        }
+      }
+      window.AlgoSteps.player(document.getElementById("stepper-naive"), {
+        make: trackedNaive,
+        capture: () => ({ frames: st1.frames.slice() }),
+        render: (snap, event) => stackN.draw(snap, event),
+        counters: { call: "calls" },
+        describe: (e) =>
+          e.type === "call" ? `calling ${e.frame}` :
+          e.type === "return" ? `${e.frame} returns ${e.value}` : "",
+      });
+
+      // --- memo ---
+      const tableHost = document.getElementById("memo-table");
+      const stackM = window.AlgoCallstackViz.create(document.getElementById("stack-memo"));
+      const st2 = { frames: [], cells: {} };
+      function* trackedMemo() {
+        st2.frames = []; st2.cells = {};
+        for (const e of window.AlgoDP.fibMemo(N)) {
+          if (e.type === "call") st2.frames.push(e.frame);
+          if (e.type === "return") st2.frames.pop();
+          if (e.type === "cell") st2.cells[e.i] = e.val;
+          yield e;
+        }
+      }
+      window.AlgoSteps.player(document.getElementById("stepper-memo"), {
+        make: trackedMemo,
+        capture: () => ({ frames: st2.frames.slice(), cells: { ...st2.cells } }),
+        render: (snap, event) => {
+          tableHost.innerHTML = "memo: " + Array.from({ length: N + 1 }, (_, i) => {
+            const v = snap.cells[i];
+            const hit = event && event.type === "hit" && event.key === i;
+            return `<span style="display:inline-block;min-width:2.6rem;text-align:center;` +
+              `border:1px solid var(--border);border-radius:6px;margin-right:0.25rem;padding:0.1rem 0;` +
+              (v !== undefined ? "background:var(--accent-soft);color:var(--accent);font-weight:700;" : "opacity:0.4;") +
+              (hit ? "outline:2.5px solid #d97706;" : "") +
+              `">${i}:${v === undefined ? "·" : v}</span>`;
+          }).join("");
+          stackM.draw(snap, event);
+        },
+        counters: { call: "calls", hit: "cache hits" },
+        describe: (e) =>
+          e.type === "call" ? `calling ${e.frame}` :
+          e.type === "hit" ? `cache HIT: fib(${e.key}) = ${e.value} — no subtree spawned` :
+          e.type === "cell" ? `memo[${e.i}] = ${e.val} — paid once, forever answered` :
+          e.type === "return" ? `${e.frame} returns ${e.value}` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

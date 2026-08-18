@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Caching and eviction — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="beam-search.html|Beam search">
+  <meta name="algo:next" content="probabilistic.html|Probabilistic structures">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Caching: remembering is cheaper than recomputing</h1>
+  <p class="lede">Unit 6 taught memoization with an unlimited cache. Real
+  memory is finite, so caching's actual algorithmic content is the
+  <em>eviction policy</em>: when full and something new arrives, who
+  leaves? The answer decides your hit rate, and hit rate decides whether
+  your database melts and your LLM bill doubles.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hash tables</a> (the
+    lookup half of every cache) and
+    <a href="../06-strategies/dp-foundations.html">memoization</a> (the
+    unlimited-memory special case).
+  </div>
+
+  <h2>The idea</h2>
+  <p>The oracle policy is Bélády's: evict the entry whose next use is
+  farthest in the future — provably optimal, impossible to run (it needs
+  tomorrow's requests), invaluable as the yardstick your real policy is
+  benchmarked against. Practical policies bet on patterns:
+  <strong>LRU</strong> (evict least-recently-used) bets on temporal
+  locality — what was touched recently will be touched again. Its
+  classic implementation is a course reunion: hash table for O(1)
+  lookup + doubly-linked list for O(1) recency reordering, glued so each
+  hash entry points at its list node. <strong>LFU</strong> bets on
+  frequency; <strong>FIFO/CLOCK</strong> approximate LRU cheaper.
+  Modern engines (ARC, TinyLFU in Caffeine) blend recency and frequency
+  because each pure bet has a famous failure.</p>
+
+  <h2>Watch it run</h2>
+  <p>An LRU cache of capacity 3 against a request trace. Green = hit
+  (entry jumps to most-recent), red = miss (leftmost = least recent gets
+  evicted when full). Then the trace turns adversarial — a repeating
+  scan of 4 keys against capacity 3, LRU's worst enemy:</p>
+  <div class="demo">
+    <div id="cache-view" style="font-family:var(--mono);font-size:0.95rem;line-height:2.2"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Redis/Memcached in front of every hot database; CDN edges; CPU
+    caches (hardware LRU approximations — unit 11's cache-and-memory
+    page measures them); the page cache under your filesystem; HTTP
+    caching headers. The LLM stack is cache-stacked: the
+    <strong>KV-cache</strong> (per-request memoization of attention
+    state — evicting it mid-conversation is why long chats slow or
+    truncate), <strong>prompt caching</strong> (persisting KV state for
+    a shared prefix across requests — system prompts priced cheaper for
+    exactly this reason), and <strong>semantic caching</strong>
+    (vector-search this unit's earlier page — over past queries: serve a
+    cached answer when a new question embeds near an old one, an
+    approximate cache with approximate correctness worth naming
+    honestly). Eviction there is literally dollars.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Every policy has an adversary</summary>
+    <div class="layer-body">
+      <p>LRU dies on <strong>scans</strong>: looping over N+1 items with
+      capacity N evicts each entry just before its reuse — 0% hits where
+      random eviction would do better (the demo's second phase shows the
+      shape). LFU dies on <strong>drift</strong>: yesterday's hot keys
+      hoard frequency counts and squat while today's rising keys can't
+      get established (aged/windowed counts are the fix; TinyLFU is this
+      idea productionized). FIFO ignores popularity entirely. This is
+      why serious caches are hybrids, and why the honest procedure is
+      unit 1's: replay YOUR trace against candidate policies and against
+      Bélády's oracle, and read the hit rates — the gap to the oracle
+      tells you whether policy tuning is even worth it, or the cache is
+      simply too small for the working set.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The classic O(1) LRU — hash table + doubly-linked recency list.
+// (JS Maps iterate in insertion order, which makes them a compact LRU.)
+class LRU {
+  constructor(cap) { this.cap = cap; this.map = new Map(); }
+  get(k) {
+    if (!this.map.has(k)) return undefined;          // miss
+    const v = this.map.get(k);
+    this.map.delete(k); this.map.set(k, v);          // re-insert = most recent
+    return v;                                        // hit, O(1)
+  }
+  set(k, v) {
+    if (this.map.has(k)) this.map.delete(k);
+    else if (this.map.size === this.cap) {
+      this.map.delete(this.map.keys().next().value); // evict oldest = LRU
+    }
+    this.map.set(k, v);
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Caches answer "have I seen this?" exactly, with real memory. The
+  next page answers it <em>approximately, in almost no memory at all</em>:
+  <a href="probabilistic.html">Bloom filters and their probabilistic
+  kin</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "caching",
+    "questions": [
+      { "q": "Why does classic LRU pair a hash table WITH a doubly-linked list?",
+        "choices": ["Redundancy in case one fails",
+                    "Each covers the other's weakness: the hash gives O(1) key lookup, the list gives O(1) move-to-front and evict-from-back — entries carry pointers into both, so every operation stays constant",
+                    "The list stores overflow entries"],
+        "answer": 1,
+        "explain": "A pure hash can't order by recency; a pure list can't look up in O(1). Composite structures — each answering one question — is unit 2's design lesson at its most-interviewed." },
+      { "q": "A nightly batch job scans your whole product catalog and your user-facing cache hit rate craters every night. What happened?",
+        "choices": ["The cache hardware is failing",
+                    "Scan pollution: the one-pass batch traffic flushed the genuinely-hot working set out of LRU — the classic adversary. Fixes: scan-resistant policies (ARC/TinyLFU), a separate cache, or bypassing the cache for batch reads",
+                    "The catalog got bigger"],
+        "answer": 1,
+        "explain": "LRU faithfully remembers the most recent — even when the most recent is a one-time scan that will never repeat. Recognizing the trace shape names the fix immediately." },
+      { "q": "Semantic caching serves a stored answer when a new query EMBEDS near an old one. What's the honest caveat a design review should raise?",
+        "choices": ["Embeddings are too slow for caching",
+                    "Correctness became approximate: 'near in embedding space' is not 'same question' — a similarity threshold now controls wrong-answer risk, so it needs measurement, an escape hatch, and exclusion of anything personalized or time-sensitive",
+                    "Vector search cannot be combined with caches"],
+        "answer": 1,
+        "explain": "A cache that can be semantically wrong is a different contract from LRU's exact hits. Great for FAQ-shaped traffic, dangerous for 'what's MY order status' — the boundary must be engineered, not hoped." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const CAP = 3;
+      const TRACE1 = ["A", "B", "C", "A", "D", "B", "A", "E", "A", "B"];
+      const TRACE2 = ["w", "x", "y", "z", "w", "x", "y", "z", "w", "x", "y", "z"];
+      const view = document.getElementById("cache-view");
+      const verdict = document.getElementById("verdict");
+
+      const state = {};
+      function* tracked() {
+        state.cache = []; state.phase = 1; state.hits1 = 0; state.miss1 = 0;
+        let map = [];
+        const run = function* (trace, phase) {
+          let hits = 0, misses = 0;
+          for (const k of trace) {
+            const idx = map.indexOf(k);
+            if (idx >= 0) {
+              map.splice(idx, 1); map.push(k);
+              hits++;
+              state.cache = map.slice();
+              yield { type: "hit", k, phase };
+            } else {
+              misses++;
+              let evicted = null;
+              if (map.length === CAP) evicted = map.shift();
+              map.push(k);
+              state.cache = map.slice();
+              yield { type: "miss", k, evicted, phase };
+            }
+          }
+          return { hits, misses };
+        };
+        const r1 = yield* run(TRACE1, 1);
+        state.phase = 2;
+        map = [];
+        state.cache = [];
+        yield { type: "reset" };
+        const r2 = yield* run(TRACE2, 2);
+        verdict.textContent = `Friendly trace: ${r1.hits}/${TRACE1.length} hits — locality rewarded. ` +
+          `Adversarial 4-key scan at capacity 3: ${r2.hits}/${TRACE2.length} hits — LRU evicts each key ` +
+          `just before its reuse, every time. Same policy, opposite outcomes: the trace decides.`;
+        yield { type: "done" };
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ cache: (state.cache || []).slice(), phase: state.phase }),
+        render: (snap, event) => {
+          const slots = Array.from({ length: CAP }, (_, i) => snap.cache[i]);
+          view.innerHTML =
+            `<span style="color:var(--text-soft)">LRU →</span> ` +
+            slots.map((k, i) => {
+              let style = "display:inline-block;min-width:2.6rem;text-align:center;padding:0.15rem 0;" +
+                "border:1.5px solid var(--border);border-radius:8px;margin-right:0.3rem;";
+              if (k === undefined) style += "opacity:0.3;";
+              if (event && event.k === k) {
+                style += event.type === "hit"
+                  ? "background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;"
+                  : "background:var(--bad-soft, #fdd);border-color:var(--bad);font-weight:700;";
+              }
+              return `<span style="${style}">${k ?? "·"}</span>`;
+            }).join("") +
+            ` <span style="color:var(--text-soft)">← most recent</span>` +
+            `<span class="hint" style="margin-left:1rem">phase ${snap.phase}: ${snap.phase === 1 ? "friendly locality" : "adversarial scan"}</span>`;
+        },
+        counters: { hit: "hits", miss: "misses" },
+        speed: 2.5,
+        describe: (e) =>
+          e.type === "hit" ? `"${e.k}" — HIT: found in O(1), promoted to most recent` :
+          e.type === "miss" ? `"${e.k}" — miss${e.evicted ? `; cache full, evicting least-recent "${e.evicted}"` : ""}` :
+          e.type === "reset" ? "cache cleared — now the adversarial trace: w x y z repeating, capacity 3" :
+          e.type === "done" ? "compare the two phases' hit counters" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

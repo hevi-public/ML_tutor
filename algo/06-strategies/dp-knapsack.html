@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Knapsack and friends — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dp-sequences.html|DP on sequences">
+  <meta name="algo:next" content="dp-trees-and-bitmasks.html|DP on trees and bitmasks">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/dp.js"></script>
+  <script defer src="../assets/js/viz/table.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>Knapsack: optimizing under a budget</h1>
+  <p class="lede">Items with weights and values, a capacity, take-it-or-
+  leave-it choices: the canonical resource-allocation problem, and DP's
+  most-reused table. It also carries the course's most instructive
+  asterisk — an algorithm that looks polynomial, is technically
+  exponential, and taught complexity theory a new word.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="dp-foundations.html">The DP recipe</a> and
+    <a href="dp-sequences.html">2-D tables</a>. The greedy page's warning
+    gets its sharpest example here.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Greedy fails first, instructively: taking by best value-per-weight
+  ratio is beaten by a capacity-5 example — item A (w2, v3), B (w3, v4),
+  C (w4, v5). Ratios say take C (1.25/kg) then nothing else fits: value
+  5. Optimal is A+B: value 7. Density greed can't see that two mediocre
+  items <em>compose</em> better than one good one.</p>
+  <p>The DP sentence: <em>best[i][c] = the most value achievable using
+  only the first i items within capacity c.</em> Each item poses one
+  binary question — skip it (inherit best[i−1][c]) or take it (its value
+  plus best[i−1][c−wᵢ], the best the <em>earlier</em> items manage in the
+  space that remains):</p>
+  <p><span class="math">best[i][c] = \max\big(best[i{-}1][c],\; v_i + best[i{-}1][c - w_i]\big)</span></p>
+  <p>n·W cells, O(1) each: O(nW). Traceback (did the value change from the
+  row above?) names the chosen items.</p>
+
+  <h2>Watch it run</h2>
+  <p>Four items — A(w2,v3) B(w3,v4) C(w4,v5) D(w5,v6) — capacity 5. Each
+  row absorbs one item; amber cells are where taking it beat skipping it.
+  Bottom-right: 7, the A+B answer greed missed:</p>
+  <div class="demo">
+    <div id="table"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Budgeted selection is everywhere once you see the shape: cloud
+    cost optimization (which workloads fit the reserved-instance budget),
+    cargo and bin planning, ad-slot allocation, feature selection under a
+    latency budget, portfolio construction. In LLM systems it's the
+    <strong>context-window packing problem</strong>: retrieved chunks have
+    token costs and relevance scores, the window is the knapsack — RAG
+    pipelines solve (usually greedily, now you know the caveat) exactly
+    this. Cutting-stock and scheduling variants run manufacturing.
+    Cryptographers even built (broken) cryptosystems on its hardness.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The asterisk — "pseudo-polynomial", honestly</summary>
+    <div class="layer-body">
+      <p>O(nW) looks polynomial. It isn't. Complexity is measured against
+      input <em>size in bits</em>, and the number W occupies only
+      log₂ W bits — so W itself is exponential in its own description
+      length. Capacity 1,000,000 is seven characters of input but a
+      million table columns. Algorithms polynomial in the numeric
+      <em>value</em> but exponential in the bit-length are
+      <strong>pseudo-polynomial</strong>. Practical consequences: knapsack
+      DP is superb when W is human-scale (budgets in dollars, weights in
+      kilograms, tokens in a context window) and useless when W is a
+      cryptographic-scale number. Knapsack is NP-complete (unit 11) with
+      a pseudo-polynomial escape hatch — "NP-complete" and "solvable in
+      practice" coexist, a nuance worth carrying into any hardness
+      conversation.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The family: unbounded, subset-sum, and the 1-D space trick</summary>
+    <div class="layer-body">
+      <p><strong>Unbounded knapsack</strong> (unlimited copies per item):
+      same recurrence but "take" stays on row i — best[i][c−wᵢ] — because
+      taking doesn't use the item up. <strong>Subset-sum</strong> ("can
+      these numbers hit total T exactly?"): knapsack with values dropped
+      and max replaced by OR — the reduction workhorse of unit 11.
+      <strong>Space</strong>: like edit distance, only the previous row is
+      read, so one array suffices — with a trap: iterate capacity
+      <em>downward</em> for 0/1 (so this row's takes can't cascade),
+      <em>upward</em> for unbounded (so they deliberately can). A
+      direction bug silently converts one problem into the other — a
+      genuinely common wild bug, and a nice interview tell.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/dp.js), events elided:
+function knapsack(items, W) {
+  const d = table(items.length + 1, W + 1, 0);
+  for (let i = 1; i <= items.length; i++) {
+    const { w, v } = items[i - 1];
+    for (let c = 0; c <= W; c++) {
+      d[i][c] = d[i - 1][c];                     // skip item i
+      if (w <= c) d[i][c] = Math.max(d[i][c],
+        d[i - 1][c - w] + v);                    // take it: value + best fit
+    }                                            //   of the OTHERS in what's left
+  }
+  return d[items.length][W];   // traceback: rows where the value changed
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Tables over prefixes and budgets are the standard issue. The recipe
+  also runs on stranger state spaces —
+  <a href="dp-trees-and-bitmasks.html">subtrees and bitmask subsets</a> —
+  which is where DP meets the graphs unit and the exponential frontier.</p>
+
+  <script type="application/json" class="symbols">
+  { "W": { "name": "W — the capacity", "pron": "say: double-you",
+           "means": "the budget; the table has one column per capacity value 0…W — which is why W's SIZE, not its digit count, sets the cost", "short": "capacity" },
+    "vi": { "name": "vᵢ, wᵢ — item i's value and weight", "pron": "say: vee-eye, double-you-eye",
+           "means": "what taking item i gains, and what it costs against the capacity", "short": "value/weight" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "dp-knapsack",
+    "questions": [
+      { "q": "Why does value-density greedy (best value/weight first) fail on knapsack?",
+        "choices": ["Division is numerically unstable",
+                    "Items compose: two mediocre items can fill the capacity better than one dense item that strands leftover space — density can't see interactions, the table can",
+                    "It fails only when weights are equal"],
+        "answer": 1,
+        "explain": "A(2,3)+B(3,4)=7 beats C(4,5)+nothing=5 at capacity 5. Note the fine print: greedy-by-density IS near-optimal for the FRACTIONAL variant — take-partial changes the problem entirely." },
+      { "q": "O(nW) is called pseudo-polynomial. What's actually exponential about it?",
+        "choices": ["The number of items n",
+                    "W measured against its input size: the capacity is written in log W bits, so nW is exponential in the LENGTH of the input — a 20-digit capacity means ~10²⁰ columns",
+                    "Nothing — the name is historical"],
+        "answer": 1,
+        "explain": "Complexity counts bits, not numerals' magnitudes. This one distinction reconciles 'knapsack is NP-complete' with 'my knapsack code runs instantly' — both true, at different W scales." },
+      { "q": "A RAG pipeline picks retrieved chunks for a 8k-token window by relevance score, greedily. When is that fine, and what's the upgrade?",
+        "choices": ["Greedy is always sufficient for retrieval",
+                    "Fine when chunks are similar-sized (greed's failure needs composition effects); when sizes vary a lot, it's 0/1 knapsack — token costs as weights, scores as values — and the DP is cheap at W=8192",
+                    "The upgrade is a bigger context window"],
+        "answer": 1,
+        "explain": "Recognizing the problem's NAME is the senior-engineer move: 'context packing = knapsack' immediately tells you when greedy is safe, what optimal costs, and that W is comfortably pseudo-polynomial-friendly." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const items = [
+        { id: "A", w: 2, v: 3 }, { id: "B", w: 3, v: 4 },
+        { id: "C", w: 4, v: 5 }, { id: "D", w: 5, v: 6 },
+      ];
+      const W = 5;
+      const viz = window.AlgoTableViz.create(document.getElementById("table"), {
+        rowLabels: ["∅", ...items.map((x) => `${x.id}(w${x.w},v${x.v})`)],
+        colLabels: Array.from({ length: W + 1 }, (_, c) => "c" + c),
+      });
+
+      const state = {};
+      function* tracked() {
+        state.cells = {}; state.took = [];
+        for (let c = 0; c <= W; c++) state.cells["0," + c] = 0;
+        for (const e of window.AlgoDP.knapsack(items, W)) {
+          if (e.type === "cell") {
+            state.cells[e.i + "," + e.j] = e.val;
+            if (e.took) state.took.push(e.i + "," + e.j);
+          }
+          yield e;
+        }
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ cells: { ...(state.cells || {}) }, took: (state.took || []).slice() }),
+        render: (snap, event) =>
+          viz.draw(items.length + 1, W + 1,
+            { cells: snap.cells, trace: new Set(snap.took) }, event),
+        counters: { cell: "cells filled" },
+        describe: (e) =>
+          e.type === "cell" ? `best[${e.i}][${e.j}] = ${e.val}` +
+            (e.took ? ` — taking ${items[e.i - 1].id} beat skipping it` : "") :
+          e.type === "done" ? `best value: ${e.best}, by taking {${e.chosen.join(", ")}} — the composition greedy missed` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

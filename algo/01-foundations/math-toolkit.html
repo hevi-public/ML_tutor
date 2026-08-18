@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logs, sums and friends — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Foundations">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="recurrences.html|Recurrences and the Master theorem">
+  <meta name="algo:next" content="proving-correctness.html|Proving an algorithm correct">
+
+  <link rel="stylesheet" href="../../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 1 · Foundations</p>
+  <h1>Logs, sums and friends</h1>
+  <p class="lede">The entire mathematical toolkit this course uses, on one
+  page: four ideas, each earned through code you've already shipped. Skim now,
+  return whenever a page's math layer sends you here.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    School arithmetic, possibly rusty. Everything is rebuilt from "what does
+    this loop do".
+  </div>
+
+  <h2>Logarithms: the halving counter</h2>
+  <p>Forget the textbook definition for a second.
+  <span class="math">\log_2 n</span> — say "log base two of n" — answers one
+  question: <strong>how many times can n be halved before hitting 1?</strong>
+  It's the loop count of:</p>
+  <pre><code>while (n > 1) { n = n / 2; count++; }   // count === log₂(n)</code></pre>
+  <p>That's why it shows up wherever halving does: binary search's
+  comparisons, a balanced tree's height, merge sort's levels, the number of
+  bits in a number. Try it:</p>
+  <div class="demo">
+    <div class="control"><label>n = <output id="log-n">1,048,576</output></label>
+      <input type="range" id="log-slider" min="1" max="60" value="20"
+             aria-label="Exponent for n as a power of two"></div>
+    <p class="readout" id="log-readout"></p>
+  </div>
+  <details class="layer">
+    <summary>Show the three log rules this course actually uses</summary>
+    <div class="layer-body">
+      <div class="math equation">\log(xy) = \log x + \log y \qquad \log(x^k) = k \log x \qquad \log_b n = \frac{\log_2 n}{\log_2 b}</div>
+      <p><em>In plain English:</em> logs turn multiplication into addition and
+      powers into multiplication — and switching log bases only multiplies by
+      a constant. That last one is why Big-O never bothers writing the base:
+      <span class="math">O(\log_2 n)</span> and
+      <span class="math">O(\log_{10} n)</span> differ by a constant factor,
+      which Big-O ignores by design.</p>
+    </div>
+  </details>
+
+  <h2>Sums: what loops cost</h2>
+  <p>A loop's total cost is a sum, written with
+  <span class="math" data-sym="\sum">\sum</span> — say "the sum of". One shows
+  up constantly: the cost of the loop-inside-a-loop where the inner loop grows.
+  Insertion sort, bubble sort, "compare every pair" — they all spend:</p>
+  <div class="math equation">\sum_{i=1}^{n} i \;=\; 1 + 2 + \cdots + n \;=\; \frac{n(n+1)}{2}</div>
+  <p><em>In plain English:</em> the staircase of work adds up to about half an
+  n-by-n square — which is why "the inner loop grows by one each time" and
+  "n²" are the same news. The picture proof: pair the first and last terms
+  (1+n), the second and second-last (2+n−1)… — n/2 pairs, each summing to
+  n+1.</p>
+  <details class="layer">
+    <summary>Show the other sum that matters: the geometric series</summary>
+    <div class="layer-body">
+      <div class="math equation">1 + 2 + 4 + \cdots + n \;=\; 2n - 1 \qquad\qquad 1 + \tfrac{1}{2} + \tfrac{1}{4} + \cdots \;&lt;\; 2</div>
+      <p><em>In plain English:</em> doubling terms — the whole pile is barely
+      more than the last term alone (that's why "leaf-heavy" recursion trees
+      cost what their bottom level costs). Halving terms — the whole infinite
+      pile never reaches 2 (that's why dynamic arrays and root-heavy trees are
+      cheap: the tail is small change). These two facts settle more complexity
+      arguments than everything else on this page combined.</p>
+    </div>
+  </details>
+
+  <h2>Floors, ceilings, and why we wave at them</h2>
+  <p><span class="math">\lfloor x \rfloor</span> rounds down,
+  <span class="math">\lceil x \rceil</span> rounds up — say "floor of x",
+  "ceiling of x". They appear because real inputs don't divide evenly:
+  splitting 15 items gives <span class="math">\lfloor 15/2 \rfloor = 7</span>
+  and <span class="math">\lceil 15/2 \rceil = 8</span>, and
+  <code>(lo + hi) &gt;&gt; 1</code> is a floor in disguise. The asymptotic
+  license: since the pieces differ by at most one item, they never change a
+  growth rate — so analyses on this site treat n as conveniently divisible
+  and say so. (Off-by-one <em>bugs</em>, however, live exactly here — the
+  binary-search page in unit 3 is largely about respecting these brackets in
+  code even though we blur them in analysis.)</p>
+
+  <h2>Factorials and choices: how big is the haystack?</h2>
+  <p>Lower bounds and brute-force estimates need to count possibilities.
+  <span class="math">n!</span> ("n factorial") counts the orderings of n
+  things — 10! is 3.6 million; 20! is 2.4 quintillion, which is why
+  "try every ordering" dies young. <span class="math">C(n,k)</span> ("n choose
+  k") counts ways to pick k of n when order doesn't matter. You'll meet n! at
+  the sorting lower bound (a decision tree must reach n! leaves) and both in
+  unit 11's hardness arguments.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Capacity planning is this page: "if traffic doubles, log-shaped costs
+    add a step, linear costs double, quadratic costs quadruple" is a sizing
+    meeting in one sentence. The geometric series is your cloud bill's best
+    friend (retry-with-backoff sums to a constant multiple; so does dynamic
+    array growth), and "how many bits do I need for k values" —
+    <span class="math">\lceil \log_2 k \rceil</span> — is every ID scheme and
+    every index-page-depth estimate you've ever done.</p>
+  </div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>That's the whole kit: logs (halvings), the two sums (staircase, doubling),
+  floor/ceiling (blur in analysis, respect in code), and counting
+  (factorials, choices). Next: the other foundation — knowing an algorithm is
+  <em>right</em>, with <a href="proving-correctness.html">loop
+  invariants</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "n": { "name": "n — the input size", "pron": "say: en",
+           "means": "how many items the algorithm is given", "short": "input size" },
+    "\\sum": { "name": "∑ — summation", "pron": "say: the sum of",
+           "means": "add up the terms that follow, over the stated range", "short": "add them up" },
+    "i": { "name": "i — the running index", "pron": "say: eye",
+           "means": "the loop counter the sum ranges over", "short": "loop counter" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "math-toolkit",
+    "questions": [
+      { "q": "A balanced binary tree holds a billion items. Roughly how tall is it?",
+        "choices": ["About 30 levels", "About 1,000 levels", "About a million levels"],
+        "answer": 0,
+        "explain": "Height is the halving counter: log₂(10⁹) ≈ 30. This one number is why tree-shaped indexes answer in microseconds." },
+      { "q": "An inner loop runs 1 step, then 2, then 3 … up to n. Total steps?",
+        "choices": ["About n", "About n²/2 — the staircase sum", "About n log n"],
+        "answer": 1,
+        "explain": "∑i = n(n+1)/2. The /2 and the +1 are constants Big-O drops: it's Θ(n²), the quiet cost of every \"compare all pairs\" loop." },
+      { "q": "A retry policy waits 1s, then 2s, then 4s … for up to 10 retries. Total worst-case wait?",
+        "choices": ["About 10 seconds", "About 1,024 seconds — barely more than the final wait alone", "About 100 seconds"],
+        "answer": 1,
+        "explain": "Doubling series: 1+2+…+512 = 1,023 ≈ 2× the last term. The geometric series means the last term IS the bill — true of backoff waits, dynamic array copies, and leaf-heavy recursion trees alike." },
+      { "q": "Why does Big-O never specify a logarithm's base?",
+        "choices": ["Convention — base 2 is assumed and it matters",
+                    "Because changing base multiplies by a constant, and Big-O ignores constant factors",
+                    "Because logarithms don't have bases"],
+        "answer": 1,
+        "explain": "log₁₀n = log₂n / log₂10 — a fixed ×0.301. Inside O(·) that's invisible, so O(log n) needs no base. (Outside Big-O — e.g. counting actual tree levels — the base matters again!)" } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const slider = document.getElementById("log-slider");
+      const nOut = document.getElementById("log-n");
+      const readout = document.getElementById("log-readout");
+      function update() {
+        const k = Number(slider.value);
+        const n = Math.pow(2, k);
+        nOut.textContent = n.toLocaleString("en-US");
+        readout.innerHTML =
+          `<strong>${k}</strong> halvings to reach 1 — so log₂(n) = ${k}. ` +
+          `A binary search over n items: ~${k} comparisons. A balanced tree of n items: ~${k} levels.` +
+          (k >= 40 ? " (n is now beyond what fits in RAM anywhere — the log still fits on one hand… of a spider.)" : "");
+      }
+      slider.addEventListener("input", update);
+      update();
+    });
+  </script>
+</main>
+</body>
+</html>

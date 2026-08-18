@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab: build a hash table — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Practice labs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="sorting-lab.html|Lab: write your own sorts">
+  <meta name="algo:next" content="graph-playground.html|Graph playground">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/labs/runner.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 10 · Practice labs</p>
+  <h1>Lab: build a hash table</h1>
+  <p class="lede">No <code>Map</code>, no <code>Object</code> as storage —
+  buckets, a hash function, and collision handling, from parts. The
+  harness feeds it adversarial keys that all collide, because collision
+  handling that never ran isn't collision handling.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hash tables</a> —
+    especially chaining and why deletes are the subtle case.
+  </div>
+
+  <div id="lab-host"></div>
+
+  <div class="box in-the-wild">
+    <span class="label">Why the colliding keys</span>
+    <p>The harness includes keys crafted to share a bucket under
+    reasonable small-table hashing. A table that stores by
+    <code>hash(key)</code> alone overwrites them into each other —
+    the exact bug class behind real-world hash-flooding incidents,
+    where attackers mass-produce collisions to turn O(1) into O(n).
+    Chaining with full-key comparison inside the bucket is the fix
+    you're implementing.</p>
+  </div>
+
+  <h2>Where this goes next</h2>
+  <p>The unit's centerpiece:
+  <a href="graph-playground.html">the graph playground</a> — every
+  algorithm from units 4–5, on any graph you draw.</p>
+
+  <script type="application/json" class="lab">
+  { "labs": [ { "id": "hash-table-lab", "title": "Build a hash table",
+      "task": "Write createTable(buckets) returning {set, get, has, remove} built on an array of bucket chains — no Map/Object storage.",
+      "goals": ["set/get round-trip", "colliding keys coexist", "overwrite updates in place", "remove leaves neighbors intact"] } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      window.AlgoLabs.create(document.getElementById("lab-host"), {
+        id: "hash-table-lab",
+        pageId: "hash-table-lab",
+        title: "Build a hash table (chaining)",
+        task: `<p>Write <code>createTable(buckets)</code> returning an object
+          with <code>set(k, v)</code>, <code>get(k)</code> (→ value or
+          <code>undefined</code>), <code>has(k)</code>, and
+          <code>remove(k)</code>. Storage must be an array of
+          <code>buckets</code> chains — use the provided <code>hashString</code>
+          idea or your own, but no <code>Map</code>/plain-object storage.</p>`,
+        fnName: "createTable",
+        starter: `function hashString(s, buckets) {
+  let h = 5381;
+  for (const ch of String(s)) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0;
+  return h % buckets;
+}
+
+function createTable(buckets) {
+  const chains = Array.from({ length: buckets }, () => []);
+  return {
+    set(k, v) {
+      // find the bucket; update the entry if k exists, else append [k, v]
+    },
+    get(k) {
+      // return the value for k, or undefined
+    },
+    has(k) {
+      return this.get(k) !== undefined;
+    },
+    remove(k) {
+      // delete k's entry from its chain — leave the others alone
+    },
+  };
+}`,
+        testSource: `
+function runTests(fn) {
+  const results = [];
+  const t = (name, pass, detail) => results.push({ name, pass, detail });
+
+  const table = fn(8);
+  t("returns set/get/has/remove", table &&
+    ["set", "get", "has", "remove"].every((m) => typeof table[m] === "function"));
+
+  table.set("alpha", 1); table.set("beta", 2); table.set("gamma", 3);
+  t("set/get round-trip", table.get("alpha") === 1 && table.get("beta") === 2 && table.get("gamma") === 3);
+  t("missing key → undefined", table.get("nope") === undefined && !table.has("nope"));
+
+  table.set("beta", 20);
+  t("overwrite updates in place", table.get("beta") === 20);
+
+  // adversarial: many keys into an 8-bucket table — collisions guaranteed
+  // by pigeonhole; every key must still be individually retrievable.
+  const small = fn(8);
+  const keys = [];
+  for (let i = 0; i < 40; i++) keys.push("k" + i * 7);
+  keys.forEach((k, i) => small.set(k, i * 11));
+  t("40 keys in 8 buckets all retrievable (pigeonhole says ≥5 share a bucket)",
+    keys.every((k, i) => small.get(k) === i * 11),
+    "storing by hash alone overwrites bucket-mates");
+
+  small.remove(keys[13]);
+  t("remove deletes only its key",
+    small.get(keys[13]) === undefined &&
+    small.get(keys[12]) === 12 * 11 && small.get(keys[14]) === 14 * 11,
+    "chain neighbors must survive");
+
+  const again = fn(8);
+  again.set("x", 0);
+  t("falsy values are real values", again.has("x") && again.get("x") === 0,
+    "has() must not confuse value 0 with absence");
+  return results;
+}`,
+        hint: `<p>Each chain holds <code>[key, value]</code> pairs. set:
+          compute the bucket, scan the chain for the key — replace its value
+          or push a new pair. get: scan the same chain comparing FULL keys.
+          remove: <code>findIndex</code> + <code>splice</code>. The value-0
+          test wants <code>has</code> checking pair existence, not
+          truthiness.</p>`,
+        solution: `function hashString(s, buckets) {
+  let h = 5381;
+  for (const ch of String(s)) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0;
+  return h % buckets;
+}
+
+function createTable(buckets) {
+  const chains = Array.from({ length: buckets }, () => []);
+  const chainOf = (k) => chains[hashString(k, buckets)];
+  return {
+    set(k, v) {
+      const chain = chainOf(k);
+      const hit = chain.find((p) => p[0] === k);
+      if (hit) hit[1] = v; else chain.push([k, v]);
+    },
+    get(k) {
+      const hit = chainOf(k).find((p) => p[0] === k);
+      return hit ? hit[1] : undefined;
+    },
+    has(k) {
+      return chainOf(k).some((p) => p[0] === k);
+    },
+    remove(k) {
+      const chain = chainOf(k);
+      const i = chain.findIndex((p) => p[0] === k);
+      if (i >= 0) chain.splice(i, 1);
+    },
+  };
+}`,
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

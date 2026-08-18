@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Binary search, done right — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:next" content="elementary-sorts.html|Selection, insertion, bubble">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>Binary search, done right</h1>
+  <p class="lede">You've met it twice already. This page exists because binary
+  search holds a famous record: tiny, ancient, obviously correct — and
+  botched by most programmers who write it from scratch. The invariant is the
+  vaccine.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-foundations/proving-correctness.html">Proving an algorithm
+    correct</a> — this page is that technique earning rent.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Jon Bentley asked professional programmers to write binary search;
+  the majority produced a version with a bug. Knuth noted the first correct
+  published version appeared twelve years after the first published version.
+  The bugs are always the same species:
+  <strong>boundary confusion</strong> — <code>&lt;</code> vs
+  <code>&lt;=</code>, <code>mid</code> vs <code>mid±1</code>, loops that skip
+  an element or never terminate on two-element ranges.</p>
+  <p>The cure is not memorization, it's the method from unit 1: <em>write the
+  invariant first, then make every line honor it.</em> Ours: <strong>if the
+  target exists, its index is in [lo, hi]</strong> — both ends inclusive.
+  Every line of the implementation is now forced: the loop runs while the
+  region is non-empty (<code>lo &lt;= hi</code>); a too-small middle moves
+  <code>lo</code> to <code>mid + 1</code> (mid itself is cleared — keeping it
+  would be timid <em>and</em> break termination); and emptiness means
+  provably absent.</p>
+
+  <h2>Watch it run</h2>
+  <div class="demo">
+    <canvas id="bs-canvas" width="880" height="150"
+            aria-label="Binary search halving its candidate region"></canvas>
+    <div id="bs-stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Beyond lookups: <code>git bisect</code> binary-searches your commit
+    history for the one that broke the build — the "array" is time, the
+    "comparison" is your test. Autoscalers and load tests binary-search for
+    capacity limits. Every "find the first version where…", "lowest latency
+    that fails", "boundary between OK and broken" is binary search over a
+    <em>predicate</em> — the pattern below generalizes far beyond sorted
+    arrays: it needs only monotonicity (false…false, true…true).</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The bug gallery — each one is a broken invariant clause</summary>
+    <div class="layer-body">
+      <p><strong><code>hi = mid</code></strong> (instead of mid−1): the region
+      no longer shrinks when hi−lo is 0 — infinite loop on some inputs.
+      Termination was a clause of the proof.
+      <strong><code>while (lo &lt; hi)</code></strong> with inclusive bounds:
+      exits with a one-element region unchecked — misses targets at the
+      boundary. Check 3 of the proof fails.
+      <strong><code>mid = (lo + hi) / 2</code></strong> in fixed-width
+      languages: overflows when lo+hi exceeds the integer max — the famous
+      JDK bug that sat in <code>Arrays.binarySearch</code> for nine years.
+      Write <code>lo + (hi − lo) / 2</code>. (JavaScript's numbers dodge this
+      one until 2⁵³ — but write the safe form anyway; you won't stay in
+      JavaScript forever.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The upgrade: binary search over any monotone predicate</summary>
+    <div class="layer-body">
+      <p>Replace "a[mid] vs target" with any test that flips once from false
+      to true along the range, and binary search finds the flip point in
+      log n tests. "First bad commit", "smallest capacity that survives the
+      load", "first timestamp after midnight" — same loop, new predicate.
+      This form (find the first true) uses the half-open convention
+      [lo, hi): <code>while (lo &lt; hi) { if (test(mid)) hi = mid; else
+      lo = mid + 1; }</code> — note how the invariant changed ("answer in
+      [lo, hi], hi may BE the answer") and the code changed with it,
+      consistently. Pick a convention by writing its invariant; never mix
+      halves of two conventions — that's the bug gallery's origin story.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Inclusive convention: INVARIANT — if present, target's index is in [lo, hi]
+function binarySearch(a, target) {
+  let lo = 0, hi = a.length - 1;
+  while (lo <= hi) {                      // loop while region non-empty
+    const mid = lo + ((hi - lo) >> 1);    // overflow-safe middle
+    if (a[mid] === target) return mid;
+    if (a[mid] < target) lo = mid + 1;    // mid is cleared — exclude it
+    else hi = mid - 1;                    // ditto
+  }
+  return -1;                              // region empty ⇒ provably absent
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Searching sorted data is solved. The rest of the unit asks the prior
+  question — how the data got sorted — starting with the three sorts everyone
+  writes first: <a href="elementary-sorts.html">selection, insertion,
+  bubble</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "binary-search-right",
+    "questions": [
+      { "q": "With the inclusive invariant \"target's index is in [lo, hi]\", why must the update be lo = mid + 1 rather than lo = mid?",
+        "choices": ["Either works; +1 is just faster",
+                    "mid was checked and cleared, so keeping it violates nothing — but the region then may not shrink, breaking termination",
+                    "Because mid might overflow"],
+        "answer": 1,
+        "explain": "On a two-element region, lo = mid can loop forever. The proof needs both truth-preservation AND progress; lo = mid+1 delivers both, and the invariant says it's safe." },
+      { "q": "git bisect finds the commit that broke your build in ~log₂(n) test runs. What property of \"brokenness\" makes that valid?",
+        "choices": ["Commits are stored sorted by hash",
+                    "Monotonicity: history is good…good, bad…bad — the test flips once, so halving locates the flip",
+                    "Git stores a search index"],
+        "answer": 1,
+        "explain": "Binary search needs order, but the order can live in a predicate rather than in values. (And when a flaky test breaks monotonicity, bisect misleads — same failure as searching an unsorted array.)" },
+      { "q": "Why did this course teach the proof method BEFORE this page's famous bugs?",
+        "choices": ["Historical accident",
+                    "Because each classic bug is precisely one broken clause of the invariant proof — the method detects them mechanically, no memorized incantation needed",
+                    "The bugs are unfixable otherwise"],
+        "answer": 1,
+        "explain": "Off-by-ones are not typing errors; they're specification errors. Write the invariant, and every ±1 becomes a checkable consequence instead of folklore." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const N = 64;
+      const arr = window.AlgoRandom.ints(N, 5, 400, 314).sort((a, b) => a - b);
+      const target = arr[41];
+      const viz = window.AlgoArrayViz.create(document.getElementById("bs-canvas"));
+      const max = Math.max(...arr);
+      window.AlgoSteps.player(document.getElementById("bs-stepper"), {
+        make: () => window.AlgoSorts.binarySearch(arr, target),
+        capture: () => ({ array: arr.slice(), max }),
+        render: (snap, event) => viz.draw(snap, event),
+        counters: { compare: "comparisons" },
+        describe: (e) =>
+          e.type === "focus" ? `region [${e.lo}, ${e.hi}] — invariant holds` :
+          e.type === "compare" ? "one comparison clears the middle" :
+          e.type === "found" ? `found at index ${e.i}` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

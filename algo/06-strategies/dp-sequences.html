@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DP on sequences — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dp-foundations.html|Dynamic programming">
+  <meta name="algo:next" content="dp-knapsack.html|Knapsack and friends">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/dp.js"></script>
+  <script defer src="../assets/js/viz/table.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>DP on sequences: the algorithm inside <code>diff</code></h1>
+  <p class="lede">Fib was DP with training wheels — one dimension, one
+  recurrence term. Sequence problems are where the recipe earns its keep:
+  define what a table cell <em>means</em>, write how it follows from its
+  neighbors, fill in dependency order. Edit distance — the algorithm under
+  every diff view you've ever read — is the flagship.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="dp-foundations.html">The 4-step DP recipe</a>. Everything here
+    is that recipe, with the table grown to two dimensions.
+  </div>
+
+  <h2>The idea</h2>
+  <p><strong>Edit distance</strong>: the minimum number of single-character
+  inserts, deletes, and substitutions turning string a into string b.
+  Recipe step 1, the sentence: <em>d[i][j] = the edit distance between the
+  first i characters of a and the first j characters of b.</em> Step 2,
+  the recurrence — look at the <em>last</em> characters:</p>
+  <p><span class="math">d[i][j] = \min\big(d[i{-}1][j] + 1,\; d[i][j{-}1] + 1,\; d[i{-}1][j{-}1] + [a_i \ne b_j]\big)</span></p>
+  <p class="hint">In plain English: delete a's last character, or insert
+  b's, or line the two last characters up — free if they match, one
+  substitution if not. Three neighbors, one min.</p>
+  <p>Step 3: (m+1)(n+1) cells × O(1) each = O(mn). Step 4: fill rows
+  top-to-bottom — every cell's three dependencies sit up and left. The
+  answer is the bottom-right cell, and walking the choices backward from it
+  recovers the actual edit script: <em>that traceback path is literally
+  the diff</em>.</p>
+
+  <h2>Watch it run</h2>
+  <p><code>kitten → sitting</code>. Green flashes are match-diagonals
+  (free); when the table completes, the traceback path lights up — read it
+  as the edit script. Distance: 3 (substitute k→s, substitute e→i, insert
+  g):</p>
+  <div class="demo">
+    <div id="table"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p><code>git diff</code> and every code-review pane run
+    LCS/edit-distance machinery (Myers' algorithm — same DP, cleverer
+    frontier). Spell checkers rank corrections by edit distance;
+    fuzzy search (fzf, database <code>LEVENSHTEIN</code>) is this table;
+    DNA sequence alignment (Needleman-Wunsch/Smith-Waterman) is this exact
+    recurrence with biological scoring — computed at genome scale.
+    Speech-recognition scoring (word error rate) is edit distance on
+    words. And evaluation harnesses for LLM outputs lean on
+    edit-distance-family metrics whenever "how different are these two
+    texts?" needs a number.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>LIS — same recipe, different sentence</summary>
+    <div class="layer-body">
+      <p><strong>Longest increasing subsequence</strong>: in [3, 1, 8, 2,
+      5, 4, 7, 6], find the longest subsequence that climbs — here length
+      4 (e.g. 1, 2, 5, 7). The sentence: <em>len[i] = length of the
+      longest increasing subsequence ending exactly at index i</em>.
+      Recurrence: len[i] = 1 + max(len[j]) over all j &lt; i with
+      arr[j] &lt; arr[i]. O(n²), traceback recovers the chain. The
+      pattern to notice: "ending exactly at i" is the standard dodge when
+      a subproblem needs a firm anchor — the same dodge that defines many
+      DP sentences. (A binary-search refinement gets O(n log n) —
+      patience sorting — worth knowing exists.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Space: you rarely need the whole table</summary>
+    <div class="layer-body">
+      <p>Edit distance's recurrence reads only the previous row — so two
+      rows suffice: O(min(m, n)) memory instead of O(mn), which is the
+      difference between diffing chromosomes in RAM or not. The catch:
+      row-recycling destroys the traceback (the path needs the full
+      table). Hirschberg's trick gets both — divide & conquer to find
+      where the optimal path crosses the middle row, then recurse on the
+      two halves: full alignment in linear space, O(mn) time. A beautiful
+      example of two strategies (D&C + DP) composing, and it ships in
+      bioinformatics tools for exactly the RAM reason.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/dp.js), events elided:
+function editDistance(a, b) {
+  const d = table(a.length + 1, b.length + 1);
+  for (let i = 0; i <= a.length; i++) d[i][0] = i;   // delete everything
+  for (let j = 0; j <= b.length; j++) d[0][j] = j;   // insert everything
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;    // match is free
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,        // delete a[i]
+        d[i][j - 1] + 1,        // insert b[j]
+        d[i - 1][j - 1] + cost, // substitute (or match)
+      );
+    }
+  }
+  return d[a.length][b.length];  // traceback from here = the edit script
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Sequences give way to <em>budgets</em>:
+  <a href="dp-knapsack.html">knapsack</a>, where the table's second
+  dimension is capacity, and where an innocent-looking "polynomial"
+  complexity hides an asterisk big enough to have its own name.</p>
+
+  <script type="application/json" class="symbols">
+  { "d": { "name": "d[i][j] — the subproblem table", "pron": "say: dee of eye, jay",
+           "means": "the edit distance between a's first i characters and b's first j characters", "short": "table cell" },
+    "m": { "name": "m, n — the two string lengths", "pron": "say: em and en",
+           "means": "the table has (m+1)×(n+1) cells — the complexity is their product", "short": "lengths" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "dp-sequences",
+    "questions": [
+      { "q": "What does cell d[3][5] of the kitten→sitting table MEAN?",
+        "choices": ["The 3rd and 5th characters differ",
+                    "The minimum edits turning \"kit\" (first 3 chars) into \"sitti\" (first 5 chars) — the one-sentence meaning that the whole design hangs on",
+                    "3 deletions and 5 insertions have happened"],
+        "answer": 1,
+        "explain": "Recipe step 1 is the make-or-break step. If the sentence for a cell isn't crisp, the recurrence that follows will be wrong in ways that are miserable to debug." },
+      { "q": "Why does the traceback path equal the diff?",
+        "choices": ["It's an approximation that's usually close",
+                    "Each backward step records WHICH of the three options was optimal at that cell — down=delete, right=insert, diagonal=match/substitute — so the path is the optimal edit script itself",
+                    "Because the table is symmetric"],
+        "answer": 1,
+        "explain": "DP tables store optimal VALUES; the choices that produced them encode optimal SOLUTIONS. Walking choices backward is the universal DP-reconstruction move — same trick as knapsack's chosen items." },
+      { "q": "You need to diff two 10-million-line files and RAM is the constraint. What's the informed play?",
+        "choices": ["Buy more RAM — the full table is mandatory",
+                    "Two-row rolling storage gives the distance in O(min(m,n)) memory; if the actual diff script is needed, Hirschberg's divide-&-conquer recovers it in linear space too",
+                    "Sample every 100th line"],
+        "answer": 1,
+        "explain": "Knowing which parts of the table the recurrence actually reads — and the D&C+DP composition when the path itself is needed — is the difference between 'impossible' and 'runs on a laptop'." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const A = "kitten", B = "sitting";
+      const rows = A.length + 1, cols = B.length + 1;
+      const viz = window.AlgoTableViz.create(document.getElementById("table"), {
+        rowLabels: ["·", ...A.split("")],
+        colLabels: ["·", ...B.split("")],
+      });
+
+      const state = {};
+      function* tracked() {
+        state.cells = {}; state.trace = [];
+        for (const e of window.AlgoDP.editDistance(A, B)) {
+          if (e.type === "cell") state.cells[e.i + "," + e.j] = e.val;
+          if (e.type === "trace") state.trace = e.cells.map(([i, j]) => i + "," + j);
+          yield e;
+        }
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ cells: { ...(state.cells || {}) }, trace: (state.trace || []).slice() }),
+        render: (snap, event) =>
+          viz.draw(rows, cols, { cells: snap.cells, trace: new Set(snap.trace) }, event),
+        counters: { cell: "cells filled" },
+        describe: (e) =>
+          e.type === "cell" ? (e.j === 0 ? `base case: turning \"${A.slice(0, e.i)}\" into \"\" takes ${e.val} deletes` :
+            e.i === 0 ? `base case: turning \"\" into \"${B.slice(0, e.j)}\" takes ${e.val} inserts` :
+            `d[${e.i}][${e.j}] = ${e.val}` + (e.match ? " — last characters match, diagonal is free" : "")) :
+          e.type === "trace" ? "traceback: walking the optimal choices home — this path IS the diff" :
+          e.type === "done" ? `edit distance: ${e.distance} (substitute k→s, substitute e→i, insert g)` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

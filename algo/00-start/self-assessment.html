@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Where should you start? — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Start here">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="what-is-an-algorithm.html|What is an algorithm?">
+  <meta name="algo:next" content="../01-foundations/counting-steps.html|Counting steps">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start here</p>
+  <h1>Where should you start?</h1>
+  <p class="lede">Six honest questions, no grading, no storage — just a
+  suggested entry point. You can ignore it: the units are ordered but the
+  prerequisites are always linked, so nothing traps you.</p>
+
+  <div class="box plain-english">
+    <span class="label">The honest default</span>
+    If you'd rather skip the quiz: start at
+    <a href="../01-foundations/counting-steps.html"><strong>unit 1</strong></a>.
+    Even readers who know Big-O usually enjoy the measured version of it, and
+    the foundations unit is where the site's stepper habits are formed.
+  </div>
+
+  <div id="placement"></div>
+  <div class="box" id="verdict" hidden>
+    <span class="label">Suggested starting point</span>
+    <p id="verdict-text"></p>
+  </div>
+
+  <h2>Where this goes next</h2>
+  <p>Wherever the suggestion pointed — or straight to
+  <a href="../01-foundations/counting-steps.html">Counting steps</a>.</p>
+
+  <script>
+    // A placement quiz, not a graded one: answers map to a suggested entry
+    // unit, deliberately outside the quiz.js/progress machinery (missing a
+    // question here should NOT become a flashcard).
+    document.addEventListener("DOMContentLoaded", () => {
+      const QUESTIONS = [
+        { q: "Big-O notation — what's your honest relationship with it?",
+          choices: [
+            ["We've never met, or it never stuck", 0],
+            ["I can say \"that's O(n²)\" but couldn't defend it formally", 1],
+            ["I'm comfortable, including Θ vs O and amortized costs", 2]] },
+        { q: "A teammate proposes a hash map instead of a sorted array plus binary search. Can you argue the trade-offs?",
+          choices: [
+            ["Not really — I'd trust their call", 0],
+            ["Roughly: hash is O(1)-ish, but I'm hazy on the fine print", 1],
+            ["Yes — load factors, ordering, worst cases, memory", 2]] },
+        { q: "BFS and DFS —",
+          choices: [
+            ["I've heard the acronyms", 0],
+            ["I could write one with a queue or a stack, given a minute", 1],
+            ["I know when each is right, and what edge classification is", 2]] },
+        { q: "Could you implement Dijkstra's algorithm from memory, priority queue and all?",
+          choices: [
+            ["No", 0],
+            ["With a reference open, yes", 1],
+            ["Yes, and I know why negative weights break it", 2]] },
+        { q: "Dynamic programming —",
+          choices: [
+            ["The name alone raises my heart rate", 0],
+            ["I've solved a few (fib, knapsack) but don't trust myself on new ones", 1],
+            ["I can spot overlapping subproblems and write both top-down and bottom-up", 2]] },
+        { q: "\"NP-complete\" means, roughly —",
+          choices: [
+            ["…I'd rather not say", 0],
+            ["\"probably no fast exact algorithm exists\" — but I couldn't explain reductions", 1],
+            ["I can state P vs NP and sketch why SAT is the anchor", 2]] },
+      ];
+
+      const host = document.getElementById("placement");
+      const picks = new Array(QUESTIONS.length).fill(null);
+
+      QUESTIONS.forEach((item, qi) => {
+        const card = document.createElement("section");
+        card.className = "quiz-q";
+        const p = document.createElement("p");
+        p.className = "q-text";
+        p.textContent = `${qi + 1}. ${item.q}`;
+        card.appendChild(p);
+        const choices = document.createElement("div");
+        choices.className = "choices";
+        item.choices.forEach(([text, score]) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "choice";
+          btn.textContent = text;
+          btn.addEventListener("click", () => {
+            picks[qi] = score;
+            choices.querySelectorAll(".choice").forEach((b) => delete b.dataset.state);
+            btn.dataset.state = "correct"; // reuse the highlight style, no judgement implied
+            if (!picks.includes(null)) verdict();
+          });
+          choices.appendChild(btn);
+        });
+        card.appendChild(choices);
+        host.appendChild(card);
+      });
+
+      function verdict() {
+        const total = picks.reduce((a, b) => a + b, 0); // 0..12
+        const graphs = picks[2] + picks[3];             // 0..4
+        let text;
+        if (total <= 3) {
+          text = `Start at <a href="../01-foundations/counting-steps.html"><strong>Unit 1 —
+            Foundations</strong></a> and take it in order. The whole course was built for
+            exactly where you are, and the foundations unit pays off everything after it.`;
+        } else if (total <= 7) {
+          text = `Skim <a href="../01-foundations/counting-steps.html"><strong>Unit 1</strong></a>
+            (the measured Big-O treatment tightens hand-wavy knowledge fast), then work
+            <a href="../index.html"><strong>units 2–3</strong></a> properly — that's where
+            "roughly knowing" becomes "can defend in review".`;
+        } else if (graphs <= 2) {
+          text = `Your foundations are solid but graphs are the gap — convenient, because
+            graphs are this course's centerpiece. Go straight to
+            <a href="../index.html"><strong>Unit 4 — Graphs I</strong></a>, then 5, then the
+            systems unit; dip back into units 1–3 pages as the prereq boxes suggest.`;
+        } else {
+          text = `You know this material. Two suggestions: jump to
+            <a href="../index.html"><strong>Unit 9 — Production &amp; LLM systems</strong></a>
+            for the modern payoff, and use the <a href="../index.html">labs</a> +
+            <a href="../index.html">expert track</a> to pressure-test what's rusty. The
+            earlier units are there when a prereq box points backwards.`;
+        }
+        document.getElementById("verdict-text").innerHTML = text;
+        document.getElementById("verdict").hidden = false;
+        document.getElementById("verdict").scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+  </script>
+</main>
+</body>
+</html>

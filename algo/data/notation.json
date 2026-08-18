@@ -1,0 +1,71 @@
+{
+  "asymptotics": {
+    "title": "Growth and bounds",
+    "entries": [
+      { "sym": "O(g(n))", "name": "big O", "say": "big oh of gee of en",
+        "means": "an upper bound on growth: the cost grows no faster than g(n), ignoring constant factors, from some input size onward.",
+        "aliases": ["big oh", "upper bound", "order of"],
+        "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O" } },
+      { "sym": "Θ(g(n))", "name": "big theta", "say": "big thay-ta of gee of en",
+        "means": "a tight bound: the cost grows exactly like g(n) — bounded above and below by constant multiples of it.",
+        "aliases": ["theta", "tight bound", "exactly"],
+        "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O" } },
+      { "sym": "Ω(g(n))", "name": "big omega", "say": "big oh-may-ga of gee of en",
+        "means": "a lower bound on growth: the cost grows at least this fast. How impossibility results are written.",
+        "aliases": ["omega", "lower bound", "horseshoe"],
+        "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O" } },
+      { "sym": "o, ω", "name": "little o, little omega", "say": "little oh, little oh-may-ga",
+        "means": "the strict versions: grows strictly slower (o) or strictly faster (ω) than g(n) — the bound is not tight.",
+        "aliases": ["little oh", "strict bounds"] },
+      { "sym": "n", "name": "the input size", "say": "en",
+        "means": "how many items the algorithm is given: elements to sort, keys to store, characters to scan.",
+        "aliases": ["input size", "problem size"] },
+      { "sym": "T(n)", "name": "the cost function", "say": "tee of en",
+        "means": "the number of steps an algorithm takes on an input of size n; the thing the bounds above describe.",
+        "aliases": ["running time", "time complexity"] }
+    ]
+  },
+  "math": {
+    "title": "The math toolkit",
+    "entries": [
+      { "sym": "log n, lg n", "name": "logarithm of n", "say": "log en",
+        "means": "how many times n can be halved before reaching 1. In asymptotics the base doesn't matter (it's a constant factor); lg means base 2.",
+        "aliases": ["log", "logarithm", "halvings"] },
+      { "sym": "⌊x⌋, ⌈x⌉", "name": "floor and ceiling", "say": "floor of ex, ceiling of ex",
+        "means": "x rounded down (floor) or up (ceiling) to a whole number — how the analysis stays honest when n doesn't divide evenly.",
+        "aliases": ["floor brackets", "ceiling brackets", "rounding"] },
+      { "sym": "∑", "name": "summation", "say": "the sum of",
+        "means": "add up a sequence of terms — how the cost of a loop is written down before it's simplified.",
+        "aliases": ["sigma", "sum", "the E-looking symbol"] },
+      { "sym": "n!", "name": "n factorial", "say": "en factorial",
+        "means": "n × (n−1) × … × 1: the number of orderings of n items, and the growth rate of brute-forcing them.",
+        "aliases": ["factorial", "permutations"] },
+      { "sym": "C(n,k)", "name": "n choose k", "say": "en choose kay",
+        "means": "the number of ways to pick k items from n when order doesn't matter.",
+        "aliases": ["binomial coefficient", "choose"] },
+      { "sym": "mod", "name": "modulo", "say": "mod",
+        "means": "the remainder after division — the workhorse of hashing and ring buffers.",
+        "aliases": ["remainder", "%"] }
+    ]
+  },
+  "graphs": {
+    "title": "Graph notation",
+    "entries": [
+      { "sym": "G = (V, E)", "name": "a graph", "say": "gee equals vee, ee",
+        "means": "a graph G is a set of vertices V (the dots) and a set of edges E (the connections between them).",
+        "aliases": ["graph", "vertices and edges", "network"] },
+      { "sym": "|V|, |E|", "name": "vertex and edge counts", "say": "the size of vee, the size of ee",
+        "means": "how many vertices and edges the graph has — graph algorithms state their cost in both, like Θ(|V| + |E|).",
+        "aliases": ["number of nodes", "number of edges", "size bars"] },
+      { "sym": "deg(v)", "name": "degree", "say": "degree of vee",
+        "means": "how many edges touch vertex v. Directed graphs split it into in-degree and out-degree.",
+        "aliases": ["degree", "neighbors count"] },
+      { "sym": "w(u,v)", "name": "edge weight", "say": "double-u of you, vee",
+        "means": "the cost, length or capacity of the edge from u to v — whatever the problem is measuring.",
+        "aliases": ["weight", "edge cost"] },
+      { "sym": "δ(s,v)", "name": "shortest-path distance", "say": "delta of ess, vee",
+        "means": "the least total weight of any path from s to v — what Dijkstra and friends compute.",
+        "aliases": ["delta", "distance", "shortest path"] }
+    ]
+  }
+}

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drawing graphs: force-directed layout — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Visualisation">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="drawing-trees.html|Drawing trees">
+  <meta name="algo:next" content="drawing-dags.html|Drawing DAGs (Sugiyama's layers)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/layout.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Visualisation</p>
+  <h1>Force-directed layout: let physics untangle it</h1>
+  <p class="lede">General graphs have no root, no depth, no natural
+  coordinates. So don't compute positions — <em>grow</em> them: pretend
+  edges are springs and nodes repel like charges, then simulate until the
+  system relaxes. Communities clump, bridges stretch, symmetry emerges —
+  nobody told the algorithm about any of it.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="why-visualise.html">The encoding mindset</a>. The graphs
+    being drawn are unit 4's; the editor's "arrange in a circle" button is
+    about to get its promised upgrade.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Fruchterman-Reingold (1991), the standard recipe. Two forces with an
+  ideal length k ≈ √(area/n): every pair of nodes <strong>repels</strong>
+  with strength k²/d (strong when close, fading with distance); every
+  edge <strong>attracts</strong> its endpoints with strength d²/k
+  (stronger the more stretched). Each tick sums forces and moves every
+  node — but capped by a <strong>temperature</strong> that starts
+  generous and cools each tick: big rearrangements early, fine tuning
+  late, then frozen. That's simulated annealing's schedule applied to
+  aesthetics.</p>
+  <p>The claim being optimized is implicit: at equilibrium, edge lengths
+  approximate k, connected things sit near each other, and everything
+  else is pushed apart — so <em>screen distance comes to mean graph
+  distance</em>, which is exactly the encoding a viewer's eye assumes.
+  When that assumption holds, clusters in the picture are communities in
+  the data. When the layout hasn't converged (or the graph is too dense),
+  the picture claims things the data doesn't — the honest failure mode
+  to watch for.</p>
+
+  <h2>Watch it run</h2>
+  <p>The city graph from unit 4, scrambled to random positions, then
+  released. Scrub through the ticks: chaos → clumps → the familiar map.
+  The movement counter shows the cooling:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Every "network diagram" you've seen — dependency explorers,
+    Kubernetes service maps, social-graph tools, Obsidian's graph view,
+    Neo4j Browser — runs a force simulation (d3-force powers half of
+    them). Knowledge-graph UIs lay out entities this way, and embedding
+    visualizations borrow the same intuition (the next-next page makes
+    that precise). It's also this site's own machinery: the
+    <a href="../map.html">concept map</a> of this course is laid out by
+    the exact generator in the demo — and the graph editor's circle
+    button can now be understood as "the layout you use when you refuse
+    to run one".</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Costs, scaling, and the n² elephant</summary>
+    <div class="layer-body">
+      <p>Each tick is O(n²) for repulsion (all pairs) plus O(|E|) for
+      springs; a few hundred ticks for convergence. Fine for hundreds of
+      nodes, painful at tens of thousands. The standard fix imports
+      unit 2's spatial thinking: a <strong>Barnes-Hut quadtree</strong>
+      groups distant nodes and approximates their combined push as one
+      pseudo-node — O(n log n) per tick, at ~1% position error nobody can
+      see. (d3-force does this.) Multilevel methods coarsen the graph,
+      lay out the small version, then refine. Determinism note: random
+      initial positions mean every run looks different unless you seed —
+      this site seeds (unit 0's reproducibility rule), which is why the
+      demo converges to the same picture every time.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Reading (and distrusting) a force layout</summary>
+    <div class="layer-body">
+      <p>Trustworthy: clusters (dense subgraphs really do clump),
+      bridges (long stretched edges are real bottlenecks), hubs (high
+      degree gathers neighbors). Not trustworthy: absolute positions
+      (arbitrary), left/right/up/down (meaningless), precise distances
+      (only ordinal at best), and apparent "outliers" that are just
+      low-degree nodes pushed to the rim. Hairballs — dense graphs where
+      everything overlaps — aren't a layout failure so much as a signal
+      that node-link is the wrong encoding entirely; the next pages
+      (layers for DAGs, matrices for dense graphs) are the escape
+      hatches.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The site's actual layout engine (assets/js/viz/layout.js), events elided:
+for (let tick = 0; tick < iterations; tick++) {
+  for (each pair a, b)  push(a, b, k * k / dist(a, b));   // repel: k²/d
+  for (each edge u–v)   pull(u, v, dist(u, v) ** 2 / k);  // attract: d²/k
+  for (each node) move(node, capAt(temperature));         // bounded step
+  temperature *= 0.96;                     // cool: anneal toward stillness
+  if (avgMovement < ε) break;              // converged early
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Physics ignores direction — run it on a build graph and "depends on"
+  points every which way. Directed acyclic structure deserves a layout
+  that <em>shows the flow</em>:
+  <a href="drawing-dags.html">Sugiyama's layered method</a>, the
+  algorithm behind every pipeline diagram you've ever read.</p>
+
+  <script type="application/json" class="symbols">
+  { "k": { "name": "k — the ideal edge length", "pron": "say: kay",
+           "means": "the spacing the forces balance around, ≈ √(area/n); both force laws are written in terms of it", "short": "ideal length" },
+    "T": { "name": "temperature", "pron": "say: temperature",
+           "means": "the per-tick cap on movement; cooling it turns exploration into fine-tuning — annealing", "short": "step cap" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "drawing-graphs",
+    "questions": [
+      { "q": "What visual claim does a converged force layout make, and why is it useful?",
+        "choices": ["Node color equals node importance",
+                    "Screen distance ≈ graph distance: connected/clustered nodes sit together, so the eye's built-in 'near means related' assumption reads the STRUCTURE correctly",
+                    "The x-axis represents time"],
+        "answer": 1,
+        "explain": "The forces are engineered so proximity encodes connectivity. That's also the trap: an unconverged or hairball layout makes the same visual claim falsely." },
+      { "q": "Why does the temperature schedule matter — why not let nodes move freely until done?",
+        "choices": ["It saves CPU time only",
+                    "Uncapped moves oscillate and overshoot (springs fling nodes past equilibrium); cooling permits big early rearrangements, then damps to fine adjustments — annealing into a stable, better minimum",
+                    "It prevents integer overflow"],
+        "answer": 1,
+        "explain": "Force layouts are gradient-ish descent on a lumpy energy landscape. The cooling schedule is what turns 'jittering mess' into 'settles and freezes' — watch the movement counter fall in the demo." },
+      { "q": "Your service map has 20,000 nodes and each frame takes seconds. What's the classic fix, and where did you meet its idea?",
+        "choices": ["Draw fewer, larger nodes",
+                    "Barnes-Hut: a quadtree groups far-away nodes and approximates their repulsion as one pseudo-charge — O(n²)→O(n log n) per tick; it's unit 2's tree-partitioning instinct applied to space",
+                    "Switch the springs to constant force"],
+        "answer": 1,
+        "explain": "Approximate-the-distant-crowd is how n-body simulation scaled, and graph layout inherited it directly (d3-force included). Data structures keep paying rent in unexpected buildings." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("city");
+      graph.edges.forEach((e) => delete e.w);
+
+      const state = {};
+      function* tracked() {
+        // fresh scrambled copy each run; generator mutates node positions
+        const g = JSON.parse(JSON.stringify(graph));
+        state.positions = null;
+        for (const e of window.AlgoLayout.forceLayout(g, { seed: 17, iterations: 150 })) {
+          state.positions = g.nodes.map((n) => ({ id: n.id, x: n.x, y: n.y }));
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Force-directed layout animation", height: 340 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ positions: state.positions ? state.positions.map((p) => ({ ...p })) : null }),
+        render: (snap) => {
+          if (!snap.positions) return;
+          const g = { directed: false,
+            nodes: snap.positions,
+            edges: graph.edges };
+          viz.draw(g, {}, null);
+        },
+        counters: { tick: "ticks" },
+        speed: 12,
+        describe: (e) =>
+          e.type === "tick" ? `tick ${e.k}: average movement ${e.movement.toFixed(4)} — ` +
+            (e.movement > 0.01 ? "still rearranging" : "cooling into place") :
+          e.type === "done" ? "equilibrium: springs ≈ ideal length, repulsion balanced — the map re-emerged from chaos" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

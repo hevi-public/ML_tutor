@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dijkstra's algorithm — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../04-graphs/implicit-graphs.html|Implicit graphs">
+  <meta name="algo:next" content="bellman-ford.html|Bellman-Ford and negative weights">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+  <script defer src="../assets/js/graph-editor.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>Dijkstra: shortest paths when edges have prices</h1>
+  <p class="lede">BFS answered "fewest hops". But hops lie: a three-hop route
+  over fast links beats one slow hop. Give each edge a cost, and shortest
+  paths need the most famous algorithm in this course — BFS with its queue
+  promoted to a priority queue, plus one greedy commitment that's only legal
+  because prices can't be negative.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/bfs.html">BFS</a> and unit 2's
+    <a href="../02-structures/heaps.html">heap</a> — Dijkstra is the reason
+    priority queues were in the toolbox.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Keep a best-known price <span class="math" data-sym="dist">d(v)</span>
+  for every node: 0 for the start, ∞ elsewhere. Repeat two moves.
+  <strong>Settle</strong>: take the unsettled node with the cheapest
+  best-known price and declare that price final. <strong>Relax</strong>:
+  for each of its edges, check whether going <em>through</em> it beats a
+  neighbor's current best — <code>d(u) + w(u,v) &lt; d(v)</code> — and if
+  so, improve d(v) and remember u as v's parent.</p>
+  <p>The bold part is settling. The algorithm commits to the cheapest
+  frontier node <em>without looking at the rest of the graph</em> — pure
+  greed. It's legal for one reason: with non-negative weights, any other
+  route to that node would have to leave through a frontier node that's
+  already pricier, and prices only rise from there. Cheapest-so-far is
+  therefore cheapest-forever. (Let one weight go negative and this argument
+  dies — that failure is the next page.)</p>
+
+  <h2>Watch it run</h2>
+  <p>Weighted city map, starting from <code>a</code> (the first node). Green
+  = settled with its final price above; amber = frontier with a tentative
+  price that may still improve; thick edges = the shortest-path tree being
+  grown. Watch a tentative price drop when a cheaper route is found — then
+  <strong>edit the graph</strong>: change a weight (set the weight box, click
+  the edge's two endpoints twice to remove and re-add it), and see the tree
+  reroute:</p>
+  <div class="demo">
+    <div id="editor"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>The literal one: road navigation (weights = travel time) and network
+    routing — link-state protocols like OSPF run Dijkstra at every router.
+    The structural one is everywhere costs accumulate along paths: cheapest
+    currency-conversion chains, minimum-latency service routing, weighted
+    job pipelines, "cost to reach this state" in planning. And in unit 9's
+    vector search, HNSW's greedy descent is Dijkstra's settle-the-cheapest
+    instinct applied to similarity space — the frontier ordered by distance
+    to the query.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The priority queue is the complexity</summary>
+    <div class="layer-body">
+      <p>Every step needs "cheapest unsettled node" — an extract-min, plus a
+      decrease-key each time a price improves. This demo's code scans the
+      whole dist map (transparent to read, O(|V|²) overall — genuinely fine
+      at teaching scale, and honestly, for small dense graphs in practice).
+      Production swaps in unit 2's binary heap:
+      <span class="math">O((|V| + |E|) \log |V|)</span>. In plain English:
+      near-linear with a log factor as the price of keeping the frontier
+      sorted. Same algorithm, one data structure swapped, a complexity class
+      apart — the whole point of unit 2 in one sentence.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the proof — why settling is safe</summary>
+    <div class="layer-body">
+      <p><strong>Claim:</strong> when u is settled, d(u) = δ(s, u), the true
+      shortest distance. <strong>Induction on settle order.</strong> The
+      start settles at 0 — correct. Suppose all earlier-settled nodes have
+      correct final prices, and u is now the cheapest unsettled node. Any
+      path P from s to u must, at some point, first step outside the settled
+      set — say at edge (x, y) with x settled, y not. The prefix of P up to
+      y already costs at least d(y): x's relaxation offered y the price
+      d(x) + w(x, y), and d(y) can only be that or better. And
+      d(y) ≥ d(u) because u was chosen as the cheapest. With non-negative
+      weights, the rest of P from y onward can only add cost, so
+      cost(P) ≥ d(y) ≥ d(u). Every path costs at least d(u): settling is
+      safe. ∎</p>
+      <p>Spot the exact line where non-negativity earned its keep: "the rest
+      of P can only add cost". A −5 edge later in P breaks that sentence and
+      the whole proof with it.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function dijkstra(graph, start) {
+  const adj = adjacency(graph);
+  const dist = new Map(graph.nodes.map((n) => [n.id, Infinity]));
+  const parent = new Map();
+  const settled = new Set();
+  dist.set(start, 0);
+  for (;;) {
+    let u = null, best = Infinity;              // extract-min (heap in prod)
+    for (const [id, d] of dist) {
+      if (!settled.has(id) && d < best) { best = d; u = id; }
+    }
+    if (u === null) break;                      // rest unreachable
+    settled.add(u);                             // the greedy commitment
+    for (const { to, w } of adj.get(u)) {
+      const alt = best + w;                     // price via u
+      if (alt < dist.get(to)) {
+        dist.set(to, alt);                      // relax: better route found
+        parent.set(to, u);
+      }
+    }
+  }
+  return { dist, parent };                      // parents = shortest-path tree
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Two loose threads. Negative weights broke the settle argument —
+  <a href="bellman-ford.html">Bellman-Ford</a> pays extra time to fix that,
+  and detects the truly unfixable. And when you know where you're going,
+  settling evenly in all directions is wasteful —
+  <a href="astar.html">A*</a> aims the search.</p>
+
+  <script type="application/json" class="symbols">
+  { "dist": { "name": "d(v) — best-known distance", "pron": "say: dee of vee",
+           "means": "the cheapest route to v found so far; final once v is settled", "short": "tentative distance" },
+    "delta": { "name": "δ(s, v) — true shortest distance", "pron": "say: delta of ess, vee",
+           "means": "the cost of the genuinely cheapest path from s to v", "short": "shortest distance" },
+    "w": { "name": "w(u, v) — edge weight", "pron": "say: double-you of you, vee",
+           "means": "the cost of stepping along the edge from u to v", "short": "edge cost" },
+    "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "dijkstra",
+    "questions": [
+      { "q": "Dijkstra settles the cheapest frontier node permanently, mid-run. What makes that greed sound?",
+        "choices": ["The priority queue keeps nodes sorted",
+                    "Non-negative weights: any alternative route must exit the settled set through a node at least as expensive, and can only get costlier after that — cheapest-so-far is cheapest-forever",
+                    "It isn't sound — Dijkstra sometimes revises settled nodes"],
+        "answer": 1,
+        "explain": "The proof needs \"the rest of the path can only add cost\" exactly once — and that's the sentence a negative edge deletes. Greed with a safety proof beats caution." },
+      { "q": "How is Dijkstra related to BFS?",
+        "choices": ["They're unrelated algorithms that share a name convention",
+                    "Same frontier loop; the queue becomes a priority queue ordered by accumulated cost. With all weights equal to 1, Dijkstra's settle order IS BFS's ripple",
+                    "BFS is Dijkstra restricted to directed graphs"],
+        "answer": 1,
+        "explain": "One family: stack → DFS, queue → BFS, priority queue → Dijkstra. The frontier's discipline is the algorithm — unit 4's lesson, completed." },
+      { "q": "Your service mesh needs minimum-latency routes from the gateway to every service. Weights are measured p50 latencies (always ≥ 0). Which tool and why?",
+        "choices": ["BFS — fewest hops is close enough",
+                    "One Dijkstra run from the gateway: non-negative weights make it valid, and it yields the whole shortest-path tree — every service's best route in a single pass",
+                    "Floyd-Warshall — you need all pairs"],
+        "answer": 1,
+        "explain": "Single source + non-negative weights is Dijkstra's exact home. BFS would happily pick one 900ms hop over three 20ms ones; all-pairs computes n× more than asked." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("city");
+      graph.nodes.forEach((n) => { n.id = n.id.toLowerCase(); });
+      graph.edges.forEach((e) => { e.u = e.u.toLowerCase(); e.v = e.v.toLowerCase(); });
+
+      const state = {};
+      let editor;
+      function makeTracked() {
+        const g = editor ? editor.getGraph() : graph;
+        return function* tracked() {
+          state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+          if (!g.nodes.length) return;
+          const parent = {};
+          for (const e of window.AlgoGraphs.dijkstra(g, g.nodes[0].id)) {
+            window.AlgoGraphViz.applyEvent(state, e);
+            if (e.type === "relax" && e.u !== null) parent[e.v] = e.u;
+            if (e.type === "settle" && parent[e.u])
+              state.edgeState[window.AlgoGraphViz.edgeKey(parent[e.u], e.u)] = "tree";
+            yield e;
+          }
+        };
+      }
+
+      let player = null;
+      editor = window.AlgoGraphEditor.create(document.getElementById("editor"), {
+        graph,
+        weights: true,
+        onChange: () => { if (player) player.reset(makeTracked()); },
+      });
+
+      const vizHost = document.createElement("div");
+      const stepperHost = document.getElementById("stepper");
+      stepperHost.parentNode.insertBefore(vizHost, stepperHost);
+      const viz = window.AlgoGraphViz.create(vizHost, { label: "Dijkstra animation", height: 340 });
+
+      player = window.AlgoSteps.player(stepperHost, {
+        make: makeTracked(),
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(editor.getGraph(), snap, event),
+        counters: { settle: "settled", relax: "relaxations", check: "edge checks" },
+        describe: (e) =>
+          e.type === "settle" ? `${e.u} settled — final price ${e.dist}, joins the tree` :
+          e.type === "relax" ? (e.u === null
+            ? `${e.v} is the start — price 0`
+            : `improved: reaching ${e.v} via ${e.u} now costs ${e.dist}`) :
+          e.type === "check" ? `checking edge ${e.u} – ${e.v}: does going through ${e.u} help?` :
+          e.type === "done" ? "all reachable nodes settled — the tree is the answer" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

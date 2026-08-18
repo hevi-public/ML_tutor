@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backtracking and pruning — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Design strategies">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dp-trees-and-bitmasks.html|DP on trees and bitmasks">
+  <meta name="algo:next" content="../07-strings/string-search.html|Substring search, naively">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/dp.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 6 · Design strategies</p>
+  <h1>Backtracking: brute force with manners</h1>
+  <p class="lede">When no recurrence collapses the problem and no greedy
+  key is safe, you search: build a solution one choice at a time, and the
+  instant a partial solution becomes indefensible, undo the last choice and
+  try the next — abandoning the entire subtree of futures that hung off
+  it. The move is called <em>pruning</em>, and it's the difference between
+  "finishes before the heat death" and not.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/dfs.html">DFS</a> — backtracking IS depth-first
+    search over the implicit tree of partial solutions
+    (<a href="../04-graphs/implicit-graphs.html">states as nodes</a>, one
+    more payoff).
+  </div>
+
+  <h2>The idea</h2>
+  <p>The classic: <strong>N-Queens</strong> — place N queens on an N×N
+  board, none attacking another. Brute force over all placements of 6
+  queens on 36 squares is ~2 million boards. Backtracking reframes: place
+  one queen per row, and after each placement <em>check immediately</em> —
+  same column as an earlier queen? same diagonal? If yes, don't descend:
+  every board extending this prefix is already dead, so the whole branch
+  is skipped unexplored. The counters in the demo tell the story: solving
+  6-Queens visits a few hundred placements, not millions.</p>
+  <p>The general template is three verbs: <strong>choose</strong> (extend
+  the partial solution), <strong>check</strong> (still viable? if not,
+  skip), <strong>unchoose</strong> (undo on the way out — state must be
+  restored exactly, the classic source of backtracking bugs). Recursion
+  handles the rest, because the call stack IS the partial solution's
+  history.</p>
+
+  <h2>Watch it run</h2>
+  <p>6-Queens. Amber = the square being tried; red flash = pruned (attacks
+  an earlier queen — everything below it never happens); the board fills
+  and unfills as the search dives and retreats. It finds all 4
+  solutions:</p>
+  <div class="demo">
+    <div id="board" style="display:grid;grid-template-columns:repeat(6, 44px);gap:2px;margin-bottom:0.6rem"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>SAT solvers — the engines inside package-dependency resolvers
+    (Cargo, pip's resolver, apt), hardware verification, and config
+    validators — are industrial backtracking (DPLL/CDCL: choose a
+    variable, propagate, backtrack on conflict, <em>learn</em> the
+    conflict so it prunes forever after). Regex engines backtrack
+    (catastrophically, on evil patterns — that's what ReDoS is). Query
+    planners, puzzle generators, layout solvers, type inference —
+    constraint problems everywhere. And an LLM agent retrying a failed
+    tool-call plan by revising its last step is running
+    choose/check/unchoose over an implicit plan tree — with an
+    unreliable checker, which is why loops need budgets.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Pruning arithmetic — why early checks dominate</summary>
+    <div class="layer-body">
+      <p>A prune at depth d kills the entire subtree below it — roughly
+      b^(N−d) nodes for branching factor b. Pruning one row earlier is
+      therefore worth a factor of b, which compounds: the demo's few
+      hundred visits versus ~2 million brute-force boards is entirely
+      early rejection. This is also why <strong>variable ordering</strong>
+      is the big lever in real solvers: choosing the most-constrained
+      thing next ("fail first") moves contradictions toward the root,
+      where discovering them is exponentially cheaper. Same principle as
+      putting the cheapest, most-likely-to-fail validation first in a
+      request pipeline.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Backtracking vs DP vs branch-and-bound</summary>
+    <div class="layer-body">
+      <p>DP requires overlapping subproblems worth caching; backtracking
+      assumes each path is essentially unique (or the state too big to
+      memoize — remember the frontier argument from the tree-DP page).
+      <strong>Branch-and-bound</strong> is backtracking for
+      <em>optimization</em>: keep the best complete solution so far, and
+      prune any partial solution whose optimistic bound (an admissible
+      estimate — A*'s idea again) can't beat it. TSP exact solvers,
+      integer-programming solvers (CPLEX/Gurobi), and query optimizers
+      all run this. The strategies unit closes the loop: greedy = one
+      path, DP = all distinct subproblems once, backtracking = all paths
+      minus the provably doomed, branch-and-bound = minus the provably
+      non-optimal too.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/dp.js), events elided:
+function place(row) {
+  if (row === n) { report(cols); return; }        // a full, valid board
+  for (let c = 0; c < n; c++) {
+    const ok = cols.every((qc, qr) =>             // check BEFORE descending:
+      qc !== c && Math.abs(qc - c) !== row - qr); //   column & diagonal attacks
+    if (!ok) continue;                            // prune: subtree never built
+    cols.push(c);                                 // choose
+    place(row + 1);                               // explore
+    cols.pop();                                   // unchoose — restore exactly
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Unit 6 complete — you own the strategy shelf. Unit 7 applies the
+  toolkit to one data type so common it gets its own unit:
+  <a href="../07-strings/string-search.html">strings</a>, where a failure
+  function turns out to be the cleverest cache in the course.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "backtracking",
+    "questions": [
+      { "q": "What exactly does a prune at row 2 of 6-Queens save?",
+        "choices": ["One board position",
+                    "The entire subtree of futures extending that prefix — every placement of queens in rows 3–6 below it, thousands of boards, never constructed",
+                    "It saves memory but not time"],
+        "answer": 1,
+        "explain": "Pruning power is exponential in remaining depth, which is why early, cheap viability checks — and trying the most-constrained choices first — dominate solver performance." },
+      { "q": "Why must 'unchoose' restore state exactly?",
+        "choices": ["For garbage collection",
+                    "Siblings explored next assume the partial solution is exactly as it was before the choice — leaked state (a forgotten flag, an unremoved entry) corrupts every subsequent branch, often silently",
+                    "It's optional if the recursion is tail-recursive"],
+        "answer": 1,
+        "explain": "Choose/explore/unchoose must be a perfect sandwich. Un-restored state is THE classic backtracking bug — and the argument for immutable partial solutions when perf allows." },
+      { "q": "Your package resolver hangs on a complex dependency conflict. What is it almost certainly doing, and what do modern solvers add?",
+        "choices": ["Downloading too many packages",
+                    "Backtracking through version combinations; modern SAT-style resolvers add conflict LEARNING — recording why a branch died so every future branch with the same cause is pruned instantly",
+                    "Sorting versions incorrectly"],
+        "answer": 1,
+        "explain": "Dependency resolution is NP-complete and resolvers are backtracking searchers. CDCL's learned clauses are pruning that compounds — the single biggest idea behind modern SAT performance." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const N = 6;
+      const board = document.getElementById("board");
+
+      const state = {};
+      function* tracked() {
+        state.cols = []; state.solutions = 0;
+        for (const e of window.AlgoDP.nQueens(N)) {
+          if (e.type === "place" || e.type === "unplace") state.cols = e.cols;
+          if (e.type === "solution") state.solutions = e.count;
+          yield e;
+        }
+      }
+
+      function render(snap, event) {
+        let html = "";
+        for (let r = 0; r < N; r++) {
+          for (let c = 0; c < N; c++) {
+            const dark = (r + c) % 2 === 1;
+            const queen = snap.cols[r] === c;
+            const trying = event && event.type === "check" && event.row === r && event.col === c;
+            const rejected = event && event.type === "reject" && event.row === r && event.col === c;
+            let bg = dark ? "var(--bg-inset)" : "var(--bg)";
+            if (trying) bg = "#fcd34d";
+            if (rejected) bg = "var(--bad-soft, #fdd)";
+            html += `<div style="width:44px;height:44px;background:${bg};` +
+              `border:1px solid var(--border);display:flex;align-items:center;` +
+              `justify-content:center;font-size:1.5rem">${queen ? "♛" : ""}</div>`;
+          }
+        }
+        board.innerHTML = html;
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ cols: (state.cols || []).slice(), solutions: state.solutions || 0 }),
+        render,
+        counters: { place: "placements", reject: "prunes", solution: "solutions" },
+        describe: (e) =>
+          e.type === "check" ? `row ${e.row}, column ${e.col}: attacked by an earlier queen?` :
+          e.type === "reject" ? `pruned — everything below this square is skipped unexplored` :
+          e.type === "place" ? `queen placed at row ${e.row}, column ${e.col} — descend` :
+          e.type === "unplace" ? `backtrack: remove row ${e.row}'s queen, try the next column` :
+          e.type === "solution" ? `SOLUTION #${e.count} — all ${N} rows placed` :
+          e.type === "done" ? `search exhausted: ${e.solutions} solutions found` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

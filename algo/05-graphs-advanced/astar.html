@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A* and heuristic search — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="floyd-warshall.html|All pairs: Floyd-Warshall">
+  <meta name="algo:next" content="mst.html|Minimum spanning trees">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/maze.js"></script>
+  <script defer src="../assets/js/viz/grid.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>A*: search that knows where it's going</h1>
+  <p class="lede">BFS and Dijkstra explore in all directions equally — half
+  their work is spent walking <em>away</em> from the goal. A* adds one
+  number per node: an optimistic guess of the remaining distance. Order the
+  frontier by <em>spent + guessed</em>, and the search leans toward the
+  goal — provably still finding the shortest path, as long as the guess
+  never overpromises.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="dijkstra.html">Dijkstra</a> (A* is Dijkstra plus a compass) and
+    <a href="../04-graphs/implicit-graphs.html">the maze</a> from unit 4 —
+    the exact maze returns, this time raced.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Dijkstra orders its frontier by g(v) — the cost spent getting to v.
+  A* orders it by <span class="math">f(v) = g(v) + h(v)</span>, where
+  <span class="math" data-sym="h">h(v)</span> is a
+  <strong>heuristic</strong>: a cheap-to-compute estimate of the cost still
+  to go. On a grid, straight-line or Manhattan distance ("ignoring all
+  walls, how far is the goal?") is the classic choice. Nodes that head away
+  from the goal see their f explode and sink in the priority queue —
+  they're simply never reached for expansion.</p>
+  <p>The one rule: h must be <strong>admissible</strong> — never an
+  overestimate of the true remaining cost. Optimism is safe: a node can look
+  more promising than it is and merely waste a bit of exploration. But a
+  pessimistic h can make the true best route look bad enough that A*
+  finishes without ever trying it — returning a wrong "shortest" path.
+  Manhattan distance ignores walls, so it can only under-guess: admissible.
+  And h ≡ 0 is admissible too — that's literally Dijkstra. A* is a family
+  with Dijkstra at the cautious end and the quality of your guess as the
+  dial.</p>
+
+  <h2>Watch them race</h2>
+  <p>Same seeded maze, dot to star. First plain BFS (Dijkstra with all
+  weights 1), then A* with Manhattan distance. Compare the visited-cell
+  counters at the end — same shortest path length, a fraction of the
+  exploration. The BFS ripple floods everywhere; A* burrows toward the
+  goal:</p>
+  <div class="demo">
+    <h3 style="margin-top:0">Uninformed (BFS / Dijkstra)</h3>
+    <canvas id="grid-bfs" width="860" height="460" style="width:100%;height:auto"></canvas>
+    <div id="stepper-bfs"></div>
+  </div>
+  <div class="demo">
+    <h3 style="margin-top:0">A* (Manhattan heuristic)</h3>
+    <canvas id="grid-astar" width="860" height="460" style="width:100%;height:auto"></canvas>
+    <div id="stepper-astar"></div>
+    <p class="hint" id="race-verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Game pathfinding is A*'s kingdom — practically every unit that walks
+    across a map in every strategy game. Robotics motion planning; road
+    navigation (with heuristics tuned by precomputation); puzzle solvers,
+    where h = "how disordered is this state?". The deeper export is the
+    <em>pattern</em>: best-first search under an optimistic bound is also
+    branch-and-bound in optimizers and the shape of unit 9's beam search —
+    which is A*'s reckless cousin: it keeps only the top-k frontier,
+    trading the optimality guarantee for a memory budget, exactly the
+    trade LLM decoding makes.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Show the proof sketch — why admissible h can't break correctness</summary>
+    <div class="layer-body">
+      <p>Suppose A* pops the goal with cost C while some route with true
+      cost C* &lt; C is still unfinished. That route has a frontier node y
+      on it, with g(y) = its true prefix cost. Then
+      f(y) = g(y) + h(y) ≤ g(y) + (true remaining from y) = C* &lt; C =
+      f(goal) — using admissibility in the "≤". So y would have been popped
+      <em>before</em> the goal. Contradiction: when the goal is popped,
+      nothing cheaper is pending. The proof is Dijkstra's argument wearing
+      glasses: optimism keeps every truly-good route's f below any
+      premature answer, so it can't be starved.</p>
+      <p>The efficiency dial: the closer h is to the truth (while staying
+      under it), the fewer nodes have small enough f to bother expanding.
+      h ≡ 0 explores like Dijkstra; h = exact remaining cost walks straight
+      to the goal touching almost nothing.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/maze.js), events elided.
+// Diff from Dijkstra: ONE line — the frontier's sort key.
+const h = (x, y) => Math.abs(gx - x) + Math.abs(gy - y);  // Manhattan: admissible
+
+while (open.length) {
+  const [x, y] = extractMin(open);       // min f = g + h   (Dijkstra: min g)
+  if (isGoal(x, y)) return reconstruct(parent);
+  for (const [nx, ny] of neighbors(maze, x, y)) {
+    const alt = g.get(key(x, y)) + 1;
+    if (alt < (g.get(key(nx, ny)) ?? Infinity)) {
+      g.set(key(nx, ny), alt);
+      parent.set(key(nx, ny), key(x, y));
+      open.push([[nx, ny], alt + h(nx, ny)]);   // spent + optimistic guess
+    }
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Shortest paths: complete. The unit's second half optimizes different
+  quantities — first the cheapest way to <em>connect everything</em>:
+  <a href="mst.html">minimum spanning trees</a>, where greed gets its
+  cleanest triumph.</p>
+
+  <script type="application/json" class="symbols">
+  { "f": { "name": "f(v) = g(v) + h(v) — the frontier key", "pron": "say: eff of vee",
+           "means": "cost spent reaching v plus the optimistic guess of what remains — A* expands the smallest f first", "short": "priority" },
+    "g": { "name": "g(v) — cost so far", "pron": "say: gee of vee",
+           "means": "the cheapest known cost from the start to v (Dijkstra's only number)", "short": "spent cost" },
+    "h": { "name": "h(v) — the heuristic", "pron": "say: aitch of vee",
+           "means": "a fast estimate of the remaining cost from v to the goal; must never overestimate to keep A* exact", "short": "guess" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "astar",
+    "questions": [
+      { "q": "Why must the heuristic never OVERestimate remaining cost?",
+        "choices": ["Overestimates cause infinite loops",
+                    "A pessimistic h can make the true best route's f look worse than a mediocre finished one — A* returns a non-shortest path believing it's done. Optimism only costs extra exploration",
+                    "It must, or f could overflow"],
+        "answer": 1,
+        "explain": "The correctness proof needs f(node on best route) ≤ true best cost, which is exactly \"h never overpromises\". Under-guessing wastes time; over-guessing produces wrong answers — an asymmetry worth memorizing." },
+      { "q": "Set h ≡ 0. What algorithm are you running?",
+        "choices": ["Broken A* — h must be positive",
+                    "Dijkstra exactly: f = g, the frontier is ordered by cost spent, and the search expands evenly in all directions",
+                    "Greedy best-first search"],
+        "answer": 1,
+        "explain": "Zero is admissible (it never overestimates). A* is a spectrum: h ≡ 0 is Dijkstra, perfect h walks straight to the goal — heuristic quality is the efficiency dial, never the correctness dial." },
+      { "q": "Your game's pathfinding uses h = 3× straight-line distance \"to make it faster\". It IS faster — what did it silently cost?",
+        "choices": ["Nothing — speed is free if paths still look plausible",
+                    "Admissibility: 3× overestimates, so returned paths can be genuinely non-shortest. That's a legitimate speed/quality trade (weighted A*) — but it must be a decision, not an accident",
+                    "The heuristic no longer terminates"],
+        "answer": 1,
+        "explain": "Weighted A* bounds the damage (paths ≤ 3× optimal here) and ships in real engines. The engineering sin isn't the trade — it's not knowing you made it." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const maze = window.AlgoMaze.generate(43, 23, 11);
+      const verdict = document.getElementById("race-verdict");
+      const totals = {};
+
+      function setup(kind, canvasId, stepperId, makeGen) {
+        const gridViz = window.AlgoGridViz.create(document.getElementById(canvasId), maze);
+        const state = {};
+        function* tracked() {
+          state.nodeState = {}; state.pathCells = [];
+          let visits = 0, len = null;
+          for (const e of makeGen()) {
+            if (e.type === "discover") state.nodeState[e.u] = "frontier";
+            if (e.type === "visit") { state.nodeState[e.u] = "visited"; visits++; }
+            if (e.type === "path") state.pathCells = e.cells;
+            if (e.type === "done") len = e.length;
+            yield e;
+          }
+          totals[kind] = { visits, len };
+          if (totals.bfs && totals.astar) {
+            verdict.textContent =
+              `Same shortest path (${totals.bfs.len} steps both) — but BFS visited ` +
+              `${totals.bfs.visits} cells and A* only ${totals.astar.visits}. ` +
+              `The heuristic did nothing to the answer and everything to the bill.`;
+          }
+        }
+        window.AlgoSteps.player(document.getElementById(stepperId), {
+          make: tracked,
+          capture: () => ({
+            nodeState: { ...(state.nodeState || {}) },
+            pathCells: (state.pathCells || []).slice(),
+          }),
+          render: (snap, event) => gridViz.draw(snap, event),
+          counters: { visit: "cells visited", discover: "cells discovered" },
+          cap: 4000,
+          describe: (e) =>
+            e.type === "visit" ? `expanding (${e.u})` :
+            e.type === "path" ? "goal reached — recovering the path" :
+            e.type === "done" ? (e.length >= 0 ? `shortest path: ${e.length} steps` : "unreachable") : "",
+        });
+      }
+
+      setup("bfs", "grid-bfs", "stepper-bfs", () => window.AlgoMaze.gridBfs(maze));
+      setup("astar", "grid-astar", "stepper-astar", () => window.AlgoMaze.gridAstar(maze));
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Heaps and priority queues — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Data structures">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="balanced-trees.html|Balanced trees: AVL and red-black">
+  <meta name="algo:next" content="union-find.html|Union-Find (disjoint sets)">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/structures.js"></script>
+  <script defer src="../assets/js/viz/tree.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Data structures</p>
+  <h1>Heaps: "just give me the smallest, fast"</h1>
+  <p class="lede">Full sorted order is often more than you need. When the only
+  question is <em>what's most urgent right now?</em>, a weaker rule buys a
+  simpler structure — a bushy tree that lives inside a plain array, no
+  pointers at all.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="arrays-and-lists.html">Arrays</a> and the tree-height intuition
+    from <a href="binary-search-trees.html">BSTs</a>. The heap deliberately
+    keeps LESS order than both.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <strong>min-heap</strong> enforces one modest rule: <em>every parent ≤
+  its children.</em> Not left-smaller-right-bigger — siblings are strangers
+  here. This buys exactly one superpower: the minimum is always at the root,
+  readable in O(1). Removing it (or adding anything) just re-settles the rule
+  along one root-to-leaf path — O(log n), because the tree is always
+  perfectly bushy.</p>
+  <p>Why always bushy? The second trick: the heap is a <strong>complete</strong>
+  tree — filled level by level, left to right — and a complete tree needs no
+  pointers at all. Lay the levels out in an array: the node at index i has
+  children at 2i+1 and 2i+2, parent at ⌊(i−1)/2⌋. The tree is pure
+  arithmetic over a contiguous array — the layout the arrays page crowned.
+  The demo below draws both views of the <em>same bytes</em>.</p>
+  <p>The interface this implements is the
+  <strong>priority queue</strong>: <code>push(item)</code>,
+  <code>popMin()</code>. The queue page's fairness ("first in, first out")
+  becomes urgency ("most important out first") — and that swap of promise is
+  what schedulers, timers and Dijkstra's algorithm all need.</p>
+
+  <h2>Watch it run</h2>
+  <p>Push eight values, then pop them all: pushes bubble <em>up</em> from the
+  bottom slot, pops move the last element to the root and sift it
+  <em>down</em>. The array below the tree is the actual storage:</p>
+  <div class="demo">
+    <div id="heap-tree"></div>
+    <p class="readout" id="heap-array" style="font-family:var(--mono);font-size:0.85rem"></p>
+    <div id="heap-stepper"></div>
+    <p class="hint">Notice pops come out in sorted order: 3, 9, 14… — a heap
+    drained is a sort performed. That observation, done in place, is heapsort
+    (unit 3).</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Anything that answers "what's next?": OS run queues and timer wheels'
+    cousins, <code>setTimeout</code>'s internal timer heap, Kubernetes
+    scheduling queues, Dijkstra/A*'s frontier (units 4–5), merge steps in
+    LSM storage engines and k-way log merging, top-K dashboards ("10 slowest
+    endpoints" over a stream = a bounded heap), and beam search's fixed-width
+    frontier in LLM decoding (unit 9). Rule of thumb: the words
+    "most/least/soonest, repeatedly, under churn" mean heap.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why so fast? The rule is weak on purpose</summary>
+    <div class="layer-body">
+      <p>A BST answers many questions (search, range, order) so it must
+      maintain much order. A heap answers ONE question, so it maintains almost
+      none — you cannot even find an arbitrary key in a heap without scanning
+      (O(n), and that's fine: wrong tool for that job). Weak promise, cheap
+      maintenance: push and pop touch one path of length log n; peek-min is
+      free. Choosing structures is matching the promise to the question, never
+      buying more order than you'll use.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — building a heap is O(n), surprisingly</summary>
+    <div class="layer-body">
+      <p>Heapifying n items looks like n × O(log n), but sift-down cost
+      depends on a node's height, and almost all nodes are near the bottom
+      with height ≈ 0: half the nodes sift at most 0 levels, a quarter at
+      most 1, an eighth at most 2… Total ≤ n·∑ h/2ʰ = 2n — the halving
+      geometric series from the math toolkit, again. So "turn this array into
+      a heap" is linear, which is why heapsort's setup phase is free and why
+      top-K over a stream starts cheap.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/structures.js): the array IS the tree.
+function* heapPush(a, value) {
+  a.push(value);
+  let i = a.length - 1;
+  while (i > 0) {                        // sift up
+    const parent = (i - 1) >> 1;         // tree arithmetic, no pointers
+    yield { type: "compare", i, j: parent };
+    if (a[i] >= a[parent]) break;        // rule satisfied — done
+    [a[i], a[parent]] = [a[parent], a[i]];
+    yield { type: "swap", i, j: parent };
+    i = parent;
+  }
+}
+// pop: move last element to the root, then sift DOWN one path — O(log n).</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>One structure left in the unit, and it's the strangest: it answers only
+  "are these two in the same group?", yet does it so fast the analysis needed
+  a new function to describe it —
+  <a href="union-find.html">union-find</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "heaps",
+    "questions": [
+      { "q": "Why can a heap live in a plain array with no pointers?",
+        "choices": ["All trees can",
+                    "It's complete — filled level by level — so parent/child positions are pure arithmetic: children of i sit at 2i+1 and 2i+2",
+                    "Because it stores only numbers"],
+        "answer": 1,
+        "explain": "Completeness leaves no gaps, so the level-order layout is dense and index math replaces pointers — giving the cache-friendly contiguity of unit 2's opening page for free." },
+      { "q": "Find the minimum · find an arbitrary key · pop the minimum. Costs in a heap?",
+        "choices": ["O(1) · O(log n) · O(log n)",
+                    "O(1) · O(n) · O(log n)",
+                    "O(log n) · O(log n) · O(1)"],
+        "answer": 1,
+        "explain": "Peek-min is the root; popping re-settles one path (log n); but arbitrary search has no order to exploit — siblings are strangers. A heap is deliberately not a BST." },
+      { "q": "You want a live \"10 slowest requests\" board over a firehose of events. Why is a size-10 min-heap the classic answer?",
+        "choices": ["Heaps store exactly 10 items by definition",
+                    "Keep the 10 biggest seen so far; each new event compares against the smallest of them (the root) and replaces it in O(log 10) if bigger",
+                    "It sorts all events as they arrive"],
+        "answer": 1,
+        "explain": "Top-K = a K-sized min-heap of the current champions: one O(1) peek filters most events, and a replacement costs O(log K). Memory: K items, regardless of stream size." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const a = [];
+      const viz = window.AlgoTreeViz.create(document.getElementById("heap-tree"), {
+        height: 220, label: "Binary min-heap as a tree" });
+      const arrayOut = document.getElementById("heap-array");
+      const values = window.AlgoRandom.shuffle([3, 9, 14, 21, 27, 33, 40, 48], 99);
+      function* run() {
+        for (const v of values) yield* window.AlgoStructures.heapPush(a, v);
+        while (a.length) yield* window.AlgoStructures.heapPop(a);
+      }
+      window.AlgoSteps.player(document.getElementById("heap-stepper"), {
+        make: run,
+        capture: () => ({ array: a.slice() }),
+        render: (snap, event) => {
+          viz.draw(snap, event);
+          arrayOut.textContent = "array: [" + snap.array.join(", ") + "]";
+        },
+        counters: { compare: "comparisons", swap: "swaps", popped: "popped" },
+        describe: (e) =>
+          e.type === "set" ? "placed at the first free slot (or root after a pop)" :
+          e.type === "compare" ? "checking the parent ≤ child rule" :
+          e.type === "swap" ? "rule violated — swapping along the path" :
+          e.type === "popped" ? `popped the minimum: ${e.value}` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

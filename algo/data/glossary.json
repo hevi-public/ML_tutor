@@ -1,0 +1,532 @@
+{
+  "algorithm": {
+    "term": "Algorithm",
+    "plain": "A recipe precise enough that a machine can follow it — and that we can reason about.",
+    "definition": "A finite, unambiguous sequence of steps that transforms input to output. What makes it interesting is not that it works, but what it costs and how we know it's correct.",
+    "see": ["growth-rate", "worst-case"]
+  },
+  "growth-rate": {
+    "term": "Growth rate",
+    "plain": "How the work changes as the input gets bigger — the thing Big-O names.",
+    "definition": "The relationship between input size n and the resources (steps, memory) an algorithm uses, considered asymptotically: constant factors and lower-order terms are ignored because they stop mattering as n grows.",
+    "also": ["asymptotic complexity", "order of growth"],
+    "see": ["big-o", "theta"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "big-o": {
+    "term": "Big-O",
+    "plain": "A ceiling on growth: \"the work grows no faster than this shape\".",
+    "definition": "f(n) = O(g(n)) means there exist constants c and n₀ such that f(n) ≤ c·g(n) for all n ≥ n₀. An upper bound on growth rate, blind to constant factors and small inputs.",
+    "also": ["big oh", "O notation"],
+    "see": ["theta", "omega", "growth-rate"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "theta": {
+    "term": "Θ (big theta)",
+    "plain": "A tight bound: the work grows exactly like this shape, no faster and no slower.",
+    "definition": "f(n) = Θ(g(n)) means f is both O(g(n)) and Ω(g(n)): squeezed between two constant multiples of the same shape. The honest stamp for \"this is what the algorithm costs\".",
+    "also": ["big theta", "tight bound"],
+    "see": ["big-o", "omega"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "omega": {
+    "term": "Ω (big omega)",
+    "plain": "A floor on growth: \"the work grows at least this fast\".",
+    "definition": "f(n) = Ω(g(n)) means there exist constants c and n₀ such that f(n) ≥ c·g(n) for all n ≥ n₀. Lower bounds are how impossibility results are stated — like sorting's Ω(n log n).",
+    "also": ["big omega", "lower bound"],
+    "see": ["big-o", "theta"],
+    "taughtIn": { "href": "01-foundations/big-o.html", "title": "Big-O: naming how cost grows" }
+  },
+  "worst-case": {
+    "term": "Worst case",
+    "plain": "The most work the algorithm can be forced to do by the nastiest possible input of a given size.",
+    "definition": "The maximum cost over all inputs of size n. The default case this course analyses, because a guarantee that survives an adversary survives production traffic too. Average case and amortized cost are the other two lenses.",
+    "see": ["amortized", "growth-rate"]
+  },
+  "amortized": {
+    "term": "Amortized cost",
+    "plain": "The cost per operation averaged over a long run of operations — expensive moments paid off by many cheap ones.",
+    "definition": "A guarantee about the total cost of any sequence of k operations (total ≤ k · amortized bound), even though individual operations may occasionally cost far more. The dynamic array's occasional resize is the canonical example.",
+    "see": ["worst-case"]
+  },
+  "invariant": {
+    "term": "Invariant",
+    "plain": "Something that stays true every time around the loop — the skeleton of a correctness proof.",
+    "definition": "A property that holds before and after every iteration of a loop (or every recursive call). If the invariant holds at the start, is preserved by each step, and implies the goal when the loop exits, the algorithm is correct.",
+    "also": ["loop invariant"]
+  },
+  "call-stack": {
+    "term": "Call stack",
+    "plain": "The pile of \"where was I?\" notes the machine keeps — one frame per active function call.",
+    "definition": "The runtime structure holding one frame (arguments, locals, return address) per call that has started but not finished. Recursion is ordinary calls stacking frames of the same function; a stack trace is a printout of it; stack overflow is its size limit enforced.",
+    "also": ["execution stack", "the stack"],
+    "see": ["base-case"],
+    "taughtIn": { "href": "01-foundations/recursion.html", "title": "Recursion" }
+  },
+  "base-case": {
+    "term": "Base case",
+    "plain": "The input a recursive function answers directly, without calling itself — the stack's ceiling.",
+    "definition": "The condition under which recursion stops. A sound recursive function needs a base case plus guaranteed progress toward it on every path; missing either turns the call stack into a countdown to overflow.",
+    "see": ["call-stack", "invariant"],
+    "taughtIn": { "href": "01-foundations/recursion.html", "title": "Recursion" }
+  },
+  "recurrence": {
+    "term": "Recurrence",
+    "plain": "An equation that prices a recursive algorithm the way the code is shaped: the whole costs the parts plus assembly.",
+    "definition": "A definition of the cost function T(n) in terms of its own values at smaller inputs, e.g. T(n) = 2T(n/2) + n for merge sort. Solved by recursion trees, substitution, or — for the divide-and-conquer form — the Master theorem.",
+    "also": ["recurrence relation"],
+    "see": ["big-o", "call-stack"],
+    "taughtIn": { "href": "01-foundations/recurrences.html", "title": "Recurrences and the Master theorem" }
+  },
+  "collision": {
+    "term": "Collision (hashing)",
+    "plain": "Two different keys landing on the same slot — not a bug, a certainty to be managed.",
+    "definition": "When a hash function maps distinct keys to the same bucket index. Inevitable whenever there are more possible keys than slots (pigeonhole principle); handled by chaining (a list per slot) or open addressing (probe to the next slot). Collision behaviour under load is what makes or breaks a hash table's O(1) promise.",
+    "see": ["load-factor", "data-structure"],
+    "taughtIn": { "href": "02-structures/hash-tables.html", "title": "Hash tables" }
+  },
+  "load-factor": {
+    "term": "Load factor",
+    "plain": "How crowded a hash table is: stored keys divided by slots — the dial that decides whether O(1) stays honest.",
+    "definition": "α = entries / buckets. Expected chain and probe lengths grow with α (sharply, for open addressing), so practical tables resize — double the buckets and rehash — around α ≈ 0.75, paying an occasional amortized-O(1) reorganization to keep lookups constant.",
+    "also": ["alpha", "occupancy"],
+    "see": ["collision", "amortized"],
+    "taughtIn": { "href": "02-structures/hash-tables.html", "title": "Hash tables" }
+  },
+  "frontier": {
+    "term": "Frontier",
+    "plain": "The algorithm's to-do list of places to look next.",
+    "definition": "In graph search, the set of discovered-but-not-yet-processed vertices. Its data structure is the algorithm: a queue gives breadth-first search, a stack depth-first, a priority queue Dijkstra.",
+    "see": ["algorithm"]
+  },
+  "data-structure": {
+    "term": "Data structure",
+    "plain": "A shape for storing data that makes some operations cheap — always at the price of others.",
+    "definition": "An organization of data in memory together with the operations it supports and their costs. Choosing one is choosing which operations you want to be fast; every structure in unit 2 is a different answer to that trade.",
+    "see": ["algorithm", "growth-rate"]
+  },
+  "heap": {
+    "term": "Heap",
+    "plain": "A tree that only promises one thing: the smallest (or largest) item is always on top.",
+    "definition": "A complete binary tree, stored flat in an array, where every parent outranks its children (min-heap: parent ≤ children). Insert and extract-min are O(log n) by bubbling along one root-to-leaf path. The engine inside priority queues, heapsort, and Dijkstra.",
+    "also": ["binary heap"],
+    "see": ["priority-queue"],
+    "taughtIn": { "href": "02-structures/heaps.html", "title": "Heaps and priority queues" }
+  },
+  "priority-queue": {
+    "term": "Priority queue",
+    "plain": "A to-do list that always hands you the most urgent item, not the oldest.",
+    "definition": "An abstract structure supporting insert and extract-min (or -max). Usually implemented with a heap for O(log n) operations. Turning BFS's plain queue into a priority queue is precisely what creates Dijkstra's algorithm.",
+    "see": ["heap", "frontier"],
+    "taughtIn": { "href": "02-structures/heaps.html", "title": "Heaps and priority queues" }
+  },
+  "binary-search-tree": {
+    "term": "Binary search tree",
+    "plain": "A tree where left means smaller and right means larger — so lookup is a guided walk downward.",
+    "definition": "A binary tree with the ordering invariant: everything in a node's left subtree is smaller, right subtree larger. Search, insert, and delete cost the height — O(log n) if balanced, O(n) if the insert order degenerates it into a chain, which is why balancing schemes exist.",
+    "also": ["BST"],
+    "see": ["rotation", "invariant"],
+    "taughtIn": { "href": "02-structures/binary-search-trees.html", "title": "Binary search trees" }
+  },
+  "rotation": {
+    "term": "Rotation (trees)",
+    "plain": "The constant-time pivot that rebalances a tree without breaking its ordering.",
+    "definition": "A local restructuring (left or right) that swaps a node with its child while preserving the BST invariant. AVL and red-black trees insert normally, then apply O(log n) rotations to restore their height guarantee — an invariant maintained by surgery.",
+    "see": ["binary-search-tree", "invariant"],
+    "taughtIn": { "href": "02-structures/balanced-trees.html", "title": "Balanced trees: AVL and red-black" }
+  },
+  "union-find": {
+    "term": "Union-Find",
+    "plain": "A structure answering one question fast: \"are these two in the same group yet?\" — while groups keep merging.",
+    "definition": "Maintains disjoint sets under two operations: find (which set?) and union (merge two sets). With path compression and union by rank, both cost effectively O(1) amortized. Powers Kruskal's MST, incremental connectivity, and deduplication clustering.",
+    "also": ["disjoint set union", "DSU"],
+    "see": ["amortized", "spanning-tree"],
+    "taughtIn": { "href": "02-structures/union-find.html", "title": "Union-Find (disjoint sets)" }
+  },
+  "binary-search": {
+    "term": "Binary search",
+    "plain": "Halve the haystack every question: find anything in a sorted list in log n looks.",
+    "definition": "Search in a sorted array by comparing against the middle and discarding half. O(log n), with a famously bug-prone boundary discipline — the invariant (\"answer, if present, is within [lo, hi)\") is the reliable way to write it. Also a design pattern: binary-search the answer space of any monotone predicate.",
+    "see": ["invariant", "big-o"],
+    "taughtIn": { "href": "03-sorting/binary-search.html", "title": "Binary search, done right" }
+  },
+  "divide-and-conquer": {
+    "term": "Divide and conquer",
+    "plain": "Split the problem, solve the pieces (recursively), stitch the answers.",
+    "definition": "The strategy of dividing input into parts, recursing on each, and combining results — merge sort, quicksort, and binary search are the canon. Costs follow the recurrence T(n) = a·T(n/b) + combine, which the Master theorem prices.",
+    "see": ["recurrence", "base-case"],
+    "taughtIn": { "href": "03-sorting/merge-sort.html", "title": "Merge sort and divide & conquer" }
+  },
+  "pivot": {
+    "term": "Pivot",
+    "plain": "Quicksort's chosen yardstick: everything gets sorted into \"smaller than it\" and \"larger than it\".",
+    "definition": "The element around which partitioning splits the array. Pivot quality decides everything: median-ish pivots give O(n log n); consistently extreme ones (sorted input, first-element pivot) give O(n²). Random pivot choice makes the worst case a matter of luck rather than input.",
+    "see": ["divide-and-conquer", "worst-case"],
+    "taughtIn": { "href": "03-sorting/quicksort.html", "title": "Quicksort" }
+  },
+  "stable-sort": {
+    "term": "Stable sort",
+    "plain": "Equal items keep their original order — sort by date, then by sender, and the dates stay sorted within each sender.",
+    "definition": "A sort is stable if elements that compare equal preserve their relative input order. Merge sort is stable; classic quicksort and heapsort are not. Stability is what makes multi-key sorting by successive passes work.",
+    "see": ["comparison-sort"],
+    "taughtIn": { "href": "03-sorting/elementary-sorts.html", "title": "Selection, insertion, bubble" }
+  },
+  "comparison-sort": {
+    "term": "Comparison sort",
+    "plain": "Any sort that learns only by asking \"is a before b?\" — a family with a proven speed limit.",
+    "definition": "A sorting algorithm whose only information source is pairwise comparisons. The decision-tree argument shows any such sort needs Ω(n log n) comparisons in the worst case. Counting, radix, and bucket sort dodge the bound by reading digits and values instead of comparing.",
+    "see": ["omega", "stable-sort"],
+    "taughtIn": { "href": "03-sorting/sorting-lower-bound.html", "title": "Why n log n is the floor" }
+  },
+  "in-place": {
+    "term": "In-place",
+    "plain": "Sorting (or transforming) inside the array you were given, using only a scratch variable or two.",
+    "definition": "An algorithm using O(1) — or at most O(log n) — extra memory beyond its input. Quicksort and heapsort are in-place; merge sort's classic form pays O(n) extra for its merge buffer. One axis of the space/time trade-offs unit 2 keeps scoring.",
+    "see": ["data-structure"]
+  },
+  "graph": {
+    "term": "Graph",
+    "plain": "Dots and lines: things, and which things relate to which.",
+    "definition": "G = (V, E): a set of vertices and a set of edges connecting pairs of them. Directed or undirected, weighted or not. The most general-purpose model in the course — networks, dependencies, states, and relationships all wear it.",
+    "also": ["network"],
+    "see": ["vertex", "edge", "dag"],
+    "taughtIn": { "href": "04-graphs/what-is-a-graph.html", "title": "Graphs and how to store them" }
+  },
+  "vertex": {
+    "term": "Vertex",
+    "plain": "A dot in the graph: one thing — a city, a task, a server, a state.",
+    "definition": "An element of the vertex set V. deg(v) counts its incident edges (in-degree/out-degree for directed graphs). Also called a node — this course uses both interchangeably.",
+    "also": ["node"],
+    "see": ["graph", "edge"]
+  },
+  "edge": {
+    "term": "Edge",
+    "plain": "A line in the graph: this thing relates to that one.",
+    "definition": "A pair of vertices (u, v) — unordered for undirected graphs, ordered for directed ones, optionally carrying a weight w(u, v). |E| ranges from 0 to ~|V|², and whether a graph is sparse or dense decides the right representation.",
+    "also": ["arc", "link"],
+    "see": ["graph", "adjacency-list"]
+  },
+  "adjacency-list": {
+    "term": "Adjacency list",
+    "plain": "Per vertex, the list of its neighbors — the compact way to store real (sparse) graphs.",
+    "definition": "A map from each vertex to its outgoing edges. O(|V| + |E|) space, neighbor iteration at the cost of exactly the neighbors. The adjacency matrix is its dense sibling: O(|V|²) space, O(1) edge lookup — worth it only when graphs are small or dense.",
+    "also": ["adjacency matrix (contrast)"],
+    "see": ["graph", "edge"],
+    "taughtIn": { "href": "04-graphs/what-is-a-graph.html", "title": "Graphs and how to store them" }
+  },
+  "dag": {
+    "term": "DAG",
+    "plain": "A directed graph with no way to loop back — the shape of every dependency system.",
+    "definition": "Directed acyclic graph. Acyclicity is exactly what makes a topological order exist, which is why build systems, package managers, spreadsheets, and pipeline orchestrators all insist on it — and report a cycle as an error.",
+    "also": ["directed acyclic graph"],
+    "see": ["topological-order", "cycle"],
+    "taughtIn": { "href": "04-graphs/topological-sort.html", "title": "DAGs and topological sort" }
+  },
+  "cycle": {
+    "term": "Cycle",
+    "plain": "A path that comes back to where it started.",
+    "definition": "A walk with distinct edges that returns to its starting vertex. In directed graphs, detected by DFS finding a back edge to a vertex still on the current recursion path — merely revisiting a vertex is not enough (diamonds revisit without cycling). Cycles are deadlock in dependency graphs and the tripwire in Bellman-Ford's negative-loop check.",
+    "see": ["dag", "topological-order"],
+    "taughtIn": { "href": "04-graphs/cycles-and-bipartite.html", "title": "Cycles and two-coloring" }
+  },
+  "topological-order": {
+    "term": "Topological order",
+    "plain": "A to-do ordering that never schedules a task before its prerequisites.",
+    "definition": "A linear order of a DAG's vertices where every edge points forward. Computed in O(|V| + |E|) by repeatedly taking vertices of in-degree zero (Kahn) or by reverse DFS finish order. Exists exactly when the graph is acyclic — a stalled topological sort is a cycle detector.",
+    "also": ["topo sort", "topological sort"],
+    "see": ["dag", "cycle"],
+    "taughtIn": { "href": "04-graphs/topological-sort.html", "title": "DAGs and topological sort" }
+  },
+  "connected-component": {
+    "term": "Connected component",
+    "plain": "One island of the graph: everything reachable from everything, with no bridge to the rest.",
+    "definition": "A maximal set of vertices mutually reachable by paths (ignoring direction). Found by running BFS/DFS from every unvisited vertex — each launch discovers exactly one component. The streaming version of the question is union-find's specialty.",
+    "also": ["component", "island"],
+    "see": ["union-find", "strongly-connected-component"],
+    "taughtIn": { "href": "04-graphs/connectivity.html", "title": "Connected components" }
+  },
+  "bipartite": {
+    "term": "Bipartite",
+    "plain": "Two-colorable: vertices split into two camps with edges only across camps, never within.",
+    "definition": "A graph whose vertices divide into sets L and R with every edge between them. Equivalent to having no odd-length cycle, checkable in O(|V| + |E|) by BFS two-coloring. The natural shape of assignment problems — workers/jobs, students/schools — and the stage for matching algorithms.",
+    "see": ["cycle", "matching"],
+    "taughtIn": { "href": "04-graphs/cycles-and-bipartite.html", "title": "Cycles and two-coloring" }
+  },
+  "implicit-graph": {
+    "term": "Implicit graph",
+    "plain": "A graph nobody stored: neighbors are computed on demand from a rule.",
+    "definition": "A graph defined by a neighbor function rather than stored lists — maze cells and their open sides, puzzle states and legal moves, words differing by one letter. Search algorithms run unchanged; only the memory story differs. Most of the biggest graphs you'll ever search (game trees, state spaces, the web) are implicit.",
+    "also": ["state-space graph"],
+    "see": ["graph", "frontier"],
+    "taughtIn": { "href": "04-graphs/implicit-graphs.html", "title": "Implicit graphs: grids, mazes, puzzles" }
+  },
+  "shortest-path": {
+    "term": "Shortest path",
+    "plain": "The cheapest route between two vertices — fewest hops if unweighted, least total weight if not.",
+    "definition": "A path minimizing total edge weight, written δ(s, v) for the optimal distance. Algorithm choice is a decision tree: unweighted → BFS; non-negative weights → Dijkstra; negative edges → Bellman-Ford; all pairs → Floyd-Warshall; good heuristic available → A*.",
+    "see": ["relaxation", "heuristic"],
+    "taughtIn": { "href": "05-graphs-advanced/dijkstra.html", "title": "Dijkstra's algorithm" }
+  },
+  "relaxation": {
+    "term": "Relaxation",
+    "plain": "The one-line update at the heart of every shortest-path algorithm: \"is going via u a better deal?\"",
+    "definition": "For edge (u, v): if dist[u] + w(u, v) < dist[v], improve dist[v] and remember u as its parent. Dijkstra relaxes each edge once in a clever order; Bellman-Ford relaxes all edges |V|−1 times in any order; the difference in discipline is the difference between the algorithms.",
+    "also": ["edge relaxation"],
+    "see": ["shortest-path"],
+    "taughtIn": { "href": "05-graphs-advanced/bellman-ford.html", "title": "Bellman-Ford and negative weights" }
+  },
+  "heuristic": {
+    "term": "Heuristic (search)",
+    "plain": "An educated guess of the remaining distance, used to search toward the goal instead of in all directions.",
+    "definition": "In A*, a function h(v) estimating the cost from v to the goal; the frontier is ordered by g + h (cost so far plus estimate). If h never overestimates (admissible), A* stays optimal while visiting far fewer vertices than Dijkstra. Straight-line distance on maps is the canonical example.",
+    "also": ["admissible heuristic"],
+    "see": ["shortest-path", "frontier"],
+    "taughtIn": { "href": "05-graphs-advanced/astar.html", "title": "A* and heuristic search" }
+  },
+  "spanning-tree": {
+    "term": "Spanning tree",
+    "plain": "A minimal skeleton: enough edges to keep the graph connected, none to spare.",
+    "definition": "A subgraph touching every vertex with exactly |V|−1 edges and no cycle. The minimum spanning tree (MST) is the cheapest one by total weight — computed greedily by Kruskal (edges by weight + union-find) or Prim (grow one tree with a priority queue), both justified by the cut property.",
+    "also": ["MST", "minimum spanning tree"],
+    "see": ["union-find", "greedy"],
+    "taughtIn": { "href": "05-graphs-advanced/mst.html", "title": "Minimum spanning trees" }
+  },
+  "strongly-connected-component": {
+    "term": "Strongly connected component",
+    "plain": "In a directed graph: a cluster where everyone can reach everyone, respecting arrows both ways.",
+    "definition": "A maximal set of vertices with directed paths between every ordered pair. Found in O(|V| + |E|) by Tarjan's or Kosaraju's algorithm. Condensing each SCC into one node always yields a DAG — the standard first move for analyzing tangled directed systems like service call graphs.",
+    "also": ["SCC"],
+    "see": ["connected-component", "dag"],
+    "taughtIn": { "href": "05-graphs-advanced/scc.html", "title": "Strongly connected components" }
+  },
+  "augmenting-path": {
+    "term": "Augmenting path",
+    "plain": "A route with spare capacity from source to sink — proof the current flow can still grow.",
+    "definition": "In max-flow, a source-to-sink path through the residual graph (leftover capacities, including \"undo\" edges for flow already placed). Max-flow algorithms repeat: find one, push its bottleneck, update. No augmenting path left ⇔ flow is maximal ⇔ a matching min cut exists (max-flow min-cut theorem).",
+    "see": ["matching", "graph"],
+    "taughtIn": { "href": "05-graphs-advanced/max-flow.html", "title": "Max flow, min cut" }
+  },
+  "matching": {
+    "term": "Matching",
+    "plain": "A pairing-up: edges chosen so nobody is claimed twice.",
+    "definition": "A set of edges sharing no endpoints. Maximum bipartite matching (most pairs possible) reduces to max-flow with unit capacities — the course's showpiece benign reduction. König's theorem ties it to vertex covers in bipartite graphs.",
+    "see": ["bipartite", "augmenting-path"],
+    "taughtIn": { "href": "05-graphs-advanced/matching.html", "title": "Bipartite matching" }
+  },
+  "greedy": {
+    "term": "Greedy algorithm",
+    "plain": "Always take the locally best next step and never look back — occasionally provably perfect, often merely tempting.",
+    "definition": "A strategy committing to the best immediate choice at each step. Correct only when the problem has the greedy-choice property, proved by an exchange argument (interval scheduling, Huffman, MST) — and famously wrong elsewhere (coin change with denominations {25, 21, 10, 5, 1}).",
+    "see": ["exchange-argument", "dynamic-programming"],
+    "taughtIn": { "href": "06-strategies/greedy.html", "title": "Greedy algorithms" }
+  },
+  "exchange-argument": {
+    "term": "Exchange argument",
+    "plain": "The proof template for greedy: \"swap any optimal solution's choice for the greedy choice — nothing gets worse.\"",
+    "definition": "Show that any optimal solution differing from the greedy one can be transformed, one swap at a time, toward the greedy solution without losing quality. If so, greedy's output is optimal. The standard justification for interval scheduling by earliest finish and for the MST cut property.",
+    "see": ["greedy", "spanning-tree"],
+    "taughtIn": { "href": "06-strategies/greedy.html", "title": "Greedy algorithms" }
+  },
+  "dynamic-programming": {
+    "term": "Dynamic programming",
+    "plain": "Recursion that refuses to solve the same subproblem twice: solve each once, store it, reuse it.",
+    "definition": "Applies when a problem has optimal substructure (optimal answers built from optimal sub-answers) and overlapping subproblems (the recursion revisits the same states). Cost collapses from the recursion tree's exponential size to (#distinct subproblems) × (work per subproblem). Top-down with a memo table or bottom-up filling an array.",
+    "also": ["DP"],
+    "see": ["memoization", "overlapping-subproblems", "optimal-substructure"],
+    "taughtIn": { "href": "06-strategies/dp-foundations.html", "title": "Dynamic programming" }
+  },
+  "memoization": {
+    "term": "Memoization",
+    "plain": "A cache in front of a function: seen this input before? Return the stored answer.",
+    "definition": "Storing a function's results keyed by arguments so repeated calls cost O(1). Turns naive exponential recursions into polynomial DP when subproblems overlap. The same idea at systems scale is unit 9's caching — and the KV-cache in LLM inference is literally memoized attention state.",
+    "see": ["dynamic-programming", "overlapping-subproblems"],
+    "taughtIn": { "href": "06-strategies/dp-foundations.html", "title": "Dynamic programming" }
+  },
+  "overlapping-subproblems": {
+    "term": "Overlapping subproblems",
+    "plain": "The recursion keeps arriving at the same questions — which is wasteful to re-answer and profitable to cache.",
+    "definition": "When a recursive decomposition produces few distinct subproblems relative to its call-tree size (fib(n): 2ⁿ calls, only n distinct). One of DP's two preconditions; without overlap, memoization stores answers nobody asks for again and plain divide-and-conquer is the right frame.",
+    "see": ["dynamic-programming", "memoization"],
+    "taughtIn": { "href": "06-strategies/dp-foundations.html", "title": "Dynamic programming" }
+  },
+  "optimal-substructure": {
+    "term": "Optimal substructure",
+    "plain": "Optimal wholes are made of optimal parts — so sub-answers can be trusted and reused.",
+    "definition": "A problem where every optimal solution embeds optimal solutions to its subproblems (shortest paths: any prefix of a shortest path is itself shortest). DP's other precondition. Fails where sub-choices interact globally — longest simple path being the classic counterexample.",
+    "see": ["dynamic-programming", "shortest-path"],
+    "taughtIn": { "href": "06-strategies/dp-foundations.html", "title": "Dynamic programming" }
+  },
+  "backtracking": {
+    "term": "Backtracking",
+    "plain": "Try a choice, recurse; on failure, undo it and try the next — exhaustive search with a memory of what to unwind.",
+    "definition": "Depth-first exploration of a decision tree, abandoning (pruning) branches as soon as a partial solution becomes infeasible. Exponential in the worst case but effective when constraints prune early — N-Queens, Sudoku, and SAT solvers' core loop all run on it.",
+    "also": ["pruning"],
+    "see": ["call-stack", "implicit-graph"],
+    "taughtIn": { "href": "06-strategies/backtracking.html", "title": "Backtracking and pruning" }
+  },
+  "pseudo-polynomial": {
+    "term": "Pseudo-polynomial",
+    "plain": "Fast in the VALUE of the numbers, not their length — a polynomial with an asterisk.",
+    "definition": "Running time polynomial in the numeric magnitude of the input (knapsack's O(n·W)) but exponential in its bit length (W doubles per bit). Fine when values are small, useless when they're cryptographic. The reason knapsack can be both \"NP-hard\" and \"solved daily by DP\" without contradiction.",
+    "see": ["dynamic-programming", "np-complete"],
+    "taughtIn": { "href": "06-strategies/dp-knapsack.html", "title": "Knapsack and friends" }
+  },
+  "trie": {
+    "term": "Trie",
+    "plain": "A tree of characters: every path from the root spells a prefix, so all words sharing a prefix share a path.",
+    "definition": "A tree with one child per next-character; words end at marked nodes. Lookup and insert cost O(word length), independent of dictionary size, and every completion of a prefix lives under one node — which is why autocomplete, routers (longest-prefix match), and tokenizers all keep one.",
+    "also": ["prefix tree"],
+    "see": ["data-structure", "byte-pair-encoding"],
+    "taughtIn": { "href": "07-strings/tries.html", "title": "Tries" }
+  },
+  "rolling-hash": {
+    "term": "Rolling hash",
+    "plain": "A hash you can slide: drop the outgoing character, admit the incoming one, O(1) per step.",
+    "definition": "A window hash updatable incrementally as the window slides (Rabin-Karp treats the window as a base-B number mod a prime). Makes comparing a pattern against every text window cheap — with hash matches verified by direct comparison, since collisions remain possible.",
+    "see": ["collision", "comparison-sort"],
+    "taughtIn": { "href": "07-strings/rabin-karp.html", "title": "Rabin-Karp and rolling hashes" }
+  },
+  "failure-function": {
+    "term": "Failure function",
+    "plain": "KMP's cheat sheet: after a mismatch, how much of what I've matched is still usable?",
+    "definition": "For each pattern prefix, the length of its longest proper prefix that is also its suffix. On mismatch, KMP falls back along it instead of re-reading text — guaranteeing the text pointer never moves backward and total O(n + m) time.",
+    "also": ["prefix function", "border array"],
+    "see": ["invariant"],
+    "taughtIn": { "href": "07-strings/kmp.html", "title": "Knuth-Morris-Pratt" }
+  },
+  "embedding": {
+    "term": "Embedding",
+    "plain": "Meaning as coordinates: similar things get nearby points in a high-dimensional space.",
+    "definition": "A learned map from items (words, documents, images) to dense numeric vectors where geometric closeness tracks semantic similarity. The representation that turns \"find related documents\" into unit 9's nearest-neighbor search — and the input format of every RAG pipeline.",
+    "also": ["vector representation"],
+    "see": ["approximate-nearest-neighbor"],
+    "taughtIn": { "href": "09-systems/vector-search.html", "title": "Vector search and HNSW" }
+  },
+  "approximate-nearest-neighbor": {
+    "term": "Approximate nearest neighbor",
+    "plain": "Almost-closest, orders of magnitude faster — the trade every vector database makes.",
+    "definition": "Finding near-optimal nearest vectors without exact search's cost (exact kNN is linear per query; high dimensions defeat classic trees). HNSW does it with a layered graph walked greedily — express lanes on top, local streets below — recall tunable against speed.",
+    "also": ["ANN", "HNSW"],
+    "see": ["embedding", "heuristic"],
+    "taughtIn": { "href": "09-systems/vector-search.html", "title": "Vector search and HNSW" }
+  },
+  "byte-pair-encoding": {
+    "term": "Byte-pair encoding",
+    "plain": "How LLMs read: repeatedly glue the most frequent adjacent pair into one token until the vocabulary is full.",
+    "definition": "A greedy compression scheme that learns a subword vocabulary from data: start from characters, merge the most frequent pair, repeat. Frequent words become single tokens, anything else degrades gracefully to pieces — no out-of-vocabulary failures. The reason context windows, billing, and several LLM quirks are measured in tokens.",
+    "also": ["BPE", "tokenization"],
+    "see": ["greedy", "trie"],
+    "taughtIn": { "href": "09-systems/tokenizers.html", "title": "Tokenizers: tries meet BPE" }
+  },
+  "beam-search": {
+    "term": "Beam search",
+    "plain": "Frontier search on a budget: keep only the k most promising candidates at each step, discard the rest.",
+    "definition": "Breadth-limited best-first search: expand all current candidates, score successors, keep the top k (the beam width). Trades completeness and optimality for bounded cost — the standard decoding strategy for sequence generation, where the true best continuation can be evicted early.",
+    "see": ["frontier", "heuristic"],
+    "taughtIn": { "href": "09-systems/beam-search.html", "title": "Beam search" }
+  },
+  "lru": {
+    "term": "LRU",
+    "plain": "When the cache is full, evict whatever's gone unused longest.",
+    "definition": "Least-recently-used eviction: a hash map for O(1) lookup plus a doubly-linked list for O(1) recency updates — the classic composite data structure. A good default because real access patterns have temporal locality; defeated by scans, which is why databases run variants (LRU-K, tinyLFU).",
+    "also": ["least recently used"],
+    "see": ["memoization", "data-structure"],
+    "taughtIn": { "href": "09-systems/caching.html", "title": "Caching and eviction" }
+  },
+  "bloom-filter": {
+    "term": "Bloom filter",
+    "plain": "A tiny, forgetful set: \"definitely not present\" or \"probably present\", never a false never.",
+    "definition": "A bit array with k hash functions; insert sets k bits, lookup checks them. No false negatives, tunable false-positive rate, and no way to enumerate or delete members. Guards expensive lookups everywhere: storage engines skip SSTables, browsers screen malicious URLs, databases skip disk reads.",
+    "see": ["collision", "lsm-tree"],
+    "taughtIn": { "href": "09-systems/probabilistic.html", "title": "Probabilistic structures" }
+  },
+  "consistent-hashing": {
+    "term": "Consistent hashing",
+    "plain": "Sharding that survives resizing: add a server and only a sliver of keys move, not almost all of them.",
+    "definition": "Place servers and keys on a hash ring; each key belongs to the next server clockwise. Adding/removing a server relocates only ~K/N keys (vs nearly all under hash-mod-N), with virtual nodes smoothing the load. The backbone of distributed caches and Dynamo-style databases.",
+    "also": ["hash ring"],
+    "see": ["collision", "load-factor"],
+    "taughtIn": { "href": "09-systems/hashing-in-the-wild.html", "title": "Consistent hashing and rate limiters" }
+  },
+  "b-tree": {
+    "term": "B-tree",
+    "plain": "A search tree built wide on purpose: hundreds of keys per node, so the whole tree is 3–4 disk reads tall.",
+    "definition": "A balanced multi-way tree with node size matched to the storage block. Branching factor B turns height into log_B(n) — millions of keys in a handful of levels. The index structure of nearly every relational database and filesystem; the read-optimized half of unit 9's storage-engine story.",
+    "see": ["binary-search-tree", "lsm-tree"],
+    "taughtIn": { "href": "09-systems/storage-engines.html", "title": "Storage engines: B-trees vs LSM" }
+  },
+  "lsm-tree": {
+    "term": "LSM tree",
+    "plain": "Write-optimized storage: absorb writes in memory, flush sorted runs, merge them later in the background.",
+    "definition": "Log-structured merge tree: writes land in a memtable, flush as immutable sorted files (SSTables), and background compaction merge-sorts them — unit 3's merge as an architecture. Fast sequential writes, reads pay to consult multiple files (Bloom filters soften it). RocksDB, Cassandra, LevelDB.",
+    "see": ["b-tree", "bloom-filter"],
+    "taughtIn": { "href": "09-systems/storage-engines.html", "title": "Storage engines: B-trees vs LSM" }
+  },
+  "certificate": {
+    "term": "Certificate",
+    "plain": "The receipt that makes a yes-answer easy to check: the schedule itself, the subset itself.",
+    "definition": "A witness accompanying a yes-instance that a polynomial-time verifier can confirm. NP is defined by certificates existing (verifiable-in-P), saying nothing about how hard finding one is — the gap the P vs NP question lives in.",
+    "also": ["witness"],
+    "see": ["np-complete"],
+    "taughtIn": { "href": "11-expert/p-and-np.html", "title": "P, NP and NP-completeness" }
+  },
+  "np-complete": {
+    "term": "NP-complete",
+    "plain": "The hardest problems in NP — crack any one fast and they all fall.",
+    "definition": "In NP, and every NP problem reduces to it in polynomial time. SAT was proved first (Cook-Levin); thousands followed by reduction chains. NP-hard = at least that hard without necessarily being in NP. Practical meaning: stop hunting for a fast exact algorithm; choose approximation, heuristics, or solvers.",
+    "also": ["NP-hard (contrast)"],
+    "see": ["certificate", "reduction"],
+    "taughtIn": { "href": "11-expert/p-and-np.html", "title": "P, NP and NP-completeness" }
+  },
+  "reduction": {
+    "term": "Reduction",
+    "plain": "A compiler between problems: solve mine by translating it into yours.",
+    "definition": "A polynomial-time transformation of instances of problem A into instances of problem B preserving the answer. Hardness flows forward (known-hard A ≤ B proves B hard); solutions flow backward (encode A into a well-solved B, like SAT or ILP). Keeping the direction straight is the entire skill.",
+    "see": ["np-complete", "matching"],
+    "taughtIn": { "href": "11-expert/reductions.html", "title": "Reductions in practice" }
+  },
+  "approximation-ratio": {
+    "term": "Approximation ratio",
+    "plain": "The guarantee's number: \"never worse than ρ times optimal, on any input.\"",
+    "definition": "An algorithm is a ρ-approximation if its answer is within factor ρ of optimal for every instance. Proved via computable bounds on the unknown optimum (a matching lower-bounds vertex cover; the MST lower-bounds metric TSP). The line between engineering guarantees and benchmark folklore.",
+    "see": ["np-complete", "greedy"],
+    "taughtIn": { "href": "11-expert/approximation.html", "title": "Approximation algorithms" }
+  },
+  "las-vegas": {
+    "term": "Las Vegas algorithm",
+    "plain": "Always right, randomly fast — the coin flips only decide how long it takes.",
+    "definition": "A randomized algorithm whose output is always correct and whose running time is a random variable — random-pivot quicksort: guaranteed sorted, expected O(n log n) on every input. Contrast Monte Carlo, where time is fixed and correctness is probabilistic.",
+    "see": ["monte-carlo", "pivot"],
+    "taughtIn": { "href": "11-expert/randomized.html", "title": "Randomized algorithms" }
+  },
+  "monte-carlo": {
+    "term": "Monte Carlo algorithm",
+    "plain": "Always fast, probably right — with an error rate you can dial down by repeating.",
+    "definition": "A randomized algorithm with bounded running time and a bounded probability of error, typically shrinking exponentially with repetitions (Miller-Rabin primality: error ≤ 4⁻ᵏ after k rounds). Bloom filters' false positives are the data-structure incarnation.",
+    "see": ["las-vegas", "bloom-filter"],
+    "taughtIn": { "href": "11-expert/randomized.html", "title": "Randomized algorithms" }
+  },
+  "cache-line": {
+    "term": "Cache line",
+    "plain": "Memory's minimum order size: touch one byte, receive 64 — so neighbors are free and strangers are expensive.",
+    "definition": "The unit (typically 64 bytes) moved between memory and CPU caches. Sequential access rides it (plus prefetching); pointer-chasing to scattered addresses misses per hop at ~100× the cost. Why arrays beat linked lists in practice and why layout is a first-class design concern.",
+    "also": ["locality"],
+    "see": ["data-structure", "b-tree"],
+    "taughtIn": { "href": "11-expert/cache-and-memory.html", "title": "When theory meets the clock" }
+  },
+  "critical-path": {
+    "term": "Critical path (span)",
+    "plain": "The chain of steps that must happen in order — the part no amount of parallelism can compress.",
+    "definition": "In parallel cost models: span is the longest dependency chain (vs work, the total operations). Wall-clock time ≥ span regardless of processor count, and Amdahl's law is its scalar cousin (serial fraction s caps speedup at 1/s). In practice: your build DAG's longest prerequisite chain.",
+    "also": ["span", "work-span model"],
+    "see": ["dag", "topological-order"],
+    "taughtIn": { "href": "11-expert/external-and-parallel.html", "title": "Very big and very parallel" }
+  },
+  "bitmask": {
+    "term": "Bitmask",
+    "plain": "A set disguised as an integer: bit i on means element i in.",
+    "definition": "Representing subsets of a small universe (≤ 32 or 64 elements) as machine words, making set algebra single instructions (union |, intersection &) and subsets natural array indices. The enabling trick of bitmask DP and the substrate of flags, permissions, and bitboards.",
+    "see": ["dynamic-programming", "data-structure"],
+    "taughtIn": { "href": "11-expert/bit-tricks.html", "title": "Bit tricks" }
+  }
+}

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hash tables — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Data structures">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="stacks-and-queues.html|Stacks, queues and deques">
+  <meta name="algo:next" content="binary-search-trees.html|Binary search trees">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/structures.js"></script>
+
+  <style>
+    .buckets { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 0.8rem; }
+    .bucket { border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+              min-height: 6.2rem; padding: 4px; font-size: 0.78rem; }
+    .bucket .slot-no { color: var(--text-soft); font-family: var(--mono); font-size: 0.7rem;
+                       display: block; text-align: center; border-bottom: 1px dashed var(--border);
+                       margin-bottom: 3px; }
+    .bucket.hot { border-color: #d97706; box-shadow: 0 0 0 2px #d9770655; }
+    .chip { display: block; border-radius: 6px; background: var(--bg-inset); border: 1px solid var(--border);
+            padding: 1px 5px; margin: 2px 0; font-family: var(--mono); overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; }
+    .chip.walk { border-color: #d97706; }
+    .chip.placed { border-color: var(--good); background: var(--good-soft); }
+  </style>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Data structures</p>
+  <h1>Hash tables: the O(1) that runs the world</h1>
+  <p class="lede">Look anything up in constant time, no matter how much you've
+  stored — by <em>computing</em> where it lives instead of searching for it.
+  It sounds like cheating. The fine print about when the cheat fails is what
+  separates engineers who use maps from engineers who understand them.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="arrays-and-lists.html">Arrays</a> (O(1) indexing is the engine
+    under everything here) and mod from the
+    <a href="../notation.html">notation reference</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The array gave us a superpower — O(1) jump to any <em>index</em> — with
+  a catch: indexes are meaningless integers, and we want to look things up by
+  <em>keys</em> ("alice", a URL, a session token). The hash table's move:
+  build a function that turns any key into an index, then use the array
+  superpower. That converter is the <strong>hash function</strong>; a good
+  one scatters keys evenly and computes fast.</p>
+  <p>The catch behind the catch: more possible keys than slots means two keys
+  must sometimes land on the same slot — a
+  <strong><dfn data-term="collision">collision</dfn></strong>, and it's not a
+  bug but a certainty to be managed. The two classic managements:
+  <strong>chaining</strong> (each slot holds a little list) and
+  <strong>open addressing</strong> (if your slot's taken, step to the next).
+  How crowded the table is — stored keys ÷ slots — is its
+  <strong><dfn data-term="load-factor">load factor</dfn></strong>, the single
+  dial that decides whether "O(1)" stays honest.</p>
+
+  <h2>Watch it run</h2>
+  <p>Type a key (or add random ones) and step through the insert: the hash
+  arithmetic picks a slot, then the collision strategy earns its pay. Watch
+  the load factor climb — and watch what crowding does to the step counts:</p>
+  <div class="demo">
+    <div class="buttons">
+      <input id="key-input" type="text" placeholder="a key, e.g. alice" maxlength="12"
+             style="font:inherit;padding:0.35rem 0.7rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)">
+      <button type="button" class="action" id="insert-btn">insert</button>
+      <button type="button" class="action secondary" id="random-btn">+5 random</button>
+      <button type="button" class="action secondary" id="mode-btn">mode: chaining</button>
+      <button type="button" class="action secondary" id="reset-btn">reset</button>
+    </div>
+    <p class="readout" id="hash-line">&nbsp;</p>
+    <div class="buckets" id="buckets"></div>
+    <div id="ht-stepper"></div>
+    <div class="counters">
+      <span class="counter">keys: <span class="n" id="ht-n">0</span></span>
+      <span class="counter">slots: <span class="n" id="ht-slots">8</span></span>
+      <span class="counter">load factor: <span class="n" id="ht-load">0.00</span></span>
+    </div>
+    <p class="hint">Past a load factor of ~0.75, collisions snowball — real
+    tables grow (double the slots, rehash everything) before that point. The
+    resize is the dynamic array's amortized trick again: occasional O(n),
+    O(1) averaged.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>It is barely an exaggeration to say hash tables ARE the industry:
+    every <code>Map</code>/<code>dict</code>/<code>HashMap</code>, every
+    cache from CPU-adjacent to Redis, database hash joins and hash indexes,
+    deduplication, session stores, feature flags, DNS resolvers. The
+    LLM-era additions run on them too — a KV cache is a hash-shaped store
+    with an eviction policy (unit 9), and sharding a vector database starts
+    with hashing keys to nodes (consistent hashing, also unit 9, fixes what
+    naive <code>mod n</code> breaks when n changes). When unit 9 keeps
+    saying "then we hash it", this page is the "it".</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why "O(1)" is honest — and exactly when it isn't</summary>
+    <div class="layer-body">
+      <p>With a good hash and a controlled load factor, the <em>expected</em>
+      chain length is a small constant (at load α, about α for chaining) —
+      hence O(1) expected lookups, and resizing keeps α controlled. Two ways
+      the promise breaks: <strong>a bad hash</strong> (everything piles into
+      few slots — the table quietly becomes a linked list, O(n)), and
+      <strong>an adversarial workload</strong>: if an attacker can choose
+      your keys and knows your hash, they can manufacture collisions on
+      purpose. That's hash-flooding DoS — real CVEs, real outages — and it's
+      why runtimes seed their string hashes randomly per process and why
+      unit 3's "adversarial input" drum keeps beating.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Chaining vs open addressing: the real trade</summary>
+    <div class="layer-body">
+      <p><strong>Chaining</strong> is forgiving (load factor can exceed 1,
+      deletions are trivial) but every chain hop is a pointer chase — the
+      cache-miss tax from the arrays page. <strong>Open addressing</strong>
+      keeps everything in one contiguous array (cache-friendly probes, no
+      per-entry allocation) but degrades sharply as load nears 1 and makes
+      deletion subtle (you leave "tombstones" so probe chains don't break).
+      Modern high-performance tables (Swiss tables, Robin Hood variants) are
+      open addressing plus SIMD-friendly metadata — contiguity won, same
+      verdict as the arrays page.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>What makes a hash function good here (and why this isn't crypto)</summary>
+    <div class="layer-body">
+      <p>For tables you need: fast, deterministic, evenly-scattering, and —
+      against flooding — unpredictable to outsiders (a per-process random
+      seed). You do <em>not</em> need cryptographic one-wayness; SHA-256 in a
+      hash map is pure waste, and conversely djb2 in a password store is a
+      career mistake. Same word, "hash", two different contracts — the
+      security page in unit 11 draws the full line.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/structures.js): hash, then manage
+// the collision. Chaining shown; probing differs only in the loop.
+function hashString(key, buckets) {
+  let h = 5381;
+  for (let i = 0; i &lt; key.length; i++)
+    h = ((h &lt;&lt; 5) + h + key.charCodeAt(i)) &gt;&gt;&gt; 0;   // h*33 + char, unsigned
+  return h % buckets;                                // mod folds it to a slot
+}
+
+function* chainInsert(state, key) {
+  const h = hashString(key, state.buckets.length);
+  yield { type: "hash", key, h };                    // computed, not searched
+  const chain = state.buckets[h];
+  for (let k = 0; k &lt; chain.length; k++) {
+    yield { type: "chain-walk", slot: h, k };        // the collision tax
+    if (chain[k] === key) return false;
+  }
+  chain.push(key);
+  yield { type: "place", slot: h, key };
+  return true;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Hash tables trade away one thing to get O(1): <em>order</em>. Ask one
+  for "all keys between A and F" or "the smallest key" and it shrugs. The
+  structures that keep order sorted while staying fast are up next:
+  <a href="binary-search-trees.html">binary search trees</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "hash-tables",
+    "questions": [
+      { "q": "What is the hash table's core trick, in one sentence?",
+        "choices": ["Keep keys sorted so binary search works",
+                    "Compute where a key lives (hash → index), then use the array's O(1) jump — no searching",
+                    "Store everything twice for redundancy"],
+        "answer": 1,
+        "explain": "Arithmetic instead of search. Everything else on the page — collisions, load factor, resizing — is the fine print on that one move." },
+      { "q": "Your service's p99 latency spikes; profiling shows one map where thousands of keys share a handful of buckets. What happened?",
+        "choices": ["The map is over-provisioned",
+                    "The hash function is scattering badly (or being attacked) — lookups have quietly degraded from O(1) toward O(n)",
+                    "Load factor is too low"],
+        "answer": 1,
+        "explain": "A hash table with clustered keys is a linked list in disguise. If the keys are attacker-chosen, this is hash-flooding — the reason runtimes randomize string-hash seeds per process." },
+      { "q": "Why do hash tables resize at ~0.75 load factor instead of waiting until completely full?",
+        "choices": ["Memory allocators require it",
+                    "Collision costs grow nonlinearly with crowding — resizing early keeps expected probe/chain lengths at the small constant that makes \"O(1)\" true",
+                    "It makes iteration ordered"],
+        "answer": 1,
+        "explain": "At α near 1, open addressing especially falls off a cliff (probe lengths blow up). Doubling + rehashing is the amortized-analysis bargain: rare O(n) moments buying steady O(1)." },
+      { "q": "A hash map can't answer \"smallest key ≥ x\" efficiently. Why not?",
+        "choices": ["It could, with a better hash function",
+                    "Scattering keys uniformly is the point — and it destroys order, so range/min queries need a different structure (trees)",
+                    "Because keys must be strings"],
+        "answer": 1,
+        "explain": "Good hashing and preserved ordering are directly opposed goals. Choosing between a map and a tree IS choosing which queries your system needs to be fast." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const SLOTS = 8;
+      let mode = "chain"; // or "probe"
+      let state, player, keys;
+
+      const bucketsEl = document.getElementById("buckets");
+      const hashLine = document.getElementById("hash-line");
+      const input = document.getElementById("key-input");
+
+      const WORDS = ["alice", "bob", "carol", "dave", "erin", "frank", "grace",
+        "heidi", "ivan", "judy", "mallory", "oscar", "peggy", "trent", "wendy",
+        "cache", "token", "user42", "order9", "sku777", "eu-west", "shard3"];
+      let wordIdx = 0;
+
+      function freshState() {
+        return mode === "chain"
+          ? { buckets: Array.from({ length: SLOTS }, () => []) }
+          : { slots: new Array(SLOTS).fill(null) };
+      }
+
+      function snapshot() {
+        return mode === "chain"
+          ? { buckets: state.buckets.map((c) => c.slice()) }
+          : { slots: state.slots.slice() };
+      }
+
+      function renderTable(snap, event) {
+        bucketsEl.innerHTML = "";
+        const cols = mode === "chain" ? snap.buckets : snap.slots.map((k) => (k == null ? [] : [k]));
+        cols.forEach((chain, slot) => {
+          const div = document.createElement("div");
+          div.className = "bucket";
+          if (event && ((event.type === "hash" && event.h === slot) ||
+                        (event.type === "probe" && event.slot === slot) ||
+                        (event.type === "place" && event.slot === slot) ||
+                        (event.type === "chain-walk" && event.slot === slot))) {
+            div.classList.add("hot");
+          }
+          div.innerHTML = `<span class="slot-no">${slot}</span>`;
+          chain.forEach((key, k) => {
+            const chip = document.createElement("span");
+            chip.className = "chip";
+            if (event && event.type === "chain-walk" && event.slot === slot && event.k === k) chip.classList.add("walk");
+            if (event && event.type === "place" && event.slot === slot && k === chain.length - 1) chip.classList.add("placed");
+            chip.textContent = key;
+            div.appendChild(chip);
+          });
+          bucketsEl.appendChild(div);
+        });
+        if (event && event.type === "hash") {
+          hashLine.innerHTML = `hash("<strong>${event.key}</strong>") → big number → mod ${SLOTS} → slot <strong>${event.h}</strong>`;
+        }
+        const count = mode === "chain"
+          ? snap.buckets.reduce((a, c) => a + c.length, 0)
+          : snap.slots.filter(Boolean).length;
+        document.getElementById("ht-n").textContent = count;
+        document.getElementById("ht-slots").textContent = SLOTS;
+        document.getElementById("ht-load").textContent = (count / SLOTS).toFixed(2);
+      }
+
+      function insert(key) {
+        if (!key) return;
+        const gen = mode === "chain"
+          ? () => window.AlgoStructures.chainInsert(state, key)
+          : () => window.AlgoStructures.probeInsert(state, key);
+        if (!player) {
+          player = window.AlgoSteps.player(document.getElementById("ht-stepper"), {
+            make: gen,
+            capture: snapshot,
+            render: renderTable,
+            counters: { "chain-walk": "chain hops", probe: "probes" },
+            describe: (e) =>
+              e.type === "hash" ? `slot = hash(key) mod ${SLOTS} = ${e.h}` :
+              e.type === "chain-walk" ? "collision: walking the chain" :
+              e.type === "probe" ? `probing slot ${e.slot}` :
+              e.type === "place" ? `stored in slot ${e.slot}` :
+              e.type === "full" ? "table full!" : "",
+          });
+        } else {
+          player.reset(gen);
+        }
+        // auto-play the freshly recorded insert
+        player.play();
+      }
+
+      document.getElementById("insert-btn").addEventListener("click", () => {
+        insert(input.value.trim().toLowerCase()); input.value = ""; input.focus();
+      });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { insert(input.value.trim().toLowerCase()); input.value = ""; }
+      });
+      document.getElementById("random-btn").addEventListener("click", () => {
+        for (let i = 0; i < 5; i++) insert(WORDS[wordIdx++ % WORDS.length]);
+      });
+      document.getElementById("mode-btn").addEventListener("click", (e) => {
+        mode = mode === "chain" ? "probe" : "chain";
+        e.target.textContent = `mode: ${mode === "chain" ? "chaining" : "open addressing"}`;
+        state = freshState(); wordIdx = 0;
+        hashLine.innerHTML = "&nbsp;";
+        renderTable(snapshot(), null);
+      });
+      document.getElementById("reset-btn").addEventListener("click", () => {
+        state = freshState(); wordIdx = 0;
+        hashLine.innerHTML = "&nbsp;";
+        renderTable(snapshot(), null);
+      });
+
+      state = freshState();
+      renderTable(snapshot(), null);
+    });
+  </script>
+</main>
+</body>
+</html>

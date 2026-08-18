@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Balanced trees: AVL and red-black — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Data structures">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="binary-search-trees.html|Binary search trees">
+  <meta name="algo:next" content="heaps.html|Heaps and priority queues">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/structures.js"></script>
+  <script defer src="../assets/js/viz/tree.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Data structures</p>
+  <h1>Balanced trees: bushiness by force</h1>
+  <p class="lede">The last page ended with sorted input turning a BST into a
+  chain. This page feeds the <em>same poison</em> to a tree that fights back —
+  rotating itself bushy after every insert — and the O(log n) promise
+  becomes unconditional.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="binary-search-trees.html">Binary search trees</a>, especially the
+    degeneration demo — this page is its antidote.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The BST rule constrains <em>order</em> but not <em>shape</em>. Balanced
+  trees add a second rule about shape, and one repair tool. The tool is the
+  <strong>rotation</strong>: a local re-pointing of two or three references
+  that lifts a child above its parent <em>without breaking the BST order
+  rule</em> — the middle key ends up on top, smaller stuff left, bigger stuff
+  right, exactly as before, but the heights have shifted. It's O(1) — no
+  data moves, just pointers.</p>
+  <p><strong>AVL trees</strong> keep the strictest shape rule: at every node,
+  the two subtree heights differ by at most 1. Every insert walks back up
+  checking; a violation triggers one or two rotations, and balance is
+  restored — the tree can never drift further than one rotation's reach out
+  of shape. <strong>Red-black trees</strong> (the one in most standard
+  libraries) enforce a looser rule via node colors — never two reds in a row,
+  equal black-count on every root-to-leaf path — which bounds height at
+  ~2 log n while doing fewer repair rotations on average. Same idea, tuned
+  differently: AVL flatter (faster lookups), red-black cheaper to update.</p>
+
+  <h2>Watch it run</h2>
+  <p>Sixteen values inserted in <em>sorted order</em> — the exact input that
+  built the chain last page — but into an AVL tree. Watch each violation get
+  rotated away (the green-flashed node is the rotation's new subtree root),
+  and watch the height counter refuse to pass 5:</p>
+  <div class="demo">
+    <div id="avl-tree"></div>
+    <div id="avl-stepper"></div>
+    <div class="counters"><span class="counter">height now: <span class="n" id="avl-height">0</span></span></div>
+    <p class="hint">Chain avoided: 16 sorted inserts, height 5 (⌈1.44·log₂16⌉
+    is the AVL worst case). The rotations cost O(1) each — bushiness is
+    nearly free.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Every ordered container in a standard library is one of these — C++
+    <code>std::map</code>, Java <code>TreeMap</code>, .NET
+    <code>SortedDictionary</code> are red-black trees; kernel schedulers
+    (Linux CFS ran on a red-black tree for years) and epoll timers too. And
+    the disk-shaped descendant is bigger than all of them: the
+    <strong>B-tree</strong> generalizes "rotate to stay shallow" into "keep
+    nodes fat so the tree is 3–4 levels tall", which is why your database
+    index finds one row in a billion with three page reads. Unit 9's
+    storage-engines page picks that story up.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>A rotation, in slow motion</summary>
+    <div class="layer-body">
+      <p>Right rotation at node y with left child x: x rises, y becomes x's
+      right child, and x's old right subtree (everything between x and y in
+      value!) becomes y's new left subtree. Three pointer writes. The in-order
+      sequence — left-x-middle-y-right — is untouched, which is the whole
+      point: rotations change <em>heights</em> while provably preserving
+      <em>order</em>. Every balancing scheme (AVL, red-black, splay, treap) is
+      just a different policy for when to apply this same tool.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — why the AVL rule forces log height</summary>
+    <div class="layer-body">
+      <p>Let N(h) be the fewest nodes an AVL tree of height h can have. The
+      stingiest tree has one subtree of height h−1 and one of h−2 (the rule's
+      limit), so N(h) = 1 + N(h−1) + N(h−2) — Fibonacci in disguise. Since
+      Fibonacci grows exponentially (≈ φⁿ), node count grows exponentially in
+      height, so height grows logarithmically in node count:
+      h ≤ 1.44 log₂(n). The shape rule is local and cheap; the height bound
+      it buys is global and unconditional. Red-black's rule bounds height at
+      2 log₂(n+1) by a similar counting argument on black nodes.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Which balanced tree should you actually reach for?</summary>
+    <div class="layer-body">
+      <p>In practice: <strong>the one your library gives you</strong>
+      (almost always red-black), and only after asking whether you need
+      ordering at all — a hash map is simpler and faster when you don't.
+      Read-heavy with rare writes? AVL's flatter shape wins lookups.
+      Everything-on-disk? B-tree, always — the branching factor is set by the
+      page size, not by binary-vs-not. The exotic cousins (splay trees:
+      recently-used keys float to the top; treaps: randomized balance) are
+      unit-11 material.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's rebalancing core (assets/js/algo/structures.js). After the
+// ordinary BST descent, each node on the way back up checks its balance:
+const balance = height(node.left) - height(node.right);
+if (balance > 1) {                       // left side too tall
+  if (height(left.left) &lt; height(left.right))
+    node.left = rotate(node.left, "left");     // zig-zag: straighten first
+  return rotate(node, "right");                // then lift the left child
+}
+if (balance &lt; -1) { /* mirror image */ }
+// A rotation is three pointer writes — order preserved, heights repaired.</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Sometimes you don't need the full sorted order — only "give me the
+  smallest, fast, repeatedly". Relaxing the BST rule to just that buys a
+  simpler, flatter, array-backed structure:
+  <a href="heaps.html">the heap</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "balanced-trees",
+    "questions": [
+      { "q": "What does a rotation change, and what does it provably preserve?",
+        "choices": ["Changes the keys; preserves the shape",
+                    "Changes subtree heights via a few pointer writes; preserves the in-order (BST) ordering",
+                    "Changes both order and shape"],
+        "answer": 1,
+        "explain": "That's why it's THE repair tool: shape is the thing that was broken, order is the thing that must never break, and a rotation touches exactly one and not the other." },
+      { "q": "Feeding sorted input to an AVL tree gives height ~1.44·log₂n instead of n. What pays for this?",
+        "choices": ["Nothing — it's strictly free",
+                    "O(1) rotation work per insert on the walk back up (plus a height field per node)",
+                    "Lookups become O(n)"],
+        "answer": 1,
+        "explain": "A constant per insert buys an unconditional log-height guarantee — one of the best trades in the catalogue. (Red-black shifts the constants: slightly taller tree, fewer repairs.)" },
+      { "q": "Why do databases use B-trees rather than binary balanced trees for on-disk indexes?",
+        "choices": ["Disks can't store pointers",
+                    "Each disk read fetches a whole page, so nodes are made page-sized and hundreds-way — the tree becomes 3–4 levels tall for billions of keys",
+                    "B-trees don't need balancing"],
+        "answer": 1,
+        "explain": "When a read costs a disk seek, height is everything, and fat nodes buy minimum height. Same balance discipline, tuned for a different memory hierarchy — unit 9 finishes this story." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const state = { nodes: {}, root: null, nextId: 0 };
+      const viz = window.AlgoTreeViz.create(document.getElementById("avl-tree"), {
+        height: 260, label: "AVL tree absorbing sorted input via rotations" });
+      const heightOut = document.getElementById("avl-height");
+      const values = Array.from({ length: 16 }, (_, i) => (i + 1) * 5); // sorted!
+      function* buildAll() {
+        for (const v of values) yield* window.AlgoStructures.avlInsert(state, v);
+      }
+      window.AlgoSteps.player(document.getElementById("avl-stepper"), {
+        make: buildAll,
+        capture: () => ({
+          nodes: JSON.parse(JSON.stringify(state.nodes)),
+          root: state.root,
+        }),
+        render: (snap, event) => {
+          viz.draw(snap, event && event.type === "rotate"
+            ? { type: "insert", id: event.pivot } : event);
+          // compute height from the structure (the cached h field can be one
+          // step stale mid-rebalance in a snapshot)
+          const depth = (id) => id == null ? 0 :
+            1 + Math.max(depth(snap.nodes[id].left), depth(snap.nodes[id].right));
+          heightOut.textContent = depth(snap.root);
+        },
+        counters: { visit: "visits", rotate: "rotations" },
+        describe: (e) =>
+          e.type === "visit" ? "descending — ordinary BST walk" :
+          e.type === "insert" ? "attached" :
+          e.type === "rotate" ? `ROTATION (${e.dir}) — balance restored, order untouched` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

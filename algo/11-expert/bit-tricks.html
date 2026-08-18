@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bit tricks — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Expert track">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="cache-and-memory.html|When theory meets the clock">
+  <meta name="algo:next" content="external-and-parallel.html|Very big and very parallel">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 11 · Expert track</p>
+  <h1>Bit tricks: sets, masks and the machine's native tongue</h1>
+  <p class="lede">An integer is 32 tiny booleans standing in a row, and the
+  processor operates on all of them in one cycle. That makes integers the
+  fastest set implementation you will ever get — the trick unit 6's bitmask
+  DP leaned on — plus a small canon of one-liners (clear the lowest bit,
+  test for a power of two) that show up in real allocators, schedulers and
+  interviews. This page is the decoder ring.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Nothing beyond binary notation. If you're arriving from
+    <a href="../06-strategies/dp-trees-and-bitmasks.html">bitmask DP</a>,
+    the "bits as sets" table below is the promised payoff.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Number the members of a small universe 0..31. Any subset becomes one
+  integer: bit i set ⇔ element i present. Set operations become single
+  instructions — union is <code>|</code>, intersection is <code>&amp;</code>,
+  complement is <code>~</code>, symmetric difference is <code>^</code> —
+  and "for each subset" becomes counting from 0 to 2ⁿ−1, which is exactly
+  how unit 6's traveling-salesman DP enumerated its states. The second
+  family of tricks exploits two's-complement arithmetic:
+  <code>n&nbsp;&amp;&nbsp;(n−1)</code> clears the lowest set bit (subtracting 1 flips
+  the trailing run), and <code>n&nbsp;&amp;&nbsp;−n</code> isolates it.
+  Everything else on this page is a corollary of those two sentences.</p>
+
+  <h2>Watch it run</h2>
+  <p>Type any number (0 to 4 billion); every trick updates live:</p>
+  <div class="demo">
+    <p><label class="hint">n = <input id="n-in" type="number" value="180" min="0" max="4294967295"
+      style="font:inherit;font-family:var(--mono);width:9rem;padding:0.2rem 0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)"></label></p>
+    <div id="bit-out" style="font-family:var(--mono);font-size:0.92rem;line-height:1.9;overflow-x:auto"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Feature flags and permission systems (Unix's <code>rwxr-xr--</code>
+    is a 9-bit mask; every ORM's <code>flags &amp; CAN_EDIT</code>),
+    CPU sets and scheduler affinity masks in the kernel, chess engines
+    (bitboards: one 64-bit integer per piece type, move generation as
+    shifts), memory allocators rounding to powers of two
+    (<code>(n + 7) &amp; ~7</code> aligns to 8), network masks (CIDR is
+    literally "count the leading ones"), compression and serialization
+    formats packing booleans, unit 9's Bloom filter setting its k bits,
+    and HyperLogLog counting leading zeros. Modern CPUs expose
+    <code>popcount</code> and count-leading-zeros as single instructions —
+    JavaScript's <code>Math.clz32</code> is the latter.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer">
+    <summary>Why n &amp; (n−1) clears the lowest set bit</summary>
+    <div class="layer-body">
+      <p>Write n as <code>…x100…0</code> — some prefix x, then the lowest
+      set bit, then trailing zeros. Subtracting 1 borrows through the
+      zeros: <code>n−1 = …x011…1</code> — the prefix survives, the lowest
+      set bit falls to 0, the trailing zeros flip to 1s. AND the two and
+      the disagreeing suffix vanishes: <code>…x000…0</code>. Corollaries:
+      a power of two has exactly one set bit, so
+      <code>n &amp; (n−1) === 0</code> tests for it (mind n = 0);
+      Kernighan's popcount loops "clear lowest bit, count" and runs once
+      per <em>set</em> bit, not per bit — the demo shows the loop's trace.
+      Similarly <code>−n</code> in two's complement is <code>~n + 1</code>,
+      which flips everything above the lowest set bit but not it —
+      so <code>n &amp; −n</code> keeps exactly that bit.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Iterating subsets of a mask — bitmask DP's inner loop</summary>
+    <div class="layer-body">
+      <p>The idiom <code>for (let s = m; s; s = (s − 1) &amp; m)</code>
+      visits every non-empty subset s of mask m, in decreasing order:
+      subtracting 1 rolls the subset's odometer downward and the
+      <code>&amp; m</code> snaps it back inside the universe. Across all m
+      of size n this totals 3ⁿ steps (each element is in m-only, in s, or
+      out — three states), the bound that governs set-cover-style DPs.
+      One more staple: enumerating <em>supersets</em> is
+      <code>s = (s + 1) | m</code>. These two lines are most of what
+      "expert" bitmask DP adds to unit 6.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Bits as sets — the entire API, one operator each:
+const has    = (set, i) => (set &gt;&gt;&gt; i) &amp; 1;
+const add    = (set, i) => set | (1 &lt;&lt; i);
+const remove = (set, i) => set &amp; ~(1 &lt;&lt; i);
+const union = (a, b) => a | b, intersect = (a, b) => a &amp; b, diff = (a, b) => a &amp; ~b;
+
+function popcount(n) {              // Kernighan: one iteration per SET bit
+  let c = 0;
+  while (n) { n &amp;= n - 1; c++; }    // clear lowest set bit
+  return c;
+}
+const isPowerOfTwo = (n) => n &gt; 0 &amp;&amp; (n &amp; (n - 1)) === 0;
+const lowestBit    = (n) => n &amp; -n;
+const alignUp8     = (n) => (n + 7) &amp; ~7;   // allocator staple</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>From the smallest scale to the largest:
+  <a href="external-and-parallel.html">what changes when data outgrows
+  memory — or one machine</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "bit-tricks",
+    "questions": [
+      { "q": "Why does Kernighan's popcount loop exactly (number of set bits) times rather than 32?",
+        "choices": ["It checks bits until the first zero",
+                    "Each n &= n−1 deletes exactly one set bit — the lowest — so the loop's counter IS the population count; a number with 3 set bits exits after 3 iterations",
+                    "It shifts right until n is zero"],
+        "answer": 1,
+        "explain": "The borrow in n−1 stops precisely at the lowest set bit, so AND-ing erases just it. Sparse masks count almost instantly — nice when flags are mostly off." },
+      { "q": "In unit 6's TSP bitmask DP, why do sets-as-integers matter beyond saving memory?",
+        "choices": ["They only save memory",
+                    "The set IS an array index: dp[mask][last] needs subsets to be small dense integers, and set operations (add city: mask | (1<<c)) stay O(1) inside the hot loop — a Set object could neither index the table nor keep the loop cheap",
+                    "Integers can hold larger sets than Set objects"],
+        "answer": 1,
+        "explain": "The bitmask is doing double duty: constant-time set algebra AND a perfect hash of the subset into the DP table. That fusion is why 'bitmask DP' is a named technique." },
+      { "q": "A teammate writes isPowerOfTwo(n) as (n & (n−1)) === 0. The code-review catch?",
+        "choices": ["Nothing — it's the canonical trick",
+                    "n = 0 slips through: 0 & −1 is 0, but zero is not a power of two — the guard n > 0 is the difference between the trick and the bug",
+                    "It fails for odd numbers"],
+        "answer": 1,
+        "explain": "Bit tricks earn their reputation for cleverness AND for edge cases. The zero case is this family's classic — worth pattern-matching forever." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("n-in");
+      const out = document.getElementById("bit-out");
+
+      const bin = (n) => (n >>> 0).toString(2).padStart(32, "0").replace(/(.{8})/g, "$1 ").trim();
+      const mark = (n) => bin(n).split("").map((ch) =>
+        ch === "1" ? `<strong style="color:var(--accent)">1</strong>` : ch).join("");
+
+      function render() {
+        let n = Math.floor(Number(input.value));
+        if (!Number.isFinite(n) || n < 0) n = 0;
+        n = n >>> 0;
+        const low = n & -n;
+        const cleared = n & (n - 1);
+        let pc = 0, trace = [], t = n;
+        while (t) { t &= t - 1; pc++; if (trace.length < 6) trace.push(t); }
+        const pow2 = n > 0 && (n & (n - 1)) === 0;
+        const members = [];
+        for (let i = 0; i < 32; i++) if ((n >>> i) & 1) members.push(i);
+        out.innerHTML =
+          `n          = ${mark(n)}  (${n})<br>` +
+          `as a set   = { ${members.join(", ") || "∅"} }  — bit i set ⇔ element i present<br>` +
+          `n &amp; (n−1)  = ${mark(cleared)}  — lowest set bit cleared<br>` +
+          `n &amp; −n     = ${mark(low)}  — lowest set bit isolated (= ${low})<br>` +
+          `popcount   = ${pc} set bit${pc === 1 ? "" : "s"} — Kernighan's loop ran ${pc} time${pc === 1 ? "" : "s"}, not 32` +
+          (trace.length && n ? `<br>  trace: ${n} → ${trace.join(" → ")}` : "") + `<br>` +
+          `power of 2 = ${pow2 ? "✓ yes (exactly one set bit)" : "✗ no"}<br>` +
+          `n &lt;&lt; 1     = ${(n << 1) >>> 0} (×2) · n &gt;&gt;&gt; 1 = ${n >>> 1} (÷2, floored) · ` +
+          `align to 8: (n+7)&amp;~7 = ${(n + 7) & ~7}<br>` +
+          `Math.clz32 = ${Math.clz32(n)} leading zeros — so n needs ${n === 0 ? 0 : 32 - Math.clz32(n)} bits`;
+      }
+      input.addEventListener("input", render);
+      render();
+    });
+  </script>
+</main>
+</body>
+</html>

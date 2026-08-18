@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arrays and linked lists — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Data structures">
+  <meta name="algo:root" content="../">
+  <meta name="algo:next" content="stacks-and-queues.html|Stacks, queues and deques">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Data structures</p>
+  <h1>Arrays and linked lists: the two ways to hold a sequence</h1>
+  <p class="lede">Every structure in this unit is a bargain: pay here, save
+  there. The oldest bargain of all — contiguous block versus chain of
+  pointers — still decides performance fights today, and the modern answer
+  will surprise anyone who learned it from a 1995 textbook.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-foundations/big-o.html">Big-O</a> and
+    <a href="../01-foundations/amortized-analysis.html">amortized analysis</a>
+    (the dynamic array's push is priced there).
+  </div>
+
+  <h2>The idea</h2>
+  <p>An <strong>array</strong> is one contiguous block of memory: element i
+  lives at <em>start + i × size</em>, so jumping to any index is one
+  multiplication — O(1), and the CPU loves the
+  neighbours-next-door layout. The price: inserting in the middle shifts
+  everything after it (O(n)), and growing
+  needs the occasional copy (amortized O(1), as unit 1 proved).</p>
+  <p>A <strong>linked list</strong> is the opposite bet: each element is its
+  own little allocation pointing at the next. Splicing a node in or out is
+  O(1) <em>once you're standing there</em> — but getting there means walking
+  the chain, O(n), and every hop is a jump to a random address the CPU can't
+  predict.</p>
+  <table class="ref">
+    <thead><tr><th>Operation</th><th>Array</th><th>Linked list</th></tr></thead>
+    <tbody>
+      <tr><td class="glyph">read index i</td><td>O(1)</td><td>O(n) walk</td></tr>
+      <tr><td class="glyph">append at end</td><td>O(1) amortized</td><td>O(1) with a tail pointer</td></tr>
+      <tr><td class="glyph">insert/delete mid</td><td>O(n) shift</td><td>O(1) after O(n) walk to the spot</td></tr>
+      <tr><td class="glyph">memory layout</td><td>one block, cache-friendly</td><td>scattered, pointer per node</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Arrays wear a hundred masks: your language's default list,
+    database pages, network buffers, columnar analytics formats (Arrow,
+    Parquet) that exist <em>because</em> contiguous scans are fast. True
+    linked lists are rarer than the textbooks imply, but their idea — "nodes
+    that point at each other" — runs free lists in allocators, LRU caches
+    (unit 9 builds one), and the intrusive lists inside OS schedulers. And
+    every ORM N+1 bug is secretly a "walk the chain" cost wearing a suit.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The modern verdict: arrays win more than the table suggests</summary>
+    <div class="layer-body">
+      <p>The Big-O table calls mid-insertion a tie-breaker for lists. Real
+      hardware disagrees: an array's O(n) shift streams through the cache at
+      full speed, while a list's O(n) walk stalls on every hop (each next
+      pointer is a potential cache miss — unit 11's when-theory-meets-the-clock
+      page measures this live in your browser). For teaching-sized n the list
+      often <em>loses</em> the very benchmarks it was designed to win. The
+      honest rule: default to the array; reach for links when you hold a
+      handle to the node (LRU) or splice constantly at known positions.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Why O(1) indexing is really just arithmetic</summary>
+    <div class="layer-body">
+      <p><code>address(a[i]) = base + i × elementSize</code>. That's the whole
+      mechanism — no lookup, no walk, one multiply-add the CPU does in a
+      cycle. It's also why arrays are fixed-type in systems languages (the
+      size must be uniform for the formula to hold), and why JavaScript
+      engines quietly deoptimize arrays you mix types into.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The linked list in its natural habitat: O(1) splice when you HOLD the node.
+// This is the skeleton of the LRU cache built in unit 9.
+class Node { constructor(v) { this.v = v; this.prev = null; this.next = null; } }
+
+function unlink(node) {              // O(1): no walking, just re-pointing
+  node.prev.next = node.next;
+  node.next.prev = node.prev;
+}
+function insertAfter(a, node) {      // O(1): ditto
+  node.prev = a; node.next = a.next;
+  a.next.prev = node; a.next = node;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Restrict where you may touch a sequence and something interesting
+  happens: the restrictions become guarantees. That's
+  <a href="stacks-and-queues.html">stacks and queues</a> — and the choice
+  between them will literally <em>be</em> the choice between DFS and BFS in
+  unit 4.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "arrays-and-lists",
+    "questions": [
+      { "q": "Why is reading a[500000] as fast as reading a[3] in an array?",
+        "choices": ["Caching makes all reads equal",
+                    "The address is computed arithmetically: base + index × size — no walking involved",
+                    "It isn't — big indexes are slower"],
+        "answer": 1,
+        "explain": "Contiguity turns indexing into one multiply-add. A linked list must physically follow 500,000 pointers to reach the same element." },
+      { "q": "You need to remove an element you already hold a direct reference to, millions of times a second. Which structure is built for exactly this?",
+        "choices": ["Array — removal is cache-friendly",
+                    "Doubly linked list — unlink is two pointer writes, no walk needed",
+                    "Either; they're equivalent here"],
+        "answer": 1,
+        "explain": "\"O(1) once you're standing there\" is the list's one unbeatable move, and it's why LRU caches pair a hash map (to find the node) with a linked list (to move/evict it)." },
+      { "q": "A benchmark shows an array beating a linked list at random mid-sequence insertion — the list's supposed specialty. What's the likely cause?",
+        "choices": ["The benchmark is broken",
+                    "The list's O(n) walk stalls on a cache miss per hop, while the array's O(n) shift streams contiguously",
+                    "Modern arrays have O(1) insertion"],
+        "answer": 1,
+        "explain": "Both are O(n), but the constant factors differ by an order of magnitude on real memory hierarchies. Big-O picks the shape; the hardware picks the constants — the course returns to this in unit 11." } ] }
+  </script>
+</main>
+</body>
+</html>

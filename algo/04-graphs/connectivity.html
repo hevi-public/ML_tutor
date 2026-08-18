@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connected components — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="topological-sort.html|DAGs and topological sort">
+  <meta name="algo:next" content="cycles-and-bipartite.html|Cycles and two-coloring">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+  <script defer src="../assets/js/graph-editor.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Graphs</p>
+  <h1>Connected components: how many islands?</h1>
+  <p class="lede">The bluntest structural question a graph can be asked —
+  which nodes can reach which at all? — and the gentlest algorithm in the
+  unit: run any traversal, and when it runs dry, start another one somewhere
+  fresh. Each launch discovers exactly one island.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="bfs.html">BFS</a> or <a href="dfs.html">DFS</a> — either works;
+    components only care that a traversal finds <em>everything reachable</em>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>In an undirected graph, "u can reach v" is an equivalence: it's
+  reflexive, symmetric, and transitive. Equivalences partition — so the
+  graph splits cleanly into <strong>connected components</strong>, maximal
+  groups where everyone reaches everyone. The algorithm writes itself: sweep
+  the node list; every time you meet a node no traversal has touched yet,
+  launch a fresh traversal from it and label everything it reaches with a new
+  component number. The outer sweep plus all the traversals together still
+  touch each node and edge once — O(|V| + |E|) for the complete
+  partition.</p>
+  <p>One subtlety worth naming: this page's method is a <em>batch</em>
+  answer. If edges arrive over time and you must answer "same component?"
+  between insertions, re-running a traversal per query is wasteful — that
+  streaming version is exactly what unit 2's
+  <a href="../02-structures/union-find.html">union-find</a> was built for.
+  Batch: traverse. Incremental: union-find. Knowing which regime you're in
+  is the engineering skill.</p>
+
+  <h2>Watch it run</h2>
+  <p>Two clusters and a stray node. Watch the traversal exhaust the first
+  island, then launch afresh (the "new launches" counter) — each node gets
+  labeled C1, C2, C3. Then <strong>edit the graph</strong>: draw a bridge
+  between islands and run again — the count drops:</p>
+  <div class="demo">
+    <div id="editor"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Network partition detection ("is the cluster split-brained?"); social
+    and interaction graphs (communities before any fancy clustering); image
+    processing, where flood fill IS component labeling on the pixel grid;
+    fraud and entity resolution — records sharing a phone/device/address form
+    components that are probably one actor; data lineage ("which tables are
+    even connected to this report?"). In knowledge-graph pipelines, component
+    analysis is a standard sanity check: a giant component plus debris is
+    healthy, a thousand fragments means your entity linking is failing.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Directed graphs break "connected" into two words</summary>
+    <div class="layer-body">
+      <p>With arrows, reachability loses symmetry: u may reach v while v
+      can't answer back. So directed graphs get two notions.
+      <strong>Weakly connected</strong>: connected if you ignore the arrows —
+      cheap, often what "is this one system?" means.
+      <strong>Strongly connected</strong>: u reaches v <em>and</em> v reaches
+      u — mutual reachability, a much stronger claim, and finding those
+      components takes a genuinely cleverer algorithm
+      (<a href="../05-graphs-advanced/scc.html">Tarjan's, unit 5</a>). The
+      microservices version: weak = "these services are wired together";
+      strong = "these services form a call cycle" — one is topology, the
+      other is an architecture smell.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function components(graph) {
+  const adj = adjacency(graph);
+  const seen = new Set();
+  let comp = 0;
+  for (const { id } of graph.nodes) {
+    if (seen.has(id)) continue;        // already on some island
+    comp++;                            // new island — launch a traversal
+    const stack = [id];
+    seen.add(id);
+    while (stack.length) {
+      const u = stack.pop();
+      label(u, comp);                  // u belongs to island #comp
+      for (const { to } of adj.get(u)) {
+        if (!seen.has(to)) { seen.add(to); stack.push(to); }
+      }
+    }
+  }
+  return comp;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Components answer "can u reach v at all?". The next page looks
+  <em>inside</em> a component for finer structure:
+  <a href="cycles-and-bipartite.html">cycles, and whether the graph splits
+  into two clean camps</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "connectivity",
+    "questions": [
+      { "q": "Why is the total cost O(|V| + |E|) even though many traversals are launched?",
+        "choices": ["Each traversal is O(1)",
+                    "The traversals don't overlap: the shared seen-set means each node and edge is processed by exactly one launch — the launches partition the work, they don't repeat it",
+                    "Because the graph is undirected"],
+        "answer": 1,
+        "explain": "Summed over all launches, it's still \"every node once, every edge a constant number of times\". The outer loop's skip-if-seen check is O(|V|) on top." },
+      { "q": "Edges stream in one at a time, and between insertions you must answer \"same component?\" queries. Best tool?",
+        "choices": ["Re-run component labeling after every edge",
+                    "Union-find — each new edge is a union, each query a find, at amortized near-constant cost; re-traversal would pay O(|V| + |E|) per event",
+                    "An adjacency matrix"],
+        "answer": 1,
+        "explain": "Batch questions get traversal; incremental questions get union-find. Same math (equivalence classes), different regime — this pairing shows up constantly in production." },
+      { "q": "In a directed service-call graph, what's the difference between weak and strong connectivity?",
+        "choices": ["Weak counts fewer nodes",
+                    "Weak: connected when arrows are ignored (\"wired together at all\"). Strong: mutual reachability (\"these services call each other in a cycle\") — a far stronger, often alarming, fact",
+                    "They're identical for graphs without self-loops"],
+        "answer": 1,
+        "explain": "A weakly-connected system is normal architecture; a large strongly-connected knot of services means circular calls — unit 5's SCC page turns that into a refactoring tool." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("islands");
+      const verdict = document.getElementById("verdict");
+
+      const state = {};
+      let editor, player = null, viz = null;
+      function makeTracked() {
+        const g = editor ? editor.getGraph() : graph;
+        return function* tracked() {
+          state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+          for (const e of window.AlgoGraphs.components(g)) {
+            window.AlgoGraphViz.applyEvent(state, e);
+            if (e.type === "visit") state.nodeLabel[e.u] = "C" + e.comp;
+            if (e.type === "discover" && e.from !== null)
+              state.edgeState[window.AlgoGraphViz.edgeKey(e.from, e.u)] = "tree";
+            if (e.type === "done")
+              verdict.textContent = e.components === 1
+                ? "1 component — everything reaches everything"
+                : e.components + " separate components";
+            yield e;
+          }
+        };
+      }
+
+      editor = window.AlgoGraphEditor.create(document.getElementById("editor"), {
+        graph,
+        onChange: () => { if (player) player.reset(makeTracked()); },
+      });
+
+      const vizHost = document.createElement("div");
+      const stepperHost = document.getElementById("stepper");
+      stepperHost.parentNode.insertBefore(vizHost, stepperHost);
+      viz = window.AlgoGraphViz.create(vizHost, { label: "Component labeling animation", height: 340 });
+
+      player = window.AlgoSteps.player(stepperHost, {
+        make: makeTracked(),
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(editor.getGraph(), snap, event),
+        counters: { component: "new launches", visit: "visits" },
+        describe: (e) =>
+          e.type === "visit" ? `${e.u} labeled: component ${e.comp}` :
+          e.type === "discover" ? (e.from === null
+            ? `fresh launch from ${e.u} — a new island begins`
+            : `discovered ${e.u} via ${e.from}`) :
+          e.type === "component" ? `island #${e.id} complete: ${e.n} node${e.n === 1 ? "" : "s"}` :
+          e.type === "done" ? `finished — ${e.components} component(s)` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

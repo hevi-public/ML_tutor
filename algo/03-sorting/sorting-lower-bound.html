@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Why n log n is the floor — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="counting-radix-bucket.html|Sorting without comparing">
+  <meta name="algo:next" content="quickselect.html|Order statistics: quickselect">
+
+  <link rel="stylesheet" href="../../node_modules/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/katex/dist/katex.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>Why n log n is the floor</h1>
+  <p class="lede">Not "nobody has found a faster comparison sort" —
+  <em>nobody ever will</em>, and we can prove it. This is the course's first
+  impossibility result: a fence around an entire infinite space of
+  algorithms, including all the ones not invented yet.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Factorials and logs from
+    <a href="../01-foundations/math-toolkit.html">the math toolkit</a>. The
+    proof is one counting argument; every symbol is introduced below.
+  </div>
+
+  <h2>The idea</h2>
+  <p>How do you prove something about <em>every possible algorithm</em>,
+  including ones no one has imagined? You find something they all must do,
+  and count it. For comparison sorts the shared anatomy is this: since the
+  only question they may ask is "is a &lt; b?", any such algorithm — however
+  clever its control flow — is, for a fixed n, a <strong>decision tree</strong>:
+  a binary tree where each internal node is one comparison, each branch is
+  an answer, and each leaf is a final verdict about the input's ordering.</p>
+  <p>Two counts collide. <strong>Count the verdicts needed:</strong> n items
+  can arrive in n! different orders, and the algorithm must treat every one
+  differently (each needs a different rearrangement) — so the tree needs at
+  least n! leaves. <strong>Count the verdicts available:</strong> a binary
+  tree of height h has at most 2ʰ leaves. The worst-case number of
+  comparisons IS the tree's height, so:</p>
+  <div class="math equation">2^h \ge n! \;\;\Longrightarrow\;\; h \ge \log_2(n!) = \Theta(n \log n)</div>
+  <p><em>In plain English:</em> there are astronomically many possible
+  orderings to tell apart, each comparison at best halves your uncertainty,
+  and halving your way down from n! possibilities takes n log n halvings.
+  Any comparison sort, on its worst input, must ask that many questions —
+  merge sort and heapsort are therefore <em>optimal</em>, not merely good.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Directly: when a teammate proposes "a clever O(n) dedupe-by-sorting of
+    arbitrary strings", this page is the two-line review comment. More
+    broadly, the argument style — "count the distinguishable outcomes, count
+    the information per operation, divide" — prices other things too: any
+    comparison-based search of an unordered n-item set needs Ω(n) looks;
+    log₂(k) bits genuinely are needed to distinguish k states (the
+    information-theory floor under compression and encodings); and unit 11's
+    hardness results are this page's worldview, escalated: some fences are
+    around whole complexity classes.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>The proof, walked slowly</summary>
+    <div class="layer-body">
+      <p><strong>1. Every comparison sort is a decision tree (for fixed n).</strong>
+      Run the algorithm; whenever it compares, branch on the answer. All its
+      loops and recursion unroll into this tree — the tree is just "every
+      path the code could take", with the input's ordering deciding which
+      path runs.</p>
+      <p><strong>2. It needs n! leaves.</strong> Two different input
+      orderings can't share a leaf: a leaf dictates one specific
+      rearrangement, and the same rearrangement applied to two different
+      orderings can't sort both. (If two orderings reached the same leaf, at
+      least one would come out unsorted — a correctness bug.)</p>
+      <p><strong>3. Height bounds leaves.</strong> Each level at most doubles
+      the leaf count: h levels ⇒ ≤ 2ʰ leaves. Combining: 2ʰ ≥ n!, so h ≥
+      log₂(n!).</p>
+      <p><strong>4. log₂(n!) is Θ(n log n).</strong> Upper: n! &lt; nⁿ so
+      log(n!) &lt; n log n. Lower: the top half of the factors are each ≥
+      n/2, so n! ≥ (n/2)^{n/2}, giving log(n!) ≥ (n/2)log(n/2). Squeezed
+      both sides. ∎</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>What the fence does and doesn't enclose</summary>
+    <div class="layer-body">
+      <p>Enclosed: every algorithm whose only data access is pairwise
+      comparison — all of units 3's comparison sorts, all future ones, on
+      worst-case inputs. Not enclosed: integer-key sorts (last page's
+      loophole — they extract more than one bit per operation by indexing),
+      nearly-sorted inputs (the bound is worst-case; insertion sort's
+      adaptive linear run doesn't violate it because SOME input still forces
+      the staircase), and average-case… almost: an averaging refinement of
+      the same counting shows even the <em>average</em> over random inputs is
+      Ω(n log n). The fence is precise about its model — which is exactly
+      what makes it usable in an argument.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The same argument, aimed at searching</summary>
+    <div class="layer-body">
+      <p>Searching a sorted array by comparisons: n+1 possible verdicts
+      ("it's at index 0…n−1, or absent"), each comparison at most halves the
+      candidates ⇒ Ω(log n) — binary search is optimal, unit 0's punchline
+      now proven. Searching an UNsorted array: an adversary argument (the
+      proof style's sibling) — any unexamined element could have been the
+      target, so Ω(n) looks are forced. Sortedness doesn't just help; it
+      changes the information-theoretic floor.</p>
+    </div>
+  </details>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The floor applies to full sorting. Ask for less and you can pay less:
+  finding just the k-th smallest — the median, a percentile — falls to
+  expected <em>linear</em> time. <a href="quickselect.html">Quickselect</a>
+  closes the unit by weaponizing quicksort's partition for exactly that.</p>
+
+  <script type="application/json" class="symbols">
+  { "h": { "name": "h — the tree height", "pron": "say: aitch",
+           "means": "the longest root-to-leaf path: the worst-case number of comparisons",
+           "short": "worst-case comparisons" },
+    "n": { "name": "n — the input size", "pron": "say: en",
+           "means": "how many items are being sorted", "short": "input size" },
+    "n!": { "name": "n! — n factorial", "pron": "say: en factorial",
+           "means": "the number of possible orderings of n items — the verdicts a sort must distinguish",
+           "short": "possible orderings" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "sorting-lower-bound",
+    "questions": [
+      { "q": "The proof covers algorithms that haven't been invented yet. What makes that possible?",
+        "choices": ["It checks all known algorithms exhaustively",
+                    "It argues from something every comparison sort must have — a decision tree with n! leaves — rather than from any particular code",
+                    "It assumes future algorithms resemble current ones"],
+        "answer": 1,
+        "explain": "Impossibility proofs work by finding the shared anatomy of an entire model of computation and counting it. Clever control flow can't escape being a decision tree once comparisons are your only sense organ." },
+      { "q": "Insertion sort runs in linear time on nearly-sorted input. Why doesn't that breach the Ω(n log n) bound?",
+        "choices": ["It secretly does n log n work",
+                    "The bound is about the WORST case over all inputs — some input still forces the staircase, and the average over random inputs is n log n too",
+                    "Insertion sort isn't a comparison sort"],
+        "answer": 1,
+        "explain": "Lower bounds state which input SOMEONE can always find, not what every input costs. Easy inputs are allowed to be easy." },
+      { "q": "Your teammate claims an O(n) comparison-based sort for arbitrary comparable objects. Before reading the code, what do you know?",
+        "choices": ["It might work if the code is clever enough",
+                    "At least one of the claims is false: it's not O(n) worst-case, or it's not purely comparison-based, or it doesn't sort all inputs",
+                    "It must use extra memory"],
+        "answer": 1,
+        "explain": "That's what a proved fence buys: you can reject a design on the theorem, then read the code to find WHICH claim breaks — usually a hidden assumption about the keys (last page's honest loophole)." } ] }
+  </script>
+</main>
+</body>
+</html>

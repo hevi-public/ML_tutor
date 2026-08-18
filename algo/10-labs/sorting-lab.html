@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab: write your own sorts — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Practice labs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="../09-systems/storage-engines.html|Storage engines">
+  <meta name="algo:next" content="hash-table-lab.html|Lab: build a hash table">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/labs/runner.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 10 · Practice labs</p>
+  <h1>Lab: write your own sorts</h1>
+  <p class="lede">Reading unit 3 is not the same as owning it. Implement a
+  sort; the harness checks correctness on friendly <em>and adversarial</em>
+  inputs, then instruments your code with counting proxies and reports the
+  complexity it <strong>actually exhibited</strong> — the course's
+  "counters are the curriculum" promise, turned on you.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-sorting/merge-sort.html">Merge sort</a> or
+    <a href="../03-sorting/quicksort.html">quicksort</a> — implement
+    whichever you like, or an elementary sort first to watch the harness
+    call out its n².
+  </div>
+
+  <div id="lab-host"></div>
+
+  <div class="box in-the-wild">
+    <span class="label">Why the adversarial cases</span>
+    <p>Already-sorted, reverse-sorted, and all-equal inputs are where
+    homemade sorts historically die (naive quicksort's n² pivot, off-by-one
+    at boundaries, dropped duplicates). They are also exactly what
+    production data looks like — mostly-sorted logs, constant columns.
+    The multiset check catches the classic bug family where output is
+    sorted but wrong: elements dropped, duplicated, or invented.</p>
+  </div>
+
+  <h2>Where this goes next</h2>
+  <p>Same drill, different structure:
+  <a href="hash-table-lab.html">build a hash table</a> whose collisions
+  the harness controls.</p>
+
+  <script type="application/json" class="lab">
+  { "labs": [ { "id": "sorting-lab", "title": "Implement a sort",
+      "task": "Write mySort(arr) returning a new sorted array (non-decreasing). Any algorithm counts — the harness reports the complexity yours exhibits.",
+      "goals": ["correct on random inputs", "correct on adversarial inputs", "no elements lost or invented", "complexity measured"] } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      window.AlgoLabs.create(document.getElementById("lab-host"), {
+        id: "sorting-lab",
+        pageId: "sorting-lab",
+        title: "Implement a sort",
+        task: `<p>Write <code>mySort(arr)</code>: take an array of numbers,
+          <strong>return a new sorted array</strong> (non-decreasing). Don't
+          mutate the input. Any algorithm you like.</p>`,
+        fnName: "mySort",
+        starter: `function mySort(arr) {
+  // your sort here — return a NEW sorted array
+  // (start naive if you like; the harness will tell you what it costs)
+
+  return arr.slice();
+}`,
+        testSource: `
+function runTests(fn) {
+  const results = [];
+  const t = (name, pass, detail) => results.push({ name, pass, detail });
+
+  // correctness: random
+  const r1 = CHECKS.seededInts(40, 0, 99, 7);
+  const out1 = fn(r1.slice());
+  t("sorts 40 random values", Array.isArray(out1) && CHECKS.isSorted(out1),
+    Array.isArray(out1) ? "" : "did not return an array");
+  t("keeps exactly the same elements (multiset)", CHECKS.sameMultiset(r1, out1 || []),
+    "no dropping, duplicating, or inventing");
+
+  // adversarial
+  for (const kind of ["sorted", "reverse", "equal", "sawtooth"]) {
+    const a = CHECKS.adversarial(kind, 60);
+    const out = fn(a.slice());
+    t("adversarial: " + kind,
+      CHECKS.isSorted(out || []) && CHECKS.sameMultiset(a, out || []));
+  }
+  t("empty and single-element arrays",
+    CHECKS.deepEqual(fn([]), []) && CHECKS.deepEqual(fn([5]), [5]));
+
+  // measured complexity: reads at n=120 vs n=240
+  const m1 = CHECKS.countingArray(CHECKS.seededInts(120, 0, 9999, 11));
+  fn(m1.data);
+  const m2 = CHECKS.countingArray(CHECKS.seededInts(240, 0, 9999, 12));
+  fn(m2.data);
+  const ops1 = m1.counts.reads + m1.counts.writes;
+  const ops2 = m2.counts.reads + m2.counts.writes;
+  const ratio = ops1 > 0 ? ops2 / ops1 : 0;
+  const verdictText = ratio === 0 ? "no indexed reads detected (spread/copy tricks hide from the counter — fine)"
+    : ratio < 2.6 ? "≈ linearithmic or better (doubling n ≈ doubled the work: ratio " + ratio.toFixed(1) + "×)"
+    : ratio < 3.4 ? "between n log n and n² (ratio " + ratio.toFixed(1) + "×)"
+    : "≈ quadratic — doubling n cost " + ratio.toFixed(1) + "× the operations (n² doubles to 4×)";
+  t("complexity exhibited: " + verdictText, true,
+    ops1 + " ops at n=120, " + ops2 + " at n=240");
+  return results;
+}`,
+        hint: `<p>Merge sort in ~15 lines: if length ≤ 1 return a copy; split at
+          the middle; recurse on both halves; merge by repeatedly taking the
+          smaller front element. The merge is where the counters stay
+          linearithmic.</p>`,
+        solution: `function mySort(arr) {
+  if (arr.length <= 1) return arr.slice();
+  const mid = arr.length >> 1;
+  const left = mySort(arr.slice(0, mid));
+  const right = mySort(arr.slice(mid));
+  const out = [];
+  let i = 0, j = 0;
+  while (i < left.length && j < right.length)
+    out.push(left[i] <= right[j] ? left[i++] : right[j++]);
+  while (i < left.length) out.push(left[i++]);
+  while (j < right.length) out.push(right[j++]);
+  return out;
+}`,
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

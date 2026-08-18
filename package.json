@@ -12,6 +12,8 @@
     "build:bass": "node scripts/build-bass-index.js",
     "dev:git": "http-server -p 8010 -c-1 -o /git/index.html .",
     "build:git": "node scripts/build-git-index.js",
+    "dev:algo": "http-server -p 8010 -c-1 -o /algo/index.html .",
+    "build:algo": "node scripts/build-algo-index.js",
     "build:web": "node scripts/build-web-index.js",
     "verify:git": "node scripts/verify-fixtures.js",
     "check:links": "node scripts/check-links.js",

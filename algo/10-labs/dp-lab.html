@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab: dynamic programming — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Practice labs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="pathfinder-lab.html|Lab: pathfinding race">
+  <meta name="algo:next" content="algorithm-gym.html|The gym">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/labs/runner.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 10 · Practice labs</p>
+  <h1>Lab: dynamic programming</h1>
+  <p class="lede">Coin change, the unit-6 classic: fewest coins to make an
+  amount, greedy provably insufficient on the given denominations. The
+  twist: the harness includes an amount that naive exponential recursion
+  cannot finish inside the sandbox timeout — <em>the timeout is the
+  overlapping-subproblems detector</em>.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../06-strategies/dp-foundations.html">The DP recipe</a> and
+    the <a href="../06-strategies/choosing-a-strategy.html">coin-change
+    case study</a> (these denominations are the greedy-breaking set).
+  </div>
+
+  <div id="lab-host"></div>
+
+  <div class="box in-the-wild">
+    <span class="label">Why a timeout is a fair grader</span>
+    <p>"It works on small inputs" is the archetypal DP bug report:
+    correctness and complexity are separate properties, and only the
+    second one pages you at 3am. amount=800 with 5 coin types has an
+    exponential recursion tree but only 801 distinct subproblems — the
+    gap between those two numbers is the entire lesson of unit 6, and
+    here it's the difference between 4ms and the heat death of the
+    sandbox.</p>
+  </div>
+
+  <h2>Where this goes next</h2>
+  <p>The last lab is a sparring session:
+  <a href="algorithm-gym.html">the gym</a> — timed drills over
+  everything.</p>
+
+  <script type="application/json" class="lab">
+  { "labs": [ { "id": "dp-lab", "title": "Coin change, properly",
+      "task": "Write minCoins(coins, amount) → the fewest coins summing to amount (or -1). Must survive amount=800 — naive recursion times out by design.",
+      "goals": ["correct small cases", "greedy-trap denominations handled", "impossible → -1", "amount=800 inside the timeout"] } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      window.AlgoLabs.create(document.getElementById("lab-host"), {
+        id: "dp-lab",
+        pageId: "dp-lab",
+        title: "Coin change, properly",
+        fnName: "minCoins",
+        timeoutMs: 3000,
+        task: `<p>Write <code>minCoins(coins, amount)</code> → the minimum
+          number of coins (unlimited copies each) summing exactly to
+          <code>amount</code>, or <code>-1</code> if impossible.
+          <code>minCoins([25,21,10,5,1], 63)</code> is 3 (21+21+21) — greedy
+          says 6. And <code>amount=800</code> must finish: memoize or
+          tabulate.</p>`,
+        starter: `function minCoins(coins, amount) {
+  // The recurrence: best(0) = 0;
+  // best(a) = 1 + min over coins c ≤ a of best(a - c)
+  // Naive recursion re-solves the same amounts exponentially often —
+  // cache per amount (top-down) or fill an array 0..amount (bottom-up).
+
+  return -1;
+}`,
+        testSource: `
+function runTests(fn) {
+  const results = [];
+  const t = (name, pass, detail) => results.push({ name, pass, detail });
+
+  t("base case: amount 0 needs 0 coins", fn([1, 5], 0) === 0);
+  t("single coin: 7 with [7]", fn([7], 7) === 1);
+  t("US coins, 63¢ → 6 (greedy happens to be right here)", fn([25, 10, 5, 1], 63) === 6);
+  t("greedy-trap coins [25,21,10,5,1], 63 → 3 (21×3), NOT greedy's 6",
+    fn([25, 21, 10, 5, 1], 63) === 3,
+    "if you got 6: that's the greedy answer — the table has to consider 21s");
+  t("impossible: 3 with [2] → -1", fn([2], 3) === -1);
+  t("impossible: anything with [] → -1", fn([], 10) === -1);
+  t("41 with [4, 9, 25] → 6 (9+4×8? no — 9×1+4×8=41 is 9 coins; best is 4×4+25=5? check: 25+4·4=41 → 5 coins)",
+    fn([4, 9, 25], 41) === 5, "25 + 4+4+4+4");
+
+  const t0 = Date.now();
+  const big = fn([25, 21, 10, 5, 1], 800);
+  const ms = Date.now() - t0;
+  t("amount=800 finishes fast (" + ms + "ms) — 801 subproblems, not 5^k calls",
+    big === 32 && ms < 1500,
+    big !== 32 ? "expected 32 coins (25×32=800), got " + big
+      : "naive recursion would still be running");
+  return results;
+}`,
+        hint: `<p>Bottom-up in six lines: <code>best = [0, Inf, Inf, …]</code>
+          up to amount; for each a from 1, <code>best[a] = 1 + min(best[a-c])</code>
+          over coins that fit; answer <code>best[amount]</code>, translating
+          Infinity to −1. (Top-down with a Map works identically — the
+          timeout only cares that each amount is solved once.)</p>`,
+        solution: `function minCoins(coins, amount) {
+  const best = new Array(amount + 1).fill(Infinity);
+  best[0] = 0;
+  for (let a = 1; a <= amount; a++) {
+    for (const c of coins) {
+      if (c <= a && best[a - c] + 1 < best[a]) best[a] = best[a - c] + 1;
+    }
+  }
+  return best[amount] === Infinity ? -1 : best[amount];
+}`,
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

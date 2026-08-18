@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Knowledge graphs and graph RAG — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="vector-search.html|Vector search and HNSW">
+  <meta name="algo:next" content="tokenizers.html|Tokenizers: tries meet BPE">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Knowledge graphs: retrieval by relationship</h1>
+  <p class="lede">Vector search finds what's <em>similar</em>; it cannot
+  answer "who acquired the company that employs the author of this
+  document" — that's three hops of <em>relationships</em>, and it needs
+  data stored as a graph of facts. Knowledge graphs are unit 4 deployed
+  as a database, and "graph RAG" is BFS feeding an LLM's context
+  window.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/bfs.html">BFS</a> and
+    <a href="../04-graphs/what-is-a-graph.html">graph modeling</a>;
+    <a href="vector-search.html">vector search</a> as the retrieval
+    sibling this page contrasts with.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The data model is <strong>triples</strong>: (subject, relation,
+  object) — (ada, works_at, acme), (acme, acquired_by, globex). A pile
+  of triples IS a directed labeled graph: entities are nodes, each
+  triple an edge. Queries are <em>path patterns</em>: "companies
+  acquired by whoever employs ada" = start at ada, follow
+  <code>works_at</code>, follow <code>acquired_by</code> — a constrained
+  traversal, executed by exactly the machinery of unit 4. Multi-hop
+  question answering, recommendation-by-relationship, fraud rings,
+  org-chart queries: all path patterns.</p>
+  <p><strong>Graph RAG</strong> composes the two retrieval styles:
+  (1) link the user's question to entity nodes (string/vector matching —
+  units 7 and 9 both reporting); (2) expand n hops around those
+  entities — plain BFS with a depth cap and relation filters;
+  (3) serialize the harvested subgraph into text for the LLM's context.
+  The LLM gets connected <em>facts</em>, not just similar
+  <em>paragraphs</em> — which is the difference on questions whose
+  answer spans documents that never mention each other.</p>
+
+  <h2>Watch it run</h2>
+  <p>A toy company knowledge graph. The question — <em>"what products
+  might ada know about through her employer's acquisitions?"</em> —
+  becomes: BFS from <code>ada</code>, 3 hops, following work/acquisition/
+  product edges. Watch the ripple harvest the answer subgraph:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Google's Knowledge Panel and Wikidata; enterprise graphs over
+    customers/products/incidents (Neo4j, Neptune, TigerGraph — their
+    query languages, Cypher/Gremlin/SPARQL, are traversal-pattern DSLs);
+    fraud detection (rings are cycles, unit 4); drug discovery
+    (protein-interaction paths). In the LLM stack, graph RAG variants
+    (Microsoft's GraphRAG among them) build the graph <em>with</em> an
+    LLM — extracting triples from documents — then retrieve by community
+    and path; agent memory systems store "what happened" as an
+    ever-growing entity graph. The quality bottleneck is honest and
+    upstream: <strong>entity resolution</strong> — deciding that
+    "Acme Corp" and "ACME Inc." are one node — which unit 2's union-find
+    and unit 4's components already gave you the tools to audit.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Vector RAG vs graph RAG — the honest decision table</summary>
+    <div class="layer-body">
+      <p><strong>Vector RAG</strong> wins when the answer lives in some
+      paragraph's wording: cheap to build (chunk-embed-index), robust to
+      mess, fails soft (a merely-similar chunk). <strong>Graph RAG</strong>
+      wins when the answer is a <em>composition of facts</em> across
+      sources — multi-hop questions, aggregations ("all products of
+      subsidiaries of…"), provenance-sensitive domains — at the cost of
+      an extraction pipeline that is itself LLM-powered and error-prone:
+      a wrong triple is a confidently wrong fact forever, where a bad
+      chunk is just noise. Production systems increasingly run both and
+      route: similarity questions → vectors; relationship questions →
+      graph; let the LLM see each source labeled. The skill this course
+      gave you is recognizing WHICH failure a bad answer came from —
+      retrieval-by-similarity missing, or a hop that doesn't exist.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Graph RAG's retrieval core (the demo's exact code, events elided):
+function harvest(graph, seeds, maxHops, allowedRelations) {
+  const seen = new Set(seeds);
+  let frontier = [...seeds];
+  const facts = [];
+  for (let hop = 1; hop <= maxHops; hop++) {         // BFS with a depth cap
+    const next = [];
+    for (const u of frontier) {
+      for (const { rel, to } of edges(u)) {
+        if (!allowedRelations.has(rel)) continue;     // relation filter
+        facts.push(`${u} —${rel}→ ${to}`);            // harvest the triple
+        if (!seen.has(to)) { seen.add(to); next.push(to); }
+      }
+    }
+    frontier = next;
+  }
+  return facts;    // serialized into the LLM's context window
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Both retrieval styles feed text to a model — but the model doesn't
+  read text. It reads tokens, and the algorithm that decides what a
+  "token" is turns out to be greedy compression from unit 6:
+  <a href="tokenizers.html">tokenizers</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "knowledge-graphs",
+    "questions": [
+      { "q": "What question shape defeats vector search but suits a knowledge graph?",
+        "choices": ["Questions with typos",
+                    "Multi-hop compositions — \"products of companies acquired by ada's employer\" — where the answer chains facts across documents that never co-occur in any single similar paragraph",
+                    "Questions in other languages"],
+        "answer": 1,
+        "explain": "Similarity retrieves wording-neighbors; hops compose relationships. If the answer requires an edge walk, no embedding of the QUESTION lands near a chunk containing the ANSWER." },
+      { "q": "Graph RAG's harvest step is BFS with a depth cap and relation filters. Why the cap?",
+        "choices": ["BFS can't run deeper than 3",
+                    "Context budget and relevance decay: the n-hop ball grows exponentially (branching factor — unit 4's implicit-graph lesson), and facts 5 hops out are rarely about the question. The cap IS the relevance/window trade-off",
+                    "Deeper hops require a different algorithm"],
+        "answer": 1,
+        "explain": "Same math as the maze page: frontier ≈ bᵈ. An uncapped harvest floods the context window with weakly-related triples — retrieval quality falls while token cost rises." },
+      { "q": "Your knowledge graph answers get worse as the graph grows, and inspection shows \"Acme Corp\", \"ACME\", and \"Acme, Inc.\" as separate nodes. What's the diagnosis, in course vocabulary?",
+        "choices": ["The graph needs more RAM",
+                    "Entity-resolution failure fragmenting components: facts about one real entity scatter across nodes BFS can't bridge — the connected-components sanity check from unit 4, and union-find-style merging, are the audit and the fix",
+                    "BFS is visiting nodes twice"],
+        "answer": 1,
+        "explain": "A knowledge graph is only as good as its identity decisions. Fragmented entities silently amputate hops — the classic failure the components-count health check catches early." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = {
+        directed: true,
+        nodes: [
+          { id: "ada", x: 0.07, y: 0.45 }, { id: "acme", x: 0.3, y: 0.25 },
+          { id: "globex", x: 0.55, y: 0.15 }, { id: "initech", x: 0.56, y: 0.5 },
+          { id: "widgetX", x: 0.82, y: 0.28 }, { id: "gadgetY", x: 0.83, y: 0.6 },
+          { id: "bob", x: 0.3, y: 0.75 }, { id: "hooli", x: 0.6, y: 0.85 },
+        ],
+        edges: [
+          { u: "ada", v: "acme" },          // works_at
+          { u: "acme", v: "globex" },       // acquired
+          { u: "acme", v: "initech" },      // acquired
+          { u: "globex", v: "widgetX" },    // makes
+          { u: "initech", v: "gadgetY" },   // makes
+          { u: "bob", v: "hooli" },         // works_at (irrelevant branch)
+        ],
+      };
+      const REL = {
+        "ada→acme": "works_at", "acme→globex": "acquired", "acme→initech": "acquired",
+        "globex→widgetX": "makes", "initech→gadgetY": "makes", "bob→hooli": "works_at",
+      };
+      const verdict = document.getElementById("verdict");
+
+      const out = {};
+      graph.nodes.forEach((n) => { out[n.id] = []; });
+      graph.edges.forEach((e) => out[e.u].push(e.v));
+
+      const state = {};
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+        const facts = [];
+        const seen = new Set(["ada"]);
+        let frontier = ["ada"];
+        state.nodeState["ada"] = "settled";
+        state.nodeLabel["ada"] = "seed";
+        yield { type: "visit", u: "ada", hop: 0 };
+        for (let hop = 1; hop <= 3; hop++) {
+          const next = [];
+          for (const u of frontier) {
+            for (const v of out[u]) {
+              const rel = REL[u + "→" + v];
+              facts.push(`(${u}, ${rel}, ${v})`);
+              state.edgeState[window.AlgoGraphViz.edgeKey(u, v)] = "tree";
+              yield { type: "check", u, v, rel, hop };
+              if (!seen.has(v)) {
+                seen.add(v);
+                next.push(v);
+                state.nodeState[v] = "visited";
+                state.nodeLabel[v] = "hop " + hop;
+                yield { type: "discover", u: v, from: u, hop };
+              }
+            }
+          }
+          frontier = next;
+        }
+        verdict.textContent = `Harvested ${facts.length} triples for the context window: ` +
+          facts.join("  ") + " — bob/hooli never entered the frontier: irrelevant by connectivity, not by similarity.";
+        yield { type: "done", facts: facts.length };
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Graph RAG harvest animation", height: 320 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { check: "triples harvested", discover: "entities reached" },
+        describe: (e) =>
+          e.type === "visit" ? "question linked to entity 'ada' — the BFS seed" :
+          e.type === "check" ? `harvest fact: ${e.u} —${e.rel}→ ${e.v}` :
+          e.type === "discover" ? `${e.u} joins the frontier at hop ${e.hop}` :
+          e.type === "done" ? `${e.facts} facts serialized into the prompt — retrieval by relationship, complete` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

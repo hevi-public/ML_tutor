@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Heapsort — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="quicksort.html|Quicksort">
+  <meta name="algo:next" content="counting-radix-bucket.html|Sorting without comparing">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>Heapsort: the guarantee, in place</h1>
+  <p class="lede">Merge sort's promise without merge sort's memory: n log n
+  worst case, zero extra space. The trick is unit 2's heap, built inside the
+  very array being sorted — and its role today is mostly to stand behind
+  quicksort as the parachute.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/heaps.html">Heaps</a> — especially "the array IS
+    the tree" and the O(n) bottom-up build.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The heaps page ended on a tease: drain a heap and the values come out
+  sorted. Heapsort does it without leaving the array. Phase one:
+  <strong>heapify in place</strong> — reinterpret the unsorted array as a
+  complete tree and sift-down from the last parent up to the root; O(n) by
+  the geometric-series argument. Now a[0] is the <em>max</em> (max-heap this
+  time). Phase two, n−1 times: <strong>swap the max into its final slot at
+  the end, shrink the heap by one, sift the new root down.</strong> The
+  sorted region grows from the right; the heap shrinks from the left; they
+  never overlap — no scratch array, ever.</p>
+
+  <h2>Watch it run</h2>
+  <p>Phase one looks chaotic (heapify), then the rhythm appears: swap-to-end
+  (a green bar settles), sift-down, repeat:</p>
+  <div class="demo">
+    <canvas id="hs-canvas" width="880" height="150" aria-label="Heapsort: heapify, then repeated extract-max"></canvas>
+    <div id="hs-stepper"></div>
+    <p class="hint">Every extraction costs one root-to-leaf sift — ≤ log n
+    swaps — so the total is n log n with no lucky or unlucky inputs: like
+    merge sort, no input shape can hurt it.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Mostly as the safety net: introsort (C++ <code>std::sort</code> and
+    kin) runs quicksort but switches any recursion that exceeds ~2 log n
+    depth to heapsort — capping the worst case at n log n while keeping
+    quicksort's average speed. Heapsort alone also fits tight-memory and
+    hard-real-time niches (embedded, kernels) where merge sort's buffer or
+    quicksort's variance is unacceptable. And partial heapsort — stop after
+    k extractions — is the top-K pattern from the heaps page, running your
+    "10 biggest" dashboards.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why doesn't heapsort just win the whole unit?</summary>
+    <div class="layer-body">
+      <p>On paper it has everything: worst-case n log n, in place. In
+      benchmarks it loses to quicksort by ~2× anyway, and unit 2's arrays
+      page said why: the sift-down path jumps i → 2i+1 → 4i+3 — strides that
+      leave the cache line behind, while quicksort's partition streams
+      sequentially. It's also unstable (long-range swaps). So: quicksort for
+      speed, merge for stability and streams, heapsort as the bounded-depth
+      insurance — which is exactly the hybrid your standard library ships.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — both phases priced</summary>
+    <div class="layer-body">
+      <p>Heapify: sift cost is a node's height; summing heights over a
+      complete tree gives ∑ h·n/2^{h+1} ≤ 2n = O(n) (the halving series
+      again). Extraction phase: n−1 sift-downs on a shrinking heap, each ≤
+      log n — O(n log n), and it dominates. Lower levels can't save you here
+      the way they did in heapify, because every extraction starts at the
+      root. Total: Θ(n log n) worst case, Θ(1) extra space, and that's
+      tight.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact generator (assets/js/algo/sorts.js), shape only:
+for (let i = (n >> 1) - 1; i >= 0; i--) siftDown(i, n);   // heapify: O(n)
+for (let end = n - 1; end > 0; end--) {
+  swap(0, end);          // current max → its FINAL slot (sorted region grows)
+  siftDown(0, end);      // restore the heap rule on what's left: O(log n)
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Three n log n sorts, three different personalities — and a natural
+  question: can any comparison sort do better? Before answering it (two
+  pages on), one detour: sorts that <em>aren't</em> comparison sorts and
+  genuinely hit O(n) — <a href="counting-radix-bucket.html">sorting without
+  comparing</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "heapsort",
+    "questions": [
+      { "q": "How does heapsort avoid merge sort's O(n) scratch space?",
+        "choices": ["It sorts a copy",
+                    "The shrinking heap and the growing sorted region share the one array, meeting in the middle — extraction IS placement",
+                    "It compresses the data"],
+        "answer": 1,
+        "explain": "Swapping the max to the end simultaneously removes it from the heap and files it in final position. Two structures, one allocation, zero overlap." },
+      { "q": "Introsort watches quicksort's recursion depth and switches to heapsort past ~2 log n. What does this achieve?",
+        "choices": ["It makes sorting stable",
+                    "It caps the worst case at n log n: quicksort's speed on nearly all inputs, heapsort's guarantee on the pathological ones",
+                    "It halves memory usage"],
+        "answer": 1,
+        "explain": "Depth beyond 2 log n is the signature of degenerate splits — the ambush from last page. Bailing to the guaranteed algorithm turns \"usually fast\" into \"fast, and never quadratic\"." },
+      { "q": "Heapsort is worst-case optimal and in-place, yet loses real benchmarks to quicksort by ~2×. Why?",
+        "choices": ["Its constant number of comparisons is higher by n²",
+                    "Sift-down's index jumps (i → 2i+1 → …) defeat the cache, while partitioning streams memory sequentially — same Big-O, different memory behaviour",
+                    "Benchmarks are rigged"],
+        "answer": 1,
+        "explain": "The arrays page's lesson at algorithm scale: within an asymptotic class, memory-access pattern picks the winner. Unit 11 measures this effect in your own browser." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const arr = window.AlgoRandom.ints(28, 10, 300, 4242);
+      const viz = window.AlgoArrayViz.create(document.getElementById("hs-canvas"));
+      const max = Math.max(...arr);
+      const done = new Set();
+      function* tracked() {
+        done.clear();
+        for (const e of window.AlgoSorts.heapSort(arr)) {
+          if (e.type === "sorted") done.add(e.i);
+          yield e;
+        }
+      }
+      window.AlgoSteps.player(document.getElementById("hs-stepper"), {
+        make: tracked,
+        capture: () => ({ array: arr.slice(), max, sorted: new Set(done) }),
+        render: (snap, event) => viz.draw(snap, event),
+        counters: { compare: "comparisons", swap: "swaps" },
+        describe: (e) =>
+          e.type === "compare" ? "sift: checking the heap rule" :
+          e.type === "swap" ? "swap along the sift path (or max → final slot)" :
+          e.type === "sorted" ? `position ${e.i} finalized` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How this tutor works — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Start here">
+  <meta name="algo:root" content="../">
+  <meta name="algo:next" content="what-is-an-algorithm.html|What is an algorithm?">
+
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 0 · Start here</p>
+  <h1>How this tutor works</h1>
+  <p class="lede">A course in the computer science you skipped — built for
+  someone who ships software for a living and doesn't need to be taught what a
+  for-loop is. Five minutes here explains the machinery you'll use on every
+  page.</p>
+
+  <div class="box prereq">
+    <span class="label">Who this is for</span>
+    You write code professionally. Maybe you started a CS degree and left
+    before the algorithms years; maybe you never went. Either way: this course
+    assumes programming fluency and <em>zero</em> theory — Big-O, proofs and
+    graph theory are all built from scratch, in plain English first.
+  </div>
+
+  <h2>Every algorithm runs, and you hold the controls</h2>
+  <p>The core promise of this site: <strong>nothing is explained that can't
+  also be watched.</strong> Every algorithm is implemented once, as real
+  JavaScript, and that single implementation is the code printed on the page,
+  the code that draws the animation, and the code the practice labs grade you
+  against. Here's one now — bubble sort, the first sort anyone meets and the
+  last one anyone should ship:</p>
+  <div class="demo">
+    <canvas id="tour-canvas" width="880" height="160"
+            aria-label="Bubble sort animating on a bar chart"></canvas>
+    <div id="tour-stepper"></div>
+    <p class="hint">▶ plays. ‹ › single-step. The slider <em>scrubs — including
+    backwards</em>, because every demo records its steps. The chips count
+    operations; they're not decoration, they're the subject of unit 1.</p>
+  </div>
+
+  <h2>How a page is laid out</h2>
+  <p>Every topic page follows the same flow, so you always know where you are:</p>
+  <p><em>The idea</em> (plain words, no notation) → <em>Watch it run</em> (the
+  demo above, for that topic) → <em>Where you'll meet this</em> (the box below)
+  → <em>The details</em> (collapsible layers) → <em>The code</em> →
+  <em>Check your understanding</em> (a short quiz) → <em>Where this goes
+  next</em>.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>This green-edged box appears on every page, and it's half the reason
+    this course exists: each topic is tied to the production systems you
+    already work with — caches, build tools, databases, and the LLM-era stack
+    (vector search, knowledge graphs, agent pipelines) where thirty-year-old
+    algorithms suddenly run the show. Unit 9 is entirely made of these.</p>
+  </div>
+
+  <h2>The layers: proofs are on tap, never forced</h2>
+  <details class="layer" open>
+    <summary>The idea in words — always open, always enough</summary>
+    <div class="layer-body">
+      <p>The top layer of every "details" section is plain English, and the
+      course is complete if you only ever read this layer.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — open when you want precision</summary>
+    <div class="layer-body">
+      <p>Formal definitions, typeset properly. Every symbol is clickable —
+      name, pronunciation, what it stands for right here — and no symbol is
+      ever used before the site has introduced it. The
+      <a href="../notation.html">notation reference</a> holds them all.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the proof — open when you want certainty</summary>
+    <div class="layer-body">
+      <p>Correctness arguments and lower bounds live at this depth. House
+      rule: <strong>proofs are privileges, not prerequisites.</strong> No quiz
+      outside the expert unit ever requires one.</p>
+    </div>
+  </details>
+
+  <h2>Quizzes, progress and flashcards</h2>
+  <p>Each page ends with a few questions asked in plain words — they test
+  understanding, not vocabulary. Finishing a quiz marks the page complete
+  (the landing page uses this to offer "continue where you left off"), a quiz
+  never blocks you from moving on, and any question you miss quietly becomes a
+  flashcard for later review. Everything is stored in your browser's
+  localStorage; nothing leaves your machine.</p>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Next: the shortest possible demonstration of why any of this matters —
+  two ways to look up a name, and the moment one of them stops being
+  possible. Or jump to <a href="self-assessment.html">Where should you
+  start?</a> if you want a placement suggestion first.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "how-this-works",
+    "questions": [
+      { "q": "You're short on time and skip every \"Show the proof\" layer. What have you lost?",
+        "choices": ["The course stops making sense at unit 3",
+                    "Nothing essential — the top layer is always self-sufficient; proofs are optional depth",
+                    "You can't mark pages complete"],
+        "answer": 1,
+        "explain": "That's the design: plain-words layer first and sufficient, math and proofs on tap for when you want them. Only the expert unit expects proof-reading." },
+      { "q": "What's special about the code samples on these pages?",
+        "choices": ["They're pseudocode, kept language-neutral",
+                    "They're the same implementations that drive the animations and grade the labs",
+                    "They're minified for speed"],
+        "answer": 1,
+        "explain": "One implementation per algorithm — taught, animated and graded from the same source, so the page can't drift from the demo." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const arr = window.AlgoRandom.ints(24, 10, 300, 42);
+      const canvas = document.getElementById("tour-canvas");
+      const viz = window.AlgoArrayViz.create(canvas);
+      const max = Math.max(...arr);
+      const work = arr.slice();
+      window.AlgoSteps.player(document.getElementById("tour-stepper"), {
+        make: () => window.AlgoSorts.bubbleSort(work),
+        capture: () => ({ array: work.slice(), max }),
+        render: (snap, event) => viz.draw(snap, event),
+        counters: { compare: "comparisons", swap: "swaps" },
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

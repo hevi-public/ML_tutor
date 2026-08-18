@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consistent hashing and rate limiters — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="probabilistic.html|Probabilistic structures">
+  <meta name="algo:next" content="storage-engines.html|Storage engines: B-trees vs LSM">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Hashing in the wild: sharding and throttling the internet</h1>
+  <p class="lede">Two more places the humble hash function quietly runs
+  everything. Spreading data across servers sounds like
+  <code>hash(key) % N</code> — until a server joins and that innocent
+  modulo reshuffles nearly everything you stored. And letting a million
+  clients each make "a reasonable number" of requests is an algorithm
+  too — a beautiful O(1) one.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hash tables</a> — this
+    page is what happens when the "table" is a fleet of machines.
+  </div>
+
+  <h2>The idea: consistent hashing</h2>
+  <p>The modulo disaster, concretely: with <code>hash(k) % 4</code>,
+  adding a fifth server changes the answer for ~80% of keys — a
+  self-inflicted stampede of cache misses and data migration.
+  <strong>Consistent hashing</strong> re-frames placement as geometry:
+  hash both servers and keys onto a circle (0…2³²); each key belongs to
+  the first server clockwise from it. Add a server and it captures only
+  the arc between itself and its predecessor — <em>K/N of the keys move,
+  the theoretical minimum</em>; everything else is untouched. Because a
+  few random points slice the circle unevenly, each real server gets
+  ~100–200 <strong>virtual nodes</strong> (multiple ring positions),
+  which evens the arcs and lets bigger machines take more of them.</p>
+
+  <h2>See it</h2>
+  <p>60 keys on a ring with 4 servers (colored arcs). Add a fifth and
+  watch: only the keys in its captured arc change color — the counter
+  reports the moved fraction vs the ~80% a modulo would have moved:</p>
+  <div class="demo">
+    <canvas id="ring" width="420" height="420" style="max-width:420px;width:100%"></canvas>
+    <div class="buttons" style="margin:0.4rem 0">
+      <button type="button" class="action" id="add-server">add server E</button>
+      <button type="button" class="action secondary" id="ring-reset">reset to 4 servers</button>
+    </div>
+    <p class="hint" id="ring-verdict" style="font-weight:600"></p>
+  </div>
+
+  <h2>The idea: token-bucket rate limiting</h2>
+  <p>Give each client a bucket holding at most <em>burst</em> tokens,
+  refilled at <em>rate</em> tokens/second; a request spends one, an
+  empty bucket means 429. The elegance is the implementation: no timer,
+  no queue — store just (tokens, lastSeen) and compute the refill
+  <em>lazily</em> on each request from the elapsed time. O(1) time and
+  memory per client, allows honest bursts, enforces the long-run
+  average. It's the algorithm behind almost every API limit you've hit,
+  including per-token LLM quotas.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Consistent hashing: memcached/Redis client sharding (its original
+    1997 use case at Akamai), Cassandra/DynamoDB partition rings, Kafka
+    consumer assignment, load balancers with session affinity, and
+    sharding vector indexes or KV-cache state across inference servers —
+    "which GPU owns this session?" is a ring lookup. Token buckets:
+    nginx/Envoy limiters, every cloud API quota, LLM
+    tokens-per-minute budgets (a bucket where the spend per request is
+    the token count — same math), and client-side backoff logic
+    negotiating with all of the above. Both compose: the rate limiter
+    for a sharded service often lives per-shard, placed by the ring.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Virtual nodes, hot shards, and rendezvous hashing</summary>
+    <div class="layer-body">
+      <p>Virtual nodes fix arc-size variance but not <em>key</em>
+      skew — if one tenant is 40% of traffic, its shard is hot no matter
+      the geometry (fixes: split the hot key's keyspace, or cache it in
+      front). Worth knowing: <strong>rendezvous hashing</strong> — for
+      each key, score every server with hash(key, server) and pick the
+      max — achieves the same minimal-movement property with no ring at
+      all, and is often simpler when N is small. And
+      <strong>jump consistent hash</strong> (a 5-line integer trick)
+      places keys with zero memory for fixed-size fleets. The shared
+      principle: make placement a pure function of (key, current fleet)
+      with the property that fleet changes perturb few outputs —
+      "minimal disruption" as an explicit algorithmic goal.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Token bucket — the whole limiter, O(1) per request, no timers:
+function allow(client, now) {
+  const b = buckets.get(client) || { tokens: BURST, last: now };
+  b.tokens = Math.min(BURST, b.tokens + (now - b.last) * RATE);  // lazy refill
+  b.last = now;
+  if (b.tokens < 1) { buckets.set(client, b); return false; }    // 429
+  b.tokens -= 1;
+  buckets.set(client, b);
+  return true;
+}
+
+// Consistent hashing lookup — binary search on the ring (unit 3!):
+function ownerOf(key) {
+  const h = hash(key);
+  const i = lowerBound(ringPositions, h);       // first vnode ≥ h
+  return vnodeServer[i % ringPositions.length]; // wrap: the circle
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The unit's last stop is where the data finally rests:
+  <a href="storage-engines.html">B-trees versus LSM trees</a> — the two
+  ways databases lay bytes on disk, and the read/write bargain that
+  picks between them.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "hashing-in-the-wild",
+    "questions": [
+      { "q": "Why does hash(key) % N reshuffle almost everything when N changes, while the ring moves only ~K/N keys?",
+        "choices": ["The modulo operator is slow",
+                    "Modulo makes EVERY key's answer depend on N — change N, change nearly all answers. Ring placement depends only on which server's arc a key falls in, and a new server captures exactly one arc",
+                    "Rings use better hash functions"],
+        "answer": 1,
+        "explain": "The design principle: make placement insensitive to fleet size except where a change genuinely must land. Minimal disruption is engineered, not lucky." },
+      { "q": "Why do consistent-hashing deployments give each server ~150 virtual nodes?",
+        "choices": ["To tolerate hash collisions",
+                    "A few random ring points make wildly uneven arcs — one unlucky server could own half the circle. Many vnodes average the arcs out (law of large numbers) and let heterogeneous machines take proportional shares",
+                    "Virtual nodes provide redundancy for failover"],
+        "answer": 1,
+        "explain": "Same variance-taming as hashing itself: more random samples, smoother distribution. (Replication is a separate layer — typically the next R servers clockwise.)" },
+      { "q": "A client bursts 50 requests after an hour idle, and the limiter (rate 1/s, burst 50) allows them all instantly. Bug or feature?",
+        "choices": ["Bug — the limit is 1 per second",
+                    "Feature: the bucket refilled to its 50-token cap during the idle hour, and burst-then-average is precisely the contract — friendly to bursty real clients while capping sustained throughput at the rate",
+                    "Bug — the lazy refill overflowed"],
+        "answer": 1,
+        "explain": "Token buckets separate burst capacity from average rate on purpose (a plain fixed-window counter can't). Choosing BURST is choosing how spiky 'fair use' is allowed to be." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const canvas = document.getElementById("ring");
+      const ctx = canvas.getContext("2d");
+      const verdict = document.getElementById("ring-verdict");
+      const CX = 210, CY = 210, R = 165;
+      const COLORS = { A: "#047857", B: "#d97706", C: "#3f83f8", D: "#9061f9", E: "#e02424" };
+      const VNODES = 40;
+
+      const hash01 = (s) => {
+        let h = 5381;
+        for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0;
+        // avalanche finalizer: raw djb2 leaves sequential strings ("E#0",
+        // "E#1"…) clustered on the ring — mixing spreads them uniformly
+        h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0;
+        h ^= h >>> 13; h = Math.imul(h, 3266489917) >>> 0;
+        h ^= h >>> 16;
+        return h / 4294967296;
+      };
+      const KEYS = Array.from({ length: 60 }, (_, i) => "key" + i);
+
+      function buildRing(servers) {
+        const ring = [];
+        for (const s of servers)
+          for (let v = 0; v < VNODES; v++) ring.push({ pos: hash01(s + "#" + v), server: s });
+        ring.sort((a, b) => a.pos - b.pos);
+        return ring;
+      }
+      function ownerOf(ring, key) {
+        const h = hash01(key);
+        for (const vn of ring) if (vn.pos >= h) return vn.server;
+        return ring[0].server;
+      }
+
+      let before = null;
+      function draw(servers) {
+        const ring = buildRing(servers);
+        const owners = Object.fromEntries(KEYS.map((k) => [k, ownerOf(ring, k)]));
+        ctx.clearRect(0, 0, 420, 420);
+        ctx.strokeStyle = "#8886";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2); ctx.stroke();
+        // vnodes as ticks
+        for (const vn of ring) {
+          const a = vn.pos * Math.PI * 2 - Math.PI / 2;
+          ctx.strokeStyle = COLORS[vn.server];
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(CX + Math.cos(a) * (R - 6), CY + Math.sin(a) * (R - 6));
+          ctx.lineTo(CX + Math.cos(a) * (R + 6), CY + Math.sin(a) * (R + 6));
+          ctx.stroke();
+        }
+        // keys as dots, colored by owner; moved keys get a halo
+        let moved = 0;
+        for (const k of KEYS) {
+          const a = hash01(k) * Math.PI * 2 - Math.PI / 2;
+          const x = CX + Math.cos(a) * (R - 24), y = CY + Math.sin(a) * (R - 24);
+          if (before && before[k] !== owners[k]) {
+            moved++;
+            ctx.strokeStyle = "#e02424";
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(x, y, 7.5, 0, Math.PI * 2); ctx.stroke();
+          }
+          ctx.fillStyle = COLORS[owners[k]];
+          ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.font = "13px system-ui";
+        ctx.textAlign = "left";
+        servers.forEach((s, i) => {
+          ctx.fillStyle = COLORS[s];
+          ctx.fillText("■ " + s, 8, 18 + i * 18);
+        });
+        return { owners, moved };
+      }
+
+      const base = ["A", "B", "C", "D"];
+      let res = draw(base);
+      verdict.textContent = "4 servers, 60 keys — each key owned by the first server clockwise.";
+
+      document.getElementById("add-server").addEventListener("click", () => {
+        before = res.owners;
+        res = draw([...base, "E"]);
+        verdict.textContent = `Server E added: ${res.moved}/60 keys moved (haloed) ≈ ` +
+          `${Math.round(res.moved / 60 * 100)}% — the captured arcs only. hash%N would have moved ~80%.`;
+      });
+      document.getElementById("ring-reset").addEventListener("click", () => {
+        before = null;
+        res = draw(base);
+        verdict.textContent = "Back to 4 servers.";
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Binary search trees — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Data structures">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="hash-tables.html|Hash tables">
+  <meta name="algo:next" content="balanced-trees.html|Balanced trees: AVL and red-black">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/structures.js"></script>
+  <script defer src="../assets/js/viz/tree.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 2 · Data structures</p>
+  <h1>Binary search trees: keeping order without paying for it</h1>
+  <p class="lede">The hash table bought O(1) by shredding order. The binary
+  search tree keeps everything sorted <em>and</em> stays fast — binary search,
+  rebuilt as a shape you can insert into. With one famous failure mode you're
+  about to cause on purpose.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Binary search from <a href="../01-foundations/counting-steps.html">counting
+    steps</a> — a BST is that idea, made into a structure — and the tree
+    height = log n fact from
+    <a href="../01-foundations/math-toolkit.html">the math toolkit</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>One rule makes the whole structure: <strong>at every node, everything in
+  the left subtree is smaller, everything in the right subtree is larger.</strong>
+  That rule is binary search's invariant frozen into pointers — standing at
+  any node, one comparison tells you which subtree the target must be in, and
+  you've discarded the other one wholesale. Search, insert, min, max,
+  "smallest key ≥ x", ordered iteration: all just walks down (or along) the
+  tree, all proportional to its <em>height</em>.</p>
+  <p>And there's the catch. Height is only log n if the tree is
+  <em>bushy</em>. Nothing in the BST rule forces bushiness — the shape is
+  decided entirely by insertion order, and the worst order is one you meet
+  constantly in real life: <strong>already-sorted input</strong>, which makes
+  every insert go the same direction, producing a chain — a linked list with
+  extra steps, O(n) everything.</p>
+
+  <h2>Watch it run</h2>
+  <p>Sixteen values inserted in <em>shuffled</em> order — watch the amber
+  walk find each spot, and watch the tree stay bushy (height ≈ log₂ 16 = 4):</p>
+  <div class="demo">
+    <div id="good-tree"></div>
+    <div id="good-stepper"></div>
+  </div>
+  <p>Now the same sixteen values inserted in <em>sorted</em> order. Watch the
+  "tree" you get — and watch the visit counter climb per insert as the chain
+  grows:</p>
+  <div class="demo">
+    <div id="bad-tree"></div>
+    <div id="bad-stepper"></div>
+    <p class="hint">Same values, same code, same BST rule — only the arrival
+    order differs. This degeneration is why the next page exists (balanced
+    trees fix the shape by force), and why "we loaded the data in ID order"
+    is a performance postmortem waiting to be written.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Ordered maps everywhere: Java's <code>TreeMap</code>, C++'s
+    <code>std::map</code>, Rust's <code>BTreeMap</code> — reached for
+    precisely when you need what hashes can't do: range scans ("orders
+    between Tuesday and Friday"), nearest-key lookups, sorted iteration,
+    priority-with-updates. The tree idea scaled to disk pages becomes the
+    B-tree — the index inside practically every relational database — which
+    unit 9's storage-engines page treats as this page's giant cousin.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Everything is a walk: the operation catalogue</summary>
+    <div class="layer-body">
+      <p><strong>Search</strong>: walk down, one comparison per level —
+      O(height). <strong>Insert</strong>: search for where it would be, attach
+      it there. <strong>Min/max</strong>: walk all the way left/right.
+      <strong>In-order traversal</strong> (left, node, right) visits every key
+      in sorted order — a sorted dump for free, and the reason the tree
+      renderer above can place nodes left-to-right by value.
+      <strong>Delete</strong> is the only subtle one: a leaf just goes; a
+      one-child node is bypassed; a two-child node swaps values with its
+      in-order successor (the leftmost node of its right subtree — which has
+      at most one child) and deletes there. One clever case, not three
+      hard ones.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — why random order gives log height</summary>
+    <div class="layer-body">
+      <p>Inserting n distinct keys in uniformly random order gives expected
+      height O(log n) — in fact expected search cost ≈ 1.39 log₂ n. The
+      argument is quicksort's in disguise: the first key inserted plays
+      "pivot", splitting the rest into left and right subtrees, and random
+      pivots split well on average. (Unit 3 makes that argument properly for
+      quicksort; it transfers here verbatim.) The trouble is that production
+      data isn't random — timestamps, sequence IDs and imported sorted files
+      are exactly the adversarial order. Hence: balance by force, next
+      page.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/structures.js): the BST rule as a walk.
+function* bstInsert(state, value) {
+  const id = state.nextId++;
+  state.nodes[id] = { value, left: null, right: null };
+  if (state.root == null) {
+    state.root = id;
+    yield { type: "insert", id, parent: null, dir: "root" };
+    return id;
+  }
+  let cur = state.root;
+  for (;;) {
+    yield { type: "visit", id: cur };                    // one comparison
+    const dir = value &lt; state.nodes[cur].value ? "left" : "right";
+    const next = state.nodes[cur][dir];
+    if (next == null) {                                  // found the gap
+      state.nodes[cur][dir] = id;
+      yield { type: "insert", id, parent: cur, dir };
+      return id;
+    }
+    cur = next;                                          // discard other subtree
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The degenerate chain you just built is not a corner case — it's what
+  sorted input <em>always</em> does to a naive BST. The fix is to make the
+  tree maintain its own bushiness:
+  <a href="balanced-trees.html">AVL and red-black trees</a>, which promise
+  O(log n) no matter what order the keys arrive in.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "binary-search-trees",
+    "questions": [
+      { "q": "Every BST operation on this page costs O(height). What decides the height?",
+        "choices": ["The number of keys, always log n of them",
+                    "The insertion order — shuffled arrivals give ~log n, sorted arrivals give a chain of n",
+                    "The size of the values stored"],
+        "answer": 1,
+        "explain": "The BST rule constrains left-vs-right, not shape. Random order behaves like quicksort's good pivots; sorted order is the worst pivot every time." },
+      { "q": "You have a hash map and need \"all sessions that expire in the next 10 minutes\". Why does a tree (or B-tree index) beat it?",
+        "choices": ["Trees hash faster",
+                    "That's a range query — trees keep keys ordered so it's a walk from a starting point; a hash map would have to inspect every key",
+                    "Hash maps can't store timestamps"],
+        "answer": 1,
+        "explain": "Ordered-ness is exactly what hashing shreds and trees preserve. Range scans, nearest-key, sorted iteration: the tree-shaped queries." },
+      { "q": "Bulk-loading a naive BST from a file that happens to be sorted by key does what?",
+        "choices": ["Builds the ideal tree — sorted input is the best case",
+                    "Builds a linked list in a tree costume: every operation degrades to O(n)",
+                    "Fails with an error"],
+        "answer": 1,
+        "explain": "Every insert walks to the far end and hangs the node there. (If you must bulk-load sorted data into a plain BST: insert the middle first, recursively — or use a self-balancing tree and stop worrying.)" } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const values = window.AlgoRandom.shuffle(
+        Array.from({ length: 16 }, (_, i) => (i + 1) * 5), 424242);
+      const sortedValues = values.slice().sort((a, b) => a - b);
+
+      function wire(hostId, stepperId, order) {
+        const state = { nodes: {}, root: null, nextId: 0 };
+        const viz = window.AlgoTreeViz.create(document.getElementById(hostId), {
+          height: 260, label: "Binary search tree being built" });
+        function* buildAll() {
+          for (const v of order) yield* window.AlgoStructures.bstInsert(state, v);
+        }
+        window.AlgoSteps.player(document.getElementById(stepperId), {
+          make: buildAll,
+          capture: () => ({
+            nodes: JSON.parse(JSON.stringify(state.nodes)),
+            root: state.root,
+          }),
+          render: (snap, event) => viz.draw(snap, event),
+          counters: { visit: "node visits", insert: "inserts" },
+          describe: (e) =>
+            e.type === "visit" ? "comparing — which subtree must it be in?" :
+            e.type === "insert" ? (e.dir === "root" ? "first node becomes the root" : `attached as ${e.dir} child`) : "",
+        });
+      }
+      wire("good-tree", "good-stepper", values);
+      wire("bad-tree", "bad-stepper", sortedValues);
+    });
+  </script>
+</main>
+</body>
+</html>

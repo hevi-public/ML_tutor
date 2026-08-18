@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Breadth-first search — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="what-is-a-graph.html|Graphs and how to store them">
+  <meta name="algo:next" content="dfs.html|Depth-first search">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+  <script defer src="../assets/js/graph-editor.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Graphs</p>
+  <h1>Breadth-first search: explore in ripples</h1>
+  <p class="lede">Drop a stone in a pond: the wave reaches everything one hop
+  away, then everything two hops away, then three. That's the whole
+  algorithm. It finds everything reachable, it finds shortest paths for free,
+  it runs in O(|V| + |E|) — and it is quietly the most-executed graph
+  algorithm in production software.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="what-is-a-graph.html">The graph model</a> and unit 2's
+    <a href="../02-structures/stacks-and-queues.html">queue</a> — BFS is what
+    a queue is <em>for</em>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Keep a to-do list of places to look next — the <strong>frontier</strong>.
+  Start with just the source. Repeat: take the <em>oldest</em> entry off the
+  frontier (a queue — first in, first out), look at its neighbors, and add
+  any neighbor you've never seen before. The "never seen before" check is a
+  set, and it's what stops a cycle from trapping you forever.</p>
+  <p>Because the frontier is a queue, you finish <em>all</em> the 1-hop nodes
+  before touching any 2-hop node, all the 2-hop nodes before any 3-hop node —
+  the ripple. That ordering is a theorem in disguise: the first time BFS
+  reaches a node, it has arrived by a path with the fewest possible edges.
+  Record who discovered whom and you get the actual shortest path, not just
+  its length.</p>
+
+  <h2>Watch it run</h2>
+  <p>The amber ring is the frontier (discovered, waiting in the queue); green
+  is visited; the number above a node is its distance from the start — watch
+  distances get settled in strictly increasing waves. It runs on the graph
+  below: <strong>edit it</strong> (add a node, reroute an edge) and the
+  recording rebuilds from the first node in the graph.</p>
+  <div class="demo">
+    <div id="editor"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Web crawlers expanding a frontier of URLs; "people you may know"
+    (friends-of-friends is exactly the 2-hop ripple); garbage collectors
+    marking every object reachable from the roots; network broadcast and
+    peer discovery; shortest-hop routing; "blast radius" queries on a service
+    mesh; knowledge-graph retrieval expanding n hops from the entities in a
+    query (graph RAG, unit 9). And inside HNSW vector search, the candidate
+    expansion at each layer is this exact loop with a similarity-ordered
+    frontier. Learn this page and you've learned the skeleton of half of
+    unit 9.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why O(|V| + |E|)?</summary>
+    <div class="layer-body">
+      <p>The seen-set guarantees each node enters the queue at most once — so
+      the loop body runs at most |V| times. When a node is processed, we scan
+      its neighbor list; summed over all nodes, those scans touch each edge
+      once per endpoint — O(|E|) total. In plain English: every node handled
+      once, every edge glanced at a constant number of times. That's the
+      canonical shape of a linear-time graph algorithm, and the counters
+      above confirm it: visits ≤ nodes, checks ≤ 2·edges.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the proof — BFS finds shortest paths</summary>
+    <div class="layer-body">
+      <p><strong>Claim:</strong> when BFS first discovers node v, the
+      discovery path has <span class="math">\delta(s, v)</span> edges — the
+      minimum possible. <strong>Induction on distance.</strong> Base: the
+      source is discovered at distance 0. Step: assume every node at distance
+      ≤ k is discovered with a correct, settled distance, and — the queue
+      invariant — that the queue always holds nodes of distance k then k+1,
+      never anything further apart. Any node v at distance k+1 has some
+      neighbor u at distance k. When u is dequeued, v is either already
+      discovered (at distance ≤ k+1, and it can't be less, since a shorter
+      path to v would imply a neighbor of v at distance &lt; k) or is
+      discovered right now via u, at distance k+1. Either way v's recorded
+      distance is exactly k+1, and it joins the queue after all distance-k
+      nodes — preserving the invariant. ∎</p>
+      <p>The proof leans entirely on first-in-first-out. Swap the queue for a
+      stack and the invariant collapses — that's the next page.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/graphs.js), events elided:
+function bfs(graph, start) {
+  const adj = adjacency(graph);
+  const seen = new Set([start]);
+  const queue = [start];
+  while (queue.length) {
+    const u = queue.shift();          // oldest first — the ripple
+    for (const { to } of adj.get(u)) {
+      if (!seen.has(to)) {
+        seen.add(to);                 // mark at DISCOVERY, not at visit —
+        queue.push(to);               // or a node could be queued twice
+      }
+    }
+  }
+}
+// For shortest paths: also record parent.set(to, u) and
+// dist.set(to, dist.get(u) + 1) at discovery, then walk parents backward.</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>One-character diff, wildly different personality: replace the queue with
+  a stack and the ripple becomes a deep dive —
+  <a href="dfs.html">depth-first search</a>, whose talent isn't distance but
+  <em>structure</em>. And when edges get weights, the queue upgrades to a
+  priority queue and BFS grows up into
+  <a href="../05-graphs-advanced/dijkstra.html">Dijkstra</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "delta": { "name": "δ(s, v) — shortest-path distance", "pron": "say: delta of ess, vee",
+           "means": "the fewest edges on any path from s to v", "short": "shortest distance" },
+    "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "bfs",
+    "questions": [
+      { "q": "Why must a node be marked seen when it's DISCOVERED (added to the queue), not when it's visited (removed)?",
+        "choices": ["It's faster to mark early",
+                    "Between discovery and visit, another node could discover it again and queue a duplicate — same node processed twice, and on dense graphs the queue balloons",
+                    "Otherwise the queue would be a stack"],
+        "answer": 1,
+        "explain": "The seen-set's job is \"at most one queue entry per node\". Marking at visit time leaves a window where duplicates sneak in — a classic real-world BFS bug." },
+      { "q": "What single property of the queue makes BFS find shortest paths?",
+        "choices": ["It stores nodes in sorted order",
+                    "First-in-first-out — nodes are processed in the order discovered, so all distance-k nodes are handled before any distance-(k+1) node",
+                    "It never contains duplicates"],
+        "answer": 1,
+        "explain": "FIFO ⇒ the frontier is always one clean ripple: distances in the queue never differ by more than one, so the first arrival at any node is via a fewest-edges path." },
+      { "q": "You need the blast radius of a failing service: everything within 3 calls of it in the dependency graph. What's the BFS-shaped answer?",
+        "choices": ["Run BFS to completion and filter afterwards",
+                    "BFS from the failing service, stopping once the frontier's distance exceeds 3 — the ripple gives you exactly the ≤3-hop set, without touching the rest of the graph",
+                    "BFS can't answer distance-bounded queries"],
+        "answer": 1,
+        "explain": "Because BFS settles nodes in distance order, \"everything within k hops\" is just \"stop early\" — one of the most common production uses of the algorithm." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("city");
+      graph.edges.forEach((e) => delete e.w);   // BFS is the unweighted story
+
+      const state = {};
+      let editor;
+      function makeTracked() {
+        const g = editor ? editor.getGraph() : graph;
+        return function* tracked() {
+          state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+          if (!g.nodes.length) return;
+          for (const e of window.AlgoGraphs.bfsPaths(g, g.nodes[0].id)) {
+            window.AlgoGraphViz.applyEvent(state, e);
+            if (e.type === "discover" && e.from !== null)
+              state.edgeState[window.AlgoGraphViz.edgeKey(e.from, e.u)] = "tree";
+            yield e;
+          }
+        };
+      }
+
+      let viz = null, player = null;
+      editor = window.AlgoGraphEditor.create(document.getElementById("editor"), {
+        graph,
+        onChange: () => { if (player) player.reset(makeTracked()); },
+      });
+
+      const vizHost = document.createElement("div");
+      const stepperHost = document.getElementById("stepper");
+      stepperHost.parentNode.insertBefore(vizHost, stepperHost);
+      viz = window.AlgoGraphViz.create(vizHost, { label: "BFS animation", height: 340 });
+
+      player = window.AlgoSteps.player(stepperHost, {
+        make: makeTracked(),
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(editor.getGraph(), snap, event),
+        counters: { visit: "visits", discover: "discoveries", check: "edge checks" },
+        describe: (e) =>
+          e.type === "visit" ? `visiting ${e.u} — pulled from the front of the queue` :
+          e.type === "discover" ? (e.from === null
+            ? `${e.u} is the start — distance 0`
+            : `discovered ${e.u} via ${e.from} — joins the back of the queue`) :
+          e.type === "settle" ? `${e.u}'s distance is final: ${e.dist}` :
+          e.type === "check" ? `checking edge ${e.u} – ${e.v}` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

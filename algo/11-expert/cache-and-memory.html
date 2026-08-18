@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>When theory meets the clock — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Expert track">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="randomized.html|Randomized algorithms">
+  <meta name="algo:next" content="bit-tricks.html|Bit tricks">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 11 · Expert track</p>
+  <h1>When theory meets the clock: caches and memory</h1>
+  <p class="lede">Big-O counts steps as if all memory were one flat pool at
+  one price. Real machines serve memory through a hierarchy — L1 cache in
+  ~1ns, main memory in ~100ns — so two algorithms with <em>identical</em>
+  operation counts can differ by an order of magnitude on the clock. This
+  page runs that experiment on <em>your</em> machine, right here, and then
+  reconciles the result with everything unit 1 taught you.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../01-foundations/big-o.html">Big-O</a> (the model being
+    stress-tested) and
+    <a href="../02-structures/arrays-and-lists.html">arrays vs linked
+    lists</a> (whose real-world verdict this page finally explains).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Memory arrives by the <strong>cache line</strong> — 64 bytes at a
+  time. Touch one number and its seven neighbors arrive free; hardware
+  prefetchers then notice sequential patterns and fetch ahead. So
+  <em>the same N accesses</em> cost wildly different amounts depending on
+  order: march straight through an array and almost every access is a cache
+  hit; hop unpredictably and every access is a ~100ns miss. Big-O is not
+  wrong — it predicts how cost <em>scales</em>, and a cache-hostile O(n) still
+  beats a cache-friendly O(n²) eventually. But between two O(n) designs,
+  memory layout is frequently the whole ballgame — and "eventually" can be
+  further out than your actual n.</p>
+
+  <h2>Watch it run — on your machine</h2>
+  <p>Two experiments, equal operation counts by construction. (1) Sum 4
+  million doubles in sequential order vs a strided order that touches the
+  same elements. (2) Walk a 2-million-node linked list laid out
+  sequentially in memory vs the same list with shuffled node placement:</p>
+  <div class="demo">
+    <div class="buttons">
+      <button type="button" class="action" id="bench-stride">run: sequential vs strided sum</button>
+      <button type="button" class="action" id="bench-chase">run: tidy list vs scattered list</button>
+    </div>
+    <p class="readout" id="bench-out">Each run takes a second or two. Numbers are your hardware's, not ours.</p>
+    <p class="hint" id="bench-verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box sim-note">
+    <span class="label">Honesty note</span>
+    <p>This is a real measurement of a real effect, but browsers are noisy
+    laboratories: JIT warm-up, garbage collection and timer coarsening all
+    wobble the numbers, which is why each benchmark runs a warm-up pass and
+    reports a best-of-three. Expect the <em>ratio</em> to be stable and
+    meaningful (typically 2–10× here; larger in lower-level languages)
+    even when individual milliseconds bounce around.</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>This effect is why unit 2's verdict on linked lists was so harsh —
+    O(1) insertion loses to O(n) array shifting for realistic sizes once
+    every list hop is a cache miss. It's why databases and column stores
+    obsess over layout (unit 9's B-trees exist to match storage's block
+    size; columnar formats exist so scans touch only needed bytes), why
+    game engines rearranged themselves around data-oriented design
+    (structure-of-arrays vs array-of-structures), why matrix code loops in
+    row-major order, and why "we switched from a hash map to a sorted
+    array and got 5× faster" is a real code-review story at small n:
+    the hash map's O(1) hides pointer chases; the array's O(log n) rides
+    cache lines.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer">
+    <summary>The numbers every engineer ends up memorizing</summary>
+    <div class="layer-body">
+      <p>Rough, durable orders of magnitude: L1 hit ~1ns; L2 ~4ns; L3
+      ~10–30ns; main memory ~100ns; NVMe read ~100μs; datacenter network
+      round trip ~500μs; spinning disk seek ~10ms. The gaps are the story:
+      RAM is ~100× L1, disk is ~1000× RAM. An algorithm's "steps" can span
+      five orders of magnitude in real cost depending on where its operands
+      live — which is why unit 9's storage engines treat "reads from disk"
+      as the only number worth optimizing, and why the external-memory
+      model on the next-but-one page redefines cost as block transfers
+      outright.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Reconciling with Big-O — the model didn't break</summary>
+    <div class="layer-body">
+      <p>Formally, the flat-memory RAM model underlying unit 1 assumes
+      uniform access cost; caches violate the assumption by a bounded
+      constant (~100×), and Big-O absorbs constants — so every theorem in
+      this course survives intact. What changes is engineering judgment
+      inside a complexity class, where constants are the contest. There is
+      also honest theory for the hierarchy itself: the external-memory
+      model counts block transfers (B-trees are optimal there), and
+      cache-oblivious algorithms achieve optimal transfers without knowing
+      the cache's parameters — recursive divide-and-conquer layouts like
+      unit 3's merge sort are naturally close to cache-oblivious, one more
+      reason recursion earns its keep.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Both loops: exactly N additions of the same N numbers. Only ORDER differs.
+function sumSequential(a) {
+  let s = 0;
+  for (let i = 0; i &lt; a.length; i++) s += a[i];          // prefetcher heaven
+  return s;
+}
+function sumStrided(a, stride) {   // stride coprime to length ⇒ visits every index once
+  let s = 0, i = 0;
+  for (let k = 0; k &lt; a.length; k++) {
+    s += a[i];
+    i += stride; if (i &gt;= a.length) i -= a.length;       // ~every access a miss
+  }
+  return s;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Staying close to the metal one page longer:
+  <a href="bit-tricks.html">bit tricks</a> — the sets, masks and
+  micro-optimizations living inside integers.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "cache-and-memory",
+    "questions": [
+      { "q": "The demo's two sums perform identical additions on identical data, yet one is several times slower. What does Big-O say about this?",
+        "choices": ["Big-O is refuted — operation counting doesn't predict cost",
+                    "Nothing is refuted: both are Θ(n), and cache effects are a (large, ~constant-factor) violation of the uniform-cost assumption that Big-O absorbs into constants. Big-O ranks growth rates; layout decides contests WITHIN a class",
+                    "The strided version is actually O(n²)"],
+        "answer": 1,
+        "explain": "Keep both tools: asymptotics to choose the right complexity class, memory layout to win inside it. Neither substitutes for the other." },
+      { "q": "Why did unit 2 conclude that arrays usually beat linked lists in practice, despite the list's O(1) insert?",
+        "choices": ["Linked lists use more total memory, which is what matters",
+                    "Every list traversal hop is a potential ~100ns cache miss to an arbitrary address, while array elements arrive 8-to-a-cache-line with prefetching — the scattered-list benchmark on this page is that argument, measured",
+                    "JavaScript cannot implement linked lists efficiently"],
+        "answer": 1,
+        "explain": "The demo's tidy-vs-scattered list comparison isolates layout exactly: same structure, same traversal, different addresses. Memory extra cost is real too, but locality is the headline." },
+      { "q": "A code review proposes replacing a 200-element hash map (hot path) with a sorted array + binary search, citing cache lines. Sensible?",
+        "choices": ["No — O(1) beats O(log n), end of discussion",
+                    "Plausibly yes: at n=200, log₂ n ≈ 8 compares within a few cache lines can beat a hash + pointer chase to a cold bucket; the professional move is to benchmark at realistic n, knowing asymptotics only take over at scale",
+                    "Yes for any n — binary search is always faster"],
+        "answer": 1,
+        "explain": "Both wrong answers absolutize one model. Constants rule at small n, asymptotics at large n, and the crossover is an empirical question — this page's whole thesis." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const out = document.getElementById("bench-out");
+      const verdict = document.getElementById("bench-verdict");
+
+      function bestOf(f, times) {
+        let best = Infinity, result;
+        for (let t = 0; t < times; t++) {
+          const t0 = performance.now();
+          result = f();
+          best = Math.min(best, performance.now() - t0);
+        }
+        return { ms: best, result };
+      }
+
+      document.getElementById("bench-stride").addEventListener("click", () => {
+        out.textContent = "allocating 32 MB and warming up…";
+        setTimeout(() => {
+          const N = 1 << 22;                       // 4M doubles = 32 MB, far beyond cache
+          const a = new Float64Array(N);
+          for (let i = 0; i < N; i++) a[i] = i % 7;
+          const STRIDE = 4099;                     // prime vs 2^22 ⇒ full cycle, cache-hostile
+          const seq = () => { let s = 0; for (let i = 0; i < N; i++) s += a[i]; return s; };
+          const str = () => {
+            let s = 0, i = 0;
+            for (let k = 0; k < N; k++) { s += a[i]; i += STRIDE; if (i >= N) i -= N; }
+            return s;
+          };
+          seq(); str();                            // warm-up / JIT
+          const rs = bestOf(seq, 3), rt = bestOf(str, 3);
+          const ratio = rt.ms / rs.ms;
+          out.textContent = `sequential: ${rs.ms.toFixed(1)} ms · strided: ${rt.ms.toFixed(1)} ms — ` +
+            `same 4,194,304 additions (checksums ${rs.result === rt.result ? "match" : "differ!"}).`;
+          verdict.textContent = `Order alone made it ${ratio.toFixed(1)}× ${ratio > 1.3 ? "slower — cache lines and prefetching, measured on your machine." :
+            "— your machine's cache hid it well at this size; try the list benchmark, which hits harder."}`;
+        }, 30);
+      });
+
+      document.getElementById("bench-chase").addEventListener("click", () => {
+        out.textContent = "building two 2M-node lists…";
+        setTimeout(() => {
+          const N = 1 << 21;
+          // tidy: node i lives at slot i, next = i+1 — traversal is sequential in memory
+          const tidy = new Int32Array(N);
+          for (let i = 0; i < N; i++) tidy[i] = (i + 1) % N;
+          // scattered: same logical list, nodes placed at shuffled slots (seeded LCG)
+          const slot = new Int32Array(N);
+          for (let i = 0; i < N; i++) slot[i] = i;
+          let seed = 42 >>> 0;
+          const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+          for (let i = N - 1; i > 0; i--) {        // Fisher–Yates, of course
+            const j = Math.floor(rnd() * (i + 1));
+            const t = slot[i]; slot[i] = slot[j]; slot[j] = t;
+          }
+          const scattered = new Int32Array(N);
+          for (let i = 0; i < N; i++) scattered[slot[i]] = slot[(i + 1) % N];
+          const walk = (next) => { let p = 0, s = 0; for (let k = 0; k < N; k++) { s += p; p = next[p]; } return s; };
+          walk(tidy); walk(scattered);             // warm-up
+          const rt = bestOf(() => walk(tidy), 3), rs = bestOf(() => walk(scattered), 3);
+          const ratio = rs.ms / rt.ms;
+          out.textContent = `tidy layout: ${rt.ms.toFixed(1)} ms · scattered layout: ${rs.ms.toFixed(1)} ms — ` +
+            `identical 2,097,152-hop traversal of the same logical list.`;
+          verdict.textContent = `Layout alone: ${ratio.toFixed(1)}× — every scattered hop is a fresh cache line. ` +
+            `This is the linked list's real-world tax, isolated from everything else.`;
+        }, 30);
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Knuth-Morris-Pratt — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Strings">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="string-search.html|Substring search, naively">
+  <meta name="algo:next" content="rabin-karp.html|Rabin-Karp and rolling hashes">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/strings.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Strings</p>
+  <h1>KMP: the pattern that remembers itself</h1>
+  <p class="lede">The naive search's sin: on a mismatch it forgets
+  everything the last few comparisons revealed and re-reads text
+  characters. Knuth, Morris and Pratt's 1977 cure: preprocess the
+  <em>pattern</em> so that after any mismatch, it already knows the
+  furthest it can safely jump — the text pointer never moves backward,
+  guaranteeing O(n + m) on every input, adversarial ones included.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="string-search.html">The naive baseline</a>, so the waste
+    being eliminated is vivid. The failure function is honest DP —
+    <a href="../06-strategies/dp-foundations.html">unit 6</a> pays off
+    here.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Suppose you've matched <code>abab</code> of pattern
+  <code>ababc</code> and the next text character mismatches. Naive slides
+  one and re-compares from scratch. But look at what's already known: the
+  text just contained <code>abab</code>. If the pattern shifts by 2, its
+  prefix <code>ab</code> lines up with the suffix <code>ab</code> of what
+  matched — those two characters are <em>guaranteed</em> to match without
+  looking. So: shift 2, resume comparing at pattern position 2. No text
+  re-reads.</p>
+  <p>The precomputation is the <strong>failure function</strong>:
+  fail[i] = the length of the longest proper prefix of pat[0…i] that is
+  also a suffix of it. In plain English: after matching i+1 characters and
+  failing, how much of a head start does the pattern still have? It
+  depends only on the pattern — computed once in O(m), by the pattern
+  searching itself.</p>
+
+  <h2>Watch it run</h2>
+  <p>First: building fail[] for <code>ababaca</code> — the pattern
+  matching against itself, each cell recording the reusable overlap:</p>
+  <div class="demo">
+    <div id="fail-grid" style="font-family:var(--mono);font-size:1.05rem;line-height:1.8;margin-bottom:0.5rem"></div>
+    <div id="stepper-fail"></div>
+  </div>
+  <p>Then the search: <code>aabaacaadaabaaba</code> for
+  <code>aaba</code>. On each mismatch, watch the shift arrow — the
+  pattern jumps by exactly what fail[] licenses, and the text pointer
+  (amber) only ever moves right:</p>
+  <div class="demo">
+    <div id="grid" style="font-family:var(--mono);font-size:1.05rem;line-height:1.8;margin-bottom:0.5rem"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>KMP's guarantee — linear time, no text backtracking — makes it the
+    tool for <em>streaming</em>: network intrusion detection matching
+    signatures on packets it can't rewind, protocol scanners, and any
+    match-on-a-pipe situation. Its multi-pattern generalization,
+    Aho-Corasick (a trie with failure links — two pages composing), scans
+    for thousands of keywords in one pass and runs inside spam filters,
+    virus scanners and content moderation. The failure-function idea —
+    "index how a sequence overlaps itself" — reappears in Z-arrays,
+    rolling-checksum sync (rsync), and tandem-repeat finders in
+    genomics.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why the total is O(n) — an amortized argument</summary>
+    <div class="layer-body">
+      <p>The search loop looks nested — the inner while can fire several
+      fallbacks per text character. The clean accounting is unit 1's
+      <a href="../01-foundations/amortized-analysis.html">amortized
+      analysis</a>: let k be the matched-prefix length. Each text
+      character increments k at most once; each while-iteration strictly
+      decreases k. A counter that only grows n times can only shrink n
+      times: at most 2n loop iterations total, regardless of pattern or
+      adversary. The same argument, run on the pattern against itself,
+      gives O(m) for building fail[]. Guaranteed linear — the property
+      that made this a landmark, and the property the naive method's
+      average-case luck can't offer.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Reading fail[] as dynamic programming</summary>
+    <div class="layer-body">
+      <p>fail[i] is defined in terms of smaller subproblems: to extend,
+      try k = fail[i−1]; if pat[i] ≠ pat[k], fall back to fail[k−1], and
+      so on — each candidate is a previously computed answer, chained.
+      It's memoized recursion over "longest border of each prefix", built
+      left to right in dependency order: bottom-up DP by any other name.
+      The lesson worth exporting: preprocessing an input into a
+      self-referential index is DP applied to the <em>pattern</em> rather
+      than the query — the same design that unit 9's tokenizer tries and
+      suffix structures scale up.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/strings.js), events elided:
+function kmpSearch(text, pat) {
+  const fail = buildFailure(pat);       // O(m): pattern vs itself
+  const hits = [];
+  let k = 0;                            // chars of pattern currently matched
+  for (let i = 0; i < text.length; i++) {   // i NEVER decreases
+    while (k > 0 && text[i] !== pat[k]) k = fail[k - 1];  // reuse overlap
+    if (text[i] === pat[k]) k++;
+    if (k === pat.length) {             // full match
+      hits.push(i - k + 1);
+      k = fail[k - 1];                  // keep going — overlaps allowed
+    }
+  }
+  return hits;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>KMP compares characters. The next idea refuses to:
+  <a href="rabin-karp.html">Rabin-Karp</a> compares <em>fingerprints</em>,
+  and its rolling hash turns out to be one of the most reused primitives
+  in systems engineering.</p>
+
+  <script type="application/json" class="symbols">
+  { "fail": { "name": "fail[i] — the failure function", "pron": "say: fail of eye",
+           "means": "the longest proper prefix of pat[0…i] that is also its suffix — how much head start survives a mismatch", "short": "border length" },
+    "k": { "name": "k — matched-prefix length", "pron": "say: kay",
+           "means": "how many pattern characters currently match; rises with matches, falls along fail[] on mismatches", "short": "match count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "kmp",
+    "questions": [
+      { "q": "What question does fail[i] answer, in operational terms?",
+        "choices": ["Where the pattern occurs in the text",
+                    "\"After matching i+1 characters and then failing, how many characters of match do I still provably have?\" — computed from the pattern alone, before any text is seen",
+                    "How many mismatches have occurred so far"],
+        "answer": 1,
+        "explain": "The matched text region equals the pattern's own prefix — so overlaps within the PATTERN determine safe shifts universally. That's why preprocessing needs no text." },
+      { "q": "Why does 'the text pointer never moves backward' matter beyond elegance?",
+        "choices": ["It halves memory usage",
+                    "It enables streaming: match against data you can't rewind (network packets, pipes) with O(m) state — and it's the mechanical source of the guaranteed-linear bound",
+                    "It makes the code shorter"],
+        "answer": 1,
+        "explain": "One-pass over unrewindable input is a systems property, not a style point. It's why the KMP family runs in intrusion detection rather than naive search's average-case gamble." },
+      { "q": "After finding a full match, KMP sets k = fail[m−1] instead of 0. What would resetting to 0 break?",
+        "choices": ["Nothing — it's an optimization",
+                    "Overlapping matches: in text 'aabaaba', occurrences of 'aaba' at 0 and 3 share characters — resetting forgets the live overlap and skips the second hit",
+                    "It would loop forever"],
+        "answer": 1,
+        "explain": "The demo's text has exactly this: hits at 9 and 12 overlap. Treating a match as 'the longest possible current overlap' keeps the invariant honest through the hit itself." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const cell = (ch, style) =>
+        `<span style="display:inline-block;width:1.5rem;text-align:center;${style}">${ch}</span>`;
+
+      // --- failure function build ---
+      const FP = "ababaca";
+      const failGrid = document.getElementById("fail-grid");
+      const st1 = {};
+      function* trackedFail() {
+        st1.fail = {};
+        for (const e of window.AlgoStrings.buildFailure(FP)) {
+          if (e.type === "fail") st1.fail[e.pi] = e.val;
+          yield e;
+        }
+      }
+      window.AlgoSteps.player(document.getElementById("stepper-fail"), {
+        make: trackedFail,
+        capture: () => ({ fail: { ...(st1.fail || {}) } }),
+        render: (snap, event) => {
+          let top = "", bottom = "";
+          for (let i = 0; i < FP.length; i++) {
+            const hot = event && event.type === "fail" && event.pi === i;
+            top += cell(FP[i], "color:var(--text-soft);");
+            const v = snap.fail[i];
+            bottom += cell(v === undefined ? (i === 0 ? "0" : "·") : v,
+              "border:1px solid var(--border);border-radius:4px;" +
+              (v !== undefined ? "background:var(--accent-soft);color:var(--accent);font-weight:700;" : "opacity:0.45;") +
+              (hot ? "outline:2.5px solid #d97706;" : ""));
+          }
+          failGrid.innerHTML = top + "<br>" + bottom;
+        },
+        counters: { fail: "cells", compare: "self-comparisons" },
+        describe: (e) =>
+          e.type === "compare" ? (e.ok ? "prefix extends — overlap grows" : "overlap breaks — fall back along fail[]") :
+          e.type === "fail" ? `fail[${e.pi}] = ${e.val}: "${FP.slice(0, e.pi + 1)}" has a border of length ${e.val}` :
+          e.type === "done" ? `failure function complete: [${e.fail.join(", ")}]` : "",
+      });
+
+      // --- the search ---
+      const TEXT = "aabaacaadaabaaba", PAT = "aaba";
+      const grid = document.getElementById("grid");
+      const st2 = {};
+      function* tracked() {
+        st2.i = 0; st2.k = 0; st2.hits = [];
+        for (const e of window.AlgoStrings.kmpSearch(TEXT, PAT)) {
+          if (e.type === "compare") { st2.i = e.ti; st2.k = e.pi; st2.lastOk = e.ok; }
+          if (e.type === "found") st2.hits.push(e.at);
+          yield e;
+        }
+      }
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ i: st2.i || 0, k: st2.k || 0, hits: (st2.hits || []).slice(), lastOk: st2.lastOk }),
+        render: (snap, event) => {
+          let top = "", bottom = "";
+          const s = snap.i - snap.k;                      // current alignment
+          for (let i = 0; i < TEXT.length; i++) {
+            const inHit = snap.hits.some((h) => i >= h && i < h + PAT.length);
+            const isPointer = i === snap.i;
+            top += cell(TEXT[i],
+              (inHit ? "color:var(--accent);font-weight:700;" : "") +
+              (isPointer ? "background:#fcd34d55;border-radius:4px;" : ""));
+          }
+          for (let i = 0; i < TEXT.length; i++) {
+            const pi = i - s;
+            if (pi < 0 || pi >= PAT.length) { bottom += cell("", ""); continue; }
+            let style = "border:1px solid var(--border);border-radius:4px;";
+            if (pi < snap.k) style += "background:var(--accent-soft);color:var(--accent);font-weight:700;";
+            if (event && event.type === "compare" && !event.ok && pi === snap.k)
+              style += "background:var(--bad-soft, #fdd);color:var(--bad);font-weight:700;";
+            bottom += cell(PAT[pi], style);
+          }
+          grid.innerHTML = top + "<br>" + bottom +
+            `<span class="hint" style="margin-left:1rem">text pointer i=${snap.i}, matched k=${snap.k}</span>`;
+        },
+        counters: { compare: "comparisons", shift: "smart shifts", found: "matches" },
+        describe: (e) =>
+          e.type === "compare" ? (e.ok ? `text[${e.ti}] matches pattern[${e.pi}]` : `mismatch at text[${e.ti}]`) :
+          e.type === "shift" ? `fail[] licenses a shift of ${e.by} — matched overlap reused, no text re-read` :
+          e.type === "found" ? `match at ${e.at} — and k falls back to keep live overlap` :
+          e.type === "done" ? `done — matches at ${e.hits.join(", ")} (note 9 and 12 overlap)` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

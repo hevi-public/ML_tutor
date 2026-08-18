@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Approximation algorithms — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Expert track">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="reductions.html|Reductions in practice">
+  <meta name="algo:next" content="randomized.html|Randomized algorithms">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 11 · Expert track</p>
+  <h1>Approximation: provably good, never perfect</h1>
+  <p class="lede">NP-hardness kills fast <em>exact</em> optimization, not
+  fast <em>good</em> optimization. An approximation algorithm runs in
+  polynomial time and ships with a certificate of quality: "my answer is at
+  most twice the optimum — for every input, guaranteed." That last clause
+  separates this page from heuristics: a guarantee you can put in an SLA
+  versus a vibe you hope holds up.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="p-and-np.html">P and NP</a> (why we're settling),
+    <a href="../06-strategies/greedy.html">greedy</a> (the machinery we'll
+    reuse — this time with proofs about how wrong it can be).
+  </div>
+
+  <h2>The idea</h2>
+  <p>An algorithm is a <strong>ρ-approximation</strong> if for every input
+  its answer is within a factor ρ of the true optimum. The craft is
+  bounding your distance from a number you can't compute — always via a
+  <em>lower bound</em>: find something easy to compute that the optimum
+  itself cannot beat, then show your answer is within a factor of
+  <em>that</em>. Both demos below use the trick; watch for it.</p>
+
+  <h2>Watch it run</h2>
+  <p><strong>Vertex cover, 2-approximation:</strong> repeatedly grab any
+  uncovered edge and take <em>both</em> endpoints. The grabbed edges share
+  no endpoints (a matching), and every cover — the optimum included — needs
+  at least one endpoint from each, so OPT ≥ (edges grabbed) and ours =
+  2 × (edges grabbed) ≤ 2 × OPT. On this seeded 12-node graph:</p>
+  <div class="demo">
+    <div class="buttons">
+      <button type="button" class="action" id="run-vc">run the 2-approximation</button>
+      <button type="button" class="action secondary" id="show-opt">compare with the true optimum</button>
+    </div>
+    <p class="readout" id="vc-out">19 edges, 12 nodes, seeded — same result every visit.</p>
+    <p class="hint" id="vc-verdict" style="font-weight:600"></p>
+  </div>
+  <p>Measured: the matching grabs 4 edges → cover of <strong>8</strong>
+  nodes; brute force says the optimum is <strong>6</strong>. Actual ratio
+  <strong>1.33</strong>, comfortably inside the guaranteed 2.0 — guarantees
+  are ceilings, not predictions.</p>
+
+  <p><strong>TSP, nearest-neighbor vs optimal</strong> on 8 seeded cities —
+  greedy with <em>no</em> guarantee (for general TSP, none is possible
+  unless P=NP; with triangle-inequality distances, smarter algorithms get
+  2× and even 1.5×):</p>
+  <div class="demo">
+    <svg id="tsp" viewBox="0 0 420 300" width="100%" style="max-width:460px"
+         role="img" aria-label="Nearest-neighbor tour vs optimal tour on 8 cities"></svg>
+    <div class="buttons">
+      <button type="button" class="action" id="run-nn">nearest neighbor</button>
+      <button type="button" class="action secondary" id="run-opt">optimal (brute force, 5040 tours)</button>
+      <button type="button" class="action secondary" id="run-both">overlay both</button>
+    </div>
+    <p class="readout" id="tsp-out"></p>
+  </div>
+  <p>Nearest neighbor: <strong>1010.0</strong>. Optimal:
+  <strong>859.3</strong>. Ratio <strong>1.18</strong> here — but unlike the
+  cover demo, no theorem protects that number; adversarial city placements
+  drive nearest-neighbor arbitrarily far from optimal. Guaranteed-2×
+  beats usually-1.2×-sometimes-10× in anything you have to promise.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Set-cover greedy (ln n guarantee) is the shape of monitoring-probe
+    placement, test-suite minimization and ad targeting; bin-packing
+    first-fit (≤ 1.7 × OPT) is memory allocators and shipping-container
+    logistics; k-center clustering's 2-approximation is data-center
+    placement. Routing products layer heuristics (2-opt, or-opt) on top of
+    construction algorithms like nearest neighbor. And the vocabulary
+    matters commercially: "within 2× guaranteed" and "usually near-optimal
+    in benchmarks" are different promises with different lawyers.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer">
+    <summary>The 2-approximation proof, spelled out</summary>
+    <div class="layer-body">
+      <p>Let M be the set of edges the algorithm grabbed. (1) M is a
+      matching: once an edge is grabbed, both endpoints are covered, so no
+      later grabbed edge can touch them. (2) Any vertex cover C must
+      contain ≥ 1 endpoint of every edge in M — those are edges, and C
+      covers all edges. Since M's edges are disjoint, those endpoints are
+      distinct: |C| ≥ |M|, and in particular OPT ≥ |M|. (3) Our cover has
+      exactly 2|M| nodes. Chain them: ours = 2|M| ≤ 2·OPT. Note what we
+      never needed: OPT's actual value. The matching is the computable
+      stand-in — every approximation proof has one.</p>
+      <p>Sharper is provably hard: beating factor 1.36 for vertex cover is
+      NP-hard, and under the (widely believed) unique games conjecture,
+      2 − ε is out of reach — this simple algorithm may be optimal among
+      fast ones.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Metric TSP: the MST trick and Christofides</summary>
+    <div class="layer-body">
+      <p>When distances obey the triangle inequality: the minimum spanning
+      tree (unit 5!) costs ≤ OPT, because deleting one edge of the optimal
+      tour leaves a spanning tree that can't beat the MST. Walk around the
+      MST (each edge twice: cost ≤ 2·OPT), then shortcut repeated visits —
+      shortcuts can't lengthen a metric walk. Result: a 2-approximation
+      from a data structure you already own. Christofides (1976) fixes up
+      the walk with a minimum matching on odd-degree vertices for 1.5×,
+      which stood unimproved for 44 years (the 2020 improvement shaved off
+      a factor of about 10⁻³⁶ — theory moves in mysterious increments).
+      Without the triangle inequality, no constant factor is achievable
+      unless P=NP: approximating general TSP well would let you decide
+      Hamiltonian-cycle exactly.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Vertex cover 2-approximation — the entire algorithm:
+function approxVertexCover(edges) {
+  const cover = new Set();
+  for (const [u, v] of edges) {
+    if (!cover.has(u) && !cover.has(v)) {   // an uncovered edge…
+      cover.add(u); cover.add(v);           // …take BOTH ends
+    }
+  }
+  return cover;                              // ≤ 2 × optimal. Proven, not hoped.
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>The other great escape from worst-case hardness: stop being
+  predictable. <a href="randomized.html">Randomized algorithms</a> —
+  where the adversary can't aim at a coin flip.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "approximation",
+    "questions": [
+      { "q": "The vertex-cover proof bounds the algorithm against OPT without ever computing OPT. How?",
+        "choices": ["It estimates OPT by sampling",
+                    "Via a computable lower bound: the grabbed matching M satisfies OPT ≥ |M| (disjoint edges each demand a cover node), and ours is exactly 2|M| — sandwiching OPT without knowing it",
+                    "It runs brute force in the background"],
+        "answer": 1,
+        "explain": "The universal template of approximation proofs: find a quantity the optimum can't beat, relate your output to that quantity. MST plays the same role for metric TSP." },
+      { "q": "The demo measured the 2-approximation at ratio 1.33. What does the '2' still add?",
+        "choices": ["Nothing — measurements beat theory",
+                    "The 1.33 is this instance; the 2 is EVERY instance, including adversarial ones you haven't met. Guarantees are about the inputs your benchmarks don't contain",
+                    "The 2 means it's twice as fast"],
+        "answer": 1,
+        "explain": "Nearest-neighbor TSP measured 1.18 on the same page yet guarantees nothing — a malicious instance sends it arbitrarily high. Which number belongs in an SLA?" },
+      { "q": "Why does general TSP (no triangle inequality) admit NO constant-factor approximation unless P=NP?",
+        "choices": ["The distances get too large to store",
+                    "A ρ-approximation could decide Hamiltonian cycle exactly: encode edges as cost 1 and non-edges as an astronomically larger cost — any ρ-approximate tour under threshold must use only real edges",
+                    "Random instances are too hard"],
+        "answer": 1,
+        "explain": "Approximation hardness by reduction (last page's tool!): a too-good approximator for B would solve exactly a known-hard A. The gap in costs makes 'approximate' collapse into 'exact'." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      /* ----- vertex cover (seed 7 graph, results verified by brute force) ----- */
+      const EDGES = [[0,1],[0,2],[0,8],[0,11],[1,2],[1,5],[1,11],[2,4],[2,5],[2,6],
+                     [2,10],[3,11],[4,5],[4,8],[4,9],[6,8],[6,9],[7,8],[7,11]];
+      const OPT_VC = [1, 2, 4, 6, 8, 11];
+      const vcOut = document.getElementById("vc-out");
+      const vcVerdict = document.getElementById("vc-verdict");
+
+      document.getElementById("run-vc").addEventListener("click", () => {
+        const cover = new Set(); const matching = [];
+        for (const [u, v] of EDGES)
+          if (!cover.has(u) && !cover.has(v)) { cover.add(u); cover.add(v); matching.push(`${u}–${v}`); }
+        const ok = EDGES.every(([u, v]) => cover.has(u) || cover.has(v));
+        vcOut.textContent = `grabbed matching {${matching.join(", ")}} → cover of ${cover.size} nodes ` +
+          `{${[...cover].sort((a, b) => a - b).join(", ")}} — covers all 19 edges: ${ok ? "✓" : "✗"}`;
+        vcVerdict.textContent = `Guarantee: ≤ 2 × OPT. OPT ≥ ${matching.length} (the matching), ours = ${cover.size}.`;
+      });
+      document.getElementById("show-opt").addEventListener("click", () => {
+        vcVerdict.textContent = `Brute-forced optimum: ${OPT_VC.length} nodes {${OPT_VC.join(", ")}}. ` +
+          `Approximation gave 8 → actual ratio ${(8 / OPT_VC.length).toFixed(2)}, inside the guaranteed 2.00.`;
+      });
+
+      /* ----- TSP (seed 31 cities; optimal verified by 7! enumeration) ----- */
+      const P = [[275,237],[305,33],[178,110],[49,262],[329,193],[142,210],[238,130],[293,32]];
+      const NN_TOUR = [0, 4, 6, 2, 5, 3, 7, 1];       // len 1010.0
+      const OPT_TOUR = [0, 4, 1, 7, 6, 2, 5, 3];      // len 859.3
+      const svg = document.getElementById("tsp");
+      const NS = "http://www.w3.org/2000/svg";
+      const tspOut = document.getElementById("tsp-out");
+      const dist = (a, b) => Math.hypot(P[a][0] - P[b][0], P[a][1] - P[b][1]);
+      const len = (t) => t.reduce((s, _, i) => s + dist(t[i], t[(i + 1) % t.length]), 0);
+
+      function drawCities() {
+        svg.innerHTML = "";
+        P.forEach(([x, y], i) => {
+          const c = document.createElementNS(NS, "circle");
+          c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 7);
+          c.setAttribute("fill", i === 0 ? "var(--accent)" : "var(--bg-soft)");
+          c.setAttribute("stroke", "var(--accent)"); c.setAttribute("stroke-width", 2);
+          svg.appendChild(c);
+          const t = document.createElementNS(NS, "text");
+          t.setAttribute("x", x + 10); t.setAttribute("y", y - 8);
+          t.setAttribute("fill", "var(--text-soft)"); t.setAttribute("font-size", "11");
+          t.textContent = i;
+          svg.appendChild(t);
+        });
+      }
+      function drawTour(tour, color, dashed) {
+        const path = document.createElementNS(NS, "polyline");
+        const pts = [...tour, tour[0]].map((i) => P[i].join(",")).join(" ");
+        path.setAttribute("points", pts);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", color);
+        path.setAttribute("stroke-width", 2.5);
+        if (dashed) path.setAttribute("stroke-dasharray", "7 5");
+        svg.prepend(path);
+      }
+
+      drawCities();
+      document.getElementById("run-nn").addEventListener("click", () => {
+        drawCities(); drawTour(NN_TOUR, "var(--bad)");
+        tspOut.textContent = `nearest neighbor from city 0: tour length ${len(NN_TOUR).toFixed(1)} — always grabs the closest unvisited city, pays for it on the way home.`;
+      });
+      document.getElementById("run-opt").addEventListener("click", () => {
+        drawCities(); drawTour(OPT_TOUR, "var(--good)");
+        tspOut.textContent = `optimal tour (all 5,040 orders tried): length ${len(OPT_TOUR).toFixed(1)}.`;
+      });
+      document.getElementById("run-both").addEventListener("click", () => {
+        drawCities(); drawTour(OPT_TOUR, "var(--good)"); drawTour(NN_TOUR, "var(--bad)", true);
+        tspOut.textContent = `overlay — greedy (dashed) ${len(NN_TOUR).toFixed(1)} vs optimal ${len(OPT_TOUR).toFixed(1)}: ratio ${(len(NN_TOUR) / len(OPT_TOUR)).toFixed(2)}. No theorem holds that ratio down.`;
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

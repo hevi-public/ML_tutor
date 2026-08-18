@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Depth-first search — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="bfs.html|Breadth-first search">
+  <meta name="algo:next" content="topological-sort.html|DAGs and topological sort">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 4 · Graphs</p>
+  <h1>Depth-first search: follow one thread to its end</h1>
+  <p class="lede">Change one word in BFS — <em>stack</em> instead of
+  <em>queue</em> — and exploration flips personality: instead of rippling
+  outward evenly, it dives down one path as far as it can go, then backtracks.
+  Worse at distances, but far better at seeing <em>structure</em>: cycles,
+  ordering, connectivity, components.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="bfs.html">BFS</a> — this page is one edit away from it — and
+    <a href="../01-foundations/recursion.html">recursion</a>, DFS's native
+    habitat.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Same frontier loop as BFS, but take the <em>newest</em> entry instead of
+  the oldest (last in, first out). Since the newest entry is a neighbor of
+  whatever you just processed, the algorithm keeps pushing deeper along the
+  current path — and only when it runs out of unseen neighbors does it fall
+  back to the previous branch point. That fall-back is
+  <strong>backtracking</strong>, and you already own the perfect machine for
+  it: the call stack. Written recursively, DFS is four lines, and "backtrack"
+  is just <code>return</code>.</p>
+  <p>Same O(|V| + |E|) bound, same seen-set, same cycle-proofing. What
+  changes is the <em>order</em> — and the order is the payload. The exact
+  moments DFS enters and leaves each node turn out to encode the graph's
+  deep structure, which the next two pages will cash in for topological
+  ordering and component detection.</p>
+
+  <h2>Watch it run</h2>
+  <p>The same city graph BFS explored, the same starting node — compare the
+  personalities. The amber ring is the frontier (here: the stack); watch the
+  visit order snake deep along a single path and backtrack, instead of
+  rippling. Numbers show visit order:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Everything tree- or nesting-shaped: directory walks, JSON/AST
+    traversal, compilers resolving imports, dead-code elimination.
+    Dependency resolution is DFS (a package's dependencies install before the
+    package — that's the "leave" order). Deadlock detectors run DFS over
+    waits-for graphs hunting cycles. Maze solvers and puzzle searchers go
+    depth-first because the answer is deep and memory is precious: DFS holds
+    one path, BFS holds a whole ripple — the same reason agent frameworks
+    exploring tool-call trees go depth-first with backtracking.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Recursive vs explicit stack — the same algorithm</summary>
+    <div class="layer-body">
+      <p>Recursive DFS uses the language's call stack as the frontier: the
+      stack frames ARE the current path. That's the clearest version and the
+      one to write by default. The explicit-stack version (what this demo
+      runs, so it can yield events) matters when the graph is deep enough to
+      overflow the call stack — a linked-list-shaped graph of 100,000 nodes
+      will crash a recursive walker in most runtimes. Production traversals
+      of untrusted structure (crawlers, serializers) use the explicit stack
+      for exactly that reason. Unit 1's
+      <a href="../01-foundations/recursion.html">call-stack page</a> is this
+      trade-off's home.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Entry/exit times and edge classification</summary>
+    <div class="layer-body">
+      <p>Give each node a clock tick when DFS first enters it and another
+      when it finally leaves (all neighbors exhausted). These timestamps
+      classify every edge in the graph: <strong>tree edges</strong> (led to a
+      new node), <strong>back edges</strong> (point at a node still on the
+      current path — still "open"), <strong>forward/cross edges</strong>
+      (everything else, pointing at already-closed nodes). One theorem does a
+      lot of work: <em>a directed graph has a cycle if and only if DFS finds
+      a back edge</em> — a back edge closes a loop with the path above it.
+      And sorting nodes by descending exit time yields a valid topological
+      order of a DAG — the next page builds exactly this, from a different
+      angle. Nesting structure is why this works: any two nodes'
+      [entry, exit] intervals either nest or don't overlap at all, like
+      well-formed parentheses.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// One loop, two data structures, two algorithms
+// (the demo's exact code — assets/js/algo/graphs.js, events elided):
+function traverse(graph, start, container) {
+  const adj = adjacency(graph);
+  const seen = new Set([start]);
+  const frontier = [start];
+  while (frontier.length) {
+    const u = container === "queue"
+      ? frontier.shift()    // oldest first → BFS, the ripple
+      : frontier.pop();     // newest first → DFS, the deep dive
+    for (const { to } of adj.get(u)) {
+      if (!seen.has(to)) { seen.add(to); frontier.push(to); }
+    }
+  }
+}
+
+// The recursive twin — the version you'd actually write:
+function dfs(adj, u, seen = new Set()) {
+  seen.add(u);
+  for (const { to } of adj.get(u))
+    if (!seen.has(to)) dfs(adj, to, seen);
+}   // returning = backtracking</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>DFS's superpower is structure, and the first structure worth extracting
+  is <em>order</em>: which things must happen before which. That's
+  <a href="topological-sort.html">topological sort</a> — the algorithm inside
+  every build system you've ever used, and, pleasingly, the algorithm that
+  ordered this course's own pages.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "dfs",
+    "questions": [
+      { "q": "BFS and DFS differ by exactly one operation. Which?",
+        "choices": ["DFS marks nodes seen at visit time instead of discovery time",
+                    "How the frontier hands back its next node: queue (oldest, FIFO) for BFS, stack (newest, LIFO) for DFS",
+                    "DFS only works on directed graphs"],
+        "answer": 1,
+        "explain": "Same loop, same seen-set, same complexity. The frontier's discipline alone decides whether exploration ripples or dives — a beautiful example of a data structure choice BEING the algorithm." },
+      { "q": "You're traversing a user-supplied object graph that might be a 500,000-node chain. Recursive or explicit stack?",
+        "choices": ["Recursive — it's cleaner",
+                    "Explicit stack — recursion depth equals path depth, and a long chain will overflow the call stack; the heap-allocated stack just grows",
+                    "Neither — use BFS, it can't overflow"],
+        "answer": 1,
+        "explain": "Stack overflow on deep inputs is a real production failure mode of recursive DFS. (BFS swaps the risk for a different cost: its queue can hold an enormous frontier.)" },
+      { "q": "Why is DFS — not BFS — the natural engine for cycle detection in a directed graph?",
+        "choices": ["DFS is faster on cyclic graphs",
+                    "DFS knows the current path: an edge back to a node still on that path (a back edge) is a cycle, immediately. BFS's ripple keeps no path context",
+                    "BFS cannot visit a node twice"],
+        "answer": 1,
+        "explain": "The stack (or recursion) holds exactly the nodes between the start and here — so \"have I looped back onto my own path?\" is a set lookup. That back-edge test powers deadlock detectors and the next page's cycle check." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = window.AlgoGraphs.preset("city");
+      graph.edges.forEach((e) => delete e.w);
+
+      const state = {};
+      let order;
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+        order = 0;
+        for (const e of window.AlgoGraphs.dfs(graph, "A")) {
+          window.AlgoGraphViz.applyEvent(state, e);
+          if (e.type === "visit") state.nodeLabel[e.u] = "#" + (++order);
+          if (e.type === "discover" && e.from !== null)
+            state.edgeState[window.AlgoGraphViz.edgeKey(e.from, e.u)] = "tree";
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "DFS animation", height: 340 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { visit: "visits", discover: "discoveries", check: "edge checks" },
+        describe: (e) =>
+          e.type === "visit" ? `visiting ${e.u} — popped from the top of the stack` :
+          e.type === "discover" ? (e.from === null
+            ? `${e.u} is the start`
+            : `discovered ${e.u} via ${e.from} — pushed onto the stack`) :
+          e.type === "check" ? `checking edge ${e.u} – ${e.v}` :
+          e.type === "done" ? `done — ${e.visited} nodes reached` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

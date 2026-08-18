@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bipartite matching — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Graphs, advanced">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="max-flow.html|Max flow, min cut">
+  <meta name="algo:next" content="../06-strategies/choosing-a-strategy.html|Choosing a strategy">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 5 · Graphs, advanced</p>
+  <h1>Bipartite matching: assignment, solved by plumbing</h1>
+  <p class="lede">Reviewers to pull requests, jobs to machines, students to
+  projects — pair up two camps, each member used at most once, as many pairs
+  as possible. It looks like a fresh problem needing a fresh algorithm. It
+  isn't: three lines of graph surgery turn it into max flow, and the
+  surgery — a <em>reduction</em> — is the real lesson of the page.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="max-flow.html">Max flow</a> (the engine underneath) and
+    <a href="../04-graphs/cycles-and-bipartite.html">bipartite graphs</a>
+    (the two-camp shape, and how to verify it).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Given workers on the left, jobs on the right, and edges for "this
+  worker can do this job", a <strong>matching</strong> picks edges sharing
+  no endpoint. To maximize it, build a flow network: a source with a
+  capacity-1 edge to every worker, a capacity-1 edge from every job to a
+  sink, and capacity 1 on all the "can do" edges. Run max flow. Every unit
+  of flow must cross one worker→job edge, and the capacity-1 collars mean
+  no worker or job carries two units — <strong>integer flows ARE
+  matchings</strong>, value for value. Max flow = max matching, and the
+  saturated middle edges name the pairs.</p>
+  <p>Better yet, the flow machinery <em>explains</em> matching's classic
+  trick. An augmenting path here alternates unmatched-matched-unmatched
+  edges: "give worker 1 the job worker 2 held; move worker 2 to a free
+  job" — the residual reverse edge is what lets assignments be stolen and
+  cascaded. The rerouting you watched on the last page is reassignment
+  wearing overalls.</p>
+
+  <h2>Watch it run</h2>
+  <p>Four candidates, three jobs, capacity-1 plumbing added (src/snk).
+  Watch each augmenting path claim a pairing — and the third path
+  <em>reassign</em>: it routes through a reverse edge, bumping an earlier
+  pairing to make room. Final flow: 3 — and one candidate provably
+  unplaceable:</p>
+  <div class="demo">
+    <div id="viz"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Assignment is a daily shape: reviewers↔PRs, on-call slots↔engineers,
+    ads↔impressions, riders↔drivers, GPUs↔training jobs, org-donor
+    exchanges. Weighted versions (maximize total preference, not just
+    count) get the Hungarian algorithm or min-cost flow — same family.
+    The dual result (König's theorem, layered below) powers scheduling
+    proofs; and stable matching — where both sides have <em>preferences</em>
+    and you want no pair tempted to elope — is the Gale-Shapley algorithm
+    running hospital-residency and school-choice systems, a cousin worth
+    knowing exists.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why integer flows are exactly matchings</summary>
+    <div class="layer-body">
+      <p>Two directions. Matching → flow: push 1 unit along
+      src → worker → job → snk for each pair; disjoint endpoints mean no
+      capacity is exceeded — a valid flow of the same value. Flow →
+      matching: with integer capacities, Edmonds-Karp only ever pushes
+      integer bottlenecks (an easy induction), so every edge carries 0 or
+      1; the capacity-1 source edge means each worker emits at most one
+      unit, sink edges likewise for jobs — the saturated middle edges share
+      no endpoints. Values match both ways, so the maxima coincide. This
+      "solutions correspond, values agree" argument is what makes a
+      reduction trustworthy — unit 11 builds a whole theory on arguments of
+      exactly this shape.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>König's theorem, and the faster specialist</summary>
+    <div class="layer-body">
+      <p>Max-flow = min-cut, translated into matching language, becomes
+      <strong>König's theorem</strong>: in bipartite graphs, max matching =
+      minimum <em>vertex cover</em> (fewest nodes touching every edge). Your
+      demo's unplaceable candidate isn't bad luck — there's a 3-node cover
+      certifying no 4th pairing exists. When you outgrow the generic
+      engine: <strong>Hopcroft-Karp</strong> finds augmenting paths in
+      batches (all shortest ones per BFS phase), and only
+      O(√|V|) phases are ever needed — O(|E|√|V|) total, the standard for
+      big bipartite instances. Not animated here (<span class="sim-note"
+      style="padding:0">the phase batching is bookkeeping-heavy on
+      screen</span>); it is Edmonds-Karp's idea, specialized and
+      accelerated.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The whole reduction — the demo builds this then calls maxFlow unchanged:
+function maxMatching(workers, jobs, canDo) {
+  const g = { directed: true, nodes: [], edges: [] };
+  g.nodes.push({ id: "src" }, { id: "snk" }, ...workers, ...jobs);
+  for (const w of workers) g.edges.push({ u: "src", v: w.id, w: 1 });  // 1 job each
+  for (const j of jobs)    g.edges.push({ u: j.id, v: "snk", w: 1 });  // 1 worker each
+  for (const [w, j] of canDo) g.edges.push({ u: w, v: j, w: 1 });      // the options
+  return maxFlow(g, "src", "snk");   // flow value = matching size;
+}                                    // saturated middle edges = the pairs</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p><strong>Unit 5 complete</strong> — the graph classics are yours:
+  shortest paths three ways, aimed search, cheapest connection, knot
+  detection, throughput, and assignment. Unit 6 changes altitude: instead
+  of more algorithms, <a href="../06-strategies/choosing-a-strategy.html">
+  the strategies for inventing them</a> — greedy, divide & conquer, dynamic
+  programming, backtracking — and how to tell which one a new problem is
+  asking for.</p>
+
+  <script type="application/json" class="symbols">
+  { "V": { "name": "|V| — the number of vertices", "pron": "say: size of vee",
+           "means": "how many nodes the graph has", "short": "node count" },
+    "E": { "name": "|E| — the number of edges", "pron": "say: size of ee",
+           "means": "how many connections the graph has", "short": "edge count" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "matching",
+    "questions": [
+      { "q": "In the flow reduction, what enforces \"each worker takes at most one job\"?",
+        "choices": ["A constraint checked after the flow runs",
+                    "The capacity-1 edge from the source to that worker — at most one unit can ever enter, so at most one worker→job edge can carry flow",
+                    "Workers appear only once in the node list"],
+        "answer": 1,
+        "explain": "Constraints become capacities — the essence of the encoding. Want a worker who can take TWO jobs? Set that source edge's capacity to 2. The reduction bends without breaking." },
+      { "q": "What does an augmenting path through a residual reverse edge mean in matching terms?",
+        "choices": ["The algorithm made an error and is retrying",
+                    "A reassignment cascade: an existing pairing is undone so its job frees up, its worker moves elsewhere, and the net matching grows by one",
+                    "Two workers swap salaries"],
+        "answer": 1,
+        "explain": "\"Steal the job, relocate the victim\" is exactly flow cancellation. Matching theory calls these alternating paths; flow theory had already built the machinery — one idea, two vocabularies." },
+      { "q": "Why is reducing matching to max flow better engineering than coding a bespoke matcher from scratch?",
+        "choices": ["Reductions always run faster than direct algorithms",
+                    "You inherit a solved problem's correctness proof, its tooling, and its variants (capacities > 1, costs) for three lines of setup — and you can still swap in Hopcroft-Karp when scale demands",
+                    "Bespoke matchers can't be correct"],
+        "answer": 1,
+        "explain": "\"Reshape the problem until it's one you've already solved\" is among the highest-leverage moves in this course — and recognizing when it's NOT possible becomes unit 11's whole subject." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const graph = {
+        directed: true,
+        nodes: [
+          { id: "src", x: 0.04, y: 0.50 },
+          { id: "w1", x: 0.32, y: 0.12 }, { id: "w2", x: 0.32, y: 0.38 },
+          { id: "w3", x: 0.32, y: 0.64 }, { id: "w4", x: 0.32, y: 0.90 },
+          { id: "j1", x: 0.68, y: 0.20 }, { id: "j2", x: 0.68, y: 0.50 },
+          { id: "j3", x: 0.68, y: 0.80 },
+          { id: "snk", x: 0.96, y: 0.50 },
+        ],
+        edges: [
+          { u: "src", v: "w1", w: 1 }, { u: "src", v: "w2", w: 1 },
+          { u: "src", v: "w3", w: 1 }, { u: "src", v: "w4", w: 1 },
+          { u: "j1", v: "snk", w: 1 }, { u: "j2", v: "snk", w: 1 },
+          { u: "j3", v: "snk", w: 1 },
+          { u: "w1", v: "j1", w: 1 }, { u: "w1", v: "j2", w: 1 },
+          { u: "w2", v: "j1", w: 1 }, { u: "w3", v: "j3", w: 1 },
+          { u: "w4", v: "j3", w: 1 },
+        ],
+      };
+      const verdict = document.getElementById("verdict");
+
+      const state = {};
+      function* tracked() {
+        state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+        const pairs = {};
+        for (const e of window.AlgoGraphs.maxFlow(graph, "src", "snk")) {
+          if (e.type === "flow") { state.edgeState = {}; state.nodeState = {}; }
+          window.AlgoGraphViz.applyEvent(state, e);
+          if (e.type === "flow") {
+            for (const [u, v] of e.path) {
+              if (u.startsWith("w") && v.startsWith("j")) pairs[u] = v;
+              if (u.startsWith("j") && v.startsWith("w")) delete pairs[v]; // reassigned away
+            }
+            for (const [w, j] of Object.entries(pairs)) {
+              state.edgeState[window.AlgoGraphViz.edgeKey(w, j)] = "path";
+            }
+          }
+          if (e.type === "done") {
+            const placed = Object.keys(pairs).sort();
+            const out = graph.nodes.filter((n) => n.id.startsWith("w") && !pairs[n.id]).map((n) => n.id);
+            verdict.textContent = `Max matching: ${e.flow} — ` +
+              placed.map((w) => `${w}→${pairs[w]}`).join(", ") +
+              (out.length ? `. ${out.join(", ")} can't be placed (König's cover proves it, not bad luck).` : ".");
+          }
+          yield e;
+        }
+      }
+
+      const viz = window.AlgoGraphViz.create(document.getElementById("viz"),
+        { label: "Matching via max flow", height: 340 });
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState, nodeLabel: state.nodeLabel, edgeState: state.edgeState })),
+        render: (snap, event) => viz.draw(graph, snap, event),
+        counters: { flow: "pairings made", discover: "BFS discoveries" },
+        describe: (e) =>
+          e.type === "discover" ? `BFS: ${e.u} reachable via ${e.from}` :
+          e.type === "flow" ? (e.path.some(([u]) => u.startsWith("j"))
+            ? `augmenting with reassignment: an earlier pairing is bumped to fit one more`
+            : `pairing claimed along ${e.path.map(([u]) => u).join("→")}→snk`) :
+          e.type === "done" ? `no augmenting path left — matching of ${e.flow} is maximum` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

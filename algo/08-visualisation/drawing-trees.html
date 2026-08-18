@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drawing trees (Reingold–Tilford) — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Visualisation">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="why-visualise.html|Why visualise?">
+  <meta name="algo:next" content="drawing-graphs.html|Drawing graphs: force-directed layout">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/structures.js"></script>
+  <script defer src="../assets/js/viz/layout.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Visualisation</p>
+  <h1>Drawing trees: tidiness is an algorithm</h1>
+  <p class="lede">Depth going down is obvious. The hard question is
+  <em>x</em>: place every node so nothing overlaps, siblings sit in
+  order, parents center over children — and the drawing wastes no width.
+  This page is the algorithm behind every org chart, AST viewer, and this
+  course's own tree renderer.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/dfs.html">DFS</a> (layout passes are tree
+    walks); the trees themselves came from
+    <a href="../02-structures/binary-search-trees.html">unit 2</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Fix y = depth. For x, the classic aesthetic rules (Wetherell-Shannon,
+  then Reingold-Tilford 1981): (1) no overlaps, (2) siblings left to
+  right in order, (3) a parent centered over its children, (4) identical
+  subtrees drawn identically wherever they appear, (5) as narrow as
+  possible. The workable core is two DFS passes.
+  <strong>Pass 1 (post-order)</strong>: lay out each subtree
+  independently, as if alone. <strong>Pass 2</strong>: when subtrees
+  become siblings, slide the right one leftward until it just barely
+  clears the left one, then center the parent over the group.</p>
+  <p>The refinement that made R-T famous is <em>how</em> "just barely
+  clears" is computed: each subtree keeps a <strong>contour</strong> —
+  the leftmost/rightmost x at every depth — so sibling separation is a
+  single walk down two contours instead of comparing every pair of
+  nodes. With one more trick (threads linking contour nodes), the whole
+  layout is O(n). This site's renderer implements the honest simplified
+  version — leaf slots plus parent centering — which satisfies rules
+  1–3 and is what the demo below runs; the contour machinery is what
+  you'd add for rule 4/5 perfection.</p>
+
+  <h2>See it</h2>
+  <p>A random BST, laid out two ways. Left: naive "x = in-order index" —
+  correct but sprawling, every node burns a column. Right: the tidy
+  layout — subtrees pack, parents center. Insert nodes and watch both
+  adapt:</p>
+  <div class="demo">
+    <div class="buttons" style="margin-bottom:0.5rem">
+      <button type="button" class="action secondary" id="insert">insert a random key</button>
+      <button type="button" class="action secondary" id="reset">start over</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem">
+      <div>
+        <p class="hint" style="margin:0">in-order columns (width = n)</p>
+        <div id="viz-naive"></div>
+      </div>
+      <div>
+        <p class="hint" style="margin:0">tidy (width = leaves, parents centered)</p>
+        <div id="viz-tidy"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Org charts, file-tree views, AST/expression debuggers, decision
+    trees in ML tooling, phylogenies, DOM inspectors — d3's
+    <code>d3.tree()</code> is literally Reingold-Tilford (via
+    Buchheim's O(n) variant), so every d3 tree on every dashboard runs
+    this algorithm. Flame graphs are the icicle variant (width = a
+    metric instead of leaf count). And this course used the simplified
+    version before you knew: unit 6's Huffman forest and the trie page
+    laid out their trees with this exact code — pages teaching pages.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why greedy per-subtree layout is safe here</summary>
+    <div class="layer-body">
+      <p>A layout algorithm optimizing "minimum width without overlap"
+      sounds like it could need global search. The R-T insight is a
+      separator argument (tree DP's cousin): subtrees interact only
+      through their contours — the deepest silhouettes facing each
+      other. Once siblings are pushed together contour-to-contour,
+      nothing outside that pair can create an overlap between them, so
+      local packing composes into a global optimum (for fixed sibling
+      order). Compare unit 6: same reason tree DP needed only
+      (incl, excl) per subtree. Trees keep being the structure where
+      local reasoning is enough — which is also why the next page, on
+      general graphs, has to abandon exactness entirely.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The site's actual renderer (assets/js/viz/layout.js):
+function tidyTree(root) {
+  let slot = 0;
+  (function place(node) {
+    if (!node.children.length) {
+      node.x = slot++;                    // leaves claim slots left to right
+    } else {
+      node.children.forEach(place);      // post-order: children first
+      node.x = (node.children[0].x +     // parent centers over its kids
+                node.children.at(-1).x) / 2;
+    }
+  })(root);
+  // y = depth; normalize x by total slots. Full R-T adds contour-merging
+  // so identical subtrees render identically and width is optimal.
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Trees are the easy case — no cycles, clean hierarchy. General
+  graphs have neither, and their layout algorithm gives up on rules
+  entirely in favor of <em>physics</em>:
+  <a href="drawing-graphs.html">force-directed layout</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "drawing-trees",
+    "questions": [
+      { "q": "Why does the tidy layout run post-order (children before parents)?",
+        "choices": ["Pre-order would visit nodes twice",
+                    "A parent's x is DEFINED by its children's final positions (centered over them) — the dependency order of the computation dictates the traversal order",
+                    "Post-order is alphabetical"],
+        "answer": 1,
+        "explain": "Same lesson as DP fill order and topological sort: the traversal isn't a style choice, it's the dependency structure made explicit. Layout is a computation over the tree." },
+      { "q": "What do contours buy the full Reingold-Tilford algorithm?",
+        "choices": ["Prettier curved edges",
+                    "Sibling separation in one walk down two silhouettes instead of comparing all node pairs — turning subtree packing from O(n²) toward O(n)",
+                    "Support for unordered trees"],
+        "answer": 1,
+        "explain": "The contour is a summary: 'the extremes at each depth are all that matters for collision'. Summarize-what-the-neighbor-needs is the same move as tree DP's (incl, excl) pair." },
+      { "q": "A flame graph gives each frame a width equal to its CPU time, children nested inside parents. Which layout is that?",
+        "choices": ["Force-directed layout",
+                    "The tidy-tree family with the slot rule changed: width flows from a measured value instead of leaf count — an icicle layout, same recursion, different sizing function",
+                    "A treemap"],
+        "answer": 1,
+        "explain": "Recognizing the recursion under a familiar tool is the point of this unit: flame graphs, icicles, and org charts are one algorithm wearing three outfits. (Treemaps — next pages — nest areas instead.)" } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      let seed = 99;
+      let keys = [];
+      const vizN = window.AlgoGraphViz.create(document.getElementById("viz-naive"),
+        { label: "naive layout", height: 300, r: 14, width: 430 });
+      const vizT = window.AlgoGraphViz.create(document.getElementById("viz-tidy"),
+        { label: "tidy layout", height: 300, r: 14, width: 430 });
+
+      function bstInsertPlain(root, key) {
+        if (!root) return { key, left: null, right: null };
+        if (key < root.key) root.left = bstInsertPlain(root.left, key);
+        else if (key > root.key) root.right = bstInsertPlain(root.right, key);
+        return root;
+      }
+
+      function draw() {
+        let root = null;
+        for (const k of keys) root = bstInsertPlain(root, k);
+        if (!root) return;
+
+        // naive: x = in-order rank
+        const order = [];
+        (function inorder(n, depth) {
+          if (!n) return;
+          inorder(n.left, depth + 1);
+          n.depth = depth; n.rank = order.length; order.push(n);
+          inorder(n.right, depth + 1);
+        })(root, 0);
+        const maxDepth = Math.max(...order.map((n) => n.depth), 1);
+        const gN = { directed: false, nodes: [], edges: [] };
+        for (const n of order) {
+          gN.nodes.push({ id: "n" + n.key, label: String(n.key),
+            x: order.length === 1 ? 0.5 : n.rank / (order.length - 1) * 0.9 + 0.05,
+            y: 0.08 + (n.depth / maxDepth) * 0.84 });
+          if (n.left) gN.edges.push({ u: "n" + n.key, v: "n" + n.left.key });
+          if (n.right) gN.edges.push({ u: "n" + n.key, v: "n" + n.right.key });
+        }
+        vizN.draw(gN, {}, null);
+
+        // tidy: convert to children[] form and use the site's layout
+        function conv(n) {
+          if (!n) return null;
+          const c = [conv(n.left), conv(n.right)].filter(Boolean);
+          return { id: "t" + n.key, key: n.key, children: c };
+        }
+        const layout = window.AlgoLayout.tidyTree(conv(root));
+        const gT = { directed: false, nodes: [], edges: [] };
+        for (const n of layout.nodes) {
+          gT.nodes.push({ id: n.id, label: String(n.key),
+            x: 0.05 + n.x * 0.9, y: 0.08 + n.y * 0.84 });
+        }
+        for (const l of layout.links) gT.edges.push({ u: l.from.id, v: l.to.id });
+        vizT.draw(gT, {}, null);
+      }
+
+      function reset() {
+        seed = 99;
+        const rng = window.AlgoRandom.rng(seed);
+        keys = [];
+        for (let i = 0; i < 9; i++) {
+          const k = 1 + Math.floor(rng() * 99);
+          if (!keys.includes(k)) keys.push(k);
+        }
+        draw();
+      }
+      document.getElementById("insert").addEventListener("click", () => {
+        seed++;
+        const rng = window.AlgoRandom.rng(seed * 7);
+        let k = 1 + Math.floor(rng() * 99);
+        while (keys.includes(k)) k = (k % 99) + 1;
+        keys.push(k);
+        draw();
+      });
+      document.getElementById("reset").addEventListener("click", reset);
+      reset();
+    });
+  </script>
+</main>
+</body>
+</html>

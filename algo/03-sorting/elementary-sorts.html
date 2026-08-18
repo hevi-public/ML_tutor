@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Selection, insertion, bubble — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Sorting &amp; searching">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="binary-search.html|Binary search, done right">
+  <meta name="algo:next" content="merge-sort.html|Merge sort and divide &amp; conquer">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/sorts.js"></script>
+  <script defer src="../assets/js/viz/array.js"></script>
+  <script defer src="../assets/js/viz/complexity-chart.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 3 · Sorting &amp; searching</p>
+  <h1>The elementary sorts: three ways to spend n²</h1>
+  <p class="lede">Selection, insertion, bubble — all quadratic, all
+  "obsolete", and all still worth an hour: they're where sorting's key ideas
+  (invariants, stability, adaptivity) are easiest to see, and one of them
+  secretly ships inside every production sort you use.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    The staircase sum from <a href="../01-foundations/math-toolkit.html">the
+    math toolkit</a> — all three of these pay it.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Each maintains a sorted region and grows it, with a different invariant:</p>
+  <p><strong>Selection sort:</strong> "the first i slots hold the i smallest
+  values, in final position." Scan the rest for the minimum, swap it in.
+  Always exactly the staircase of comparisons, even on sorted input — but the
+  fewest swaps of any sort (n−1), which once mattered when writes were
+  expensive.</p>
+  <p><strong>Insertion sort:</strong> "the first i slots are sorted (not
+  necessarily final)." Take the next value, slide it left to its place. On
+  random input: the staircase. On <em>nearly-sorted</em> input: almost
+  nothing — each element moves only as far as it's out of place. This
+  <em>adaptivity</em> is why insertion sort survives inside grown-up sorts.</p>
+  <p><strong>Bubble sort:</strong> sweep, swapping adjacent inversions;
+  repeat. Same staircase, more swaps, no compensating virtue — its job on
+  this site is to be the honest baseline the others beat.</p>
+
+  <h2>Watch them race</h2>
+  <p>The same 28 shuffled values, three algorithms. Play all three and watch
+  the counters — then look below at what happens across input sizes:</p>
+  <div class="demo"><p><strong>Selection</strong></p>
+    <canvas id="sel-canvas" width="880" height="130" aria-label="Selection sort"></canvas>
+    <div id="sel-stepper"></div></div>
+  <div class="demo"><p><strong>Insertion</strong></p>
+    <canvas id="ins-canvas" width="880" height="130" aria-label="Insertion sort"></canvas>
+    <div id="ins-stepper"></div></div>
+  <div class="demo"><p><strong>Bubble</strong></p>
+    <canvas id="bub-canvas" width="880" height="130" aria-label="Bubble sort"></canvas>
+    <div id="bub-stepper"></div></div>
+
+  <h2>The measurement</h2>
+  <p>Comparisons across sizes — shuffled input (solid story: all quadratic)
+  versus <em>nearly-sorted</em> input for insertion sort (the outlier that
+  matters):</p>
+  <div class="demo">
+    <div id="chart"></div>
+    <p class="hint">Insertion on nearly-sorted input hugs the straight line —
+    linear when the data is almost in order. That's why real-world sorts
+    (Timsort, pdqsort, your language's built-in) hand small or nearly-sorted
+    runs to insertion sort: production data is nearly-sorted far more often
+    than chance would suggest (appended logs, resorted lists, merged
+    feeds).</p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Directly: insertion sort runs inside Timsort (Python, Java, and
+    JavaScript's <code>Array.sort</code> in several engines) for runs under
+    ~32 elements, and inside C++'s introsort below similar thresholds — so
+    most sorts your programs perform end their recursion in this page.
+    Conceptually: "keep a sorted prefix and insert into it" is how you
+    maintain a sorted list under streaming inserts, and "count the swaps
+    bubble sort would make" is exactly the inversions metric used to measure
+    how out-of-order a feed or ranking is.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Stability — the property that decides real arguments</summary>
+    <div class="layer-body">
+      <p>A sort is <strong>stable</strong> if equal keys keep their original
+      relative order. Sort orders by amount, then stably by date: rows with
+      the same date remain amount-ordered — multi-key sorting by chaining
+      simple sorts. Insertion and bubble are stable; selection (as written)
+      is not — the long-distance swap can leapfrog equal keys. Stability is
+      also the difference between "sorted the invoices" and "sorted the
+      invoices, scrambling same-day order" — a bug class that surfaces in
+      UIs and reports, not in unit tests with distinct keys.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Show the math — inversions price insertion sort exactly</summary>
+    <div class="layer-body">
+      <p>An <em>inversion</em> is a pair out of order (i &lt; j but
+      a[i] &gt; a[j]). Insertion sort's slides = the inversion count exactly:
+      each adjacent swap fixes precisely one inversion. Shuffled input has
+      ~n²/4 inversions on average (each pair 50/50) — quadratic. K-sorted
+      input (each element ≤ k slots from home) has ≤ nk — linear for small k.
+      One number, both behaviours explained. Bubble sort's swaps equal the
+      same count; it just spends more comparisons finding them.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Insertion sort — the one that earns its keep (assets/js/algo/sorts.js).
+function* insertionSort(a) {
+  for (let i = 1; i < a.length; i++) {
+    const value = a[i];
+    let j = i - 1;
+    while (j >= 0) {
+      yield { type: "compare", i: j, j: i };
+      if (a[j] <= value) break;          // found its place — adaptive exit
+      a[j + 1] = a[j];                   // slide one slot right
+      yield { type: "set", i: j + 1, value: a[j] };
+      j--;
+    }
+    a[j + 1] = value;
+    yield { type: "set", i: j + 1, value };
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>All three spend the staircase because they move information one
+  comparison-and-slide at a time. Beating n² needs a structurally different
+  move: split, solve, and merge —
+  <a href="merge-sort.html">merge sort</a>, where unit 1's recurrences pay
+  off.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "elementary-sorts",
+    "questions": [
+      { "q": "Your feed is \"nearly sorted\" — items drift at most 5 positions. Which elementary sort exploits that, and why?",
+        "choices": ["Selection — fewest swaps",
+                    "Insertion — its work equals the inversion count, which is at most 5n here: linear",
+                    "Bubble — early exit helps"],
+        "answer": 1,
+        "explain": "Insertion sort is adaptive: cost = inversions. Selection sort can't benefit — it scans the whole remainder every round regardless of order." },
+      { "q": "Sort by amount, then stably sort by date. What does stability guarantee about the result?",
+        "choices": ["It's faster than one combined sort",
+                    "Same-date rows remain in amount order — the two-pass chain implements sort-by-(date, amount)",
+                    "Nothing observable"],
+        "answer": 1,
+        "explain": "Stable sorts preserve prior order among equal keys, which is what makes multi-key sorting by chaining work. An unstable second pass scrambles the first pass's work." },
+      { "q": "Why do production sorts like Timsort delegate small runs to insertion sort rather than recursing all the way down?",
+        "choices": ["Tradition",
+                    "Below ~32 elements, insertion sort's simplicity and cache behaviour beat the overhead of clever algorithms — and real data's near-sortedness plays to its adaptivity",
+                    "Insertion sort is O(n log n) for small n"],
+        "answer": 1,
+        "explain": "Asymptotics pick winners at scale; constants pick winners in the base case. Grown-up sorts are hybrids for exactly this reason." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const base = window.AlgoRandom.ints(28, 10, 300, 777);
+      function wire(canvasId, stepperId, genName) {
+        const arr = base.slice();
+        const viz = window.AlgoArrayViz.create(document.getElementById(canvasId));
+        const max = Math.max(...arr);
+        window.AlgoSteps.player(document.getElementById(stepperId), {
+          make: () => window.AlgoSorts[genName](arr),
+          capture: () => ({ array: arr.slice(), max }),
+          render: (snap, event) => viz.draw(snap, event),
+          counters: { compare: "comparisons", swap: "swaps", set: "writes" },
+        });
+      }
+      wire("sel-canvas", "sel-stepper", "selectionSort");
+      wire("ins-canvas", "ins-stepper", "insertionSort");
+      wire("bub-canvas", "bub-stepper", "bubbleSort");
+
+      const shuffled = (n) => window.AlgoRandom.ints(n, 0, 1000, n);
+      const nearly = (n) => {                       // each element ≤3 from home
+        const a = Array.from({ length: n }, (_, i) => i);
+        for (let i = 0; i < n - 1; i += 4) { [a[i], a[i + 1]] = [a[i + 1], a[i]]; }
+        return a;
+      };
+      window.AlgoComplexityChart.render(document.getElementById("chart"), {
+        sizes: [8, 16, 32, 64, 128, 256],
+        series: [
+          { label: "insertion, shuffled", color: "#f97316",
+            make: (n) => window.AlgoSorts.insertionSort(shuffled(n)),
+            count: ["compare"], claim: { label: "the n² shape", f: (n) => n * n } },
+          { label: "selection, shuffled", color: "#a855f7",
+            make: (n) => window.AlgoSorts.selectionSort(shuffled(n)),
+            count: ["compare"], claim: { label: "the n² shape", f: (n) => n * n } },
+          { label: "insertion, nearly-sorted", color: "#0ea5e9",
+            make: (n) => window.AlgoSorts.insertionSort(nearly(n)),
+            count: ["compare"], claim: { label: "the straight line", f: (n) => n } },
+        ],
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suffix arrays — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Strings">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="tries.html|Tries">
+  <meta name="algo:next" content="../08-visualisation/why-visualise.html|Why visualise?">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/strings.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Strings</p>
+  <h1>Suffix arrays: index once, search forever</h1>
+  <p class="lede">Flip the unit's question. Instead of scanning a text per
+  query, spend effort <em>once</em> building an index that answers every
+  future substring query in logarithmic time. The index is almost
+  embarrassingly simple: the text's suffixes, sorted. Everything else is
+  consequences.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-sorting/binary-search.html">Binary search</a> does the
+    querying; <a href="tries.html">tries</a> explain the family
+    resemblance (a suffix array is a flattened suffix trie).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Key fact: <em>every substring of a text is a prefix of some
+  suffix</em>. <code>nan</code> occurs in <code>banana</code> because
+  <code>nan…</code> starts the suffix at index 2. So: list all n
+  suffixes, sort them lexicographically, store only their <em>starting
+  indexes</em> — that integer list is the <strong>suffix array</strong>.
+  Now any pattern's occurrences form one <em>contiguous run</em> in the
+  sorted order (everything starting with <code>an</code> sorts
+  together), and binary search finds the run in
+  <span class="math">O(m \log n)</span> comparisons. The text stays
+  untouched; the index is n integers.</p>
+
+  <h2>Watch it run</h2>
+  <p><code>banana</code>'s six suffixes fall into sorted order —
+  watch the a-suffixes cluster. Then try the search boxes: any pattern,
+  answered by binary search over this little table:</p>
+  <div class="demo">
+    <div id="sa-view" style="font-family:var(--mono);font-size:0.95rem;line-height:1.9;margin-bottom:0.5rem"></div>
+    <div id="stepper"></div>
+    <p style="margin:0.6rem 0 0">
+      <label class="hint">search <code>banana</code> for:
+        <input id="query" value="an" maxlength="6"
+          style="font:inherit;width:5rem;padding:0.15rem 0.3rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">
+      </label>
+      <span class="hint" id="query-result" style="font-weight:600"></span>
+    </p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Genome browsers and read aligners (BWA — the B is for
+    Burrows-Wheeler, the suffix array's compressed sibling) index
+    3-billion-character genomes for instant substring lookup;
+    bioinformatics could not exist on per-query scanning. Full-text
+    search of code (early Google Code Search famously ran on suffix
+    arrays), plagiarism detection, and data-compression analysis (the
+    longest-repeated-substring question) all live here. The
+    Burrows-Wheeler transform inside bzip2 IS a suffix sort. And LCP
+    analysis over corpus suffixes is one way training pipelines hunt
+    duplicated passages before they hit the model.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Construction cost — the honest ladder</summary>
+    <div class="layer-body">
+      <p>This demo sorts suffixes with plain string comparison:
+      O(n² log n) worst case — fine for a banana, hopeless for a genome.
+      The classic fix is <strong>prefix doubling</strong>: rank all
+      suffixes by their first character, then use those ranks to sort by
+      the first 2, then 4, then 8… — each doubling is a sort of integer
+      <em>pairs</em> (rank of first half, rank of second half), so
+      O(n log n) overall, log n rounds. Linear-time constructions exist
+      (SA-IS is the modern standard, and is what real libraries ship).
+      The ladder — naive, doubling, SA-IS — is a nice case study in how
+      far an index that "is just sorting" can be engineered when n is
+      three billion.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>The LCP array — the index's second half</summary>
+    <div class="layer-body">
+      <p>Store alongside: LCP[k] = the length of the longest common
+      prefix between the k-th and (k−1)-th suffixes in sorted order.
+      For banana's order [5 a, 3 ana, 1 anana, 0 banana, 4 na, 2 nana],
+      LCP = [—, 1, 3, 0, 0, 2]. With it: the longest repeated substring
+      is just max(LCP) (<code>ana</code>, length 3 — note the two
+      occurrences overlap!); counting distinct substrings, document
+      similarity, and faster binary search all become array arithmetic.
+      Kasai's algorithm builds LCP in O(n) from the suffix array — the
+      pair together are "the poor man's suffix tree": nearly all of that
+      structure's power, a fraction of its memory and code.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Build (teaching version — see the layer for the real ladder):
+const sa = Array.from({ length: n }, (_, i) => i)
+  .sort((a, b) => text.slice(a) < text.slice(b) ? -1 : 1);
+
+// Query: binary search for the run of suffixes starting with `pat`
+function lowerBound(pat) {
+  let lo = 0, hi = n;
+  while (lo < hi) {                       // unit 3's loop, verbatim
+    const mid = (lo + hi) >> 1;
+    if (text.slice(sa[mid], sa[mid] + pat.length) < pat) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;      // first suffix ≥ pat; a matching run starts here (if any)
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p><strong>Unit 7 complete.</strong> A deliberate change of pace next:
+  unit 8 turns the course's own rendering machinery into subject matter —
+  <a href="../08-visualisation/why-visualise.html">how to draw data and
+  algorithms so that humans can check them</a> — before unit 9 assembles
+  everything into production systems.</p>
+
+  <script type="application/json" class="symbols">
+  { "sa": { "name": "SA — the suffix array", "pron": "say: ess-ay",
+           "means": "the suffixes' starting indexes, in lexicographic order of the suffixes", "short": "suffix array" },
+    "lcp": { "name": "LCP[k] — longest common prefix", "pron": "say: el-see-pee",
+           "means": "how many characters sorted neighbors k−1 and k share — the key to repeated-substring questions", "short": "LCP array" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "suffix-arrays",
+    "questions": [
+      { "q": "Why do all occurrences of a pattern form ONE contiguous block in the suffix array?",
+        "choices": ["The construction groups them deliberately",
+                    "Every occurrence is a suffix starting with the pattern, and lexicographic sorting places all strings sharing a prefix next to each other — binary search then finds the block's edges",
+                    "Only non-overlapping occurrences do"],
+        "answer": 1,
+        "explain": "Substring = prefix of a suffix + sorted order clusters shared prefixes. Two small facts compose into an O(m log n) query on an index of plain integers." },
+      { "q": "When is a suffix array worth building instead of running KMP per query?",
+        "choices": ["Always — it strictly dominates",
+                    "When the TEXT is stable and queried many times: pay construction once, then each query is O(m log n) instead of O(n + m) — the classic index-vs-scan trade-off",
+                    "Only for small alphabets"],
+        "answer": 1,
+        "explain": "One grep through a log: scan (KMP family). A genome served to thousands of queries: index. Same reasoning as adding a database index — amortize preparation over query volume." },
+      { "q": "banana's max LCP is 3, for 'ana' — but 'ana' appears at positions 1 and 3, overlapping. What does that remind you about repeated-substring reasoning?",
+        "choices": ["The LCP array has a bug",
+                    "Repeats can overlap themselves — sorted-neighbor suffixes 'ana…' and 'anana…' share 3 characters even though the occurrences share text. Definitions of 'repeated' must say whether overlap counts",
+                    "Only palindromes overlap"],
+        "answer": 1,
+        "explain": "A classic off-by-subtlety: dedup and compression tooling must decide if overlapping repeats matter. The suffix array states the facts; the spec has to interpret them." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const TEXT = "banana";
+      const view = document.getElementById("sa-view");
+      const queryBox = document.getElementById("query");
+      const queryResult = document.getElementById("query-result");
+      let sa = null;
+
+      const state = {};
+      function* tracked() {
+        state.rows = [];
+        for (const e of window.AlgoStrings.suffixArray(TEXT)) {
+          if (e.type === "rank") state.rows.push({ k: e.k, i: e.i, suffix: e.suffix });
+          if (e.type === "done") sa = e.sa;
+          yield e;
+        }
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ rows: (state.rows || []).slice() }),
+        render: (snap, event) => {
+          view.innerHTML = snap.rows.map((r) =>
+            `<div${event && event.type === "rank" && event.k === r.k
+              ? ' style="color:var(--accent);font-weight:700"' : ""}>` +
+            `rank ${r.k}: suffix ${r.i} — "${r.suffix}"</div>`).join("") ||
+            '<span class="hint">press play to sort the suffixes…</span>';
+        },
+        counters: { rank: "suffixes placed" },
+        describe: (e) =>
+          e.type === "rank" ? `rank ${e.k}: the suffix starting at ${e.i} ("${e.suffix}")` :
+          e.type === "done" ? `suffix array: [${e.sa.join(", ")}] — six integers index every substring` : "",
+      });
+
+      function runQuery() {
+        if (!sa) { queryResult.textContent = "(run the sort first)"; return; }
+        const pat = queryBox.value;
+        if (!pat) { queryResult.textContent = ""; return; }
+        const at = (i) => TEXT.slice(sa[i], sa[i] + pat.length);
+        let lo = 0, hi = sa.length;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (at(mid) < pat) lo = mid + 1; else hi = mid; }
+        const start = lo;
+        hi = sa.length;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (at(mid) <= pat && at(mid) === pat) lo = mid + 1; else hi = mid; }
+        const hits = sa.slice(start, lo).sort((a, b) => a - b);
+        queryResult.textContent = hits.length
+          ? `→ found at position${hits.length > 1 ? "s" : ""} ${hits.join(", ")} (suffix-array rows ${start}–${lo - 1})`
+          : "→ not a substring";
+      }
+      queryBox.addEventListener("input", runQuery);
+      // run once the recording exists (player records synchronously on load)
+      runQuery();
+    });
+  </script>
+</main>
+</body>
+</html>

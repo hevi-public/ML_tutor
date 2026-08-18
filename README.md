@@ -1,6 +1,6 @@
-# ML Tutor, Bass Tutor, Git Tutor & Web Dev Reference
+# ML Tutor, Bass Tutor, Git Tutor, Algorithms Tutor & Web Dev Reference
 
-Three interactive courses and one working developer's reference on a single
+Four interactive courses and one working developer's reference on a single
 static site — plain HTML/CSS/JS, no build step, everything runs in your
 browser. Plain language first: every symbol is named, every concept opens with
 an everyday analogy before the jargon arrives.
@@ -21,6 +21,14 @@ an everyday analogy before the jargon arrives.
   your browser** — a full git implementation (isomorphic-git) on a browser
   filesystem — so `rebase --onto` and `reset --hard` can be practised on a
   repository that doesn't matter.
+- **[Algorithms Tutor](algo/index.html)** (`algo/`) — the CS degree the working
+  developer skipped, taught through the systems they already ship: data
+  structures, sorting, **graph theory as the centerpiece**, dynamic programming,
+  strings, NP-completeness — plus a visualisation unit (the site teaches its own
+  renderers) and a production/LLM-systems unit (vector search, knowledge graphs,
+  orchestration DAGs, tokenizers). Every algorithm is one steppable
+  implementation with live operation counters, and the labs grade your own
+  code in a sandboxed worker — reporting the complexity it actually exhibits.
 - **[Web Dev Reference](web/index.html)** (`web/`) — the full stack in a
   reference shape rather than a course one: Angular, RxJS, Vitest and pnpm on
   the front end; Kotlin, Spring Boot, Gradle, PostgreSQL, jOOQ and Jackson on
@@ -36,6 +44,7 @@ npm install
 npm run dev        # serves on http://localhost:8010 (ML tutor)
 npm run dev:bass   # same server, opens the bass tutor
 npm run dev:git    # same server, opens the git tutor
+npm run dev:algo   # same server, opens the algorithms tutor
 npm run dev:web    # same server, opens the web dev reference
 ```
 
@@ -48,13 +57,13 @@ site.
 
 ## Deployment (GitHub Pages)
 
-`.github/workflows/pages.yml` deploys all four tracks to GitHub Pages on every
+`.github/workflows/pages.yml` deploys all five tracks to GitHub Pages on every
 push to `main`: it installs the vendored libraries (KaTeX, highlight.js,
 VexFlow, isomorphic-git, lightning-fs), rebuilds the search indexes, verifies
 the git sandbox against the runner's real `git` binary, checks the Web Dev
 Reference's link registry, and publishes the site — ML tutor at the site root,
-bass tutor under `/bass/`, git tutor under `/git/`, web dev reference under
-`/web/`.
+bass tutor under `/bass/`, git tutor under `/git/`, algorithms tutor under
+`/algo/`, web dev reference under `/web/`.
 
 One-time setup: after the first push to `main`, the workflow enables Pages
 automatically. If that first run complains about Pages not being configured,
@@ -133,9 +142,21 @@ a different anomaly per isolation level because the rules, not a script,
 decide. Plus a version filter — set which versions you're on and every badge
 site-wide tells you whether it applies to you yet.
 
-All four sites keep state in `localStorage` under separate namespaces
-(`ml-tutor:*` / `bass-tutor:*` / `git-tutor:*` / `web-ref:*`) — nothing leaves
-your browser.
+**Algorithms Tutor** — complete: units 0–11 (foundations → data structures →
+sorting → two units of graphs → design strategies → strings → visualisation →
+production & LLM systems → labs → expert track), 82 pages. Every algorithm is
+one steppable ES-generator implementation feeding play/pause/scrub players,
+with live operation counters plotted against the claimed Big-O. A graph editor
+lets you draw your own graphs and run any unit 4–5 algorithm on them; six
+graded labs execute your code in a sandboxed Web Worker against adversarial
+tests (the DP lab's timeout doubles as an exponential-blowup detector); and
+the concept map lays out all 82 pages with the course's own force-directed
+layout generator. Glossary (72 terms), notation reference, full-text search
+and spaced-repetition flashcards fed by missed quiz questions round it out.
+
+All five sites keep state in `localStorage` under separate namespaces
+(`ml-tutor:*` / `bass-tutor:*` / `git-tutor:*` / `algo-tutor:*` / `web-ref:*`)
+— nothing leaves your browser.
 
 ## Maintenance scripts
 
@@ -143,6 +164,7 @@ your browser.
 npm run build:index   # rebuild data/search-index.json (ML) after editing pages
 npm run build:bass    # rebuild bass/data/search-index.json + exercise-index.json
 npm run build:git     # rebuild git/data/search-index.json + lab-index.json
+npm run build:algo    # rebuild algo/data/search-index.json + lab-index.json (validates too)
 npm run build:web     # rebuild web/data/search-index.json (pages + changes + docs)
 npm run verify:git    # build every git fixture and check it against the real git CLI
 npm run check:links   # validate web/data/links.json — see below
@@ -164,10 +186,11 @@ existence for `#fragment` URLs. Add `-- --offline` to skip the network passes;
 that is the form CI runs, since a documentation site being unreachable should
 never block a deploy.
 
-See `PLAN.md` (ML), `bass/PLAN.md` (bass), `git/PLAN.md` (git) and
+See `PLAN.md` (ML), `bass/PLAN.md` (bass), `git/PLAN.md` (git),
+`algo/PLAN.md` (algorithms) and
 `web/PLAN.md` (reference) for architecture and the page-template contracts
-(`assets/page-template.html`, `bass/assets/page-template.html` and
-`git/assets/page-template.html` for topic pages,
+(`assets/page-template.html`, `bass/assets/page-template.html`,
+`git/assets/page-template.html` and `algo/assets/page-template.html` for topic pages,
 `bass/assets/session-template.html` for hands-on sessions,
 `web/assets/page-template.html` for reference pages).
 

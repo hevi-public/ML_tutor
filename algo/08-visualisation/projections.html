@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projections: seeing high dimensions — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Visualisation">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="matrices-and-maps.html|Matrices, treemaps and bundling">
+  <meta name="algo:next" content="../09-systems/dependency-graphs.html|Dependency graphs and orchestration">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 8 · Visualisation</p>
+  <h1>Projections: drawing what has no x and y</h1>
+  <p class="lede">Embeddings — the coordinates LLM systems think in — live
+  in hundreds of dimensions. A screen has two. Every "map of our
+  documents" you've seen is a <em>projection</em>: an algorithm that
+  chose, out of infinitely many flattenings, one that (it hopes) keeps
+  what matters. Knowing what each family keeps — and quietly destroys —
+  is the unit's parting skill.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="why-visualise.html">Encodings</a>. If you've met vectors and
+    dot products anywhere (the ML track's linear-algebra pages count),
+    you're ahead; the demo needs neither.
+  </div>
+
+  <h2>The idea</h2>
+  <p>The naive projection: pick two of the original axes and drop the
+  rest. Cheap, faithful to the chosen pair — and blind to structure
+  living in the discarded dimensions; two clusters separated along a
+  dropped axis land exactly on top of each other. <strong>PCA</strong>
+  (principal component analysis) fixes the arbitrariness: it rotates the
+  cloud to find the two orthogonal directions along which the data
+  spreads <em>most</em>, and projects onto those. Linear, deterministic,
+  fast — and honest in a precise sense: on-screen distances are true
+  distances' shadows, only ever shrunk, never invented.</p>
+  <p>The famous nonlinear family — <strong>t-SNE and UMAP</strong> — asks
+  a different question: not "preserve global spread" but "keep each
+  point's <em>neighbors</em> next to it", letting the map warp globally
+  to make local neighborhoods crisp. That's what draws those satisfying
+  cluster islands of embedding atlases — at the price that
+  <em>between-island distances and island sizes mean little</em>, and
+  hyperparameters can manufacture or merge clusters. Powerful, standard,
+  and to be read like a caricature: excellent likeness, deliberate
+  distortion.</p>
+
+  <h2>See it</h2>
+  <p>200 points in 5 dimensions — three seeded clusters whose separation
+  lives mostly in dimensions 3–5. Left: projecting onto raw axes 1–2
+  (clusters overlap — their difference was elsewhere). Right: PCA's two
+  best directions, computed live on this page — the clusters separate:</p>
+  <div class="demo">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+      <div>
+        <p class="hint" style="margin:0">raw axes (dims 1 &amp; 2)</p>
+        <canvas id="proj-raw" width="400" height="320" style="width:100%;max-width:400px"></canvas>
+      </div>
+      <div>
+        <p class="hint" style="margin:0">PCA (top 2 components)</p>
+        <canvas id="proj-pca" width="400" height="320" style="width:100%;max-width:400px"></canvas>
+      </div>
+    </div>
+    <p class="hint" id="var-line"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Embedding atlases of document stores and support tickets
+    ("clusters = topics"), model-debugging views in TensorBoard-style
+    tools, single-cell genomics maps, and every conference slide showing
+    LLM tokens as a galaxy — overwhelmingly t-SNE/UMAP pictures.
+    Production caveats travel with them: retrieval quality lives in the
+    ORIGINAL space (unit 9's vector search never touches the 2-D map),
+    the map is diagnostic only; and cluster count/shape can be
+    hyperparameter artifacts — rerun with different perplexity before
+    believing a story. PCA earns daily keep more quietly: dimensionality
+    reduction before clustering, whitening features, and compressing
+    embeddings for cheaper ANN indexes.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>PCA in one paragraph of honest math</summary>
+    <div class="layer-body">
+      <p>Center the data; its covariance matrix records how dimensions
+      co-vary. PCA's components are that matrix's eigenvectors, ordered
+      by eigenvalue — equivalently, the directions maximizing projected
+      variance. Each eigenvalue's share of the total is the variance
+      that component explains — the demo's caption quotes it, and it's
+      the honesty meter: two components explaining 85% mean the flat
+      picture is a good shadow; 30% means most structure was flattened
+      away, whatever the picture seems to show. (This demo finds the top
+      components by power iteration — multiply, normalize, repeat —
+      unit 9 territory: it's the same idea PageRank runs on.)</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Reading a t-SNE/UMAP map without being fooled</summary>
+    <div class="layer-body">
+      <p class="sim-note" style="margin:0">Narrated, not simulated —
+      the algorithms are gradient-descent optimizations beyond this
+      page's demo budget. The reading rules: (1) trust
+      <em>membership</em> — points sharing an island are genuinely
+      similar; (2) distrust island <em>sizes</em> (t-SNE expands dense
+      clusters), <em>distances between islands</em> (mostly
+      meaningless), and apparent density; (3) rerun with different
+      perplexity/neighbors before reporting cluster counts; (4) never
+      compute anything downstream on the 2-D coordinates — cluster and
+      retrieve in the original space. Treat the map as a brilliant,
+      unreliable narrator.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// This page's exact demo code — PCA via power iteration:
+function topComponent(X) {                  // X: centered n×d data
+  let v = randomUnit(d);
+  for (let it = 0; it < 60; it++) {
+    let w = new Array(d).fill(0);           // w = Covariance · v, done as
+    for (const row of X) {                  //   Σ (row·v) row  — no d×d
+      const s = dot(row, v);                //   matrix ever materialized
+      for (let j = 0; j < d; j++) w[j] += s * row[j];
+    }
+    v = normalize(w);                       // multiply, normalize, repeat
+  }
+  return v;                                 // converges to the top eigenvector
+}
+// 2nd component: subtract each row's projection on v, run again.</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p><strong>Unit 8 complete</strong> — you now know how every picture in
+  this course was made, and which picture fits which question. Unit 9
+  cashes in everything: <a href="../09-systems/dependency-graphs.html">
+  the production &amp; LLM systems unit</a>, where graphs orchestrate,
+  vectors get searched, and the embeddings this page projected become
+  the working data.</p>
+
+  <script type="application/json" class="symbols">
+  { "pc": { "name": "principal components", "pron": "say: principal components",
+           "means": "the orthogonal directions of greatest variance — PCA projects onto the top two for a screen", "short": "PCA axes" },
+    "var": { "name": "explained variance", "pron": "say: explained variance",
+           "means": "the share of total spread the kept components carry — the honesty meter of a PCA picture", "short": "variance share" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "projections",
+    "questions": [
+      { "q": "Raw axes 1–2 overlapped the clusters; PCA separated them. What did PCA actually do differently?",
+        "choices": ["It moved the clusters apart",
+                    "It ROTATED first: found the directions where the data genuinely spreads most (wherever they point in 5-D) and projected onto those, instead of onto two arbitrary original axes",
+                    "It removed outliers"],
+        "answer": 1,
+        "explain": "Projection always discards dimensions; PCA just chooses the least destructive ones by variance. Same data, same screen, different two directions — that's the whole difference." },
+      { "q": "In a t-SNE map of your document embeddings, two islands sit far apart. What can you conclude?",
+        "choices": ["The two topics are maximally dissimilar",
+                    "Almost nothing from the distance itself — t-SNE preserves local neighborhoods and freely distorts global geometry; island MEMBERSHIP is meaningful, island spacing mostly isn't",
+                    "The embedding model failed"],
+        "answer": 1,
+        "explain": "The caricature rule: trust who's grouped with whom, distrust sizes and between-group distances, and rerun with other hyperparameters before reporting structure to stakeholders." },
+      { "q": "A teammate wants to speed up retrieval by running nearest-neighbor search on the 2-D UMAP coordinates. Why is that wrong?",
+        "choices": ["2-D arrays are slower than 100-D arrays",
+                    "The projection destroyed most similarity information by design — neighbors in the map only approximate true neighbors locally. Retrieval must run in the original embedding space (unit 9's ANN indexes exist for exactly this)",
+                    "UMAP coordinates change on every run, so caching breaks"],
+        "answer": 1,
+        "explain": "Maps are for humans; math belongs in the source space. (The nondeterminism is ALSO true, but the fundamental error is computing on a lossy shadow.)" } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+      const COLORS = [cssVar("--accent") || "#047857", "#d97706", "#3f83f8"];
+      const D = 5, PER = 66;
+      const rng = window.AlgoRandom.rng(31337);
+      const gauss = () => (rng() + rng() + rng() + rng() - 2) * 1.1;
+
+      // 3 clusters; separation mostly in dims 2,3,4 (0-indexed)
+      const centers = [
+        [0.2, -0.1, 3.0, -2.0, 1.5],
+        [-0.3, 0.2, -2.5, 2.2, -1.0],
+        [0.1, 0.1, 0.5, 3.1, 3.2],
+      ];
+      const pts = [], label = [];
+      centers.forEach((c, ci) => {
+        for (let i = 0; i < PER; i++) {
+          pts.push(c.map((v) => v + gauss()));
+          label.push(ci);
+        }
+      });
+
+      // center
+      const mean = new Array(D).fill(0);
+      for (const p of pts) for (let j = 0; j < D; j++) mean[j] += p[j] / pts.length;
+      const X = pts.map((p) => p.map((v, j) => v - mean[j]));
+
+      const dot = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
+      const norm = (v) => { const n = Math.hypot(...v) || 1; return v.map((x) => x / n); };
+      function topComponent(rows) {
+        let v = norm(Array.from({ length: D }, () => rng() - 0.5));
+        for (let it = 0; it < 80; it++) {
+          const w = new Array(D).fill(0);
+          for (const row of rows) {
+            const s = dot(row, v);
+            for (let j = 0; j < D; j++) w[j] += s * row[j];
+          }
+          v = norm(w);
+        }
+        return v;
+      }
+      const pc1 = topComponent(X);
+      const X2 = X.map((row) => { const s = dot(row, pc1); return row.map((v, j) => v - s * pc1[j]); });
+      const pc2 = topComponent(X2);
+
+      const totalVar = X.reduce((s, r) => s + dot(r, r), 0);
+      const v1 = X.reduce((s, r) => s + dot(r, pc1) ** 2, 0);
+      const v2 = X.reduce((s, r) => s + dot(r, pc2) ** 2, 0);
+      document.getElementById("var-line").textContent =
+        `PCA's two components explain ${Math.round(((v1 + v2) / totalVar) * 100)}% of the total variance — ` +
+        `the honesty meter for the right-hand picture.`;
+
+      function scatter(canvasId, coords) {
+        const ctx = document.getElementById(canvasId).getContext("2d");
+        const xs = coords.map((c) => c[0]), ys = coords.map((c) => c[1]);
+        const xmin = Math.min(...xs), xmax = Math.max(...xs);
+        const ymin = Math.min(...ys), ymax = Math.max(...ys);
+        ctx.clearRect(0, 0, 400, 320);
+        coords.forEach((c, i) => {
+          const x = 14 + ((c[0] - xmin) / (xmax - xmin || 1)) * 372;
+          const y = 14 + ((c[1] - ymin) / (ymax - ymin || 1)) * 292;
+          ctx.fillStyle = COLORS[label[i]];
+          ctx.beginPath();
+          ctx.arc(x, y, 3.4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+      scatter("proj-raw", X.map((r) => [r[0], r[1]]));
+      scatter("proj-pca", X.map((r) => [dot(r, pc1), dot(r, pc2)]));
+    });
+  </script>
+</main>
+</body>
+</html>

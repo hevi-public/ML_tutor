@@ -38,6 +38,7 @@ jobs:
           npm run build:bass
           npm run build:git
           npm run build:web
+          npm run build:algo
 
       # The git tutor's sandbox claims to be real git, so prove it on every
       # deploy: build every fixture with the browser engine and hand the

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Very big and very parallel — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Expert track">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="bit-tricks.html|Bit tricks">
+  <meta name="algo:next" content="further-reading.html|Where this goes next">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 11 · Expert track</p>
+  <h1>Very big and very parallel</h1>
+  <p class="lede">Two ways data outgrows this course's model: it stops
+  fitting in memory, or one processor stops being enough. Both got their
+  own theory, and both theories run on algorithms you already own — mostly
+  unit 3's merge, wearing progressively heavier armor. This page is a
+  guided tour, honestly narrated rather than fully built: the ideas
+  transfer, even where a browser can't truthfully simulate a datacenter.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-sorting/merge-sort.html">Merge sort</a> (the hero of
+    both halves), <a href="../02-structures/heaps.html">heaps</a> (the
+    k-way merge's engine) and
+    <a href="cache-and-memory.html">the memory-hierarchy page</a> (this is
+    its logical conclusion).
+  </div>
+
+  <h2>The idea, half one: count block transfers, not steps</h2>
+  <p>When data lives on disk, the expensive unit isn't an operation — it's
+  a <strong>block transfer</strong> (last page's ratios, escalated: one
+  disk read buys millions of CPU instructions). The external-memory model
+  makes that official: memory holds M items, transfers move B at a time,
+  and cost = number of transfers. The champion is <strong>external merge
+  sort</strong>: read M-sized chunks, sort each in memory, write them back
+  as sorted runs; then merge all runs in one pass with a heap of size k
+  (one "current block" per run — unit 2's heap doing I/O triage). Every
+  block is read once and written once per pass, and with realistic M/B
+  even petabyte inputs need only a pass or two.</p>
+
+  <h2>Watch it run</h2>
+  <p>The merge pass, at block granularity: 4 sorted runs of 24 numbers,
+  block size 8. Watch the read head pull one block at a time per run —
+  only when that run's buffer empties — and full output blocks stream out.
+  Count the transfers:</p>
+  <div class="demo">
+    <div id="runs-view" style="font-family:var(--mono);font-size:0.82rem;line-height:2"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+  <p>The counter lands on <strong>12 reads + 12 writes = 24 transfers</strong>
+  for 96 items — each block moved exactly once each way, the model's
+  optimum for a single merge pass — while the merge quietly performed 277
+  comparisons that the model deliberately prices at zero.</p>
+
+  <div class="box sim-note">
+    <span class="label">Honesty note</span>
+    <p>Nothing here touches a real disk — the demo counts simulated
+    transfers, which is exactly what the external-memory model does too.
+    That's the model's power and its caveat in one: it predicted B-trees
+    and external sort decades before SSDs, but real systems also juggle
+    caching layers, compression and parallel I/O that the clean model
+    ignores.</p>
+  </div>
+
+  <h2>The idea, half two: parallel — count work and span</h2>
+  <p>With p processors, wall-clock cost splits into two numbers.
+  <strong>Work</strong>: total operations (what one processor would do).
+  <strong>Span</strong>: the longest chain of operations that must happen
+  in order — the critical path no army of processors can compress. Merge
+  sort again shows well: the two recursive halves are independent (run
+  them in parallel!), giving Θ(n log n) work but only ~Θ(log³ n) span with
+  a parallel merge — nearly all of it parallelizable. Contrast a running
+  sum, where each step seems to need the previous one — span Θ(n)? — until
+  the <em>parallel prefix</em> trick (unit 1's associativity, weaponized)
+  computes partial sums up and down a tree in Θ(log n) span. And
+  <strong>Amdahl's law</strong> keeps everyone honest: if fraction s of
+  the job is inherently serial, no processor count beats 1/s speedup —
+  5% serial caps you at 20×, forever.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>External merge sort is inside every database's
+    <code>ORDER BY</code> on big tables, every
+    <code>sort(1)</code> on a large file, and unit 9's LSM compaction
+    (which is external merging as a lifestyle). MapReduce/Spark are the
+    parallel half industrialized — the shuffle between map and reduce
+    <em>is</em> a distributed sort/group-by, which is why "big data" began
+    as a sorting benchmark. GPU programming lives on parallel prefix
+    (scan) the way CPUs live on loops. And your build system's dependency
+    graph (unit 9 again) has a critical path — that's span, and it's why
+    16 more CI runners stopped helping after the third one.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer">
+    <summary>The external-memory arithmetic, and where B-trees fit</summary>
+    <div class="layer-body">
+      <p>Sorting N items costs Θ((N/B) · log<sub>M/B</sub>(N/B))
+      transfers — read "number of blocks, times a logarithm whose base is
+      how many runs fit in memory". The base is the quiet monster: with
+      1 GB of memory and 1 MB blocks, M/B ≈ 1000, so each pass multiplies
+      manageable size by a thousand — one merge pass handles a terabyte,
+      two handle an exabyte. This is also unit 9's B-tree story retold:
+      branching factor B turns log₂ into log<sub>B</sub>, collapsing tree
+      height to 3–4 disk reads. Same logarithm-base lever, pulled by
+      storage instead of search.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>MapReduce in this course's vocabulary</summary>
+    <div class="layer-body">
+      <p>Map: apply a function to every record, emitting (key, value)
+      pairs — embarrassingly parallel, zero span cost. Shuffle: route all
+      pairs with equal keys to the same machine — a distributed bucket
+      sort (unit 3's counting/bucket ideas at warehouse scale), and the
+      expensive part, since it's all network I/O. Reduce: fold each key's
+      values — parallel across keys. Word-count, joins, inverted-index
+      building and PageRank iterations all fit the template. Its
+      limitation is span in disguise: iterative algorithms (graph
+      traversals!) pay a full shuffle per round, which is why later
+      systems (Spark, Pregel-style engines) keep state in memory between
+      rounds. The lesson transfers whole: decompose into independent
+      pieces, pay for the coordination, respect the critical path.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The k-way merge at the heart of external sorting — heap of "next item per run".
+function* kWayMerge(runs, B) {                  // runs: arrays on "disk", B: block size
+  const buf = runs.map(() => []), at = runs.map(() => 0);
+  let out = [], transfers = 0;
+  const refill = (i) => {                       // one BLOCK READ — the priced unit
+    buf[i] = runs[i].slice(at[i], at[i] + B); at[i] += B; transfers++;
+  };
+  runs.forEach((_, i) => refill(i));
+  const heap = /* min-heap of [buf[i][0], i] — unit 2 verbatim */ makeHeap(runs, buf);
+  while (heap.size()) {
+    const [v, i] = heap.pop();                  // comparisons: free in this model
+    out.push(v);
+    buf[i].shift();
+    if (!buf[i].length &amp;&amp; at[i] &lt; runs[i].length) refill(i);
+    if (buf[i].length) heap.push([buf[i][0], i]);
+    if (out.length === B) { transfers++; out = []; }   // one BLOCK WRITE
+  }
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>That's the course's last technique. What remains is a map of where to
+  go deeper: <a href="further-reading.html">further reading</a> — books,
+  courses and papers, matched to the units they extend.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "external-and-parallel",
+    "questions": [
+      { "q": "Why does external merge sort's cost model ignore the demo's 277 comparisons and count only the 24 block transfers?",
+        "choices": ["Comparisons are literally free on modern CPUs",
+                    "One disk transfer costs as much as millions of CPU operations, so transfers dominate total time by orders of magnitude — the model prices the bottleneck and rounds everything else to zero, exactly as Big-O rounds away constants",
+                    "The heap does no comparisons in external mode"],
+        "answer": 1,
+        "explain": "Every cost model chooses what to count. RAM-model Big-O counts operations; external-memory counts transfers; the parallel model counts work and span. Choosing the right one IS the analysis." },
+      { "q": "A pipeline is 5% inherently serial. Finance approves 64 extra machines. Amdahl's verdict on the best possible speedup?",
+        "choices": ["~64× — parallelism scales with machines",
+                    "At most 20×, no matter the machine count: the serial 5% needs its full time regardless, so 1/0.05 bounds everything. The 64 machines mostly buy idle time",
+                    "Exactly 32× by the halving rule"],
+        "answer": 1,
+        "explain": "1/s is a hard ceiling, and it's why span/critical-path thinking matters more than core counts. Shrinking the serial fraction beats buying hardware." },
+      { "q": "Your build farm has 24 runners but builds barely got faster after runner 6. The course concept that explains it?",
+        "choices": ["Cache lines are too small",
+                    "The dependency DAG's critical path — its span: the longest prerequisite chain must run sequentially whatever the parallelism, and past enough runners for the DAG's width, extra ones wait on the chain",
+                    "Topological sort is O(V+E) and can't go faster"],
+        "answer": 1,
+        "explain": "Span is unit 9's dependency graph meeting this page: width of the DAG says how many runners help; length of the critical path says when they stop helping." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const B = 8, K = 4, PER_RUN = 24;
+      // seeded sorted runs
+      const rand = window.AlgoRandom.rng(9);
+      const RUNS = Array.from({ length: K }, () =>
+        Array.from({ length: PER_RUN }, () => Math.floor(rand() * 900) + 100).sort((a, b) => a - b));
+      const view = document.getElementById("runs-view");
+      const verdict = document.getElementById("verdict");
+
+      function* merge() {
+        const buf = RUNS.map(() => []), at = RUNS.map(() => 0);
+        let reads = 0, writes = 0, outCount = 0, comparisons = 0;
+        const state = { readBlocks: RUNS.map(() => 0), written: 0, current: null };
+        function* refill(i) {
+          buf[i] = RUNS[i].slice(at[i], at[i] + B); at[i] += B; reads++;
+          state.readBlocks[i]++;
+          yield { type: "read", run: i, reads, writes };
+        }
+        for (let i = 0; i < K; i++) yield* refill(i);
+        while (true) {
+          let bi = -1;
+          for (let i = 0; i < K; i++) {
+            if (!buf[i].length) continue;
+            if (bi === -1) { bi = i; continue; }
+            comparisons++;
+            if (buf[i][0] < buf[bi][0]) bi = i;
+          }
+          if (bi === -1) break;
+          buf[bi].shift();
+          outCount++;
+          if (!buf[bi].length && at[bi] < RUNS[bi].length) yield* refill(bi);
+          if (outCount % B === 0) {
+            writes++; state.written++;
+            yield { type: "write", reads, writes };
+          }
+        }
+        yield { type: "done", reads, writes, comparisons };
+        verdict.textContent = `${reads} block reads + ${writes} block writes = ${reads + writes} transfers ` +
+          `for ${K * PER_RUN} items — and ${comparisons} comparisons the model prices at zero.`;
+      }
+
+      const state = { readBlocks: [0, 0, 0, 0], written: 0 };
+      function* tracked() {
+        state.readBlocks = [0, 0, 0, 0]; state.written = 0;
+        for (const e of merge()) {
+          if (e.type === "read") state.readBlocks[e.run]++;
+          if (e.type === "write") state.written++;
+          yield e;
+        }
+      }
+
+      const block = (on, label) =>
+        `<span style="display:inline-block;width:2.2rem;text-align:center;margin-right:0.25rem;` +
+        `border:1px solid var(--border);border-radius:5px;` +
+        (on ? "background:var(--accent-soft);color:var(--accent);font-weight:700;" : "color:var(--text-soft);") +
+        `">${label}</span>`;
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ readBlocks: (state.readBlocks || [0, 0, 0, 0]).slice(), written: state.written || 0 }),
+        render: (snap) => {
+          view.innerHTML = RUNS.map((_, i) =>
+            `<div>run ${i}: ` +
+            [0, 1, 2].map((b) => block(b < snap.readBlocks[i], b < snap.readBlocks[i] ? "read" : "b" + b)).join("") +
+            `</div>`).join("") +
+            `<div style="margin-top:0.3rem">out:  ` +
+            Array.from({ length: 12 }, (_, b) => block(b < snap.written, b < snap.written ? "✓" : "·")).join("") +
+            `</div>`;
+        },
+        counters: { read: "block reads", write: "block writes" },
+        speed: 3,
+        describe: (e) =>
+          e.type === "read" ? `run ${e.run}'s buffer emptied — read its next block from disk (transfer #${e.reads + e.writes})` :
+          e.type === "write" ? `output buffer full — write one sorted block (transfer #${e.reads + e.writes})` :
+          e.type === "done" ? `merge complete: ${e.reads + e.writes} transfers, ${e.comparisons} free comparisons` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
