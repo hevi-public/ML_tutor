@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Randomized algorithms — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Expert track">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="approximation.html|Approximation algorithms">
+  <meta name="algo:next" content="cache-and-memory.html|When theory meets the clock">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 11 · Expert track</p>
+  <h1>Randomized algorithms: the adversary can't aim at a coin</h1>
+  <p class="lede">Every worst case in this course was somebody choosing the
+  input after reading your code — sorted input for naive quicksort,
+  colliding keys for your hash table. A randomized algorithm makes its
+  choices <em>after</em> the input is fixed, so no input is reliably bad.
+  The price: guarantees become expectations. The proof obligations change,
+  the code barely does.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../03-sorting/quicksort.html">Quicksort</a> (whose worst case
+    this page dissolves) and
+    <a href="../02-structures/hash-tables.html">hash tables</a> (whose
+    whole design is an expected-case bet).
+  </div>
+
+  <h2>The idea</h2>
+  <p>Two species, worth keeping apart by name.
+  <strong>Las Vegas</strong> algorithms are always correct, randomly fast:
+  quicksort with a random pivot sorts correctly every time, and its
+  <em>expected</em> cost is O(n log n) on <em>every</em> input — the
+  expectation is over the algorithm's own coins, not over hoping your
+  users' data is nice. <strong>Monte Carlo</strong> algorithms are always
+  fast, probably correct: Miller–Rabin says "prime" with error ≤ 4⁻ᵏ after
+  k rounds; unit 9's Bloom filter answers membership with a tunable false
+  positive rate. You pick which side of the guarantee bends.</p>
+  <p>And one algorithm every working engineer should know by name:
+  <strong>Fisher–Yates</strong>, the only correct way to shuffle. Walk from
+  the last index down; swap position i with a uniformly random position in
+  [0..i]. Every permutation gets probability exactly 1/n!. The tempting
+  "swap each element with a random index anywhere" is <em>biased</em> — nⁿ
+  equally likely paths cannot land uniformly on n! outcomes, because n!
+  doesn't divide nⁿ.</p>
+
+  <h2>Watch it run</h2>
+  <p>6,000 shuffles of [0, 1, 2], seeded, counted per permutation. Fair
+  dice would give ~1,000 each:</p>
+  <div class="demo">
+    <div class="buttons">
+      <button type="button" class="action" id="run-fy">Fisher–Yates × 6000</button>
+      <button type="button" class="action secondary" id="run-naive">the "obvious" biased shuffle × 6000</button>
+    </div>
+    <div id="bars" style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.5rem;align-items:end;min-height:9rem;margin:0.8rem 0"></div>
+    <p class="readout" id="shuffle-out">Run one — the bars are counted live, seeded for reproducibility.</p>
+  </div>
+  <p>Measured (seed 42): Fisher–Yates lands between <strong>983 and
+  1,022</strong> per permutation — noise around fair. The naive shuffle
+  lands between <strong>885 and 1,135</strong> — a systematic ~11% tilt
+  matching theory exactly: 27 equally likely swap-paths spread over 6
+  permutations give 4/27 to some and 5/27 to others. The bug is invisible
+  in any single output and glaring in aggregate — which is precisely how it
+  ships to production.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Everywhere reliability engineering lives: jittered exponential
+    backoff (randomness prevents synchronized retry stampedes),
+    power-of-two-choices load balancing (random two servers, pick the
+    less loaded — expected max load drops exponentially versus one random
+    choice), per-process hash seeds (the standard defense against the
+    hash-flooding attacks your hash-table lab simulated), Miller–Rabin
+    behind every TLS key generation, reservoir sampling for "pick a fair
+    sample from a stream you can't store". Redis sorted sets run on skip
+    lists — the layered coin-flip structure in the fold-out below. And the
+    shuffle demo is a true cautionary tale: a major browser's randomized
+    ballot for default-browser choice once used a biased comparator
+    shuffle, visibly favoring some vendors.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer">
+    <summary>Why random-pivot quicksort is expected O(n log n) on every input</summary>
+    <div class="layer-body">
+      <p>Fix any input. Consider elements of rank i and j (i &lt; j) in
+      sorted order; they get compared at most once, and only if one of them
+      is the first pivot chosen from the ranks i..j. That's 2 favorable
+      outcomes among j − i + 1 equally likely first-choices, so the
+      probability is 2/(j − i + 1). Summing over all pairs:
+      E[comparisons] = Σ 2/(j − i + 1) ≈ 2n ln n. No assumption about the
+      input anywhere in that sentence — the expectation is over pivots.
+      This <em>indicator variable</em> pattern (probability per pair,
+      summed by linearity of expectation) is the workhorse of expected-case
+      analysis; the same three lines analyze hashing's expected chain
+      length and quickselect's expected O(n).</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Skip lists: a balanced tree from coin flips</summary>
+    <div class="layer-body">
+      <p>A sorted linked list is O(n) to search. Now flip a coin per
+      element: heads, it also joins a second, sparser list; heads again, a
+      third, and so on. Search from the top lane: skim until you'd
+      overshoot, drop a lane, repeat — expected O(log n), because each
+      lane has expected half the density of the one below, exactly like
+      binary search's halving but enforced by probability instead of by
+      rotation gymnastics. Compare unit 2's AVL/red-black machinery:
+      skip lists get the same expected bounds with ~20 lines and no
+      rebalancing cases, which is why Redis chose them for sorted sets.
+      The trade: worst case O(n) with vanishing probability, versus
+      guaranteed O(log n) with implementation pain. Randomness as a
+      complexity-of-code reducer.</p>
+    </div>
+  </details>
+  <details class="layer">
+    <summary>Where the randomness itself comes from — and when mulberry32 is a crime</summary>
+    <div class="layer-body">
+      <p>This site's demos use mulberry32, a seeded PRNG chosen so prose
+      and demo agree forever — determinism as a feature. Games and
+      simulations want exactly that. Security wants the opposite:
+      session tokens, key generation and shuffling anything with money on
+      it need a <em>cryptographically secure</em> source
+      (<code>crypto.getRandomValues</code> in the browser) whose future
+      outputs can't be predicted from past ones. mulberry32's entire
+      future is its 32-bit seed — observing a few outputs reconstructs
+      everything. The classic incident category: online poker sites whose
+      shuffle seed was the server clock, letting observers reconstruct
+      every hand. Fisher–Yates was correct; the coin was counterfeit.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// Fisher–Yates — the site's own shuffle (assets/js/algo/random.js):
+function shuffle(array, rand) {
+  const a = array.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));   // uniform in [0..i] — i+1 choices
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;    // each of the n! orders: probability exactly 1/n!
+}
+// The biased version differs by ONE character class: rand() * a.length —
+// swapping with anywhere instead of [0..i]. n^n paths, n! outcomes, no fit.</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Both escapes from hardness — approximation and randomization — still
+  count abstract steps. The last stretch of the course asks what happens
+  when steps stop being equal:
+  <a href="cache-and-memory.html">caches, memory, and the clock</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "randomized",
+    "questions": [
+      { "q": "\"Random-pivot quicksort is expected O(n log n)\" — expectation over what, exactly?",
+        "choices": ["Over typical user inputs — pathological inputs are still slow every time",
+                    "Over the algorithm's own pivot coins, for EVERY fixed input — no input is reliably slow, because the adversary must commit before the dice roll",
+                    "Over both inputs and pivots equally"],
+        "answer": 1,
+        "explain": "The whole point of randomizing: it converts 'bad inputs exist' into 'bad LUCK exists', and luck can't be submitted through your API by an attacker." },
+      { "q": "Why is the naive shuffle (swap every position with a random ANY position) provably biased for n = 3?",
+        "choices": ["It makes too few swaps",
+                    "It has 3³ = 27 equally likely execution paths, which cannot distribute evenly over 3! = 6 permutations — 27 isn't divisible by 6, so some orders must be hit more often",
+                    "It can return the identity permutation"],
+        "answer": 1,
+        "explain": "A counting argument, no simulation needed — though the demo's 885-vs-1135 bars make it visceral. Fisher–Yates has exactly n! paths, one per permutation." },
+      { "q": "Your service shuffles prize-draw entries with a seeded PRNG (seed = timestamp). Fisher–Yates is implemented perfectly. The vulnerability?",
+        "choices": ["None — Fisher–Yates guarantees uniformity",
+                    "The coin, not the shuffle: a timestamp seed has few plausible values, so an observer can replay candidate seeds, reconstruct the exact shuffle, and predict winners. Uniformity proofs assume unpredictable randomness",
+                    "Timestamps make the shuffle too slow"],
+        "answer": 1,
+        "explain": "The algorithm and its randomness source are separate trust boundaries — the poker-site incident in the fold-out is exactly this failure. Money or secrets ⇒ crypto.getRandomValues." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const PERMS = ["012", "021", "102", "120", "201", "210"];
+      const bars = document.getElementById("bars");
+      const out = document.getElementById("shuffle-out");
+
+      function run(kind) {
+        const rand = window.AlgoRandom.rng(42);
+        const counts = Object.fromEntries(PERMS.map((p) => [p, 0]));
+        for (let r = 0; r < 6000; r++) {
+          const a = [0, 1, 2];
+          if (kind === "fy") {
+            for (let i = 2; i > 0; i--) {
+              const j = Math.floor(rand() * (i + 1));
+              [a[i], a[j]] = [a[j], a[i]];
+            }
+          } else {
+            for (let i = 0; i < 3; i++) {
+              const j = Math.floor(rand() * 3);          // the one-character bug
+              [a[i], a[j]] = [a[j], a[i]];
+            }
+          }
+          counts[a.join("")]++;
+        }
+        const max = Math.max(...Object.values(counts));
+        bars.innerHTML = PERMS.map((p) => {
+          const c = counts[p];
+          const off = Math.abs(c - 1000) > 60;
+          return `<div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:0.8rem">${c}</div>
+            <div style="height:${(c / max) * 100}px;border-radius:4px 4px 0 0;
+                 background:${off ? "var(--bad)" : "var(--good)"};opacity:0.85"></div>
+            <div style="font-family:var(--mono);font-size:0.8rem;color:var(--text-soft)">${p.split("").join("")}</div>
+          </div>`;
+        }).join("");
+        const lo = Math.min(...Object.values(counts)), hi = Math.max(...Object.values(counts));
+        out.textContent = kind === "fy"
+          ? `Fisher–Yates: ${lo}–${hi} per permutation — statistical noise around fair (1000).`
+          : `Naive shuffle: ${lo}–${hi} — a systematic tilt (theory says 889 vs 1111), not noise. Red bars are >6% off fair.`;
+      }
+      document.getElementById("run-fy").addEventListener("click", () => run("fy"));
+      document.getElementById("run-naive").addEventListener("click", () => run("naive"));
+    });
+  </script>
+</main>
+</body>
+</html>
