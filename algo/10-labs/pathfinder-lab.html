@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab: pathfinding race — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Practice labs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="graph-playground.html|Graph playground">
+  <meta name="algo:next" content="dp-lab.html|Lab: dynamic programming">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/labs/runner.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 10 · Practice labs</p>
+  <h1>Lab: pathfinding race</h1>
+  <p class="lede">Implement shortest-path search on the course's own maze
+  model — the same seeded mazes unit 4 animated. The harness checks your
+  path is <em>valid</em> (adjacent open cells, start to goal) and
+  <em>optimal</em> (matches the reference BFS length), across several
+  seeds. Wrong-by-one path lengths and walked-through-walls both get
+  named specifically.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../04-graphs/bfs.html">BFS</a> and
+    <a href="../04-graphs/implicit-graphs.html">the maze model</a>
+    (<code>{w, h, walls: Set("x,y"), start: [x,y], goal: [x,y]}</code>).
+  </div>
+
+  <div id="lab-host"></div>
+
+  <div class="box in-the-wild">
+    <span class="label">The bug families this catches</span>
+    <p>Marking seen at visit instead of discovery (duplicates → wrong
+    lengths on some seeds), forgetting the goal can be the start,
+    diagonal moves (adjacency check fails), path reconstruction reversed
+    or missing the start cell, and DFS submitted as BFS (valid path,
+    non-optimal length — the harness distinguishes these two failures
+    precisely because they teach different lessons).</p>
+  </div>
+
+  <h2>Where this goes next</h2>
+  <p><a href="dp-lab.html">The DP lab</a> — where the harness detects
+  exponential blowup by timing you against an input naive recursion
+  cannot survive.</p>
+
+  <script type="application/json" class="lab">
+  { "labs": [ { "id": "pathfinder-lab", "title": "Shortest path in a maze",
+      "task": "Write findPath(maze) returning the optimal path as an array of \"x,y\" cell keys from start to goal, using the unit-4 maze model.",
+      "goals": ["valid path (open, adjacent cells)", "optimal length on 4 seeds", "unreachable goal → null"] } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      window.AlgoLabs.create(document.getElementById("lab-host"), {
+        id: "pathfinder-lab",
+        pageId: "pathfinder-lab",
+        title: "Shortest path in a maze",
+        fnName: "findPath",
+        imports: ["assets/js/labs/checks.js", "assets/js/algo/random.js", "assets/js/algo/maze.js"],
+        task: `<p>Write <code>findPath(maze)</code>. The maze is unit 4's model:
+          <code>{w, h, walls: Set("x,y"), start: [x,y], goal: [x,y]}</code>.
+          Return the <strong>shortest</strong> path as an array of
+          <code>"x,y"</code> strings from start to goal inclusive — or
+          <code>null</code> if the goal is unreachable. A
+          <code>neighbors(maze, x, y)</code> helper is provided (via
+          <code>AlgoMaze</code>), or roll your own.</p>`,
+        starter: `function findPath(maze) {
+  const key = (x, y) => x + "," + y;
+  // AlgoMaze.neighbors(maze, x, y) → [[nx, ny], ...] of open adjacent cells
+  // BFS with a parent map, then walk parents backward from the goal.
+
+  return null;
+}`,
+        testSource: `
+function runTests(fn) {
+  const results = [];
+  const t = (name, pass, detail) => results.push({ name, pass, detail });
+  const key = (x, y) => x + "," + y;
+
+  function referenceLen(maze) {
+    let last = null;
+    for (const e of AlgoMaze.gridBfs(maze)) if (e.type === "done") last = e.length;
+    return last;
+  }
+  function validate(maze, path) {
+    if (!Array.isArray(path) || !path.length) return "not a non-empty array";
+    if (path[0] !== key(...maze.start)) return "does not start at the start";
+    if (path[path.length - 1] !== key(...maze.goal)) return "does not end at the goal";
+    for (let i = 0; i < path.length; i++) {
+      const [x, y] = path[i].split(",").map(Number);
+      if (maze.walls.has(path[i])) return "walks through a wall at " + path[i];
+      if (x < 0 || y < 0 || x >= maze.w || y >= maze.h) return "leaves the maze at " + path[i];
+      if (i > 0) {
+        const [px, py] = path[i - 1].split(",").map(Number);
+        if (Math.abs(x - px) + Math.abs(y - py) !== 1)
+          return "non-adjacent step " + path[i - 1] + " → " + path[i];
+      }
+    }
+    return null;
+  }
+
+  for (const seed of [7, 11, 23, 42]) {
+    const maze = AlgoMaze.generate(21, 13, seed);
+    const expected = referenceLen(maze);
+    let path;
+    try { path = fn(maze); } catch (err) { t("seed " + seed, false, String(err)); continue; }
+    const invalid = validate(maze, path);
+    if (invalid) { t("seed " + seed + ": path validity", false, invalid); continue; }
+    t("seed " + seed + ": valid path", true);
+    t("seed " + seed + ": OPTIMAL length", path.length - 1 === expected,
+      path.length - 1 === expected ? "" :
+        "yours: " + (path.length - 1) + " steps, shortest: " + expected +
+        (path.length - 1 > expected ? " — valid but not shortest (DFS-ish?)" : " — shorter than possible?!"));
+  }
+
+  // unreachable: wall off the goal
+  const boxed = AlgoMaze.generate(21, 13, 7);
+  const [gx, gy] = boxed.goal;
+  for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) boxed.walls.add(key(gx + dx, gy + dy));
+  let r = null, threw = false;
+  try { r = fn(boxed); } catch (err) { threw = true; }
+  t("walled-off goal → null (and no crash, no infinite loop)", !threw && r === null,
+    threw ? "threw" : (r === null ? "" : "returned a path to an unreachable goal"));
+  return results;
+}`,
+        hint: `<p>The unit-4 recipe verbatim: a queue of cells, a
+          <code>parent</code> Map keyed by <code>"x,y"</code> (start maps to
+          null), mark at <em>discovery</em>. When you dequeue the goal, walk
+          the parent chain backward and reverse it. Exhausted queue with no
+          goal → return null.</p>`,
+        solution: `function findPath(maze) {
+  const key = (x, y) => x + "," + y;
+  const startK = key(...maze.start), goalK = key(...maze.goal);
+  const parent = new Map([[startK, null]]);
+  const queue = [maze.start];
+  while (queue.length) {
+    const [x, y] = queue.shift();
+    if (key(x, y) === goalK) {
+      const path = [];
+      for (let k = goalK; k; k = parent.get(k)) path.unshift(k);
+      return path;
+    }
+    for (const [nx, ny] of AlgoMaze.neighbors(maze, x, y)) {
+      const k = key(nx, ny);
+      if (!parent.has(k)) { parent.set(k, key(x, y)); queue.push([nx, ny]); }
+    }
+  }
+  return null;
+}`,
+      });
+    });
+  </script>
+</main>
+</body>
+</html>

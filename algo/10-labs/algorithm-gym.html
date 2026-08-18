@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The gym — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Practice labs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="dp-lab.html|Lab: dynamic programming">
+  <meta name="algo:next" content="../11-expert/p-and-np.html|P, NP and NP-completeness">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/random.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 10 · Practice labs</p>
+  <h1>The gym: rapid-fire recall</h1>
+  <p class="lede">The course's knowledge, as a workout: ten questions drawn
+  from a mixed drill bank — name the complexity, pick the structure, spot
+  the strategy — against a three-minute clock. Repetition is the point;
+  the bank shuffles differently each session (this page is deliberately
+  unseeded — the one place surprise beats reproducibility).</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Everything. That's the workout.
+  </div>
+
+  <div class="demo">
+    <div class="buttons" style="margin-bottom:0.6rem">
+      <button type="button" class="action" id="start">start a set (10 questions, 3:00)</button>
+      <span class="hint" id="clock" style="margin:0;font-family:var(--mono);font-weight:700"></span>
+    </div>
+    <div id="drill" style="min-height:10rem"></div>
+    <p class="hint" id="score" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Why drills at all</span>
+    <p>The strategy-choice questions of unit 6 only pay off if the
+    recognition is fast enough to happen in a design meeting. Spaced,
+    slightly-pressured recall is the boring, evidence-backed way to get
+    there — and your missed answers here feed the same
+    <a href="../flashcards.html">flashcard deck</a> quiz misses do.</p>
+  </div>
+
+  <h2>Where this goes next</h2>
+  <p>Labs complete. What remains is the summit ridge:
+  <a href="../11-expert/p-and-np.html">the expert track</a> — hardness,
+  reductions, approximation, and where to go when this course runs out.</p>
+
+  <script type="application/json" class="lab">
+  { "labs": [ { "id": "algorithm-gym", "title": "The gym",
+      "task": "Timed mixed drills over the whole course: 10 questions, 3 minutes, misses become flashcards.",
+      "goals": ["finish a set", "misses feed the flashcard deck"] } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const BANK = [
+        ["Lookup by key in a hash table (typical)?", ["O(1)", "O(log n)", "O(n)"], 0, "Average constant; worst degrades with collisions."],
+        ["Search in a balanced BST?", ["O(1)", "O(log n)", "O(n)"], 1, "Height is the cost, and balance pins height to log n."],
+        ["BFS/DFS on a graph?", ["O(|V|·|E|)", "O(|V| + |E|)", "O(|V|²) always"], 1, "Every node once, every edge a constant number of times."],
+        ["Dijkstra with a binary heap?", ["O((|V|+|E|) log |V|)", "O(|V|+|E|)", "O(|V|³)"], 0, "The log factor is the priority queue's fee."],
+        ["Comparison-sort lower bound?", ["O(n)", "Ω(n log n)", "Ω(n²)"], 1, "The decision-tree argument — unit 3's impossibility."],
+        ["\"Fewest hops between two users\" — which algorithm?", ["DFS", "BFS", "Dijkstra"], 1, "Unweighted shortest path is BFS's exact job."],
+        ["\"Cheapest route with tolls\" — which algorithm?", ["BFS", "Dijkstra", "Kruskal"], 1, "Weighted, non-negative, single source."],
+        ["\"Wire all offices with least fiber\" — which?", ["Dijkstra", "MST (Kruskal/Prim)", "Max flow"], 1, "Connect everything cheaply ≠ shortest paths."],
+        ["\"Order tasks with prerequisites\" — which?", ["Topological sort", "Two-coloring", "A*"], 0, "And a stall proves a cycle."],
+        ["\"Are these two records in the same cluster, under streaming merges?\"", ["Union-find", "BFS per query", "Sorting"], 0, "Incremental connectivity is union-find's home."],
+        ["Autocomplete wants which structure?", ["Hash table", "Trie", "Heap"], 1, "Prefix locality — hashing scatters it, the trie stores it."],
+        ["\"Certainly not present / probably present\" in tiny memory?", ["LRU cache", "Bloom filter", "Suffix array"], 1, "One-sided error is the contract."],
+        ["Naive fib is exponential; memoized fib is —", ["O(n)", "O(n log n)", "still exponential"], 0, "Distinct subproblems × O(1) each."],
+        ["Which greedy is provably optimal?", ["Largest-job-first scheduling", "Interval scheduling by earliest finish", "Knapsack by value density"], 1, "The other two have small counterexamples."],
+        ["Edit distance between two strings of length m, n?", ["O(m+n)", "O(m·n)", "O(2^n)"], 1, "The table's size is the cost."],
+        ["KMP's worst-case total time?", ["O(n·m)", "O(n + m)", "O(n log m)"], 1, "The failure function forbids text backtracking."],
+        ["A* stays optimal when its heuristic —", ["never overestimates", "never underestimates", "is exact"], 0, "Admissibility: optimism is safe, pessimism lies."],
+        ["Detecting a directed cycle needs —", ["any revisited node", "a back edge to the current DFS path", "an odd cycle"], 1, "Diamonds revisit without cycles — unit 4's classic trap."],
+        ["An LSM engine's writes are fast because —", ["they skip the WAL", "they're sequential; sorting is deferred to compaction", "SSDs have no seek time"], 1, "Amortized architecture: pay later, sequentially."],
+        ["Consistent hashing exists to —", ["speed up hashing", "move only ~K/N keys when the fleet changes", "encrypt shard keys"], 1, "hash%N reshuffles nearly everything; the ring doesn't."],
+        ["The KV-cache in LLM serving is essentially —", ["an LRU eviction policy", "memoization of attention state", "a Bloom filter"], 1, "Unit 6's idea at the center of inference cost."],
+        ["Beam search trades away —", ["speed", "completeness/optimality guarantees", "the scoring model"], 1, "A capped frontier can evict the true best prefix."],
+      ];
+
+      const drill = document.getElementById("drill");
+      const clock = document.getElementById("clock");
+      const scoreLine = document.getElementById("score");
+      let timer = null;
+
+      document.getElementById("start").addEventListener("click", () => {
+        const qs = BANK.slice();
+        for (let i = qs.length - 1; i > 0; i--) {          // unseeded shuffle
+          const j = Math.floor(Math.random() * (i + 1));
+          [qs[i], qs[j]] = [qs[j], qs[i]];
+        }
+        const set = qs.slice(0, 10);
+        let current = 0, correct = 0, deadline = Date.now() + 180000;
+        scoreLine.textContent = "";
+        if (timer) clearInterval(timer);
+        timer = setInterval(() => {
+          const left = Math.max(0, deadline - Date.now());
+          clock.textContent = Math.floor(left / 60000) + ":" +
+            String(Math.floor(left / 1000) % 60).padStart(2, "0");
+          if (left <= 0) finish("time!");
+        }, 250);
+
+        function finish(reason) {
+          clearInterval(timer); timer = null;
+          drill.innerHTML = "";
+          clock.textContent = "";
+          scoreLine.textContent = `${reason} ${correct}/${set.length} correct. ` +
+            (correct === set.length ? "Clean set. 💪" : "Misses are in your flashcard deck — spaced repetition does the rest.");
+          if (window.AlgoProgress && current > 0)
+            window.AlgoProgress.recordLab("algorithm-gym", { pageId: "algorithm-gym", assisted: false });
+        }
+
+        function show() {
+          if (current >= set.length) return finish("done —");
+          const [q, choices, answer, explain] = set[current];
+          drill.innerHTML = `<p style="font-weight:600">${current + 1}/10 · ${q}</p>` +
+            choices.map((c, i) =>
+              `<button type="button" class="action secondary" data-i="${i}"
+                 style="display:block;margin:0.3rem 0;text-align:left">${c}</button>`).join("") +
+            `<p class="hint" id="fb"></p>`;
+          drill.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+            const i = Number(b.dataset.i);
+            const fb = drill.querySelector("#fb");
+            if (i === answer) { correct++; fb.textContent = "✓ " + explain; fb.style.color = "var(--accent)"; }
+            else {
+              fb.textContent = "✗ " + choices[answer] + " — " + explain;
+              fb.style.color = "var(--bad)";
+              if (window.AlgoProgress)
+                window.AlgoProgress.recordMiss("algorithm-gym", q, choices[answer], explain);
+            }
+            drill.querySelectorAll("button").forEach((x) => x.disabled = true);
+            setTimeout(() => { current++; show(); }, 1400);
+          }));
+        }
+        show();
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
