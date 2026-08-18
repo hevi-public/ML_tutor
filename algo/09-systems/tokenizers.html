@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tokenizers: tries meet BPE — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="knowledge-graphs.html|Knowledge graphs and graph RAG">
+  <meta name="algo:next" content="beam-search.html|Beam search">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Tokenizers: how text becomes what models read</h1>
+  <p class="lede">Every prompt you have ever sent was first chopped into
+  <em>tokens</em> — subword pieces from a fixed vocabulary. The algorithm
+  that learned that vocabulary is greedy compression (Huffman's cousin);
+  the one that applies it is a merge loop you can watch. Token counts are
+  billed, context windows are measured in them, and more model quirks
+  than you'd expect trace back to this page.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../06-strategies/huffman.html">Huffman</a> ("frequent things
+    should be cheap to say") and <a href="../07-strings/tries.html">tries</a>
+    (the vocabulary's natural index).
+  </div>
+
+  <h2>The idea</h2>
+  <p><strong>Byte-pair encoding</strong> (BPE), the dominant scheme
+  (GPT-family, Llama-family): start with single characters (bytes, in
+  practice) as the vocabulary. Count all adjacent pairs in the training
+  corpus; <em>merge the most frequent pair</em> into a new vocabulary
+  entry; repeat until the vocabulary hits its budget (~50k–200k entries).
+  Frequent words end up as single tokens, rare words as several pieces,
+  arbitrary garbage as many bytes — graceful degradation with no
+  out-of-vocabulary failures ever.</p>
+  <p>Note the inversion of Huffman: Huffman keeps symbols fixed and
+  assigns frequent ones <em>short codes</em>; BPE keeps the "code" fixed
+  (one token = one ID) and makes frequent <em>strings</em> into single
+  symbols. Same force — spend representation on what occurs often —
+  pointed at the vocabulary instead of the bits. Encoding new text then
+  replays the learned merges in order (or equivalently, greedily matches
+  the longest vocabulary entry at each position — a trie walk, which is
+  how fast implementations do it).</p>
+
+  <h2>Watch it run</h2>
+  <p>Training BPE live on a toy corpus (<code>low lower lowest newer
+  newest wider</code>). Watch the most frequent pair merge each round —
+  <code>e+r</code>, <code>l+o</code>, <code>lo+w</code>… — and the
+  vocabulary grow. Then the learned merges encode a word the corpus
+  never saw:</p>
+  <div class="demo">
+    <div id="corpus-view" style="font-family:var(--mono);font-size:0.95rem;line-height:2"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Everything LLM: billing (tokens are the meter), context limits
+    (8k/128k/1M are token counts), speed (generation is per-token), and
+    a bestiary of quirks — models miscounting letters in "strawberry"
+    (the letters aren't visible; tokens are), arithmetic stumbling when
+    digits group oddly, code models favoring certain indentation
+    (whitespace tokenization), multilingual cost differences (languages
+    poorly covered by the vocabulary pay 2–4× more tokens for the same
+    meaning). Variants: WordPiece (BERT — merge by likelihood, not raw
+    count), Unigram/SentencePiece (T5, Llama — start big, prune).
+    And the trie connection is production-real: fast tokenizers compile
+    the vocabulary into an automaton; constrained decoding walks a trie
+    of legal continuations to force valid JSON.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why subwords at all — the vocabulary trilemma</summary>
+    <div class="layer-body">
+      <p>Characters only: no out-of-vocabulary problem, but sequences
+      get long (attention cost grows with length — quadratically in
+      classic transformers) and each symbol carries little meaning.
+      Whole words: short meaningful sequences, but an unbounded
+      vocabulary, embedding tables in the billions, and instant failure
+      on any new word, name or typo. Subwords are the engineered middle:
+      bounded vocabulary, no OOV (worst case: bytes), frequent words
+      still one token. The budget knob (~50k–200k) trades embedding-
+      table memory against sequence length — an honest-to-goodness
+      space/time trade-off, priced in GPU memory and attention FLOPs.
+      Compression view: BPE is a dictionary coder (LZ-family kin), and
+      "tokens per byte" is literally a compression ratio — which is why
+      tokenizer quality is measured in exactly those units.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact training loop, events elided:
+function trainBPE(words, rounds) {
+  let seqs = words.map((w) => w.split(""));        // start: characters
+  const merges = [];
+  for (let r = 0; r < rounds; r++) {
+    const pairCount = new Map();                    // count adjacent pairs
+    for (const s of seqs)
+      for (let i = 0; i + 1 < s.length; i++)
+        bump(pairCount, s[i] + " " + s[i + 1]);
+    const best = argmax(pairCount);                 // most frequent pair
+    if (!best) break;
+    merges.push(best);                              // vocabulary grows by 1
+    seqs = seqs.map((s) => applyMerge(s, best));    // replace pair everywhere
+  }
+  return merges;   // encoding new text = replay these merges in order
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Tokens go in; tokens come out — chosen one at a time by a search
+  over possible continuations. That search is unit 5's frontier
+  discipline with a budget: <a href="beam-search.html">beam search</a>.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "tokenizers",
+    "questions": [
+      { "q": "BPE and Huffman both exploit frequency. What's the inversion between them?",
+        "choices": ["BPE works on bits, Huffman on strings",
+                    "Huffman fixes the symbols and shortens frequent ones' CODES; BPE fixes the code cost (one ID per token) and promotes frequent STRINGS into single symbols — same force, applied to the vocabulary",
+                    "There is none — BPE is Huffman renamed"],
+        "answer": 1,
+        "explain": "Both spend representation on the frequent. Huffman compresses the encoding; BPE compresses the sequence. Recognizing one idea in two costumes is unit 6 paying rent." },
+      { "q": "Why can a model that writes flawless essays miscount the r's in 'strawberry'?",
+        "choices": ["Counting requires a calculator tool",
+                    "The model never sees letters — 'strawberry' arrives as one or two tokens, and the character composition of a token is not directly observable to it. The tokenizer's granularity IS the model's perceptual floor",
+                    "The model's vocabulary lacks the word"],
+        "answer": 1,
+        "explain": "Tokenization quirks explain a whole family of LLM stumbles (spelling, rhyming, digit manipulation). Knowing the input representation beats anthropomorphizing the failure." },
+      { "q": "Your product's Japanese users hit context limits far sooner than English users on equivalent content. The algorithmic cause?",
+        "choices": ["Japanese text is inherently longer",
+                    "Vocabulary coverage: the tokenizer's merges were learned mostly from English-heavy data, so Japanese text decomposes into many more, smaller tokens — same meaning, multiplied token count, multiplied cost",
+                    "UTF-8 encodes Japanese inefficiently"],
+        "answer": 1,
+        "explain": "Tokens-per-character varies hugely by language for exactly the BPE-training reason. It's a fairness and cost issue that product teams discover from bills — now you can predict it." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const WORDS = ["low", "lower", "lowest", "newer", "newest", "wider"];
+      const ROUNDS = 8;
+      const view = document.getElementById("corpus-view");
+      const verdict = document.getElementById("verdict");
+      const SEP = " ";
+
+      function* bpe() {
+        let seqs = WORDS.map((w) => w.split(""));
+        const merges = [];
+        yield { type: "round", k: 0, seqs: seqs.map((s) => s.slice()) };
+        for (let r = 1; r <= ROUNDS; r++) {
+          const count = new Map();
+          for (const s of seqs)
+            for (let i = 0; i + 1 < s.length; i++) {
+              const key = s[i] + SEP + s[i + 1];
+              count.set(key, (count.get(key) || 0) + 1);
+            }
+          let best = null, bestN = 1;
+          for (const [k, n] of count) if (n > bestN) { best = k; bestN = n; }
+          if (!best) break;
+          const [a, b] = best.split(SEP);
+          merges.push([a, b]);
+          seqs = seqs.map((s) => {
+            const outSeq = [];
+            for (let i = 0; i < s.length; i++) {
+              if (i + 1 < s.length && s[i] === a && s[i + 1] === b) {
+                outSeq.push(a + b); i++;
+              } else outSeq.push(s[i]);
+            }
+            return outSeq;
+          });
+          yield { type: "merge", a, b, n: bestN, k: r, seqs: seqs.map((s) => s.slice()), merges: merges.slice() };
+        }
+        // encode an unseen word with the learned merges
+        let novel = "lowering".split("");
+        for (const [a, b] of merges) {
+          const outSeq = [];
+          for (let i = 0; i < novel.length; i++) {
+            if (i + 1 < novel.length && novel[i] === a && novel[i + 1] === b) {
+              outSeq.push(a + b); i++;
+            } else outSeq.push(novel[i]);
+          }
+          novel = outSeq;
+        }
+        yield { type: "done", novel, vocab: merges.length };
+      }
+
+      const state = {};
+      function* tracked() {
+        state.seqs = WORDS.map((w) => w.split(""));
+        state.lastMerge = null;
+        for (const e of bpe()) {
+          if (e.seqs) state.seqs = e.seqs;
+          if (e.type === "merge") state.lastMerge = e.a + e.b;
+          if (e.type === "done")
+            verdict.textContent = `Unseen word "lowering" encodes as [${e.novel.join(" | ")}] — ` +
+              `${e.novel.length} tokens from ${e.vocab} learned merges. No out-of-vocabulary failure possible.`;
+          yield e;
+        }
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ seqs: (state.seqs || WORDS.map((w) => w.split(""))).map((s) => s.slice()), lastMerge: state.lastMerge || null }),
+        render: (snap) => {
+          view.innerHTML = snap.seqs.map((s, i) =>
+            `<div><span style="color:var(--text-soft);display:inline-block;min-width:4.5rem">${WORDS[i]}</span> ` +
+            s.map((tok) =>
+              `<span style="display:inline-block;padding:0.05rem 0.4rem;margin-right:0.2rem;` +
+              `border:1px solid var(--border);border-radius:6px;` +
+              (tok === snap.lastMerge ? "background:var(--accent-soft);color:var(--accent);font-weight:700;" : "") +
+              `">${tok}</span>`).join("") + `</div>`).join("");
+        },
+        counters: { merge: "merges learned" },
+        speed: 2,
+        describe: (e) =>
+          e.type === "round" ? "start: every character is its own token" :
+          e.type === "merge" ? `round ${e.k}: most frequent pair is "${e.a}"+"${e.b}" (×${e.n}) — merged into vocabulary entry "${e.a}${e.b}"` :
+          e.type === "done" ? "training done — now encoding a word the corpus never contained" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
