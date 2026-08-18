@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rabin-Karp and rolling hashes — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Strings">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="kmp.html|Knuth-Morris-Pratt">
+  <meta name="algo:next" content="tries.html|Tries">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/strings.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 7 · Strings</p>
+  <h1>Rabin-Karp: compare fingerprints, not characters</h1>
+  <p class="lede">A different escape from re-comparison: reduce each
+  m-character window to one number — a hash — and compare numbers instead.
+  The trick that makes it viable is the <strong>rolling</strong> update:
+  slide the window one character and refresh its hash in O(1), no
+  re-reading. That one primitive outgrew string search entirely; it's in
+  your sync tools, your dedup storage, and your git hosting.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hashing</a> (what
+    collisions are and why they're inevitable) and
+    <a href="string-search.html">the naive baseline</a>.
+  </div>
+
+  <h2>The idea</h2>
+  <p>Treat a window of m characters as an m-digit number in base B, taken
+  modulo a large prime: <span class="math">h = (c_0 B^{m-1} + c_1 B^{m-2}
+  + \dots + c_{m-1}) \bmod p</span>. In plain English: the window's
+  characters, read as one big number, squashed to fixed size. Hash the
+  pattern once; slide over the text comparing hashes. Equal hashes don't
+  prove a match (collisions exist — <strong>spurious hits</strong>), so
+  verify by direct comparison; unequal hashes <em>do</em> prove a
+  non-match, and that's the common case, dismissed in O(1).</p>
+  <p>The rolling step: dropping the left character and adding one on the
+  right is arithmetic — subtract c₀·Bᵐ⁻¹, multiply by B, add the
+  newcomer, all mod p. Expected time O(n + m); worst case O(n·m) only if
+  collisions pile up, which random-looking hashes make vanishingly rare
+  (and an adversary-resistant variant just randomizes p or B at
+  startup).</p>
+
+  <h2>Watch it run</h2>
+  <p><code>abracadabra</code> vs <code>abra</code> again — but now each
+  alignment is one number comparison. Amber = window whose hash mismatched
+  (dismissed instantly); green = hash hit, then the characters confirm:</p>
+  <div class="demo">
+    <div id="grid" style="font-family:var(--mono);font-size:1.05rem;line-height:1.8;margin-bottom:0.5rem"></div>
+    <p class="hint" id="hash-line" style="font-family:var(--mono)"></p>
+    <div id="stepper"></div>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>The rolling hash is the star. <strong>rsync</strong> finds which
+    file blocks changed by rolling a checksum over the receiver's copy;
+    <strong>content-defined chunking</strong> in dedup storage and backup
+    tools (restic, borg) cuts files where the rolling hash hits a magic
+    value, so an insert early in a file doesn't reshuffle every chunk
+    boundary; git's packfile delta engine hunts matching slices the same
+    way. Plagiarism/similarity detection (MOSS) fingerprints documents
+    with rolling k-gram hashes — the same n-gram shingling that dedups
+    LLM training corpora. Multi-pattern search gets it too: hash all k
+    patterns into a set, roll once over the text.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Spurious hits, and how rare "rare" is</summary>
+    <div class="layer-body">
+      <p>With a prime p and decently mixing base, two unequal windows
+      collide with probability about 1/p. For p ≈ 10⁶ and a million
+      windows, expect roughly one spurious verify per run — each costing
+      O(m) and finding out. Expected total: O(n + m + (spurious)·m) ≈
+      O(n + m). Two footnotes worth engineering respect: (1) if the
+      inputs are adversarial, fixed constants can be attacked —
+      randomize them per process (this is precisely why language runtimes
+      randomized their string-hash seeds after the 2011 hash-flooding
+      DoS); (2) if you skip verification entirely — trusting the hash —
+      you've traded correctness for speed; sometimes right (dedup with
+      SHA-256-sized hashes), sometimes a data-loss story.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code (assets/js/algo/strings.js), events elided:
+function rabinKarp(text, pat) {
+  const m = pat.length;
+  let ph = hash(pat), th = hash(text.slice(0, m));
+  const pow = B ** (m - 1) % MOD;                 // precomputed top-digit weight
+  const hits = [];
+  for (let s = 0; s + m <= text.length; s++) {
+    if (th === ph && verify(text, s, pat)) hits.push(s);  // hash hit → confirm
+    if (s + m < text.length) {                    // ROLL in O(1):
+      th = (th - text.charCodeAt(s) * pow) mod;   //   drop the left char
+      th = (th * B + text.charCodeAt(s + m)) mod; //   shift, add the right char
+    }
+  }
+  return hits;
+}</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Searching one text is solved three ways now. The unit's last two
+  pages flip the problem: preprocess the <em>data</em> so that many future
+  queries are cheap — <a href="tries.html">tries</a> for prefix worlds,
+  then <a href="suffix-arrays.html">suffix arrays</a> for substring
+  worlds.</p>
+
+  <script type="application/json" class="symbols">
+  { "B": { "name": "B — the base", "pron": "say: bee",
+           "means": "the radix treating characters as digits (e.g. 256); each window is an m-digit base-B number", "short": "base" },
+    "p": { "name": "p — the modulus", "pron": "say: pee",
+           "means": "a large prime keeping hashes fixed-size; collision odds scale like 1/p", "short": "modulus" },
+    "h": { "name": "h — the window hash", "pron": "say: aitch",
+           "means": "the fingerprint compared instead of m characters; updated in O(1) as the window slides", "short": "hash" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "rabin-karp",
+    "questions": [
+      { "q": "Equal hashes at some window — what do you actually know?",
+        "choices": ["The pattern occurs there",
+                    "Only that a match is POSSIBLE — hashes collide, so a direct character check confirms; unequal hashes, by contrast, definitively rule a window out",
+                    "The hash function is broken"],
+        "answer": 1,
+        "explain": "The asymmetry is the design: certainty on the (common) reject side, cheap suspicion on the (rare) accept side. Filters with one-sided error reappear as Bloom filters in unit 9." },
+      { "q": "Why is the ROLLING update the load-bearing idea rather than hashing itself?",
+        "choices": ["Rolling hashes have fewer collisions",
+                    "Recomputing each window from scratch costs O(m) per slide — O(n·m) total, no better than naive. The O(1) roll is what makes hash-per-window affordable at all",
+                    "It avoids modular arithmetic"],
+        "answer": 1,
+        "explain": "Drop-multiply-add is the entire miracle. It's also exactly what rsync and content-defined chunking need: a fingerprint that glides along a stream at O(1) per byte." },
+      { "q": "Why does an insert near the start of a file NOT reshuffle chunk boundaries in content-defined chunking (restic/borg-style)?",
+        "choices": ["Chunks are fixed 4KB blocks",
+                    "Boundaries are declared where the ROLLING hash hits a magic value — a property of local content. After the insertion's neighborhood, the same content produces the same boundaries again",
+                    "The backup tool diffs against the previous version"],
+        "answer": 1,
+        "explain": "Fixed-size chunking shifts every boundary after an insert (everything re-uploads); content-defined boundaries resynchronize. One rolling hash = the difference between backing up 1MB and 1TB." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const TEXT = "abracadabra", PAT = "abra";
+      const grid = document.getElementById("grid");
+      const hashLine = document.getElementById("hash-line");
+
+      const state = {};
+      function* tracked() {
+        state.s = -1; state.hits = []; state.ph = null; state.th = null; state.match = false;
+        for (const e of window.AlgoStrings.rabinKarp(TEXT, PAT)) {
+          if (e.type === "hash" && e.pattern) state.ph = e.h;
+          else if (e.type === "hash") { state.s = e.s; state.th = e.h; state.match = e.match; }
+          if (e.type === "found") state.hits.push(e.at);
+          yield e;
+        }
+      }
+
+      const cell = (ch, style) =>
+        `<span style="display:inline-block;width:1.5rem;text-align:center;${style}">${ch}</span>`;
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ s: state.s, hits: (state.hits || []).slice(),
+          ph: state.ph, th: state.th, match: state.match }),
+        render: (snap) => {
+          let top = "";
+          for (let i = 0; i < TEXT.length; i++) {
+            const inHit = snap.hits.some((h) => i >= h && i < h + PAT.length);
+            const inWin = snap.s >= 0 && i >= snap.s && i < snap.s + PAT.length;
+            top += cell(TEXT[i],
+              (inHit ? "color:var(--accent);font-weight:700;" : "") +
+              (inWin ? (snap.match
+                ? "background:var(--accent-soft);border-radius:4px;"
+                : "background:#fcd34d44;border-radius:4px;") : ""));
+          }
+          grid.innerHTML = top;
+          hashLine.textContent = snap.ph === null ? "" :
+            `pattern hash: ${snap.ph}` +
+            (snap.s >= 0 ? ` · window[${snap.s}] hash: ${snap.th} → ${snap.match ? "HIT, verify chars" : "differ — window dismissed in O(1)"}` : "");
+        },
+        counters: { hash: "hash comparisons", compare: "char verifications", found: "matches" },
+        describe: (e) =>
+          e.type === "hash" ? (e.pattern ? `pattern hashed once: ${e.h}` :
+            e.match ? `window ${e.s}: hashes equal — could be a match, verifying` :
+            `window ${e.s}: hash ${e.h} ≠ pattern — rejected without reading characters`) :
+          e.type === "compare" ? (e.ok ? `confirm text[${e.ti}]` : `spurious hit! characters disagree`) :
+          e.type === "found" ? `verified match at ${e.at}` :
+          e.type === "done" ? `done — matches at ${e.hits.join(", ")}` : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
