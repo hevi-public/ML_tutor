@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Where this goes next — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Expert track">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="external-and-parallel.html|Very big and very parallel">
+  <meta name="algo:next" content="../map.html|The concept map">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 11 · Expert track</p>
+  <h1>Where this goes next</h1>
+  <p class="lede">You've now had the working-engineer's pass through the CS
+  degree's algorithms years. This page is the honest map of what to read
+  when you want more — matched to the units here, with opinions about
+  which book serves which reader, because "just read CLRS" is advice
+  mostly given by people who didn't.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Ideally, the rest of the course — this page keeps referring backwards.
+  </div>
+
+  <h2>The three canonical books, honestly compared</h2>
+  <p><strong>CLRS</strong> (Cormen, Leiserson, Rivest, Stein,
+  <em>Introduction to Algorithms</em>) is the reference: every proof this
+  course folded into a collapsible layer is there in full, with the
+  pseudocode conventions our steppable implementations quietly mirror.
+  Use it as an encyclopedia — read the chapter after meeting the idea
+  here, not before. Deepest coverage of units 1, 3, 5 and 6 (their
+  recurrences, sorting, graph and DP chapters are definitive).</p>
+  <p><strong>Skiena</strong> (<em>The Algorithm Design Manual</em>) is the
+  practitioner's book — the back-half catalog ("I have a problem that
+  looks like X…") is the professional-grade version of this course's
+  <a href="../06-strategies/choosing-a-strategy.html">choosing a
+  strategy</a> page, and his war stories are unit 9's spirit in book form.
+  Best first purchase for the audience this course was built for.</p>
+  <p><strong>Sedgewick &amp; Wayne</strong> (<em>Algorithms, 4th ed.</em>)
+  sits between: real, runnable Java for every structure (closest in
+  philosophy to our one-steppable-implementation rule), superb diagrams,
+  lighter on proofs. Their booksite and Coursera course pair well with
+  units 2–5.</p>
+  <p>The free heavyweight: <strong>Jeff Erickson's
+  <em>Algorithms</em></strong> (freely available online) — graduate-level
+  clarity on recursion, DP and graphs, and the best written treatment of
+  unit 11's reductions anywhere. <strong>Roughgarden's</strong>
+  <em>Algorithms Illuminated</em> series matches this course's
+  intuition-first temperament with the lectures to go with it.</p>
+
+  <h2>By unit, when one of them grabbed you</h2>
+  <p><strong>Units 1–3</strong> (analysis, structures, sorting): CLRS
+  chapters 1–9 for rigor; Sedgewick for implementation craft; Bentley's
+  <em>Programming Pearls</em> for the engineering aesthetic our
+  counter-driven demos borrow.
+  <strong>Units 4–5</strong> (graphs): CLRS's graph chapters for the
+  proofs; Erickson's flow chapters are outstanding and free.
+  <strong>Unit 6</strong> (DP &amp; greedy): Erickson again (his DP
+  chapter is the field's best), Kleinberg &amp; Tardos for exchange
+  arguments done beautifully.
+  <strong>Unit 7</strong> (strings): Gusfield's <em>Algorithms on
+  Strings, Trees and Sequences</em> — bioinformatics-flavored, definitive.
+  <strong>Unit 8</strong> (visualisation): Munzner's <em>Visualization
+  Analysis and Design</em> for the theory; the D3 ecosystem for practice.
+  <strong>Unit 9</strong> (systems): Kleppmann's <em>Designing
+  Data-Intensive Applications</em> is the book-shaped version of the whole
+  unit; then primary sources — the HNSW paper (Malkov &amp; Yashunin
+  2016), the LSM-tree paper (O'Neil et al. 1996), Dynamo (consistent
+  hashing in production, 2007).
+  <strong>Unit 11</strong>: Garey &amp; Johnson's <em>Computers and
+  Intractability</em> remains the NP-completeness bible (its problem
+  catalog is a professional tool); Mitzenmacher &amp; Upfal for
+  randomization; Vazirani for approximation.</p>
+
+  <h2>Courses and practice</h2>
+  <p>Lectures: MIT 6.006 and 6.046 (OpenCourseWare, free, superb) map
+  almost unit-for-unit onto this course and its proofs; Princeton's
+  Algorithms I/II (Coursera, Sedgewick himself) onto units 2–5.
+  Practice: LeetCode is drill work — genuinely useful for units 2–7
+  fluency the way the <a href="../10-labs/algorithm-gym.html">gym</a> is,
+  and just as unrepresentative of the job; Codeforces/AtCoder if
+  competition sharpens you; Project Euler where math meets code. The
+  honest framing: interview prep is a legitimate, bounded goal — a few
+  weeks of drills on top of this course's understanding beats months of
+  memorization without it.</p>
+
+  <div class="box in-the-wild">
+    <span class="label">The reading habit that compounds</span>
+    <p>The highest-leverage habit isn't a book: it's reading the
+    <em>algorithm sections</em> of the engineering blogs and papers behind
+    systems you use — how Postgres plans joins, how V8 sorts, how Kafka
+    replicates, how FAISS/pgvector implement unit 9's vector search. You
+    now have the vocabulary they assume. That was this course's actual
+    goal: not that you know every algorithm, but that nothing in those
+    documents is a wall anymore.</p>
+  </div>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Nowhere — you're done. Well: <a href="../map.html">the concept
+  map</a> shows everything you've covered as one graph (laid out by unit
+  8's own algorithm), and the <a href="../flashcards.html">flashcard
+  deck</a> keeps what you learned from evaporating. Thanks for making it
+  to the end.</p>
+
+  <script type="application/json" class="quiz">
+  { "id": "further-reading",
+    "questions": [
+      { "q": "A colleague wants ONE book to buy after finishing this course, as a working engineer. The defensible default?",
+        "choices": ["CLRS cover-to-cover — it's the standard",
+                    "Skiena's Algorithm Design Manual — the problem-to-technique catalog and war stories extend exactly the skill this course optimized for (recognition and strategy choice), with CLRS as the reference to consult per-topic",
+                    "Whatever has the most LeetCode overlap"],
+        "answer": 1,
+        "explain": "CLRS is a superb reference and a punishing cover-to-cover read. Match the book to the reader: practitioners extend recognition first, proofs on demand — the layering this whole site used." },
+      { "q": "You need the definitive catalog of known NP-complete problems to check yours against. The standard professional source?",
+        "choices": ["Any interview-prep site",
+                    "Garey & Johnson's Computers and Intractability — its appendix of hundreds of catalogued NP-complete problems, organized by structure, has been the working tool for hardness arguments since 1979",
+                    "The Wikipedia list is the canonical reference"],
+        "answer": 1,
+        "explain": "Wikipedia is fine for orientation, but G&J's catalog with its reduction pointers is what 'we checked the literature' means in a paper or design doc. Some tools don't age." },
+      { "q": "What was this course's actual endgame for you as an engineer?",
+        "choices": ["Memorizing the canon of classic algorithms",
+                    "Reading fluency and recognition: production systems, papers and design discussions stop being walls, because every 'it's basically Dijkstra with a twist' now lands — details can be looked up, the shape-matching can't",
+                    "Preparation for competitive programming"],
+        "answer": 1,
+        "explain": "Algorithms are looked up; recognition is trained. If the storage-engine docs, the HNSW paper and your build system's scheduling now read as 'combinations of things I know' — that was the point." } ] }
+  </script>
+</main>
+</body>
+</html>
