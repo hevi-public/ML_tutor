@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Probabilistic structures — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Production & LLM systems">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="caching.html|Caching and eviction">
+  <meta name="algo:next" content="hashing-in-the-wild.html|Consistent hashing and rate limiters">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 9 · Production &amp; LLM systems</p>
+  <h1>Probabilistic structures: tiny memory, honest error bars</h1>
+  <p class="lede">Exact answers have a memory floor: remembering a billion
+  URLs takes billions of bytes, period. The escape is a different
+  contract — answers that are <em>usually</em> right, with error you can
+  calculate and tune, in kilobytes. The flagship is the Bloom filter:
+  set membership with one-sided error, and one of the most deployed data
+  structures on the planet.</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    <a href="../02-structures/hash-tables.html">Hashing</a> — everything
+    here is hash functions pointed at bits instead of buckets. Rabin-Karp's
+    one-sided-error idea (unit 7) is the same shape.
+  </div>
+
+  <h2>The idea</h2>
+  <p>A <strong>Bloom filter</strong> is a bit array of m bits plus k hash
+  functions. <em>Add x</em>: set the k bits that x's hashes point at.
+  <em>Query x</em>: are all k of x's bits set? If any is 0, x was
+  <strong>definitely never added</strong> — a certain no. If all are 1,
+  x was <em>probably</em> added — but other items' bits can overlap into
+  a <strong>false positive</strong>. The error is one-sided (no false
+  negatives), and its rate is arithmetic, not hope: about
+  <span class="math">(1 - e^{-kn/m})^k</span> after n insertions — in
+  plain English, pick bits-per-item and the failure odds follow. Ten
+  bits per item and optimal k ≈ 0.7·m/n gives ~1% false positives:
+  a billion URLs summarized in ~1.2 GB instead of ~60 GB of exact
+  storage.</p>
+
+  <h2>Watch it run</h2>
+  <p>A 32-bit filter, k=3. Adding words sets bits (watch overlaps);
+  querying shows the two honest outcomes — and, when the bits happen to
+  collide, the third: a false positive on a word never added:</p>
+  <div class="demo">
+    <div id="bits" style="font-family:var(--mono);font-size:0.9rem;letter-spacing:1px;line-height:2"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="verdict" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Where you'll meet this</span>
+    <p>Databases first: LSM engines (RocksDB, Cassandra, the
+    storage-engines page ahead) keep a Bloom filter per file so a read
+    can skip files that certainly lack the key — the single trick that
+    makes LSM reads viable. Chrome's Safe Browsing pre-check, CDN
+    "have I cached this?", spellcheckers, spam filters, crawl frontiers
+    ("seen this URL?"), and dedup in LLM training pipelines ("seen this
+    n-gram/document?") at corpus scale, where exactness would cost more
+    than the training run. Siblings with the same contract:
+    <strong>count-min sketch</strong> (approximate counts — heavy-hitter
+    detection, trending topics, per-key rate stats) and
+    <strong>HyperLogLog</strong> (count distinct in 1.5 KB — Redis
+    <code>PFCOUNT</code>, unique-visitor analytics). All three are
+    hashes + a small array + a theorem.</p>
+  </div>
+
+  <h2>The details (open as much as you like)</h2>
+  <details class="layer" open>
+    <summary>Why one-sided error is the load-bearing feature</summary>
+    <div class="layer-body">
+      <p>Systems compose safely around an error that only points one
+      way. The LSM read path: filter says no → skip the file,
+      <em>guaranteed</em> safe; filter says yes → do the real read,
+      wasting work only the false-positive fraction of the time. The
+      pattern — cheap certain-no filter in front of an expensive exact
+      check — is Rabin-Karp's hash-then-verify generalized, and it never
+      returns a wrong final answer; it only occasionally fails to save
+      you money. Contrast a cache (can return stale data) or a semantic
+      cache (can return wrong data): knowing WHICH side of an
+      approximate structure can err is the systems-design skill this
+      unit keeps drilling. Two footnotes: classic Blooms can't delete
+      (bits are shared; counting Blooms and cuckoo filters fix it), and
+      capacity is a promise — overfill past the design n and the false-
+      positive rate climbs the curve.</p>
+    </div>
+  </details>
+
+  <h2>The code</h2>
+  <pre><code class="language-javascript">// The demo's exact code — a Bloom filter is barely code at all:
+class Bloom {
+  constructor(m, k) { this.m = m; this.k = k; this.bits = new Array(m).fill(0); }
+  hashes(x) {              // k hashes from 2 via double hashing (standard trick)
+    const h1 = djb2(x) % this.m, h2 = (fnv(x) % (this.m - 1)) + 1;
+    return Array.from({ length: this.k }, (_, i) => (h1 + i * h2) % this.m);
+  }
+  add(x)   { for (const b of this.hashes(x)) this.bits[b] = 1; }
+  query(x) { return this.hashes(x).every((b) => this.bits[b] === 1); }
+}          // query=false → certainly absent; true → probably present</code></pre>
+
+  <h2>Check your understanding</h2>
+  <div class="quiz-root"></div>
+
+  <h2>Where this goes next</h2>
+  <p>Hashing has two more production starring roles before the unit
+  closes: <a href="hashing-in-the-wild.html">spreading load across
+  servers that keep joining and leaving, and rate-limiting the
+  internet</a>.</p>
+
+  <script type="application/json" class="symbols">
+  { "m": { "name": "m — bits in the filter", "pron": "say: em",
+           "means": "the bit array's size; more bits per item = fewer false positives", "short": "filter size" },
+    "kk": { "name": "k — hash functions", "pron": "say: kay",
+           "means": "how many bits each item sets/checks; optimal k ≈ 0.7·m/n", "short": "hash count" },
+    "fp": { "name": "false-positive rate ≈ (1−e^(−kn/m))^k", "pron": "say: the eff-pee rate",
+           "means": "the tunable odds that a never-added item answers 'probably present'", "short": "error rate" } }
+  </script>
+
+  <script type="application/json" class="quiz">
+  { "id": "probabilistic",
+    "questions": [
+      { "q": "A Bloom filter answers 'no'. What do you know, and why is that the valuable direction?",
+        "choices": ["The item was probably not added",
+                    "The item was CERTAINLY never added — at least one of its bits is still 0, which no insertion of it could have left. Certain-no lets systems skip expensive work with zero correctness risk",
+                    "Nothing without checking the source of truth"],
+        "answer": 1,
+        "explain": "False positives exist; false negatives cannot (bits are never cleared). The guaranteed direction is what makes it composable as a pre-filter in front of exact checks." },
+      { "q": "Your LSM database's read latency degrades as data grows, and profiling shows reads touching many SSTable files. Which single structure is designed for exactly this?",
+        "choices": ["A bigger LRU cache",
+                    "A Bloom filter per file: 'certainly not here' skips a file's entire read path, so a key lookup touches ~1 file plus a false-positive tax you chose (e.g. 1% at 10 bits/key)",
+                    "An adjacency matrix of keys"],
+        "answer": 1,
+        "explain": "This is the canonical deployment — RocksDB/Cassandra ship it by default. Next page's storage engines complete the picture of where those files come from." },
+      { "q": "Counting unique visitors with a HashSet takes 8 GB; HyperLogLog does it in ~1.5 KB with ~2% error. What's the principled way to decide?",
+        "choices": ["Always exact — errors are unprofessional",
+                    "Ask what the number is FOR: a dashboard trend tolerates ±2% invisibly, a billing system doesn't. Approximation with a known error bar is an engineering contract, not a shortcut — chosen per consumer",
+                    "Always approximate — memory is expensive"],
+        "answer": 1,
+        "explain": "The unit's recurring meta-lesson: exact, amortized, approximate, and probabilistic are CONTRACTS. Senior engineering is matching the contract to the consumer, and writing the error bar down." } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const M = 32, K = 3;
+      const bitsHost = document.getElementById("bits");
+      const verdict = document.getElementById("verdict");
+
+      const djb2 = (s) => { let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0; return h; };
+      const fnv = (s) => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h; };
+      const hashes = (x) => {
+        const h1 = djb2(x) % M, h2 = (fnv(x) % (M - 1)) + 1;
+        return Array.from({ length: K }, (_, i) => (h1 + i * h2) % M);
+      };
+
+      const ADDS = ["cache", "index", "graph", "token", "queue"];
+      const QUERIES = ["cache", "shard", "vector", "beam", "trie", "heap", "stack", "proxy"];
+
+      const state = {};
+      function* tracked() {
+        state.bits = new Array(M).fill(0);
+        state.active = [];
+        let fp = null;
+        for (const w of ADDS) {
+          const hs = hashes(w);
+          state.active = hs;
+          for (const b of hs) state.bits[b] = 1;
+          yield { type: "place", w, hs };
+        }
+        const added = new Set(ADDS);
+        for (const w of QUERIES) {
+          const hs = hashes(w);
+          state.active = hs;
+          const hit = hs.every((b) => state.bits[b] === 1);
+          const truth = added.has(w);
+          if (hit && !truth && !fp) fp = w;
+          yield { type: "check", w, hs, hit, truth };
+        }
+        state.active = [];
+        verdict.textContent = fp
+          ? `"${fp}" was NEVER added, yet all its bits were set by others — a false positive, exactly as the math prices in. Every "no" above, though, was a certainty.`
+          : `No false positive in this batch — at ${ADDS.length * K}/${M} bits set the odds were real; rerun mentally with more insertions and they climb the (1−e^(−kn/m))^k curve.`;
+        yield { type: "done" };
+      }
+
+      window.AlgoSteps.player(document.getElementById("stepper"), {
+        make: tracked,
+        capture: () => ({ bits: (state.bits || []).slice(), active: (state.active || []).slice() }),
+        render: (snap) => {
+          bitsHost.innerHTML = snap.bits.map((b, i) => {
+            const active = snap.active.includes(i);
+            return `<span style="display:inline-block;width:1.15rem;text-align:center;` +
+              `border-bottom:2px solid ${active ? "#d97706" : "transparent"};` +
+              `color:${b ? "var(--accent)" : "var(--text-soft)"};font-weight:${b ? 700 : 400}">${b}</span>`;
+          }).join("") || "";
+        },
+        counters: { place: "insertions", check: "queries" },
+        speed: 2,
+        describe: (e) =>
+          e.type === "place" ? `add "${e.w}" → set bits ${e.hs.join(", ")}` :
+          e.type === "check" ? `query "${e.w}" → bits ${e.hs.join(", ")}: ` +
+            (!e.hit ? "a zero found — CERTAINLY absent" :
+              e.truth ? "all set — present (true positive)" :
+              "all set — 'probably present'… but it was never added: FALSE POSITIVE") :
+          e.type === "done" ? "one-sided error, demonstrated" : "",
+      });
+    });
+  </script>
+</main>
+</body>
+</html>
