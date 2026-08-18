@@ -8,7 +8,7 @@
    Maze model: { w, h, walls: Set("x,y"), start: [x,y], goal: [x,y] }
    Events reuse the graph vocabulary with u = "x,y" cell keys, plus
    {type:'path', cells} when the goal is reached. */
-(function () {
+(function (scope) {
   "use strict";
 
   const key = (x, y) => x + "," + y;
@@ -17,7 +17,7 @@
   // knock out a few extra walls so multiple routes exist (better for A* vs
   // BFS comparisons).
   function generate(w, h, seed, extraOpenings = Math.floor(w * h / 12)) {
-    const rand = window.AlgoRandom.rng(seed);
+    const rand = scope.AlgoRandom.rng(seed);
     const walls = new Set();
     for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) walls.add(key(x, y));
     const carve = (x, y) => walls.delete(key(x, y));
@@ -126,5 +126,5 @@
     return null;
   }
 
-  window.AlgoMaze = { generate, neighbors, gridBfs, gridAstar, key };
-})();
+  scope.AlgoMaze = { generate, neighbors, gridBfs, gridAstar, key };
+})(typeof self !== "undefined" ? self : window);

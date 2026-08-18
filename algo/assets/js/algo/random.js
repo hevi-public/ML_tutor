@@ -4,7 +4,7 @@
    with a "shuffle" button re-seeds from the clock. mulberry32: tiny, fast,
    plenty good for teaching-sized inputs (this is a classroom, not a casino —
    the crypto page in unit 11 says why that distinction matters). */
-(function () {
+(function (scope) {
   "use strict";
 
   function mulberry32(seed) {
@@ -17,7 +17,7 @@
     };
   }
 
-  window.AlgoRandom = {
+  scope.AlgoRandom = {
     rng(seed) {
       return mulberry32(seed === undefined ? Date.now() : seed);
     },
@@ -39,4 +39,4 @@
       return a;
     },
   };
-})();
+})(typeof self !== "undefined" ? self : window);
