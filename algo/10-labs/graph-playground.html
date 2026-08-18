@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graph playground — Algorithms Tutor</title>
+
+  <meta name="algo:unit" content="Practice labs">
+  <meta name="algo:root" content="../">
+  <meta name="algo:prev" content="hash-table-lab.html|Lab: build a hash table">
+  <meta name="algo:next" content="pathfinder-lab.html|Lab: pathfinding race">
+
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github.min.css"
+        media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="../../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css"
+        media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="../assets/css/site.css">
+
+  <script defer src="../../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script defer src="../assets/js/site.js"></script>
+  <script defer src="../assets/js/progress.js"></script>
+  <script defer src="../assets/js/notation.js"></script>
+  <script defer src="../assets/js/glossary.js"></script>
+  <script defer src="../assets/js/quiz.js"></script>
+  <script defer src="../assets/js/algo/steps.js"></script>
+  <script defer src="../assets/js/algo/graphs.js"></script>
+  <script defer src="../assets/js/viz/graph.js"></script>
+  <script defer src="../assets/js/graph-editor.js"></script>
+</head>
+<body>
+<main>
+  <p class="unit-tag">Unit 10 · Practice labs</p>
+  <h1>Graph playground: every algorithm, your graph</h1>
+  <p class="lede">The course's promise, cashed in one page: draw any
+  graph — or load a preset — pick any algorithm from units 4–5, and step
+  through it. Copy a share link to send a configured graph to someone
+  (or to yourself in a bug report about your own intuition).</p>
+
+  <div class="box prereq">
+    <span class="label">Before you start</span>
+    Units <a href="../04-graphs/what-is-a-graph.html">4</a> and
+    <a href="../05-graphs-advanced/dijkstra.html">5</a> — this is their
+    combined sandbox.
+  </div>
+
+  <div class="demo">
+    <div class="buttons" style="margin-bottom:0.5rem">
+      <label class="hint" style="margin:0">preset
+        <select id="preset" style="font:inherit;padding:0.15rem 0.3rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">
+          <option value="">(keep current)</option>
+          <option value="city">city (weighted, undirected)</option>
+          <option value="build">build DAG (directed)</option>
+          <option value="islands">islands (components)</option>
+          <option value="services">services (SCCs)</option>
+          <option value="pipes">pipes (flow network)</option>
+        </select></label>
+      <label class="hint" style="margin:0">algorithm
+        <select id="algo" style="font:inherit;padding:0.15rem 0.3rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">
+          <option value="bfs">BFS (from first node)</option>
+          <option value="dfs">DFS (from first node)</option>
+          <option value="bfsPaths">BFS shortest hops</option>
+          <option value="topoSort">topological sort</option>
+          <option value="components">connected components</option>
+          <option value="twoColor">two-coloring / bipartite</option>
+          <option value="dijkstra">Dijkstra (from first node)</option>
+          <option value="bellmanFord">Bellman-Ford (from first node)</option>
+          <option value="kruskal">Kruskal MST</option>
+          <option value="prim">Prim MST (from first node)</option>
+          <option value="tarjanSCC">Tarjan SCC</option>
+          <option value="maxFlow">max flow (first → last node)</option>
+        </select></label>
+      <button type="button" class="action" id="run">run on this graph</button>
+    </div>
+    <div id="editor"></div>
+    <div id="stepper"></div>
+    <p class="hint" id="note" style="font-weight:600"></p>
+  </div>
+
+  <div class="box in-the-wild">
+    <span class="label">Prompts worth trying</span>
+    <p>Draw a cycle and watch topological sort name it. Two-color a
+    square, then pentagon. Give Kruskal a tie and compare with Prim.
+    Build a graph where BFS's hop-count route and Dijkstra's weighted
+    route disagree. Make Bellman-Ford's tripwire fire (directed +
+    a negative loop — set weight, er, the editor keeps weights positive;
+    make the cheapest cycle and reason about what WOULD happen). Break a
+    bipartite graph with one chord. Every one of these is a unit 4–5
+    theorem you now own.</p>
+  </div>
+
+  <h2>Where this goes next</h2>
+  <p>The graded version of this sandbox:
+  <a href="pathfinder-lab.html">implement the pathfinding yourself</a>
+  and race the reference.</p>
+
+  <script type="application/json" class="lab">
+  { "labs": [ { "id": "graph-playground", "title": "Graph playground",
+      "task": "Free exploration: run any unit 4–5 algorithm on any graph you draw. Share configurations by link.",
+      "goals": ["draw and edit graphs", "run all 12 algorithms", "share by URL"] } ] }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const note = document.getElementById("note");
+      const algoSel = document.getElementById("algo");
+      const presetSel = document.getElementById("preset");
+
+      let editor, viz, player = null;
+
+      const state = {};
+      function makeTracked() {
+        const g = editor.getGraph();
+        const kind = algoSel.value;
+        return function* tracked() {
+          state.nodeState = {}; state.nodeLabel = {}; state.edgeState = {};
+          if (!g.nodes.length) return;
+          const first = g.nodes[0].id, last = g.nodes[g.nodes.length - 1].id;
+          const G = window.AlgoGraphs;
+          const gen =
+            kind === "bfs" ? G.bfs(g, first) :
+            kind === "dfs" ? G.dfs(g, first) :
+            kind === "bfsPaths" ? G.bfsPaths(g, first) :
+            kind === "topoSort" ? G.topoSort(g) :
+            kind === "components" ? G.components(g) :
+            kind === "twoColor" ? G.twoColor(g) :
+            kind === "dijkstra" ? G.dijkstra(g, first) :
+            kind === "bellmanFord" ? G.bellmanFord(g, first) :
+            kind === "kruskal" ? G.kruskal(g) :
+            kind === "prim" ? G.prim(g, first) :
+            kind === "tarjanSCC" ? G.tarjanSCC(g) :
+            G.maxFlow(g, first, last);
+          let order = 0;
+          for (const e of gen) {
+            if (kind === "maxFlow" && e.type === "flow") { state.edgeState = {}; state.nodeState = {}; }
+            window.AlgoGraphViz.applyEvent(state, e);
+            if (kind === "dfs" && e.type === "visit") state.nodeLabel[e.u] = "#" + (++order);
+            if (kind === "components" && e.type === "visit") state.nodeLabel[e.u] = "C" + e.comp;
+            if (kind === "twoColor" && e.type === "visit") state.nodeLabel[e.u] = e.color === 0 ? "A" : "B";
+            if (kind === "tarjanSCC" && e.type === "component")
+              for (const id of e.nodes) { state.nodeState[id] = "settled"; state.nodeLabel[id] = "S" + e.id; }
+            if ((kind === "bfs" || kind === "bfsPaths" || kind === "dfs" || kind === "components")
+                && e.type === "discover" && e.from)
+              state.edgeState[window.AlgoGraphViz.edgeKey(e.from, e.u)] = "tree";
+            if (e.type === "done") {
+              note.textContent = "done: " + JSON.stringify(e, (k, v) =>
+                v instanceof Map ? Object.fromEntries(v) : v).slice(0, 220);
+            }
+            yield e;
+          }
+        };
+      }
+
+      editor = window.AlgoGraphEditor.create(document.getElementById("editor"), {
+        graph: window.AlgoGraphs.preset("city"),
+        weights: true,
+        directedToggle: true,
+        onChange: () => { if (player) player.reset(makeTracked()); },
+      });
+
+      const vizHost = document.createElement("div");
+      const stepperHost = document.getElementById("stepper");
+      stepperHost.parentNode.insertBefore(vizHost, stepperHost);
+      viz = window.AlgoGraphViz.create(vizHost, { label: "Playground animation", height: 340 });
+
+      player = window.AlgoSteps.player(stepperHost, {
+        make: makeTracked(),
+        capture: () => JSON.parse(JSON.stringify({
+          nodeState: state.nodeState || {}, nodeLabel: state.nodeLabel || {},
+          edgeState: state.edgeState || {} })),
+        render: (snap, event) => viz.draw(editor.getGraph(), snap, event),
+        counters: { visit: "visits", discover: "discoveries", check: "checks",
+          settle: "settled", relax: "relaxed", "tree-edge": "tree edges",
+          order: "ordered", component: "components", flow: "aug. paths" },
+        describe: (e) => e.type + (e.u !== undefined && e.u !== null ? " " + e.u : "") +
+          (e.v !== undefined ? " → " + e.v : "") +
+          (e.dist !== undefined ? " (d=" + e.dist + ")" : ""),
+      });
+
+      document.getElementById("run").addEventListener("click", () => {
+        note.textContent = "";
+        player.reset(makeTracked());
+      });
+      algoSel.addEventListener("change", () => { note.textContent = ""; player.reset(makeTracked()); });
+      presetSel.addEventListener("change", () => {
+        if (!presetSel.value) return;
+        editor.setGraph(window.AlgoGraphs.preset(presetSel.value));
+        presetSel.value = "";
+      });
+
+      if (window.AlgoProgress) window.AlgoProgress.recordLab("graph-playground", { pageId: "graph-playground" });
+    });
+  </script>
+</main>
+</body>
+</html>
